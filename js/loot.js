@@ -128,7 +128,7 @@ Game.Loot = (function () {
     const G = Game.GEN_BY_TIER;
     if (G) {
       const xp = def.xp || 1;
-      const maxT = def.boss ? 5 : xp <= 2 ? 2 : xp <= 4 ? 3 : xp <= 8 ? 4 : 5;
+      const maxT = def.boss ? 5 : xp <= 2 ? 2 : xp <= 5 ? 3 : 4; // 最高ティア(星鋼/虚空)はボス限定
       const pool = [];
       for (let t = 1; t <= maxT; t++) if (G[t]) for (let i = 0; i < G[t].length; i++) pool.push(G[t][i]);
       if (pool.length) return pool;
