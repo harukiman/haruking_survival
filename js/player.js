@@ -241,7 +241,7 @@ Game.Player = (function () {
     }
     if (def.shift) { Game.World.shift(); return; }
     if (def.respec) { const n = respec(); Game.Inventory.remove(sel.id, 1); Game.UI.toast('記憶の書を読んだ — スキルを振り直した（' + n + 'P返却）'); Game.UI.refreshAll(); return; }
-    if (def.food || def.cures || def.buff) { Game.Inventory.useSelected(); return; }
+    if (def.food || def.cures || def.buff || def.skillTome || def.xpGain) { Game.Inventory.useSelected(); return; }
     if (def.armor) { equipSelectedArmor(); return; }
 
     // --- 以降はタイルが必要（耕作/植える/設置）---

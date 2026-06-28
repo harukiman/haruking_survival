@@ -172,6 +172,7 @@ Game.UI = (function () {
     { id: 'energy_cell', n: 10, price: 2 }, { id: 'rocket_ammo', n: 2, price: 3 },
     { id: 'bomb', n: 2, price: 2 },
     { id: 'carrot_seeds', n: 3, price: 1 }, { id: 'pumpkin_seeds', n: 2, price: 1 }, { id: 'tomato_seeds', n: 3, price: 1 },
+    { id: 'xp_orb', n: 1, price: 3 }, { id: 'wisdom_tome', n: 1, price: 8 },
     { rand: true, price: 4, label: '謎の装備（ランダム）' },
   ];
   function openTrade() { const sc = document.getElementById('trade-screen'); if (!sc) return; sc.classList.remove('hidden'); Game.state.paused = true; refreshTrade(); }
@@ -661,7 +662,7 @@ Game.UI = (function () {
     if (def.flavor) h += '<div class="tt-flavor" style="margin-bottom:6px">' + def.flavor + '</div>';
     const btns = [];
     if (def.armor && def.slot) btns.push('<button id="inv-act" class="big-btn">装備する</button>');
-    else if (def.food || def.cures || def.buff) btns.push('<button id="inv-act" class="big-btn">' + (def.food ? '食べる' : '使う') + '</button>');
+    else if (def.food || def.cures || def.buff || def.skillTome || def.xpGain) btns.push('<button id="inv-act" class="big-btn">' + (def.food ? '食べる' : def.skillTome ? '読む' : '使う') + '</button>');
     else if (Game.Loot.rollable(st.id) || def.tool) btns.push('<button id="inv-hot" class="big-btn alt">ホットバーへ装備</button>');
     if (Game.Net && Game.Net.isConnected()) btns.push('<button id="inv-give" class="big-btn alt">仲間に渡す</button>');
     btns.push('<button id="inv-drop" class="big-btn inv-discard">捨てる' + (st.count > 1 ? '（1個）' : '') + '</button>');

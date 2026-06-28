@@ -366,6 +366,8 @@ Game.ITEMS = {
   magma_hammer:  { name:'溶岩の戦槌', stack:1, color:'#c0502a', tool:'sword', tier:5, attack:17, aoe:true, flavor:'溶炉の巨人の鎚。打てば大地が灼ける。' },
   pharaoh_crown: { name:'王の冠', stack:1, color:'#e8c54a', armor:4, slot:'head', flavor:'墳墓に眠りし王の黄金の冠。威厳が身を護る。' },
   mind_tome:     { name:'記憶の書', stack:8, color:'#d0c0ff', respec:true, flavor:'稀少な記憶の書。読めばスキルを振り直せる。' },
+  wisdom_tome:   { name:'知恵の書', stack:8, color:'#ffd86b', skillTome:1, flavor:'古の知恵が宿る稀覯本。読めばスキルポイントを1得る。' },
+  xp_orb:        { name:'経験の宝珠', stack:16, color:'#7fd0ff', xpGain:40, flavor:'砕けば膨大な経験が流れ込む輝く珠。' },
 };
 
 // クラフトレシピ。station=null は手作り、それ以外は近接が必要
@@ -586,7 +588,7 @@ Game.MOBS = {
   cursed_armor:{ name:'呪鎧', hostile:true, hp:30, speed:0.9, color:'#7a7a86', size:13, drops:[{item:'iron',n:[1,3]},{item:'iron_ore',n:[1,2]}], dmg:6, xp:5 },
   // 宇宙
   void_drone:{ name:'虚空ドローン', hostile:true, hp:18, speed:2.2, color:'#7fa0d0', size:10, drops:[{item:'star_metal',n:[0,2]},{item:'lumen',n:[0,1]}], dmg:5, xp:5, space:true, ghost:true },
-  star_guardian:{ name:'星の守護者', hostile:true, hp:320, speed:1.4, color:'#cfe0ff', size:30, drops:[{item:'star_core',n:[2,4]},{item:'star_metal',n:[6,12]},{item:'flying_carpet',n:[0,1]},{item:'frost_staff',n:[0,1]},{item:'gate_babylon',n:[0,1]}], dmg:11, xp:80, space:true, big:true, boss:true, summon:'void_drone' },
+  star_guardian:{ name:'星の守護者', hostile:true, hp:320, speed:1.4, color:'#cfe0ff', size:30, drops:[{item:'star_core',n:[2,4]},{item:'star_metal',n:[6,12]},{item:'flying_carpet',n:[0,1]},{item:'frost_staff',n:[0,1]},{item:'gate_babylon',n:[0,1]},{item:'wisdom_tome',n:[0,1]}], dmg:11, xp:80, space:true, big:true, boss:true, summon:'void_drone' },
   // 友好NPC: 謎の旅人
   wanderer: { name:'謎の旅人', hostile:false, hp:20, speed:1.0, color:'#caa84a', size:11, drops:[], xp:0, friendly:true, npc:true },
   // ===== P25 コンテンツ拡張: 新モブ =====
@@ -599,7 +601,7 @@ Game.MOBS = {
   astral_serpent:{ name:'宇宙の大蛇', hostile:true, hp:60, speed:2.0, color:'#b0a0ff', size:16, drops:[{item:'star_metal',n:[1,3]},{item:'star_core',n:[0,1]}], dmg:8, xp:14, space:true, ghost:true, big:true },
   // ===== P27 ダンジョンボス（大型ダンジョンの巣から稀に出現）=====
   tomb_king:  { name:'墳墓の王', hostile:true, hp:200, speed:1.3, color:'#d8b048', size:26, drops:[{item:'sand_greatsword',n:[1,1]},{item:'pharaoh_crown',n:[0,1]},{item:'gold_bar',n:[3,6]},{item:'chitin',n:[2,4]},{item:'gae_bolg',n:[0,1]}], dmg:9, xp:45, boss:true, big:true, summon:'scorpion', inflict:{poison:240} },
-  forge_titan:{ name:'溶炉の巨人', hostile:true, hp:280, speed:1.1, color:'#c0502a', size:30, drops:[{item:'magma_hammer',n:[1,1]},{item:'iron',n:[4,8]},{item:'gold_bar',n:[2,5]}], dmg:12, xp:60, boss:true, big:true, summon:'golem', shape:'tall' },
+  forge_titan:{ name:'溶炉の巨人', hostile:true, hp:280, speed:1.1, color:'#c0502a', size:30, drops:[{item:'magma_hammer',n:[1,1]},{item:'iron',n:[4,8]},{item:'gold_bar',n:[2,5]},{item:'xp_orb',n:[1,2]}], dmg:12, xp:60, boss:true, big:true, summon:'golem', shape:'tall' },
   crystal_queen:{ name:'水晶の女王', hostile:true, hp:300, speed:1.2, color:'#c884f0', size:28, drops:[{item:'prism_blade',n:[1,1]},{item:'shadow_crystal',n:[4,8]},{item:'lumen',n:[3,6]},{item:'star_core',n:[0,1]}], dmg:11, xp:70, boss:true, big:true, summon:'frost_wisp', shape:'tall', ranged:{dmg:8,range:7,cd:70,kind:'frost',status:{cold:200}} },
   twilight_colossus:{ name:'黄昏の巨像', hostile:true, hp:340, speed:1.05, color:'#d08a4a', size:34, drops:[{item:'colossus_blade',n:[1,1]},{item:'gold_bar',n:[3,6]},{item:'iron',n:[4,8]},{item:'mind_tome',n:[0,1]}], dmg:13, xp:90, boss:true, big:true, shape:'tall', summon:'cursed_armor' },
   abyss_dragon:{ name:'深淵の竜', hostile:true, hp:380, speed:1.35, color:'#6a1f8a', size:34, drops:[{item:'dragon_fang',n:[1,1]},{item:'shadow_core',n:[3,6]},{item:'shadow_crystal',n:[6,12]},{item:'lumen',n:[4,8]},{item:'mind_tome',n:[0,1]}], dmg:14, xp:120, boss:true, big:true, shadow:true, shape:'tall', summon:'abyss_stalker', ranged:{dmg:10,range:8,cd:60,kind:'hex'} },
@@ -668,7 +670,7 @@ Game.ITEM_GLYPH = {
   healing_totem:'⛲', street_lamp:'🪔', table:'🪑', chair:'🪑', bookshelf:'📚', glass:'🪟', rug:'🟥',
   chitin:'🦂', bone_club:'🦴', gold_sword:'⚔️', war_hammer:'🔨', crystal_blade:'⚔️', chitin_spear:'🔱',
   gold_helmet:'⛑️', gold_chest:'🛡️', crystal_helmet:'🪖', crystal_chest:'🛡️', star_helmet:'⛑️', chitin_armor:'🦺',
-  sand_greatsword:'⚔️', magma_hammer:'🔨', pharaoh_crown:'👑', mind_tome:'📖',
+  sand_greatsword:'⚔️', magma_hammer:'🔨', pharaoh_crown:'👑', mind_tome:'📖', wisdom_tome:'📗', xp_orb:'🔮',
   energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️', prism_blade:'⚔️', dragon_fang:'⚔️', colossus_blade:'⚔️',
 };
 

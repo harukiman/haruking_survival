@@ -92,6 +92,21 @@ Game.Inventory = (function () {
     if (!sl) return false;
     const def = Game.ITEMS[sl.id];
     const p = Game.state.player;
+    // 知恵の書: スキルポイント+1
+    if (def && def.skillTome) {
+      p.skillPoints = (p.skillPoints || 0) + 1;
+      remove(sl.id, 1); Game.Audio.play('levelup');
+      if (Game.Render.spawnFloat) Game.Render.spawnFloat(p.x, p.y - 18, 'スキルP +1', '#ffd86b', true);
+      Game.UI.toast(def.name + ' を読んだ — スキルポイント +1');
+      Game.UI.refreshAll(); return true;
+    }
+    // 経験の宝珠: 大量の経験値
+    if (def && def.xpGain) {
+      remove(sl.id, 1); Game.Player.gainXP(def.xpGain); Game.Audio.play('enchant');
+      if (Game.Render.spawnFloat) Game.Render.spawnFloat(p.x, p.y - 18, 'EXP +' + def.xpGain, '#7fd0ff', true);
+      Game.UI.toast(def.name + ' を砕いた — 経験 +' + def.xpGain);
+      Game.UI.refreshAll(); return true;
+    }
     // 治療アイテム（包帯/解毒薬）
     if (def && def.buff) {
       Game.Status.apply(def.buff.type, def.buff.dur);
