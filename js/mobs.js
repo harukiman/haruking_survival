@@ -470,7 +470,7 @@ Game.Mobs = (function () {
       Game.Render.flash(auraC);
       Game.Render.spawnParticles(m.x, m.y, auraC, m.champion ? 44 : 22);
       Game.state.eliteKills = (Game.state.eliteKills || 0) + 1;
-      if (Game.Achievements) Game.Achievements.unlock('elite_hunter');
+      if (Game.Achievements) { Game.Achievements.unlock('elite_hunter'); if (Game.state.eliteKills >= 25) Game.Achievements.unlock('elite_veteran'); }
       if (m.champion) {
         // チャンピオン: 確定で複数レア戦利品(高品質ギア2点＋宝珠＋低確率で書)を地面に生成
         const champDrops = [];
@@ -485,7 +485,7 @@ Game.Mobs = (function () {
         Game.UI.toast('★ ' + (m.championName || 'チャンピオン') + ' を討伐！ 財宝を手にした');
         Game.Audio.play('champion_die');
         Game.state.championKills = (Game.state.championKills || 0) + 1;
-        if (Game.Achievements) Game.Achievements.unlock('champion_slayer');
+        if (Game.Achievements) { Game.Achievements.unlock('champion_slayer'); if (Game.state.championKills >= 10) Game.Achievements.unlock('champion_master'); }
       } else {
         if (Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - m.def.size * 0.6, '精鋭撃破!', '#ffd86b', true);
         Game.Audio.play('elite_die');

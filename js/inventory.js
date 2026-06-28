@@ -49,6 +49,8 @@ Game.Inventory = (function () {
     if (Game.MAGIC_ITEMS && Game.MAGIC_ITEMS.indexOf(id) >= 0) Game.Achievements.unlock('magic_user');
     if (Game.LEGENDARY_ITEMS && Game.LEGENDARY_ITEMS.indexOf(id) >= 0) Game.Achievements.unlock('legendary');
     const d = Game.ITEMS[id]; if (d && d.tool === 'gun') Game.Achievements.unlock('gun_user');
+    if (Game.RELIC_IDS && Game.RELIC_IDS.indexOf(id) >= 0) Game.Achievements.unlock('relic_hoarder');
+    if (Game.ENDGAME_ITEMS && Game.ENDGAME_ITEMS.indexOf(id) >= 0) Game.Achievements.unlock('endgame_smith');
   }
 
   // rolled装備など個別インスタンスを空きスロットへ（スタックしない）。成功でtrue
@@ -92,6 +94,7 @@ Game.Inventory = (function () {
     const s = slots(); const add = Math.min(n, MAX_SLOTS - s.length);
     for (let i = 0; i < add; i++) s.push(null);
     if (add > 0) Game.state.player.invSlots = s.length;
+    if (s.length >= MAX_SLOTS && Game.Achievements) Game.Achievements.unlock('pack_rat');
     return add;
   }
 

@@ -65,6 +65,7 @@ Game.Player = (function () {
     else if (p.vehicle === 'boat') spd = p.speed * 1.5;
     // 浅瀬は減速＋水音（乗り物なし・徒歩のみ）
     const gUnder = Game.World.groundAt(Math.floor(p.x / TS), Math.floor(p.y / TS));
+    if (Game.Achievements && Game.Achievements.visitBiome && Game.state.worldName === 'light') Game.Achievements.visitBiome(gUnder);
     const onWater = !p.vehicle && gUnder === Game.TILE.WATER;
     if (onWater) spd *= 0.5;
     // 毒の沼地: 足が重く、稀に毒を受ける（徒歩のみ）
@@ -460,6 +461,7 @@ Game.Player = (function () {
     Game.Inventory.slots()[idx] = prev ? { id: prev.id, count: 1 } : null;
     applyEquipStats();
     Game.Audio.play('relic_get');
+    if (p.accessory && p.accessory2 && Game.Achievements) Game.Achievements.unlock('dual_relic');
     Game.UI.toast(def.name + ' を装備（遺物）');
     Game.UI.refreshAll();
   }

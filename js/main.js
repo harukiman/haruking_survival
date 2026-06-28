@@ -59,6 +59,7 @@ window.Game = window.Game || {};
       championKills: 0,
       bounty: null,
       bountyDone: 0,
+      visitedBiomes: {},
       questIndex: 0,
       questDone: {},
       reunified: false,
@@ -155,6 +156,7 @@ window.Game = window.Game || {};
     Game.state.championKills = data.championKills || 0;
     Game.state.bounty = data.bounty || null;
     Game.state.bountyDone = data.bountyDone || 0;
+    Game.state.visitedBiomes = data.visitedBiomes || {};
     Game.state.questIndex = data.questIndex || 0;
     Game.state.questDone = data.questDone || {};
     Game.state.reunified = !!data.reunified;

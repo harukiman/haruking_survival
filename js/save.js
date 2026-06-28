@@ -38,6 +38,7 @@ Game.Save = (function () {
       championKills: s.championKills || 0,
       bounty: s.bounty || null,
       bountyDone: s.bountyDone || 0,
+      visitedBiomes: s.visitedBiomes || {},
       questIndex: s.questIndex || 0,
       questDone: s.questDone || {},
       reunified: !!s.reunified,

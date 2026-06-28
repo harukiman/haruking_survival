@@ -40,6 +40,17 @@ Game.Achievements = (function () {
     elite_hunter:  { name:'エリートハンター', desc:'精鋭個体を討伐した' },
     champion_slayer:{ name:'チャンピオンスレイヤー', desc:'ネームド・チャンピオンを討伐した' },
     bounty_king:   { name:'賞金稼ぎの王', desc:'賞金首の大物を討ち取った' },
+    // 新コンテンツ実績
+    visit_swamp:   { name:'澱みへ踏み入る', desc:'毒の沼地に足を踏み入れた' },
+    visit_volcanic:{ name:'灼熱の地へ', desc:'火山地帯に足を踏み入れた' },
+    biome_master:  { name:'全地踏破', desc:'草原・森・砂漠・雪原・沼地・火山を踏破した' },
+    pack_rat:      { name:'大荷物', desc:'インベントリ上限を100まで拡張した' },
+    dual_relic:    { name:'二つの遺物', desc:'遺物を2つ同時に装備した' },
+    elite_veteran: { name:'精鋭狩りの達人', desc:'精鋭個体を25体討伐した' },
+    champion_master:{ name:'チャンピオンの覇者', desc:'チャンピオンを10体討伐した' },
+    bounty_veteran:{ name:'凄腕の賞金稼ぎ', desc:'賞金を10回受け取った' },
+    endgame_smith: { name:'星と虚無の鍛冶', desc:'エンドゲーム装備を作製した' },
+    relic_hoarder: { name:'遺物収集家', desc:'遺物を手に入れた' },
   };
   // ボス種別→実績ID
   Game.BOSS_ACH = { tomb_king:'slay_tomb_king', forge_titan:'slay_forge_titan', star_guardian:'slay_star_guardian', crystal_queen:'slay_crystal_queen', hunger_beast:'slay_hunger_beast', abyss_dragon:'slay_abyss_dragon', twilight_colossus:'slay_twilight_colossus', swamp_lord:'slay_swamp_lord', lava_lord:'slay_lava_lord' };
@@ -47,6 +58,8 @@ Game.Achievements = (function () {
   // 種別判定用（手に入れた時の実績）
   Game.MAGIC_ITEMS = ['warp_staff', 'flame_staff', 'frost_staff', 'flying_carpet'];
   Game.LEGENDARY_ITEMS = ['sand_greatsword', 'magma_hammer', 'pharaoh_crown', 'cosmic_blade', 'star_cannon', 'excalibur', 'gae_bolg', 'gate_babylon', 'prism_blade', 'dragon_fang', 'colossus_blade', 'mire_scythe', 'magma_maul', 'starcore_greatsword', 'voidcore_blade'];
+
+  Game.ENDGAME_ITEMS = ['starcore_greatsword', 'voidcore_blade', 'star_aegis', 'void_helm'];
 
   function set() { return Game.state.achievements || (Game.state.achievements = {}); }
 
@@ -61,8 +74,21 @@ Game.Achievements = (function () {
     Game.Audio.play('levelup');
   }
 
+  // バイオーム到達の記録＋実績
+  function visitBiome(tile) {
+    if (!Game.state) return; const T = Game.TILE;
+    const map = {}; map[T.GRASS] = 'grass'; map[T.FOREST] = 'forest'; map[T.SAND] = 'sand'; map[T.SNOW] = 'snow'; map[T.SWAMP] = 'swamp'; map[T.VOLCANIC] = 'volcanic';
+    const key = map[tile]; if (!key) return;
+    const vb = Game.state.visitedBiomes || (Game.state.visitedBiomes = {});
+    if (vb[key]) return;
+    vb[key] = 1;
+    if (key === 'swamp') unlock('visit_swamp');
+    if (key === 'volcanic') unlock('visit_volcanic');
+    if (['grass', 'forest', 'sand', 'snow', 'swamp', 'volcanic'].every(function (k) { return vb[k]; })) unlock('biome_master');
+  }
+
   function count() { return Object.keys(set()).length; }
   function total() { return Object.keys(Game.ACHIEVEMENTS).length; }
 
-  return { unlock, has, count, total };
+  return { unlock, has, count, total, visitBiome };
 })();

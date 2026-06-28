@@ -79,7 +79,7 @@ Game.Bounty = (function () {
       Game.Inventory.add('gold_bar', b.rewardGold);
       Game.Inventory.add('xp_orb', 1);
       if (b.rewardItem) Game.Inventory.add(b.rewardItem.id, b.rewardItem.count);
-      Game.state.bountyDone = (Game.state.bountyDone || 0) + 1;
+      Game.state.bountyDone = (Game.state.bountyDone || 0) + 1; if (Game.state.bountyDone >= 10 && Game.Achievements) Game.Achievements.unlock('bounty_veteran');
       if (Game.Achievements) Game.Achievements.unlock('bounty_king');
       Game.UI.toast('★ 賞金首の大物を討伐！ 金塊 x' + b.rewardGold + ' ＋ 財宝を得た');
       Game.Audio.play('bounty_done');
@@ -117,7 +117,7 @@ Game.Bounty = (function () {
       Game.UI.toast('★ 賞金を受け取った — ' + rewardText(b));
       Game.Audio.play('bounty_done');
       if (Game.Render.spawnFloat) { const p = Game.state.player; Game.Render.spawnFloat(p.x, p.y - 18, '賞金 +' + b.rewardGold, '#e8c54a', true); }
-      Game.state.bountyDone = (Game.state.bountyDone || 0) + 1;
+      Game.state.bountyDone = (Game.state.bountyDone || 0) + 1; if (Game.state.bountyDone >= 10 && Game.Achievements) Game.Achievements.unlock('bounty_veteran');
       Game.state.bounty = generate(); // 次の依頼を即発行
       announce(Game.state.bounty);
       Game.UI.refreshAll();
