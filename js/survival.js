@@ -25,6 +25,29 @@ Game.Survival = (function () {
         damage(1, 'starve');
       }
     }
+
+    // 正気度（影世界で減少・光の護符/光源で緩和、光世界で回復）
+    const T = Game.TUNE;
+    if (Game.state.worldName === 'shadow') {
+      let drain = T.SANITY_DRAIN;
+      for (const k in p.armor) { const id = p.armor[k]; if (id && Game.ITEMS[id] && Game.ITEMS[id].lumen) drain *= 0.4; }
+      if (nearLight()) drain *= 0.3;
+      Game.state.sanity = Math.max(0, Game.state.sanity - drain);
+      if (Game.state.sanity < 10 && Game.Achievements) Game.Achievements.unlock('deep_sanity');
+      if (Game.state.sanity <= 0 && p.health > 0 && Game.state.tick % 50 === 0) damage(2, 'sanity');
+    } else if (Game.state.sanity < T.SANITY_MAX) {
+      Game.state.sanity = Math.min(T.SANITY_MAX, Game.state.sanity + 0.06);
+    }
+    if (Game.state.tick % 15 === 0) Game.UI.refreshStats();
+  }
+
+  function nearLight() {
+    const TS = Game.CFG.TILE_SIZE, p = Game.state.player;
+    const ptx = Math.floor(p.x / TS), pty = Math.floor(p.y / TS);
+    for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) {
+      if (Game.LIGHT_LEVEL[Game.World.objAt(ptx + dx, pty + dy)]) return true;
+    }
+    return false;
   }
 
   function eat(amount) {
@@ -35,14 +58,15 @@ Game.Survival = (function () {
 
   function damage(amount, source) {
     const p = Game.state.player;
-    if (p.invuln > 0 && source !== 'starve') return;
-    // 防具で軽減（飢餓は無視）
-    if (source !== 'starve') {
+    const physical = source !== 'starve' && source !== 'sanity';
+    if (p.invuln > 0 && physical) return;
+    // 防具で軽減（飢餓・正気崩壊は無視）
+    if (physical) {
       const armor = Game.Player.totalArmor();
       amount = Math.max(1, amount - armor);
     }
     p.health -= amount;
-    if (source !== 'starve') { p.invuln = 30; Game.Audio.play('hurt'); }
+    if (physical) { p.invuln = 30; Game.Audio.play('hurt'); }
     if (p.health <= 0) { p.health = 0; die(); }
     Game.UI.refreshStats();
   }

@@ -37,6 +37,11 @@ Game.Crafting = (function () {
     }
     for (const id in recipe.in) Inv.remove(id, recipe.in[id]);
     Inv.add(recipe.out.id, recipe.out.n);
+    if (Game.Achievements) {
+      Game.Achievements.unlock('first_craft');
+      if (recipe.out.id === 'shadow_mirror') Game.Achievements.unlock('first_mirror');
+      if (recipe.out.id === 'shadow_chest' || recipe.out.id === 'shadow_helmet') Game.Achievements.unlock('shadow_gear');
+    }
     Game.Audio.play('craft');
     Game.UI.toast(Game.ITEMS[recipe.out.id].name + ' を作成');
     Game.UI.refreshAll();

@@ -15,11 +15,19 @@ Game.Lighting = (function () {
   }
 
   function ambientDarkness() {
-    return darknessFor(Game.state ? Game.state.timeOfDay : 0.4);
+    if (!Game.state) return 0;
+    let d = darknessFor(Game.state.timeOfDay);
+    // 影世界は常時薄暗
+    if (Game.state.worldName === 'shadow') d = Math.max(d, Game.TUNE.SHADOW_AMBIENT);
+    // 正気度が低いと視界が狭まる（恐怖演出）
+    const sanity = Game.state.sanity;
+    if (sanity != null && sanity < 40) d = Math.min(0.92, d + (40 - sanity) / 40 * 0.28);
+    return d;
   }
 
-  // 空のティント色（夜=青, 夕焼け=橙）
+  // 空のティント色（影世界=紫, 夜=青, 夕焼け=橙）
   function skyTint() {
+    if (Game.state.worldName === 'shadow') return [26, 10, 44]; // 影の紫
     const t = Game.state.timeOfDay;
     if (t >= 0.68 && t < 0.80) return [70, 30, 20];   // 夕焼け
     if (t >= 0.20 && t < 0.30) return [40, 30, 50];   // 明け方

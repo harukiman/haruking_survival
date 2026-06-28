@@ -111,9 +111,69 @@ Game.World = (function () {
     });
   }
 
+  // ===== 二相世界 =====
+  function setActiveWorld(name) {
+    const w = Game.state.worlds[name];
+    Game.state.worldName = name;
+    Game.state.chunks = w.chunks;
+    Game.state.modifiedTiles = w.modifiedTiles;
+    Game.state.tileData = w.tileData;
+    Game.state.mobs = w.mobs;
+    Game.state.drops = w.drops;
+  }
+
+  // 影鏡で光⇄影をシフト
+  function shift() {
+    const st = Game.state;
+    if (!st || st.paused || st.shiftCd > 0) return false;
+    if (Game.Inventory.count('shadow_mirror') < 1) { Game.UI.toast('影鏡が必要（夜の敵から影の欠片を集めて作る）'); return false; }
+    const target = st.worldName === 'light' ? 'shadow' : 'light';
+    setActiveWorld(target);
+    st.shiftCd = Game.TUNE.SHIFT_COOLDOWN;
+    st.hasShifted = true;
+    const pt = Game.Player.playerTile();
+    // シフト先で足元が塞がっていたら近傍の空きへ押し出す
+    if (!isWalkable(pt.tx, pt.ty)) nudgeToWalkable();
+    updateChunks(pt.tx, pt.ty);
+    Game.Render.flash(target === 'shadow' ? '#3a1a55' : '#cfe0ff');
+    Game.Audio.play('shift');
+    Game.UI.toast(target === 'shadow' ? '影の世界へ…' : '光の世界へ戻った');
+    Game.UI.refreshWorld();
+    if (Game.Achievements) Game.Achievements.unlock(target === 'shadow' ? 'first_shift' : null);
+    return true;
+  }
+
+  function nudgeToWalkable() {
+    const p = Game.state.player, TS = Game.CFG.TILE_SIZE;
+    const ptx = Math.floor(p.x / TS), pty = Math.floor(p.y / TS);
+    for (let r = 1; r < 6; r++) {
+      for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+        if (isWalkable(ptx + dx, pty + dy)) {
+          p.x = (ptx + dx) * TS + TS / 2; p.y = (pty + dy) * TS + TS / 2; p.prevX = p.x; p.prevY = p.y; return;
+        }
+      }
+    }
+  }
+
+  // 両世界に同時設置（裂け目の楔）
+  function setObjBothWorlds(tx, ty, val) {
+    const cur = Game.state.worldName;
+    ['light', 'shadow'].forEach(function (name) {
+      const w = Game.state.worlds[name];
+      const key = U.tileKey(tx, ty);
+      const d = w.modifiedTiles.get(key) || {};
+      d.o = val; w.modifiedTiles.set(key, d);
+      // ロード済みチャンクがあれば即反映
+      const ch = w.chunks.get(U.chunkKey(toChunkCoord(tx), toChunkCoord(ty)));
+      if (ch) { ch.object[localIndex(tx, ty)] = val; ch.dirty = true; }
+    });
+    if (val === Game.OBJ.NONE) { Game.state.worlds.light.tileData.delete(U.tileKey(tx, ty)); Game.state.worlds.shadow.tileData.delete(U.tileKey(tx, ty)); }
+  }
+
   return {
     Chunk, getChunk, groundAt, objAt, setObj, setGround,
     getTileData, setTileData, clearTileData,
     isWalkable, updateChunks, toChunkCoord,
+    setActiveWorld, shift, setObjBothWorlds,
   };
 })();

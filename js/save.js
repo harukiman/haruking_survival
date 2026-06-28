@@ -4,19 +4,31 @@ window.Game = window.Game || {};
 Game.Save = (function () {
   const KEY = Game.CFG.SAVE_KEY;
 
+  function dumpWorld(w) {
+    const deltas = {}, tileData = {};
+    w.modifiedTiles.forEach(function (v, k) { deltas[k] = v; });
+    w.tileData.forEach(function (v, k) { tileData[k] = v; });
+    return {
+      deltas: deltas,
+      tileData: tileData,
+      drops: w.drops.map(function (d) { return { id: d.id, count: d.count, x: d.x, y: d.y }; }),
+    };
+  }
+
   function serialize() {
     const s = Game.state;
     const p = s.player;
-    const deltas = {};
-    s.modifiedTiles.forEach(function (v, k) { deltas[k] = v; });
-    const tileData = {};
-    s.tileData.forEach(function (v, k) { tileData[k] = v; });
     return {
-      v: 2,
+      v: 3,
       seed: s.seed,
       tick: s.tick,
       spawn: s.spawn,
       weather: s.weather,
+      worldName: s.worldName,
+      sanity: s.sanity,
+      hasShifted: s.hasShifted,
+      achievements: s.achievements || {},
+      worlds: { light: dumpWorld(s.worlds.light), shadow: dumpWorld(s.worlds.shadow) },
       player: {
         x: p.x, y: p.y, dir: p.dir,
         health: p.health, maxHealth: p.maxHealth,
@@ -25,9 +37,6 @@ Game.Save = (function () {
         xp: p.xp, level: p.level, xpNext: p.xpNext, armor: p.armor,
       },
       inventory: s.inventory.map(function (sl) { return sl ? { id: sl.id, count: sl.count } : null; }),
-      drops: s.drops.map(function (d) { return { id: d.id, count: d.count, x: d.x, y: d.y }; }),
-      deltas: deltas,
-      tileData: tileData,
     };
   }
 

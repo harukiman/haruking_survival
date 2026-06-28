@@ -13,11 +13,12 @@ Game.Render = (function () {
     }
     const x = ch.cache.getContext('2d');
     x.clearRect(0, 0, CHUNK_PX, CHUNK_PX);
+    const groundSet = Game.state.worldName === 'shadow' ? Game.Tiles.groundShadow : Game.Tiles.ground;
     for (let ly = 0; ly < CS; ly++) {
       for (let lx = 0; lx < CS; lx++) {
         const i = ly * CS + lx;
         const g = ch.ground[i];
-        const ga = Game.Tiles.ground[g];
+        const ga = groundSet[g];
         if (ga) x.drawImage(ga, lx * TS, ly * TS);
         const o = ch.object[i];
         if (o !== Game.OBJ.NONE) {
@@ -62,6 +63,20 @@ Game.Render = (function () {
     drawParticles(ctx);
     Game.Lighting.drawOverlay(ctx);
     drawWeather(ctx);
+    drawFlash(ctx);
+  }
+
+  // 世界シフト時の画面フラッシュ
+  let flashColor = null, flashT = 0;
+  function flash(color) { flashColor = color; flashT = 22; }
+  function drawFlash(ctx) {
+    if (flashT <= 0) return;
+    ctx.save();
+    ctx.globalAlpha = (flashT / 22) * 0.85;
+    ctx.fillStyle = flashColor;
+    ctx.fillRect(0, 0, Game.view.w, Game.view.h);
+    ctx.restore();
+    flashT--;
   }
 
   function drawWeather(ctx) {
@@ -172,5 +187,5 @@ Game.Render = (function () {
     }
   }
 
-  return { draw, buildChunkCache, spawnParticles };
+  return { draw, buildChunkCache, spawnParticles, flash };
 })();

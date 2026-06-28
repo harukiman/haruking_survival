@@ -23,6 +23,7 @@ Game.Input = (function () {
       // ホットバー 1-9
       if (k >= '1' && k <= '9') Game.Inventory.setHotbar(parseInt(k, 10) - 1);
       if (k === 'e') { Game.UI.toggleInventory(); }
+      if (k === 'f') { Game.World.shift(); }          // 世界シフト
       if (k === 'k' || k === 'q') placeQueued = true; // facing設置
       if (k === ' ') e.preventDefault();
     });
@@ -77,6 +78,8 @@ Game.Input = (function () {
     placeBtn.addEventListener('touchstart', doPlace, { passive: false });
     placeBtn.addEventListener('click', doPlace);
     document.getElementById('btn-inv').addEventListener('click', function () { Game.UI.toggleInventory(); });
+    const shiftBtn = document.getElementById('btn-shift');
+    if (shiftBtn) shiftBtn.addEventListener('click', function (e) { e.preventDefault(); Game.World.shift(); });
   }
 
   // ゲームパッド（接続時のみ）

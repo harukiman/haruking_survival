@@ -38,6 +38,10 @@ Game.Inventory = (function () {
         s[i] = { id: id, count: put }; n -= put;
       }
     }
+    if (Game.Achievements && Game.state) {
+      if (id === 'wood') Game.Achievements.unlock('first_wood');
+      else if (id === 'lumen') Game.Achievements.unlock('lumen');
+    }
     return n;
   }
 

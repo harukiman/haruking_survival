@@ -21,6 +21,9 @@ Game.UI = (function () {
     el.level = document.getElementById('level-text');
     el.armor = document.getElementById('armor-text');
     el.xp = document.getElementById('xp-bar');
+    el.sanity = document.getElementById('sanity-bar');
+    el.sanityWrap = document.getElementById('sanity-wrap');
+    el.world = document.getElementById('world-label');
     el.chestScreen = document.getElementById('chest-screen');
     el.chestGrid = document.getElementById('chest-grid');
     el.chestInvGrid = document.getElementById('chest-inv-grid');
@@ -83,6 +86,20 @@ Game.UI = (function () {
       el.armor.textContent = Game.Player.totalArmor();
       el.xp.style.width = (p.xp / p.xpNext * 100) + '%';
     }
+    if (el.sanity) {
+      el.sanity.style.width = (Game.state.sanity / Game.TUNE.SANITY_MAX * 100) + '%';
+      // 正気度バーは影世界でのみ表示
+      el.sanityWrap.style.display = Game.state.worldName === 'shadow' ? 'flex' : 'none';
+    }
+  }
+
+  function refreshWorld() {
+    if (!el.world) return;
+    const shadow = Game.state.worldName === 'shadow';
+    el.world.textContent = shadow ? '影の世界' : '光の世界';
+    el.world.className = shadow ? 'world-shadow' : 'world-light';
+    document.body.classList.toggle('shadow-mode', shadow);
+    refreshStats();
   }
 
   function refreshInventory() {
@@ -138,7 +155,7 @@ Game.UI = (function () {
     });
   }
 
-  function refreshAll() { refreshHotbar(); refreshStats(); refreshInventory(); refreshChest(); }
+  function refreshAll() { refreshHotbar(); refreshStats(); refreshInventory(); refreshChest(); refreshWorld(); }
 
   // ===== チェスト =====
   function openChest(tx, ty) {
@@ -228,11 +245,12 @@ Game.UI = (function () {
     const TS = Game.CFG.TILE_SIZE;
     const ptx = Math.floor(p.x / TS), pty = Math.floor(p.y / TS);
     const half = span / 2;
+    const palette = Game.state.worldName === 'shadow' ? Game.SHADOW_TILE_COLOR : Game.TILE_COLOR;
     mmCtx.clearRect(0, 0, size, size);
     for (let y = 0; y < span; y++) {
       for (let x = 0; x < span; x++) {
         const t = Game.WorldGen.genTile(ptx - half + x, pty - half + y, Game.state.seed);
-        mmCtx.fillStyle = Game.TILE_COLOR[t.ground] || '#333';
+        mmCtx.fillStyle = palette[t.ground] || '#333';
         mmCtx.fillRect(x * scale, y * scale, scale + 0.5, scale + 0.5);
       }
     }
@@ -246,6 +264,6 @@ Game.UI = (function () {
   return {
     init, showGameUI, refreshHotbar, refreshStats, refreshInventory,
     refreshCraft, refreshAll, toggleInventory, toast, updateMinimap,
-    openChest, closeChest, refreshChest,
+    openChest, closeChest, refreshChest, refreshWorld,
   };
 })();

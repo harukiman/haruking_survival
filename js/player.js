@@ -138,7 +138,8 @@ Game.Player = (function () {
         if (sl) Game.state.drops.push({ id: sl.id, count: sl.count, x: tx * TS + TS / 2, y: ty * TS + TS / 2 });
       });
     }
-    Game.World.setObj(tx, ty, Game.OBJ.NONE);
+    if (meta.dualPlaced) Game.World.setObjBothWorlds(tx, ty, Game.OBJ.NONE);
+    else Game.World.setObj(tx, ty, Game.OBJ.NONE);
     const wx = tx * TS + TS / 2, wy = ty * TS + TS / 2;
     if (meta.drops) {
       for (let i = 0; i < meta.drops.length; i++) {
@@ -168,6 +169,7 @@ Game.Player = (function () {
     const def = sel ? Game.ITEMS[sel.id] : null;
     if (!def) return;
 
+    if (def.shift) { Game.World.shift(); return; }
     if (def.food) { Game.Inventory.useSelected(); return; }
     if (def.armor) { equipArmor(sel.id); return; }
     if (def.tool === 'hoe' && obj === Game.OBJ.NONE) {
@@ -187,7 +189,9 @@ Game.Player = (function () {
     if (targetMeta && targetMeta.solid && t.tx === pt.tx && t.ty === pt.ty) return;
     const g = Game.World.groundAt(t.tx, t.ty);
     if (g === Game.TILE.DEEP_WATER) return;
-    Game.World.setObj(t.tx, t.ty, def.place);
+    // 両世界リンク設置物（裂け目の楔）
+    if (targetMeta && targetMeta.dualPlaced) Game.World.setObjBothWorlds(t.tx, t.ty, def.place);
+    else Game.World.setObj(t.tx, t.ty, def.place);
     if (def.place === Game.OBJ.CHEST) Game.World.setTileData(t.tx, t.ty, { chest: new Array(27).fill(null) });
     if (def.place === Game.OBJ.SAPLING) Game.World.setTileData(t.tx, t.ty, { sapling: { timer: 0 } });
     Game.Inventory.remove(sel.id, 1);
@@ -234,6 +238,7 @@ Game.Player = (function () {
       p.maxHealth += 2; p.health = p.maxHealth;
       Game.Audio.play('levelup');
       Game.UI.toast('レベルアップ！ Lv.' + p.level);
+      if (Game.Achievements && p.level >= 5) Game.Achievements.unlock('level5');
     }
     Game.UI.refreshStats();
   }

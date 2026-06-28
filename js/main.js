@@ -25,24 +25,38 @@ window.Game = window.Game || {};
     Game.view.w = w; Game.view.h = h;
   }
 
+  function mkWorld() {
+    return { chunks: new Map(), modifiedTiles: new Map(), tileData: new Map(), mobs: [], drops: [] };
+  }
+
   function freshState(seed) {
-    return {
+    const worlds = { light: mkWorld(), shadow: mkWorld() };
+    const st = {
       seed: seed >>> 0,
       tick: 0,
       timeOfDay: 0.3,
       player: Game.Player.makeDefault(),
       camera: { x: 0, y: 0 },
-      chunks: new Map(),
-      modifiedTiles: new Map(),
-      tileData: new Map(),
-      drops: [],
-      mobs: [],
       inventory: Game.Inventory.makeEmpty(),
       spawn: { tx: 0, ty: 0 },
       openChest: null,
       weather: { type: 'clear', timer: 600 },
       paused: false,
+      // 二相世界
+      worldName: 'light',
+      worlds: worlds,
+      shiftCd: 0,
+      sanity: Game.TUNE.SANITY_MAX,
+      hasShifted: false,
+      achievements: {},
+      // active 参照（worlds[worldName] を指す）
+      chunks: worlds.light.chunks,
+      modifiedTiles: worlds.light.modifiedTiles,
+      tileData: worlds.light.tileData,
+      mobs: worlds.light.mobs,
+      drops: worlds.light.drops,
     };
+    return st;
   }
 
   function newGame(seedStr) {
@@ -63,10 +77,22 @@ window.Game = window.Game || {};
     Game.state = freshState(data.seed);
     Game.state.tick = data.tick || 0;
     Game.state.spawn = data.spawn || { tx: 0, ty: 0 };
-    // 差分復元
-    if (data.deltas) for (const k in data.deltas) Game.state.modifiedTiles.set(k, data.deltas[k]);
-    if (data.tileData) for (const k in data.tileData) Game.state.tileData.set(k, data.tileData[k]);
+    Game.state.sanity = data.sanity != null ? data.sanity : Game.TUNE.SANITY_MAX;
+    Game.state.hasShifted = !!data.hasShifted;
+    Game.state.achievements = data.achievements || {};
     if (data.weather) Game.state.weather = data.weather;
+    // 両世界の差分/タイルデータ復元
+    const restoreWorld = function (name, wd) {
+      if (!wd) return;
+      const w = Game.state.worlds[name];
+      if (wd.deltas) for (const k in wd.deltas) w.modifiedTiles.set(k, wd.deltas[k]);
+      if (wd.tileData) for (const k in wd.tileData) w.tileData.set(k, wd.tileData[k]);
+      if (wd.drops) wd.drops.forEach(function (d) { w.drops.push({ id: d.id, count: d.count, x: d.x, y: d.y }); });
+    };
+    if (data.worlds) { restoreWorld('light', data.worlds.light); restoreWorld('shadow', data.worlds.shadow); }
+    else if (data.deltas) { restoreWorld('light', { deltas: data.deltas, tileData: data.tileData, drops: data.drops }); } // v2互換
+    // アクティブ世界をセット
+    Game.World.setActiveWorld(data.worldName || 'light');
     // プレイヤー
     const p = Game.state.player, sp = data.player || {};
     p.x = sp.x || 0; p.y = sp.y || 0; p.prevX = p.x; p.prevY = p.y;
@@ -85,7 +111,6 @@ window.Game = window.Game || {};
         Game.state.inventory[i] = sl ? { id: sl.id, count: sl.count } : null;
       }
     }
-    if (data.drops) data.drops.forEach(function (d) { Game.state.drops.push({ id: d.id, count: d.count, x: d.x, y: d.y }); });
     startWorld();
   }
 
@@ -103,6 +128,7 @@ window.Game = window.Game || {};
   function update() {
     const intent = Game.Input.poll();
     if (Game.state.paused) return;
+    if (Game.state.shiftCd > 0) Game.state.shiftCd--;
     Game.Player.update(intent);
     Game.Survival.update();
     Game.DayNight.update();

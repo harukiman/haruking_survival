@@ -17,12 +17,15 @@ Game.CFG = {
 // 地面レイヤー
 Game.TILE = { DEEP_WATER:0, WATER:1, SAND:2, GRASS:3, FOREST:4, DIRT:5, STONE:6, SNOW:7 };
 
-// オブジェクトレイヤー（0=なし、100番台=プレイヤー設置物）
+// オブジェクトレイヤー（0=なし、50番台=影世界固有、100番台=プレイヤー設置物）
 Game.OBJ = {
   NONE:0, TREE:1, ROCK:2, COAL_ORE:3, IRON_ORE:4, GOLD_ORE:5, BUSH:6, FLOWER:7,
   BERRY_BUSH:8, PINE_TREE:9, CACTUS:10,
+  // 影世界固有
+  SHADOW_TREE:50, SHADOW_CRYSTAL:51, LUMEN_ORE:52, SOUL_FLOWER:53, VOID_ROCK:54,
   WOOD_BLOCK:100, STONE_BLOCK:101, CRAFTING_TABLE:102, FURNACE:103, TORCH:104, CHEST:105,
   FARMLAND:106, WHEAT:107, CAMPFIRE:108, LANTERN:109, FENCE:110, DOOR:111, BED:112, SAPLING:113,
+  RIFT_ANCHOR:114, LUMEN_LANTERN:115,
 };
 
 // 地面の色（手続き描画のベース）
@@ -37,6 +40,18 @@ Game.TILE_COLOR = {
   [Game.TILE.SNOW]:       '#e8eef2',
 };
 
+// 影世界の地面パレット（同じTILE idを別色で描画）
+Game.SHADOW_TILE_COLOR = {
+  [Game.TILE.DEEP_WATER]: '#0a0618',
+  [Game.TILE.WATER]:      '#241a4a',
+  [Game.TILE.SAND]:       '#4a4060',
+  [Game.TILE.GRASS]:      '#3a2a55',
+  [Game.TILE.FOREST]:     '#2c1f44',
+  [Game.TILE.DIRT]:       '#33223a',
+  [Game.TILE.STONE]:      '#3b3550',
+  [Game.TILE.SNOW]:       '#5a5575',
+};
+
 Game.SOLID_TILE = {
   [Game.TILE.DEEP_WATER]: true,  // 移動不可
   [Game.TILE.WATER]: false,      // 浅瀬は通れる（減速は今回省略）
@@ -48,6 +63,9 @@ Game.LIGHT_LEVEL = {
   [Game.OBJ.CAMPFIRE]: 9,
   [Game.OBJ.LANTERN]: 10,
   [Game.OBJ.FURNACE]: 5,
+  [Game.OBJ.LUMEN_LANTERN]: 14,   // 影世界用の強力な光
+  [Game.OBJ.RIFT_ANCHOR]: 8,
+  [Game.OBJ.LUMEN_ORE]: 6,        // 光鉱はほのかに光る
 };
 
 // オブジェクトのメタ情報。solid=移動阻害, drops=破壊時ドロップ
@@ -76,6 +94,15 @@ Game.OBJ_META = {
   [Game.OBJ.DOOR]:      { name:'扉', solid:false, mineable:true, tool:null, tier:0, hp:3, drops:[{item:'door', n:[1,1]}], render:'door' },
   [Game.OBJ.BED]:       { name:'ベッド', solid:false, mineable:true, tool:null, tier:0, hp:3, drops:[{item:'bed', n:[1,1]}], render:'bed', bed:true },
   [Game.OBJ.SAPLING]:   { name:'苗木', solid:false, mineable:true, tool:null, tier:0, hp:1, drops:[{item:'sapling', n:[1,1]}], render:'sapling', sapling:true },
+  // 影世界固有オブジェクト
+  [Game.OBJ.SHADOW_TREE]:  { name:'影樹', solid:true, mineable:true, tool:'axe', tier:0, hp:8, drops:[{item:'shadow_wood', n:[2,4]}], render:'shadowtree', shadowOnly:true },
+  [Game.OBJ.SHADOW_CRYSTAL]:{ name:'影晶', solid:true, mineable:true, tool:'pickaxe', tier:2, hp:14, drops:[{item:'shadow_crystal', n:[1,3]}], render:'shadowcrystal', shadowOnly:true },
+  [Game.OBJ.LUMEN_ORE]:    { name:'光鉱', solid:true, mineable:true, tool:'pickaxe', tier:3, hp:16, drops:[{item:'lumen', n:[1,2]}], render:'lumenore', shadowOnly:true },
+  [Game.OBJ.SOUL_FLOWER]:  { name:'月光草', solid:false, mineable:true, tool:null, tier:0, hp:1, drops:[{item:'moonleaf', n:[1,2]}], render:'soulflower', shadowOnly:true },
+  [Game.OBJ.VOID_ROCK]:    { name:'虚岩', solid:true, mineable:true, tool:'pickaxe', tier:1, hp:7, drops:[{item:'stone', n:[1,2]},{item:'shadow_crystal', n:[0,1]}], render:'voidrock', shadowOnly:true },
+  // 設置物（両世界対応）
+  [Game.OBJ.RIFT_ANCHOR]:  { name:'裂け目の楔', solid:false, mineable:true, tool:null, tier:0, hp:6, drops:[{item:'rift_anchor', n:[1,1]}], render:'rift', dualPlaced:true },
+  [Game.OBJ.LUMEN_LANTERN]:{ name:'光のランタン', solid:false, mineable:true, tool:null, tier:0, hp:2, light:14, drops:[{item:'lumen_lantern', n:[1,1]}], render:'lumenlantern' },
 };
 
 // アイテム定義。place=設置するOBJ id, tool/tier=道具, food=空腹回復
@@ -131,6 +158,24 @@ Game.ITEMS = {
   fence:       { name:'柵', stack:99, color:'#9c6b3f', place:Game.OBJ.FENCE },
   door:        { name:'扉', stack:99, color:'#a9762f', place:Game.OBJ.DOOR },
   bed:         { name:'ベッド', stack:1, color:'#c44', place:Game.OBJ.BED },
+  // ===== 二相世界（光と影）=====
+  shadow_shard:  { name:'影の欠片', stack:99, color:'#7a4fb0' },     // 夜の敵がドロップ
+  shadow_mirror: { name:'影鏡', stack:1, color:'#3a2a55', shift:true }, // 使用で世界シフト
+  shadow_wood:   { name:'影樹の幹', stack:99, color:'#3a2c4a' },
+  shadow_crystal:{ name:'影晶', stack:99, color:'#9a5fe0' },
+  lumen:         { name:'光素', stack:99, color:'#ffe9a0' },
+  moonleaf:      { name:'月光草', stack:99, color:'#a8e0c0', food:14 },
+  shadow_steel:  { name:'影鋼', stack:99, color:'#6a5a8a' },
+  // 固有装備（影晶/影鋼/光素 由来）
+  shadow_pickaxe:{ name:'影のツルハシ', stack:1, color:'#9a5fe0', tool:'pickaxe', tier:3 },
+  shadow_blade:  { name:'影刃', stack:1, color:'#9a5fe0', tool:'sword', tier:4, attack:11, voidBonus:true },
+  shadow_axe:    { name:'影の斧', stack:1, color:'#9a5fe0', tool:'axe', tier:3 },
+  shadow_helmet: { name:'影鋼の兜', stack:1, color:'#6a5a8a', armor:3, slot:'head' },
+  shadow_chest:  { name:'影鋼の鎧', stack:1, color:'#6a5a8a', armor:6, slot:'chest' },
+  lumen_charm:   { name:'光の護符', stack:1, color:'#ffe9a0', armor:2, slot:'head', lumen:true }, // 影世界で正気維持
+  // 設置物
+  rift_anchor:   { name:'裂け目の楔', stack:16, color:'#7a4fb0', place:Game.OBJ.RIFT_ANCHOR },
+  lumen_lantern: { name:'光のランタン', stack:16, color:'#ffe9a0', place:Game.OBJ.LUMEN_LANTERN },
 };
 
 // クラフトレシピ。station=null は手作り、それ以外は近接が必要
@@ -171,6 +216,17 @@ Game.RECIPES = [
   { out:{id:'leather_chest', n:1}, in:{leather:5}, station:'crafting_table' },
   { out:{id:'iron_helmet', n:1}, in:{iron:4}, station:'crafting_table' },
   { out:{id:'iron_chest', n:1}, in:{iron:6}, station:'crafting_table' },
+  // ===== 二相世界 =====
+  { out:{id:'shadow_mirror', n:1}, in:{shadow_shard:8, iron:1}, station:'crafting_table' }, // シフト解禁
+  { out:{id:'shadow_steel', n:1}, in:{shadow_crystal:1, iron:1}, station:'furnace' },
+  { out:{id:'shadow_pickaxe', n:1}, in:{shadow_crystal:3, wood:2}, station:'crafting_table' },
+  { out:{id:'shadow_axe', n:1}, in:{shadow_crystal:3, wood:2}, station:'crafting_table' },
+  { out:{id:'shadow_blade', n:1}, in:{shadow_crystal:2, shadow_steel:1}, station:'crafting_table' },
+  { out:{id:'shadow_helmet', n:1}, in:{shadow_steel:4}, station:'crafting_table' },
+  { out:{id:'shadow_chest', n:1}, in:{shadow_steel:6}, station:'crafting_table' },
+  { out:{id:'lumen_charm', n:1}, in:{lumen:3}, station:'crafting_table' },
+  { out:{id:'lumen_lantern', n:2}, in:{lumen:2, iron:1}, station:'crafting_table' },
+  { out:{id:'rift_anchor', n:1}, in:{shadow_crystal:2, iron:2}, station:'crafting_table' },
 ];
 
 // モブ定義
@@ -178,10 +234,13 @@ Game.MOBS = {
   rabbit:   { name:'うさぎ', hostile:false, hp:4,  speed:1.6, color:'#d8cfc0', size:7,  drops:[{item:'raw_meat',n:[1,1]},{item:'hide',n:[0,1]}], flee:true, xp:1 },
   deer:     { name:'鹿', hostile:false, hp:8,  speed:1.4, color:'#a9762f', size:11, drops:[{item:'raw_meat',n:[1,3]},{item:'hide',n:[1,2]}], flee:true, xp:2 },
   sheep:    { name:'羊', hostile:false, hp:6,  speed:1.0, color:'#eee', size:10, drops:[{item:'raw_meat',n:[1,2]},{item:'hide',n:[1,2]}], flee:true, xp:1 },
-  slime:    { name:'スライム', hostile:true, hp:6,  speed:1.1, color:'#5fc46b', size:10, drops:[{item:'slime_ball',n:[1,2]}], dmg:2, hop:true, xp:2 },
-  zombie:   { name:'ゾンビ', hostile:true, hp:14, speed:1.3, color:'#4a7a4a', size:11, drops:[{item:'raw_meat',n:[0,1]}], dmg:4, xp:3 },
-  skeleton: { name:'スケルトン', hostile:true, hp:12, speed:1.5, color:'#dcdcd0', size:10, drops:[{item:'bone',n:[1,3]}], dmg:3, xp:3 },
-  spider:   { name:'クモ', hostile:true, hp:10, speed:2.2, color:'#3a2a3a', size:12, drops:[{item:'string',n:[1,2]}], dmg:3, xp:3 },
+  slime:    { name:'スライム', hostile:true, hp:6,  speed:1.1, color:'#5fc46b', size:10, drops:[{item:'slime_ball',n:[1,2]},{item:'shadow_shard',n:[0,1]}], dmg:2, hop:true, xp:2 },
+  zombie:   { name:'ゾンビ', hostile:true, hp:14, speed:1.3, color:'#4a7a4a', size:11, drops:[{item:'raw_meat',n:[0,1]},{item:'shadow_shard',n:[0,1]}], dmg:4, xp:3 },
+  skeleton: { name:'スケルトン', hostile:true, hp:12, speed:1.5, color:'#dcdcd0', size:10, drops:[{item:'bone',n:[1,3]},{item:'shadow_shard',n:[0,1]}], dmg:3, xp:3 },
+  spider:   { name:'クモ', hostile:true, hp:10, speed:2.2, color:'#3a2a3a', size:12, drops:[{item:'string',n:[1,2]},{item:'shadow_shard',n:[0,1]}], dmg:3, xp:3 },
+  // 影世界固有モブ
+  wraith:   { name:'影霊', hostile:true, hp:16, speed:2.0, color:'#6a4f9a', size:11, drops:[{item:'shadow_shard',n:[1,2]}], dmg:5, xp:4, shadow:true, ghost:true },
+  watcher:  { name:'見張り目', hostile:true, hp:24, speed:0.8, color:'#241a3a', size:13, drops:[{item:'shadow_crystal',n:[0,2]},{item:'shadow_shard',n:[1,1]}], dmg:6, xp:5, shadow:true },
 };
 
 // 防具スロット
@@ -196,6 +255,10 @@ Game.TUNE = {
   DESPAWN_TILES: 28,          // この距離超で消滅
   CROP_GROW_TICKS: 1400,      // 1段階の成長 tick
   COOK_TICKS: 200,            // 精錬1個あたり tick
+  SHIFT_COOLDOWN: 120,        // 世界シフトのクールダウン tick
+  SHADOW_AMBIENT: 0.55,       // 影世界の常時暗さ（光源で打ち消す）
+  SANITY_MAX: 100,
+  SANITY_DRAIN: 0.04,         // 影世界滞在で毎tick減る正気度（護符/光で緩和）
 };
 
 // 起動時に付与する初期アイテム（チュートリアル簡略化のため最低限）

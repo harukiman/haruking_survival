@@ -24,6 +24,7 @@ Game.Mobs = (function () {
   // 周辺の空き walkable タイルを探してスポーン
   function trySpawn() {
     if (Game.state.mobs.length >= TUNE.MOB_CAP) return;
+    const shadowWorld = Game.state.worldName === 'shadow';
     const night = Game.Lighting.ambientDarkness() > 0.4;
     const p = Game.state.player;
     for (let attempt = 0; attempt < 8; attempt++) {
@@ -35,7 +36,11 @@ Game.Mobs = (function () {
       if (!Game.World.isWalkable(tx, ty)) continue;
       const g = Game.World.groundAt(tx, ty);
       let type = null;
-      if (night) {
+      if (shadowWorld) {
+        // 影世界は固有の敵が常時出現
+        const pool = ['wraith', 'wraith', 'watcher', 'spider'];
+        type = pool[Math.floor(Math.random() * pool.length)];
+      } else if (night) {
         // 夜は敵対モブ
         const pool = ['zombie', 'skeleton', 'spider', 'slime'];
         type = pool[Math.floor(Math.random() * pool.length)];
@@ -162,6 +167,7 @@ Game.Mobs = (function () {
     }
     Game.Render.spawnParticles(m.x, m.y, m.def.color, 10);
     Game.Player.gainXP(m.def.xp || 1);
+    if (Game.Achievements && m.def.hostile) Game.Achievements.unlock('first_night');
     Game.Audio.play('mobdie');
   }
 
@@ -177,6 +183,7 @@ Game.Mobs = (function () {
       const r = m.def.size * 0.5;
       const hop = m.def.hop ? Math.abs(Math.sin(m.hopPhase)) * 5 : 0;
       ctx.save();
+      if (m.def.ghost) ctx.globalAlpha = 0.7 + Math.sin(m.hopPhase * 0.5) * 0.15;
       ctx.translate(s.x, s.y - hop);
       // 影
       ctx.fillStyle = 'rgba(0,0,0,0.25)';
