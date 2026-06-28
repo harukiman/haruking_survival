@@ -39,6 +39,7 @@ Game.Discovery = (function () {
     const key = Game.state.worldName + ':' + kind + ':' + Math.floor(tx / 40) + ',' + Math.floor(ty / 40);
     if (Game.state.discovered[key]) return false;
     Game.state.discovered[key] = 1;
+    if (Game.Achievements && Object.keys(Game.state.discovered).length >= 5) Game.Achievements.unlock('explorer');
     fire(kind);
     if (Game.Net && Game.Net.isConnected() && Game.Net.broadcastDiscovery) Game.Net.broadcastDiscovery(kind);
     return true;

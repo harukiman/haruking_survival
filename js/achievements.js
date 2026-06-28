@@ -17,7 +17,16 @@ Game.Achievements = (function () {
     lore_complete: { name:'碑文の蒐集家', desc:'全ての石碑を読んだ' },
     resonance:     { name:'共鳴', desc:'二相を繋ぎ封印を解いた' },
     reunified:     { name:'世界を還せし者', desc:'光と影をひとつに還した' },
+    magic_user:    { name:'魔を操る', desc:'魔法武器を手に入れた' },
+    legendary:     { name:'伝説を手に', desc:'レジェンダリ装備を手に入れた' },
+    space_traveler:{ name:'星の海へ', desc:'宇宙へ旅立った' },
+    dungeon_boss:  { name:'迷宮の覇者', desc:'ダンジョンの主を打ち倒した' },
+    explorer:      { name:'大いなる探究者', desc:'ランドマークを5つ発見した' },
   };
+
+  // 種別判定用（手に入れた時の実績）
+  Game.MAGIC_ITEMS = ['warp_staff', 'flame_staff', 'frost_staff', 'flying_carpet'];
+  Game.LEGENDARY_ITEMS = ['sand_greatsword', 'magma_hammer', 'pharaoh_crown', 'cosmic_blade', 'star_cannon'];
 
   function set() { return Game.state.achievements || (Game.state.achievements = {}); }
 

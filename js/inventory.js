@@ -38,18 +38,23 @@ Game.Inventory = (function () {
         s[i] = { id: id, count: put }; n -= put;
       }
     }
-    if (Game.Achievements && Game.state) {
-      if (id === 'wood') Game.Achievements.unlock('first_wood');
-      else if (id === 'lumen') Game.Achievements.unlock('lumen');
-    }
+    checkItemAchievement(id);
     return n;
+  }
+
+  function checkItemAchievement(id) {
+    if (!Game.Achievements || !Game.state) return;
+    if (id === 'wood') Game.Achievements.unlock('first_wood');
+    else if (id === 'lumen') Game.Achievements.unlock('lumen');
+    if (Game.MAGIC_ITEMS && Game.MAGIC_ITEMS.indexOf(id) >= 0) Game.Achievements.unlock('magic_user');
+    if (Game.LEGENDARY_ITEMS && Game.LEGENDARY_ITEMS.indexOf(id) >= 0) Game.Achievements.unlock('legendary');
   }
 
   // rolled装備など個別インスタンスを空きスロットへ（スタックしない）。成功でtrue
   function addInstance(slot) {
     const s = slots();
     for (let i = 0; i < s.length; i++) {
-      if (!s[i]) { s[i] = { id: slot.id, count: 1, roll: slot.roll || null }; return true; }
+      if (!s[i]) { s[i] = { id: slot.id, count: 1, roll: slot.roll || null }; checkItemAchievement(slot.id); return true; }
     }
     return false;
   }

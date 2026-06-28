@@ -177,7 +177,7 @@ Game.World = (function () {
     setActiveWorld(name);
     const TS = Game.CFG.TILE_SIZE, p = Game.state.player;
     if (spawnTile) { p.x = spawnTile.tx * TS + TS / 2; p.y = spawnTile.ty * TS + TS / 2; }
-    if (name === 'space') { p.x = 0; p.y = 2 * TS; } // 宇宙の帰還ロケット脇
+    if (name === 'space') { p.x = 0; p.y = 2 * TS; if (Game.Achievements) Game.Achievements.unlock('space_traveler'); } // 宇宙の帰還ロケット脇
     else if (name === 'light') { p.x = Game.state.spawn.tx * TS + TS / 2; p.y = Game.state.spawn.ty * TS + TS / 2; }
     p.prevX = p.x; p.prevY = p.y;
     if (!isWalkable(Math.floor(p.x / TS), Math.floor(p.y / TS))) nudgeToWalkable();

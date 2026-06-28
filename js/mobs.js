@@ -348,9 +348,15 @@ Game.Mobs = (function () {
     Game.Player.gainXP(m.def.xp || 1);
     if (Game.Achievements && m.def.hostile) Game.Achievements.unlock('first_night');
     if (m.def.boss) {
-      Game.Render.flash('#c060ff');
-      Game.UI.toast('影の主を打ち倒した！ 影核を手にした');
-      if (Game.Achievements) Game.Achievements.unlock('boss_slain');
+      if (m.type === 'sovereign') {
+        Game.Render.flash('#c060ff');
+        Game.UI.toast('影の主を打ち倒した！ 影核を手にした');
+        if (Game.Achievements) Game.Achievements.unlock('boss_slain');
+      } else {
+        Game.Render.flash('#ffcaa0');
+        Game.UI.toast(m.def.name + 'を打ち倒した！');
+        if (Game.Achievements) Game.Achievements.unlock('dungeon_boss');
+      }
     }
     Game.Audio.play('mobdie');
   }
