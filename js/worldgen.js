@@ -61,9 +61,9 @@ Game.WorldGen = (function () {
         const hw = big ? 8 : 5, hh = big ? 6 : 4;
         const dx = wx - ax, dy = wy - ay;
         if (Math.abs(dx) <= hw && Math.abs(dy) <= hh) {
-          // テーマを地形で決定
+          // テーマを地形で決定（雪原は氷窟/水晶洞窟に分岐）
           let wall;
-          if (ground === T.SNOW) wall = O.ICE_WALL;
+          if (ground === T.SNOW) wall = (U.hash3(ax, ay, seed + 222) < 0.5) ? O.CRYSTAL_WALL : O.ICE_WALL;
           else if (ground === T.SAND) wall = O.TOMB_WALL;
           else if (ground === T.STONE) wall = O.FORGE_WALL;
           else wall = O.DUNGEON_WALL;

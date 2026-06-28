@@ -38,7 +38,7 @@ Game.OBJ = {
   ROCKET:127, STAR_ORE:128,
   // 家具・家作り
   HEALING_TOTEM:129, STREET_LAMP:130, TABLE:131, CHAIR:132, BOOKSHELF:133, GLASS:134, RUG:135,
-  TOMB_WALL:136, FORGE_WALL:137,
+  TOMB_WALL:136, FORGE_WALL:137, CRYSTAL_WALL:138,
 };
 
 // 地面の色（手続き描画のベース）
@@ -163,6 +163,7 @@ Game.OBJ_META = {
   [Game.OBJ.ICE_WALL]:   { name:'氷壁', solid:true, mineable:true, tool:'pickaxe', tier:1, hp:14, drops:[{item:'stone', n:[0,1]}], render:'icewall' },
   [Game.OBJ.TOMB_WALL]:  { name:'砂岩の壁', solid:true, mineable:true, tool:'pickaxe', tier:2, hp:18, drops:[{item:'stone', n:[1,2]},{item:'gold_ore', n:[0,1]}], render:'twall' },
   [Game.OBJ.FORGE_WALL]: { name:'溶岩岩の壁', solid:true, mineable:true, tool:'pickaxe', tier:3, hp:24, drops:[{item:'stone', n:[1,2]},{item:'iron_ore', n:[0,1]}], render:'fwall' },
+  [Game.OBJ.CRYSTAL_WALL]:{ name:'水晶の壁', solid:true, mineable:true, tool:'pickaxe', tier:3, hp:22, light:3, drops:[{item:'shadow_crystal', n:[0,1]},{item:'lumen', n:[0,1]},{item:'stone', n:[1,2]}], render:'cwall' },
   [Game.OBJ.SPAWNER]:    { name:'魔物の巣', solid:true, mineable:true, tool:'pickaxe', tier:2, hp:16, light:3, drops:[{item:'bone', n:[1,3]},{item:'shadow_shard', n:[0,1]}], render:'spawner', spawner:true },
   // ロケット/宇宙
   [Game.OBJ.ROCKET]:     { name:'ロケット', solid:true, mineable:true, tool:'pickaxe', tier:1, hp:30, light:6, drops:[{item:'rocket', n:[1,1]}], render:'rocket_obj', rocket:true },
@@ -291,6 +292,7 @@ Game.ITEMS = {
   excalibur:   { name:'約束された勝利の剣', stack:1, color:'#ffe9a0', tool:'sword', tier:5, attack:22, proj:{kind:'slash', dmg:34, big:true, cd:40}, wsfx:'beam', flavor:'掲げれば光の砲撃となりて、邪悪を薙ぎ払う。' },
   gae_bolg:    { name:'刺し穿つ死棘の槍', stack:1, color:'#c0303a', tool:'sword', tier:5, attack:18, proj:{kind:'pierce', dmg:24, cd:22}, wsfx:'slash_air', flavor:'放てば因果を捻じ曲げ、必ず心臓を貫く朱槍。' },
   gate_babylon:{ name:'王の財宝', stack:1, color:'#e8c54a', tool:'sword', tier:5, attack:16, proj:{kind:'slash', dmg:11, count:5, spread:0.7, cd:34}, wsfx:'slash_air', flavor:'無数の宝具を雨と降らせる、王の蔵。' },
+  prism_blade: { name:'プリズムの刃', stack:1, color:'#c884f0', tool:'sword', tier:5, attack:19, proj:{kind:'slash', dmg:16, count:3, spread:0.4, cd:30}, wsfx:'beam', flavor:'水晶の女王の刃。光を七色に砕き、三閃となって奔る。' },
   // 乗り物
   car:           { name:'車', stack:1, color:'#c0444a', vehicle:'car', flavor:'大地を駆ける鉄の馬。' },
   boat:          { name:'ボート', stack:1, color:'#9c6b3f', vehicle:'boat', flavor:'水を越えるための小舟。' },
@@ -552,6 +554,7 @@ Game.MOBS = {
   // ===== P27 ダンジョンボス（大型ダンジョンの巣から稀に出現）=====
   tomb_king:  { name:'墳墓の王', hostile:true, hp:200, speed:1.3, color:'#d8b048', size:26, drops:[{item:'sand_greatsword',n:[1,1]},{item:'pharaoh_crown',n:[0,1]},{item:'gold_bar',n:[3,6]},{item:'chitin',n:[2,4]},{item:'gae_bolg',n:[0,1]}], dmg:9, xp:45, boss:true, big:true, summon:'scorpion', inflict:{poison:240} },
   forge_titan:{ name:'溶炉の巨人', hostile:true, hp:280, speed:1.1, color:'#c0502a', size:30, drops:[{item:'magma_hammer',n:[1,1]},{item:'iron',n:[4,8]},{item:'gold_bar',n:[2,5]}], dmg:12, xp:60, boss:true, big:true, summon:'golem', shape:'tall' },
+  crystal_queen:{ name:'水晶の女王', hostile:true, hp:300, speed:1.2, color:'#c884f0', size:28, drops:[{item:'prism_blade',n:[1,1]},{item:'shadow_crystal',n:[4,8]},{item:'lumen',n:[3,6]},{item:'star_core',n:[0,1]}], dmg:11, xp:70, boss:true, big:true, summon:'frost_wisp', shape:'tall', ranged:{dmg:8,range:7,cd:70,kind:'frost',status:{cold:200}} },
   // ===== P30 敵の多様化: 遠距離魔法・巨人・形状バリエーション =====
   hex_caster:{ name:'影の呪術師', hostile:true, hp:18, speed:1.0, color:'#a060e0', size:11, drops:[{item:'shadow_crystal',n:[0,1]},{item:'shadow_shard',n:[1,2]}], dmg:4, xp:5, shadow:true, ghost:true, shape:'wisp', ranged:{dmg:6,range:7,cd:80,kind:'hex'} },
   gazer:    { name:'浮遊する眼', hostile:true, hp:14, speed:1.3, color:'#6a3a6a', size:11, drops:[{item:'shadow_shard',n:[1,2]}], dmg:4, xp:4, ghost:true, shape:'orb', ranged:{dmg:5,range:6,cd:70,kind:'hex'} },
@@ -611,7 +614,7 @@ Game.ITEM_GLYPH = {
   chitin:'🦂', bone_club:'🦴', gold_sword:'⚔️', war_hammer:'🔨', crystal_blade:'⚔️', chitin_spear:'🔱',
   gold_helmet:'⛑️', gold_chest:'🛡️', crystal_helmet:'🪖', crystal_chest:'🛡️', star_helmet:'⛑️', chitin_armor:'🦺',
   sand_greatsword:'⚔️', magma_hammer:'🔨', pharaoh_crown:'👑', mind_tome:'📖',
-  energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️',
+  energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️', prism_blade:'⚔️',
 };
 
 Game.INV_SIZE = 36;       // 先頭9 = ホットバー

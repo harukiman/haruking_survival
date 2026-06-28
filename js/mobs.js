@@ -110,6 +110,7 @@ Game.Mobs = (function () {
         if (Game.state.worldName === 'light') {
           if (g === Game.TILE.SAND && Math.random() < 0.03 && countType('tomb_king') === 0) type = 'tomb_king';
           else if (g === Game.TILE.STONE && Math.random() < 0.03 && countType('forge_titan') === 0) type = 'forge_titan';
+          else if (g === Game.TILE.SNOW && Math.random() < 0.03 && countType('crystal_queen') === 0) type = 'crystal_queen';
         }
         if (!type) type = pool[Math.floor(Math.random() * pool.length)];
         // 近傍の歩ける床へ

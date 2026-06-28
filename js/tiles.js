@@ -211,6 +211,12 @@ Game.Tiles = (function () {
       x.fillStyle = '#ff7a3c'; x.globalAlpha = 0.6;
       for (let yy = 6; yy < TS; yy += 9) { x.fillRect(3, yy, TS - 6, 2); }
       x.globalAlpha = 1; x.strokeStyle = '#5a3a3a'; x.lineWidth = 1.5; x.strokeRect(2, 2, TS - 4, TS - 4);
+    } else if (r === 'cwall') {
+      x.fillStyle = '#6a3f8a'; x.fillRect(1, 1, TS - 2, TS - 2);
+      // 水晶のファセット
+      x.fillStyle = '#c884f0'; x.beginPath(); x.moveTo(TS / 2, 3); x.lineTo(TS - 5, TS / 2); x.lineTo(TS / 2, TS - 3); x.lineTo(5, TS / 2); x.closePath(); x.fill();
+      x.fillStyle = 'rgba(255,255,255,0.5)'; x.beginPath(); x.moveTo(TS / 2, 3); x.lineTo(5, TS / 2); x.lineTo(TS / 2, TS / 2); x.closePath(); x.fill();
+      x.strokeStyle = '#9a6ad0'; x.lineWidth = 1.5; x.strokeRect(2, 2, TS - 4, TS - 4);
     } else if (r === 'spawner') {
       x.fillStyle = '#2a2030'; x.fillRect(3, 3, TS - 6, TS - 6);
       x.strokeStyle = '#a04a6a'; x.lineWidth = 2; x.strokeRect(5, 5, TS - 10, TS - 10);
