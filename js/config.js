@@ -538,6 +538,15 @@ Game.SKILL_TREE = [
   { id:'a3', branch:'arcane', name:'魔の冴え', tier:2, cost:2, req:['a1'], eff:{crit:0.1}, desc:'会心率+10%' },
   { id:'a4', branch:'arcane', name:'生命錬成', tier:3, cost:3, req:['a3'], eff:{lifesteal:0.08, hp:10}, desc:'吸血+8%・HP+10' },
   { id:'a5', branch:'arcane', name:'賢者', tier:4, cost:4, req:['a2','a4'], eff:{atk:3, hp:20, xpBoost:0.15}, desc:'攻撃+3・HP+20・経験+15%' },
+  // ===== P41 スキルツリー拡張: 中間ノード＋tier5アルティメット =====
+  { id:'w7', branch:'war', name:'豪腕', tier:3, cost:3, req:['w2'], eff:{atk:4}, desc:'攻撃+4' },
+  { id:'w8', branch:'war', name:'剣聖', tier:5, cost:5, req:['w6'], eff:{atk:8, crit:0.1, lifesteal:0.08}, desc:'攻撃+8・会心+10%・吸血+8%' },
+  { id:'g6', branch:'guard', name:'生命力', tier:3, cost:3, req:['g1'], eff:{hp:25}, desc:'最大HP+25' },
+  { id:'g7', branch:'guard', name:'不滅の城壁', tier:5, cost:5, req:['g5'], eff:{armor:6, hp:40, regen:1}, desc:'防御+6・HP+40・回復+1' },
+  { id:'s7', branch:'surv', name:'軽身', tier:3, cost:3, req:['s1'], eff:{moveSpd:0.1, staminaMax:30}, desc:'移動+10%・スタミナ+30' },
+  { id:'s8', branch:'surv', name:'放浪の達人', tier:5, cost:5, req:['s6'], eff:{moveSpd:0.15, hp:30, mining:1, flag:'forager'}, desc:'移動+15%・HP+30・採掘UP・採取UP' },
+  { id:'a6', branch:'arcane', name:'明鏡止水', tier:3, cost:3, req:['a1'], eff:{crit:0.08, xpBoost:0.1}, desc:'会心+8%・経験+10%' },
+  { id:'a7', branch:'arcane', name:'大賢者', tier:5, cost:5, req:['a5'], eff:{atk:5, hp:30, xpBoost:0.25, lifesteal:0.08}, desc:'攻撃+5・HP+30・経験+25%・吸血+8%' },
 ];
 Game.SKILL_BY_ID = {};
 Game.SKILL_TREE.forEach(function (n) { Game.SKILL_BY_ID[n.id] = n; });

@@ -226,7 +226,7 @@ Game.UI = (function () {
     Game.SKILL_BRANCHES.forEach(function (br) {
       h += '<div class="sk-branch"><div class="sk-branch-name">' + br[1] + '</div><div class="sk-tree">';
       const nodes = Game.SKILL_TREE.filter(function (n) { return n.branch === br[0]; });
-      for (let t = 1; t <= 4; t++) {
+      for (let t = 1; t <= 5; t++) {
         h += '<div class="sk-tier">';
         nodes.filter(function (n) { return n.tier === t; }).forEach(function (n) {
           const owned = p.skills && p.skills[n.id];
