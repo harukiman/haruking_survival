@@ -294,6 +294,22 @@ Game.ITEMS = {
   sanity_charm:  { name:'影核のお守り', stack:1, color:'#c060ff', armor:2, slot:'head', lumen:true, immuneSanity:true },
   // エンディング
   unity_core:    { name:'統合の核', stack:1, color:'#ffffff', ending:true, flavor:'光と影、ふたつの祈りを束ねる核。掲げれば、割れた世界はひとつに還る。' },
+  // ===== P25 コンテンツ拡張: 素材 =====
+  gold_bar:      { name:'金塊', stack:99, color:'#e8c54a', flavor:'精錬された黄金。装飾にも、刃にも。' },
+  chitin:        { name:'甲殻', stack:99, color:'#b07030', flavor:'砂漠の蟲の硬い殻。軽く、しなやかな防具になる。' },
+  // ===== P25: 武器 =====
+  bone_club:     { name:'骨の棍棒', stack:1, color:'#dcdcd0', tool:'sword', tier:1, attack:4, flavor:'打ち倒した者の骨で。原始の暴力。' },
+  gold_sword:    { name:'金の剣', stack:1, color:'#e8c54a', tool:'sword', tier:2, attack:6, flavor:'美しき黄金の刃。見栄えは一流、実用も悪くない。' },
+  war_hammer:    { name:'戦鎚', stack:1, color:'#b8bcc0', tool:'sword', tier:3, attack:10, flavor:'振り抜けば鎧ごと砕く重鎚。' },
+  crystal_blade: { name:'影晶の刃', stack:1, color:'#b86ad0', tool:'sword', tier:4, attack:13, voidBonus:true, flavor:'影晶を研ぎ澄ました刃。虚ろなものほどよく斬れる。' },
+  chitin_spear:  { name:'甲殻の槍', stack:1, color:'#c08040', tool:'sword', tier:2, attack:7, flavor:'砂漠の蟲の殻を束ねた槍。間合いに優れる。' },
+  // ===== P25: 防具・セット素材 =====
+  gold_helmet:   { name:'金の兜', stack:1, color:'#e8c54a', armor:2, slot:'head' },
+  gold_chest:    { name:'金の鎧', stack:1, color:'#e8c54a', armor:3, slot:'chest' },
+  crystal_helmet:{ name:'影晶の兜', stack:1, color:'#b86ad0', armor:3, slot:'head' },
+  crystal_chest: { name:'影晶の鎧', stack:1, color:'#b86ad0', armor:5, slot:'chest' },
+  star_helmet:   { name:'星鋼の兜', stack:1, color:'#aee0ff', armor:4, slot:'head' },
+  chitin_armor:  { name:'甲殻の鎧', stack:1, color:'#c08040', armor:3, slot:'chest' },
 };
 
 // クラフトレシピ。station=null は手作り、それ以外は近接が必要
@@ -381,6 +397,19 @@ Game.RECIPES = [
   { out:{id:'fur_coat', n:1}, in:{hide:5}, station:'crafting_table' },
   { out:{id:'enchant_table', n:1}, in:{shadow_steel:2, lumen:3}, station:'crafting_table' },
   { out:{id:'leather', n:1}, in:{guts:2}, station:'crafting_table' },
+  // ===== P25: コンテンツ拡張レシピ =====
+  { out:{id:'gold_bar', n:1}, in:{gold_ore:1, coal:1}, station:'furnace' },
+  { out:{id:'bone_club', n:1}, in:{bone:3, wood:1}, station:null },
+  { out:{id:'gold_sword', n:1}, in:{gold_bar:2, wood:1}, station:'crafting_table' },
+  { out:{id:'war_hammer', n:1}, in:{iron:4, wood:2}, station:'crafting_table' },
+  { out:{id:'crystal_blade', n:1}, in:{shadow_crystal:4, shadow_steel:2}, station:'crafting_table' },
+  { out:{id:'chitin_spear', n:1}, in:{chitin:3, wood:2}, station:'crafting_table' },
+  { out:{id:'gold_helmet', n:1}, in:{gold_bar:3}, station:'crafting_table' },
+  { out:{id:'gold_chest', n:1}, in:{gold_bar:5}, station:'crafting_table' },
+  { out:{id:'crystal_helmet', n:1}, in:{shadow_crystal:3, shadow_steel:2}, station:'crafting_table' },
+  { out:{id:'crystal_chest', n:1}, in:{shadow_crystal:5, shadow_steel:3}, station:'crafting_table' },
+  { out:{id:'star_helmet', n:1}, in:{star_metal:3}, station:'crafting_table' },
+  { out:{id:'chitin_armor', n:1}, in:{chitin:5}, station:'crafting_table' },
 ];
 
 // 装備セット効果（head+chest が同セットで発動）
@@ -388,6 +417,9 @@ Game.SETS = {
   leather: { name:'革装束', items:['leather_helmet','leather_chest'], hungerSlow:0.5 },
   iron:    { name:'鉄装束', items:['iron_helmet','iron_chest'], armor:2 },
   shadow:  { name:'影鋼装束', items:['shadow_helmet','shadow_chest'], armor:1, sanityResist:true },
+  gold:    { name:'黄金装束', items:['gold_helmet','gold_chest'], armor:1, hungerSlow:0.3 },
+  crystal: { name:'影晶装束', items:['crystal_helmet','crystal_chest'], armor:2, sanityResist:true },
+  star:    { name:'星鋼装束', items:['star_helmet','gravity_boots'], armor:3 },
 };
 
 // 難易度（自由度: のんびり建築〜高難度）
@@ -426,6 +458,14 @@ Game.MOBS = {
   star_guardian:{ name:'星の守護者', hostile:true, hp:320, speed:1.4, color:'#cfe0ff', size:30, drops:[{item:'star_core',n:[2,4]},{item:'star_metal',n:[6,12]},{item:'flying_carpet',n:[0,1]},{item:'frost_staff',n:[0,1]}], dmg:11, xp:80, space:true, big:true },
   // 友好NPC: 謎の旅人
   wanderer: { name:'謎の旅人', hostile:false, hp:20, speed:1.0, color:'#caa84a', size:11, drops:[], xp:0, friendly:true, npc:true },
+  // ===== P25 コンテンツ拡張: 新モブ =====
+  boar:     { name:'猪', hostile:true, hp:18, speed:1.8, color:'#8a6a4a', size:12, drops:[{item:'raw_meat',n:[1,3]},{item:'hide',n:[1,2]}], dmg:5, xp:4 },
+  bat:      { name:'コウモリ', hostile:true, hp:6, speed:2.6, color:'#4a3a4a', size:7, drops:[{item:'guts',n:[0,1]},{item:'string',n:[0,1]}], dmg:2, xp:2, ghost:true },
+  bandit:   { name:'山賊', hostile:true, hp:22, speed:1.6, color:'#7a5a3a', size:11, drops:[{item:'gold_bar',n:[0,2]},{item:'iron',n:[0,2]},{item:'bone',n:[0,1]}], dmg:6, xp:6 },
+  golem:    { name:'岩ゴーレム', hostile:true, hp:48, speed:0.7, color:'#8a8d91', size:15, drops:[{item:'stone',n:[2,5]},{item:'iron_ore',n:[1,2]},{item:'gold_ore',n:[0,1]}], dmg:8, xp:9, big:true },
+  scorpion: { name:'サソリ', hostile:true, hp:14, speed:1.9, color:'#b07030', size:9, drops:[{item:'chitin',n:[1,2]}], dmg:4, xp:4, inflict:{poison:240} },
+  ice_bear: { name:'白熊', hostile:true, hp:40, speed:1.4, color:'#e8eef2', size:16, drops:[{item:'raw_meat',n:[2,4]},{item:'hide',n:[2,3]}], dmg:7, xp:8, inflict:{cold:240}, big:true },
+  astral_serpent:{ name:'宇宙の大蛇', hostile:true, hp:60, speed:2.0, color:'#b0a0ff', size:16, drops:[{item:'star_metal',n:[1,3]},{item:'star_core',n:[0,1]}], dmg:8, xp:14, space:true, ghost:true, big:true },
 };
 
 // 防具スロット
@@ -473,6 +513,8 @@ Game.ITEM_GLYPH = {
   rocket:'🚀', star_metal:'🌟', star_core:'💫', cosmic_blade:'🌠', star_cannon:'🔫', gravity_boots:'👢',
   warp_staff:'🪄', flame_staff:'🔥', frost_staff:'❄️', flying_carpet:'🧞',
   healing_totem:'⛲', street_lamp:'🪔', table:'🪑', chair:'🪑', bookshelf:'📚', glass:'🪟', rug:'🟥',
+  chitin:'🦂', bone_club:'🦴', gold_sword:'⚔️', war_hammer:'🔨', crystal_blade:'⚔️', chitin_spear:'🔱',
+  gold_helmet:'⛑️', gold_chest:'🛡️', crystal_helmet:'🪖', crystal_chest:'🛡️', star_helmet:'⛑️', chitin_armor:'🦺',
 };
 
 Game.INV_SIZE = 36;       // 先頭9 = ホットバー

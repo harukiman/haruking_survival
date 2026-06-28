@@ -56,14 +56,20 @@ Game.Mobs = (function () {
       } else if (night && diff.spawnHostiles) {
         // 夜は敵対モブ（のんびりは出ない）。血の月は強敵寄り
         const pool = Game.state.bloodMoon
-          ? ['zombie', 'zombie', 'skeleton', 'spider', 'leech']
-          : ['zombie', 'skeleton', 'spider', 'slime', 'leech'];
+          ? ['zombie', 'zombie', 'skeleton', 'spider', 'leech', 'bandit', 'bat']
+          : ['zombie', 'skeleton', 'spider', 'slime', 'leech', 'bat'];
         type = pool[Math.floor(Math.random() * pool.length)];
       } else {
-        // 昼は動物（草地/森）。稀に謎の旅人
+        // 昼: 動物＋環境ごとの敵（砂漠=サソリ, 雪原=白熊, 草地森=稀に猪/旅人）
+        const diffH = diff.spawnHostiles;
         if (g === Game.TILE.GRASS || g === Game.TILE.FOREST) {
           if (Math.random() < 0.04 && countType('wanderer') === 0) type = 'wanderer';
+          else if (diffH && Math.random() < 0.12) type = 'boar';
           else { const pool = ['rabbit', 'deer', 'sheep']; type = pool[Math.floor(Math.random() * pool.length)]; }
+        } else if (g === Game.TILE.SAND && diffH && Math.random() < 0.5) {
+          type = 'scorpion';
+        } else if (g === Game.TILE.SNOW && diffH && Math.random() < 0.35) {
+          type = 'ice_bear';
         } else if (g === Game.TILE.STONE && Math.random() < 0.3) {
           type = 'slime';
         }
@@ -84,10 +90,11 @@ Game.Mobs = (function () {
         const stx = ptx + dx, sty = pty + dy;
         const g = Game.World.groundAt(stx, sty);
         let pool;
-        if (Game.state.worldName === 'space') { pool = (Math.random() < 0.04 && countType('star_guardian') === 0) ? ['star_guardian'] : ['void_drone', 'void_drone']; }
+        if (Game.state.worldName === 'space') { pool = (Math.random() < 0.04 && countType('star_guardian') === 0) ? ['star_guardian'] : ['void_drone', 'void_drone', 'astral_serpent']; }
         else if (Game.state.worldName === 'shadow') pool = ['wraith', 'watcher'];
-        else if (g === Game.TILE.SNOW) pool = ['frost_wisp', 'frost_wisp', 'cursed_armor'];
-        else pool = ['zombie', 'skeleton', 'spider', 'cursed_armor'];
+        else if (g === Game.TILE.SNOW) pool = ['frost_wisp', 'frost_wisp', 'cursed_armor', 'ice_bear'];
+        else if (g === Game.TILE.SAND) pool = ['scorpion', 'scorpion', 'cursed_armor', 'golem'];
+        else pool = ['zombie', 'skeleton', 'spider', 'cursed_armor', 'golem'];
         const type = pool[Math.floor(Math.random() * pool.length)];
         // 近傍の歩ける床へ
         for (let a = 0; a < 6; a++) {
