@@ -420,6 +420,7 @@ Game.UI = (function () {
       toggle('leftHanded', '✋ 左利き(操作左右反転)') +
       toggle('dmgNumbers', '🔢 ダメージ数値表示') +
       toggle('screenShake', '📳 画面のゆれ') +
+      toggle('lowHpWarn', '🩸 低HP警告') +
       toggle('showFps', '📈 FPS表示');
     c.querySelectorAll('.opt-slider').forEach(function (sl) {
       sl.addEventListener('input', function () {

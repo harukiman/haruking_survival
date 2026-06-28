@@ -76,7 +76,27 @@ Game.Render = (function () {
     Game.Lighting.drawOverlay(ctx);
     drawWeather(ctx);
     drawCursor(ctx);
+    drawDanger(ctx);
     drawFlash(ctx);
+  }
+
+  // 低HP危険ヴィネット＋被弾フィードバック
+  let hurtT = 0;
+  function hurtFlash() { hurtT = 12; }
+  function drawDanger(ctx) {
+    const s = Game.state; if (!s || s.paused) return;
+    const p = s.player; if (!p) return;
+    const warnOn = !(Game.Settings && Game.Settings.get('lowHpWarn') === false);
+    const ratio = p.maxHealth ? p.health / p.maxHealth : 1;
+    let intensity = 0;
+    if (warnOn && ratio < 0.3 && p.health > 0) { const pulse = 0.5 + Math.sin(s.tick * 0.15) * 0.5; intensity = (1 - ratio / 0.3) * (0.38 + pulse * 0.34); }
+    if (hurtT > 0) { intensity = Math.max(intensity, hurtT / 12 * 0.5); hurtT--; }
+    if (intensity <= 0.01) return;
+    const v = Game.view, w = v.w, h = v.h;
+    ctx.save();
+    const g = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.30, w / 2, h / 2, Math.max(w, h) * 0.62);
+    g.addColorStop(0, 'rgba(170,20,30,0)'); g.addColorStop(1, 'rgba(180,20,32,' + Math.min(0.78, intensity) + ')');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h); ctx.restore();
   }
 
   // ゲームパッド選択カーソル
@@ -380,5 +400,5 @@ Game.Render = (function () {
     ctx.textAlign = 'left';
   }
 
-  return { draw, buildChunkCache, spawnParticles, spawnBlood, spawnSlash, spawnFloat, spawnLightning, flash };
+  return { draw, buildChunkCache, spawnParticles, spawnBlood, spawnSlash, spawnFloat, spawnLightning, flash, hurtFlash };
 })();
