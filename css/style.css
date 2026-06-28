@@ -95,8 +95,12 @@ body.left-handed #action-btns { right: auto; left: calc(12px + env(safe-area-ins
 .ach-row b { font-size: .86rem; color: #e8edf2; }
 .ach-row .ach-d { font-size: .74rem; color: #9fb0c4; }
 /* スキルツリー */
-.sk-branch { margin: 8px 0; }
-.sk-branch-name { font-weight: 700; color: #cfe0f0; font-size: .9rem; margin-bottom: 4px; }
+.sk-branch { margin: 6px 0; border: 1px solid #2a3950; border-radius: 8px; overflow: hidden; }
+.sk-branch-name { font-weight: 700; color: #cfe0f0; font-size: .9rem; padding: 8px 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: rgba(30,40,58,0.6); }
+.sk-branch.open .sk-branch-name { border-bottom: 1px solid #2a3950; }
+.sk-branch-name .sk-bcount { font-size: .72rem; color: #8a98ac; font-weight: 500; }
+.sk-tree { display: flex; gap: 6px; overflow-x: auto; padding: 8px; }
+.sk-tlbl { font-size: .64rem; color: #6a7689; text-align: center; margin-bottom: 3px; }
 .sk-tree { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
 .sk-tier { display: flex; flex-direction: column; gap: 6px; min-width: 92px; }
 .sk-node { text-align: left; border-radius: 9px; padding: 7px 8px; cursor: pointer; border: 1px solid #33455e;

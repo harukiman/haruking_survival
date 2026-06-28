@@ -602,9 +602,51 @@ Game.SKILL_TREE = [
   { id:'a6', branch:'arcane', name:'明鏡止水', tier:3, cost:3, req:['a1'], eff:{crit:0.08, xpBoost:0.1}, desc:'会心+8%・経験+10%' },
   { id:'a7', branch:'arcane', name:'大賢者', tier:5, cost:5, req:['a5'], eff:{atk:5, hp:30, xpBoost:0.25, lifesteal:0.08}, desc:'攻撃+5・HP+30・経験+25%・吸血+8%' },
 ];
+// ===== スキルツリー大幅拡充(生成): 既存30 + 生成126 = 156ノード。数値は控えめ(インフレ防止) =====
+(function () {
+  const T = Game.SKILL_TREE;
+  const STATWORD = { atk: '力', crit: '鋭', lifesteal: '吸', hp: '命', armor: '盾', regen: '癒', moveSpd: '疾', mining: '掘', staminaMax: '活', hungerSlow: '糧', xpBoost: '智' };
+  const LABEL = { atk: '攻撃', crit: '会心', lifesteal: '吸血', hp: '最大HP', armor: '防御', regen: '回復', moveSpd: '移動', mining: '採掘', staminaMax: 'スタミナ', hungerSlow: '空腹緩和', xpBoost: '経験' };
+  const PCT = { crit: 1, lifesteal: 1, moveSpd: 1, xpBoost: 1, hungerSlow: 1 };
+  const RANK = ['', '初', '弐', '参', '肆', '伍'];
+  const BR = [
+    { b: 'war', word: '剣', pool: [['atk', 1], ['crit', 0.02], ['lifesteal', 0.015]] },
+    { b: 'guard', word: '盾', pool: [['hp', 6], ['armor', 1], ['regen', 0.2]] },
+    { b: 'surv', word: '探', pool: [['moveSpd', 0.02], ['mining', 0.25], ['staminaMax', 8], ['hungerSlow', 0.04]] },
+    { b: 'arcane', word: '魔', pool: [['xpBoost', 0.04], ['crit', 0.02], ['hp', 5]] },
+    { b: 'hunter', word: '狩', pool: [['atk', 1], ['crit', 0.025], ['moveSpd', 0.02]] },
+    { b: 'mystic', word: '幽', pool: [['lifesteal', 0.02], ['xpBoost', 0.04], ['crit', 0.02], ['hp', 5]] },
+    { b: 'fortune', word: '福', pool: [['mining', 0.3], ['xpBoost', 0.03], ['hp', 6], ['staminaMax', 8]] },
+  ];
+  const perTier = [4, 4, 4, 3, 3];
+  function rnd(key, v) { return PCT[key] ? Math.round(v * 100) / 100 : Math.round(v); }
+  BR.forEach(function (def) {
+    let prev = [];
+    for (let t = 1; t <= 5; t++) {
+      const cnt = perTier[t - 1], cur = [];
+      for (let i = 0; i < cnt; i++) {
+        const id = 'gx_' + def.b + '_' + t + '_' + i;
+        const nStats = (t >= 3 && i % 2 === 0) ? 2 : 1;
+        const eff = {}, dparts = [];
+        for (let k = 0; k < nStats; k++) {
+          const ps = def.pool[(i + k) % def.pool.length], key = ps[0];
+          eff[key] = rnd(key, (eff[key] || 0) + ps[1] * t);
+        }
+        for (const kk in eff) dparts.push(LABEL[kk] + '+' + (PCT[kk] ? Math.round(eff[kk] * 100) + '%' : eff[kk]));
+        const primary = Object.keys(eff)[0];
+        const name = def.word + STATWORD[primary] + (t > 1 ? RANK[t] : '') + (i > 0 ? '・' + (i + 1) : '');
+        const req = t === 1 ? [] : [prev[i % prev.length]];
+        T.push({ id: id, branch: def.b, name: name, tier: t, cost: t, req: req, eff: eff, desc: dparts.join('・') });
+        cur.push(id);
+      }
+      prev = cur;
+    }
+  });
+})();
+
 Game.SKILL_BY_ID = {};
 Game.SKILL_TREE.forEach(function (n) { Game.SKILL_BY_ID[n.id] = n; });
-Game.SKILL_BRANCHES = [['war', '⚔ 剣'], ['guard', '🛡 守'], ['surv', '🌿 探'], ['arcane', '✦ 魔']];
+Game.SKILL_BRANCHES = [['war', '⚔ 剣'], ['guard', '🛡 守'], ['surv', '🌿 探'], ['arcane', '✦ 魔'], ['hunter', '🏹 狩'], ['mystic', '🌓 幽'], ['fortune', '💰 福']];
 Game.MAX_LEVEL = 9999;
 
 // 難易度（自由度: のんびり建築〜高難度）

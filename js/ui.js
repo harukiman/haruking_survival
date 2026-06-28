@@ -220,6 +220,7 @@ Game.UI = (function () {
     sc.classList.remove('hidden'); Game.state.paused = true; renderStats();
   }
   function closeStats() { const sc = document.getElementById('stats-screen'); if (sc) sc.classList.add('hidden'); Game.state.paused = false; }
+  const skOpen = {}; // スキル系統の開閉状態
   function renderStats() {
     const p = Game.state.player; const body = document.getElementById('stats-body'); if (!body || !p) return;
     const slot = Game.Inventory.selectedSlot(); const wst = Game.Loot.stats(slot);
@@ -279,23 +280,33 @@ Game.UI = (function () {
     stats.forEach(function (s) {
       h += '<div class="stat-row"><span class="sname">' + s[1] + ' <em>' + s[2] + '</em></span><span class="sval">' + (p[s[0]] || 0) + '</span><button class="stat-plus" data-stat="' + s[0] + '"' + ((p.skillPoints || 0) <= 0 ? ' disabled' : '') + '>＋</button></div>';
     });
-    h += '<h2>スキルツリー</h2>';
-    // 系統ごとに tier 列でツリー表示。前提未達は薄く、習得可は強調
+    const totalSk = Game.SKILL_TREE.length;
+    const ownedSk = p.skills ? Object.keys(p.skills).filter(function (k) { return p.skills[k]; }).length : 0;
+    h += '<h2>スキルツリー <span style="color:#ffe27a;font-size:.85rem">' + ownedSk + ' / ' + totalSk + '</span><span style="color:#7a8494;font-size:.74rem">　系統名をタップで開閉</span></h2>';
+    // 系統ごとに折りたたみ表示(視認性)。既定は閉。習得可がある系統と展開中の系統だけ開く
     Game.SKILL_BRANCHES.forEach(function (br) {
-      h += '<div class="sk-branch"><div class="sk-branch-name">' + br[1] + '</div><div class="sk-tree">';
       const nodes = Game.SKILL_TREE.filter(function (n) { return n.branch === br[0]; });
-      for (let t = 1; t <= 5; t++) {
-        h += '<div class="sk-tier">';
-        nodes.filter(function (n) { return n.tier === t; }).forEach(function (n) {
-          const owned = p.skills && p.skills[n.id];
-          const can = Game.Player.canUnlock(n.id);
-          const cls = owned ? 'owned' : can ? 'can' : 'locked';
-          h += '<button class="sk-node ' + cls + '" data-skill="' + n.id + '" title="' + n.desc + '">' +
-            '<b>' + n.name + '</b><span class="sk-cost">' + (owned ? '習得済' : n.cost + 'P') + '</span><span class="sk-desc">' + n.desc + '</span></button>';
-        });
+      const own = nodes.filter(function (n) { return p.skills && p.skills[n.id]; }).length;
+      const canAny = nodes.some(function (n) { return Game.Player.canUnlock(n.id); });
+      const open = skOpen[br[0]] != null ? skOpen[br[0]] : false;
+      h += '<div class="sk-branch' + (open ? ' open' : '') + '">';
+      h += '<div class="sk-branch-name" data-br="' + br[0] + '"><span>' + (open ? '▼' : '▶') + ' ' + br[1] + '</span><span class="sk-bcount">' + own + '/' + nodes.length + (canAny ? ' <em style="color:#ffd86b">●習得可</em>' : '') + '</span></div>';
+      if (open) {
+        h += '<div class="sk-tree">';
+        for (let t = 1; t <= 5; t++) {
+          h += '<div class="sk-tier"><div class="sk-tlbl">T' + t + '</div>';
+          nodes.filter(function (n) { return n.tier === t; }).forEach(function (n) {
+            const owned = p.skills && p.skills[n.id];
+            const can = Game.Player.canUnlock(n.id);
+            const cls = owned ? 'owned' : can ? 'can' : 'locked';
+            h += '<button class="sk-node ' + cls + '" data-skill="' + n.id + '" title="' + n.desc + '">' +
+              '<b>' + n.name + '</b><span class="sk-cost">' + (owned ? '習得済' : n.cost + 'P') + '</span><span class="sk-desc">' + n.desc + '</span></button>';
+          });
+          h += '</div>';
+        }
         h += '</div>';
       }
-      h += '</div></div>';
+      h += '</div>';
     });
     h += '<p class="hint">前提スキルを習得すると次が解放。振り直しは「記憶の書」(レア)。レベル上限 ' + (Game.MAX_LEVEL || 9999) + '。</p>';
     // 実績一覧
@@ -324,6 +335,7 @@ Game.UI = (function () {
     body.innerHTML = h;
     body.querySelectorAll('.stat-plus').forEach(function (b) { b.addEventListener('click', function () { Game.Player.spendStat(b.getAttribute('data-stat')); renderStats(); }); });
     body.querySelectorAll('.sk-node[data-skill]').forEach(function (b) { b.addEventListener('click', function () { const id = b.getAttribute('data-skill'); if (Game.Player.unlockSkill(id)) renderStats(); }); });
+    body.querySelectorAll('.sk-branch-name[data-br]').forEach(function (b) { b.addEventListener('click', function () { const k = b.getAttribute('data-br'); skOpen[k] = !skOpen[k]; renderStats(); }); });
   }
 
   // 発見済みランドマークのマーカー色
