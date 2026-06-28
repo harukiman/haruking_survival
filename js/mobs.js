@@ -119,9 +119,11 @@ Game.Mobs = (function () {
           else if (diffH && Math.random() < 0.12) type = 'boar';
           else { const pool = ['rabbit', 'deer', 'sheep']; type = pool[Math.floor(Math.random() * pool.length)]; }
         } else if (g === Game.TILE.SAND && diffH && Math.random() < 0.5) {
-          type = Math.random() < 0.3 ? 'dust_mage' : (Math.random() < 0.4 ? 'dune_serpent' : 'scorpion');
+          const r2 = Math.random();
+          type = r2 < 0.25 ? 'dust_mage' : r2 < 0.45 ? 'dune_serpent' : r2 < 0.7 ? 'sand_wurm' : 'scorpion';
         } else if (g === Game.TILE.SNOW && diffH && Math.random() < 0.4) {
-          type = Math.random() < 0.45 ? 'frost_wolf' : 'ice_bear';
+          const r2 = Math.random();
+          type = r2 < 0.4 ? 'frost_wolf' : r2 < 0.7 ? 'frost_spider' : 'ice_bear';
         } else if (g === Game.TILE.STONE && Math.random() < 0.3) {
           type = 'slime';
         } else if (g === Game.TILE.SWAMP && diffH && Math.random() < 0.55) {
@@ -130,7 +132,7 @@ Game.Mobs = (function () {
           type = sp[Math.floor(Math.random() * sp.length)];
         } else if (g === Game.TILE.VOLCANIC && diffH && Math.random() < 0.55) {
           // 火山地帯: 火の敵が出やすい
-          const vp = ['ember_imp', 'ember_imp', 'dust_mage', 'golem', 'cursed_armor'];
+          const vp = ['ember_imp', 'ember_imp', 'salamander', 'salamander', 'dust_mage', 'golem', 'cursed_armor'];
           type = vp[Math.floor(Math.random() * vp.length)];
         }
       }

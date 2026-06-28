@@ -721,6 +721,10 @@ Game.MOBS = {
   swamp_wisp:{ name:'沼の鬼火', hostile:true, hp:12, speed:1.4, color:'#8fe06a', size:10, drops:[{item:'glow_spore',n:[0,1]},{item:'shadow_shard',n:[0,1]}], dmg:4, xp:4, ghost:true, shape:'wisp', ranged:{dmg:5,range:6,cd:80,kind:'venom',status:{poison:200}} },
   giant_toad:{ name:'大蛙', hostile:true, hp:22, speed:1.2, color:'#5a8a3a', size:13, drops:[{item:'frog_legs',n:[1,2]},{item:'guts',n:[0,1]}], dmg:5, xp:5, hop:true, shape:'blob', inflict:{poison:180} },
   viper:{ name:'毒蛇', hostile:true, hp:11, speed:2.3, color:'#7a9a3a', size:9, drops:[{item:'snake_meat',n:[1,1]},{item:'hide',n:[0,1]}], dmg:4, xp:4, shape:'spiky', inflict:{poison:240} },
+  // 火山/砂漠/雪原の新モブ3種
+  salamander:{ name:'火トカゲ', hostile:true, hp:20, speed:1.6, color:'#e0641f', size:11, drops:[{item:'sulfur',n:[0,1]},{item:'hide',n:[0,1]}], dmg:5, xp:5, shape:'spiky', inflict:{burn:120}, ranged:{dmg:6,range:6,cd:85,kind:'fire'} },
+  sand_wurm:{ name:'砂蟲', hostile:true, hp:26, speed:2.0, color:'#cda85a', size:13, drops:[{item:'chitin',n:[1,2]},{item:'guts',n:[0,1]}], dmg:6, xp:6, shape:'blob', inflict:{poison:150} },
+  frost_spider:{ name:'氷蜘蛛', hostile:true, hp:16, speed:2.0, color:'#bfe4f5', size:11, drops:[{item:'string',n:[1,2]},{item:'lumen',n:[0,1]}], dmg:5, xp:5, shape:'spider', inflict:{cold:200} },
   // ===== P30 敵の多様化: 遠距離魔法・巨人・形状バリエーション =====
   hex_caster:{ name:'影の呪術師', hostile:true, hp:18, speed:1.0, color:'#a060e0', size:11, drops:[{item:'shadow_crystal',n:[0,1]},{item:'shadow_shard',n:[1,2]}], dmg:4, xp:5, shadow:true, ghost:true, shape:'wisp', ranged:{dmg:6,range:7,cd:80,kind:'hex'} },
   gazer:    { name:'浮遊する眼', hostile:true, hp:14, speed:1.3, color:'#6a3a6a', size:11, drops:[{item:'shadow_shard',n:[1,2]}], dmg:4, xp:4, ghost:true, shape:'orb', ranged:{dmg:5,range:6,cd:70,kind:'hex'} },
