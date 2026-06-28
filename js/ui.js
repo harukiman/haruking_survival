@@ -149,6 +149,19 @@ Game.UI = (function () {
   }
   function isBigMapOpen() { return bigMapOpen; }
 
+  // ボスHPバー（最大HPのボスを表示・不在なら隠す）
+  let bbName = null, bbFill = null, bbEl = null;
+  function refreshBossBar() {
+    if (!bbEl) { bbEl = document.getElementById('boss-bar'); bbName = document.getElementById('boss-bar-name'); bbFill = document.getElementById('boss-bar-fill'); }
+    if (!bbEl || !Game.state) return;
+    const mobs = Game.state.mobs; let boss = null;
+    for (let i = 0; i < mobs.length; i++) { const m = mobs[i]; if (m.def && m.def.boss) { if (!boss || m.maxHp > boss.maxHp) boss = m; } }
+    if (!boss) { if (!bbEl.classList.contains('hidden')) bbEl.classList.add('hidden'); return; }
+    bbEl.classList.remove('hidden');
+    if (bbName.textContent !== boss.def.name) bbName.textContent = boss.def.name;
+    bbFill.style.width = Math.max(0, boss.hp / boss.maxHp * 100) + '%';
+  }
+
   // ===== ステータス & スキル画面 =====
   function openStats() {
     const sc = document.getElementById('stats-screen'); if (!sc) return;
@@ -875,6 +888,6 @@ Game.UI = (function () {
     openChest, openSharedChest, closeChest, refreshChest, refreshWorld,
     showLore, closeLore, refreshQuest, openQuest, closeQuest, showEnding, showIntro, refreshNet, refreshStatus,
     toggleOptions, openEnchant, closeEnchant,
-    toggleBigMap, isBigMapOpen, updateBigMap, openStats, closeStats, renderStats,
+    toggleBigMap, isBigMapOpen, updateBigMap, openStats, closeStats, renderStats, refreshBossBar,
   };
 })();
