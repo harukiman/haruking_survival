@@ -100,6 +100,8 @@ Game.Mobs = (function () {
           type = 'twilight_colossus';
         } else if (g === Game.TILE.SWAMP && Game.state.worldName === 'light' && Math.random() < 0.02 && countType('swamp_lord') === 0) {
           type = 'swamp_lord'; // 夜の毒の沼地に沼の主が稀出現
+        } else if (g === Game.TILE.VOLCANIC && Game.state.worldName === 'light' && Math.random() < 0.02 && countType('lava_lord') === 0) {
+          type = 'lava_lord'; // 火山地帯に溶岩の王が稀出現
         } else {
           const pool = Game.state.bloodMoon
             ? ['zombie', 'zombie', 'skeleton', 'spider', 'leech', 'bandit', 'bat', 'gazer', 'troll', 'harpy', 'viper']

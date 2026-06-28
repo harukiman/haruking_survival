@@ -309,6 +309,7 @@ Game.Cutscene = (function () {
     twilight_colossus:{ name: '黄昏の巨像', col: '#e0a050', sil: 'tall', intro: ['血の月の下、大地が震え、巨像が目覚める', '「滅びの刻だ——黄昏が、すべてを呑む」'], outro: ['巨像は轟音とともに崩れ、月光が鎮まった', '— 巨像の大剣、ここに —'] },
     wanted_boss: { name: '賞金首の大物', col: '#e0504a', sil: 'tall', intro: ['手配書の影が、ぬっと立ちはだかる', '「俺の首にかけた賞金、冥土の土産にくれてやる」'], outro: ['大物は膝をつき、奪った財宝が地に散らばった', '— 賞金、受け取るがいい —'] },
     swamp_lord:  { name: '沼の主', col: '#5a7a3a', sil: 'beast', intro: ['澱んだ沼が泡立ち、瘴気の巨躯がせり上がる', '「この沼に踏み入る者よ……朽ちて、肥やしとなれ」'], outro: ['主は泥へと還り、澱みに澄んだ水が戻った', '— 澱みの大鎌、その手に —'] },
+    lava_lord:   { name: '溶岩の王', col: '#d8521f', sil: 'tall', intro: ['溶岩湖が沸き立ち、灼熱の王が立ち上がる', '「我が炉に挑むか。ならば灰も残すまい」'], outro: ['王は冷えて黒曜となり、静寂が戻った', '— 溶岩の大槌、ここに —'] },
   };
   function drawBossSilhouette(d, cx, cy, sc, mode) {
     ctx.save(); ctx.translate(cx, cy); ctx.scale(sc, sc);
