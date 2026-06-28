@@ -112,6 +112,7 @@ Game.UI = (function () {
     document.getElementById('btn-ending-continue').addEventListener('click', function () {
       el.endingScreen.classList.add('hidden'); Game.state.paused = false;
     });
+    { const rv = document.getElementById('btn-death-revive'); if (rv) rv.addEventListener('click', function () { document.getElementById('death-screen').classList.add('hidden'); Game.Survival.respawn(); }); }
     document.getElementById('btn-ending-ngplus').addEventListener('click', function () {
       el.endingScreen.classList.add('hidden'); Game.startNGPlus();
     });
@@ -1120,6 +1121,19 @@ Game.UI = (function () {
     Game.state.paused = false; // 演出後に「歩き続ける」で閉じる。pausedにしない（背景見せる）
   }
 
+  // ===== 死亡サマリー =====
+  function showDeath(s) {
+    const box = document.getElementById('death-stats'); if (!box) return;
+    box.innerHTML =
+      '<div>死因　　　<b style="color:#ff8a8a">' + s.cause + '</b></div>' +
+      '<div>生存　　　<b>' + s.days + '</b> 日（約 ' + s.mins + ' 分）</div>' +
+      '<div>レベル　　<b>' + s.level + '</b></div>' +
+      '<div>撃破ボス　<b style="color:#ffd86b">' + s.bosses + '</b> 体</div>' +
+      '<div>討伐総数　<b>' + s.kills + '</b></div>' +
+      '<div>所持金塊　<b style="color:#e8c54a">' + s.gold + '</b></div>';
+    document.getElementById('death-screen').classList.remove('hidden');
+  }
+
   function toast(msg) {
     el.toast.textContent = msg;
     el.toast.classList.add('show');
@@ -1182,7 +1196,7 @@ Game.UI = (function () {
     init, showGameUI, refreshHotbar, refreshStats, refreshInventory,
     refreshCraft, refreshAll, toggleInventory, toast, updateMinimap,
     openChest, openSharedChest, closeChest, refreshChest, refreshWorld,
-    showLore, closeLore, refreshQuest, openQuest, closeQuest, refreshBounty, showEnding, showIntro, refreshNet, refreshStatus,
+    showLore, closeLore, refreshQuest, openQuest, closeQuest, refreshBounty, showEnding, showDeath, showIntro, refreshNet, refreshStatus,
     toggleOptions, openEnchant, closeEnchant,
     toggleBigMap, isBigMapOpen, updateBigMap, openStats, closeStats, renderStats, refreshBossBar, openTrade, closeTrade,
   };

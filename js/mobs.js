@@ -267,7 +267,7 @@ Game.Mobs = (function () {
           moveMob(m, dxp, dyp, m.def.speed * 0.82);
           // 接触攻撃
           if (distP < (m.def.size * 0.5 + 12) && m.attackCd <= 0) {
-            Game.Survival.damage(m.dmg || m.def.dmg, 'mob');
+            Game.Survival.damage(m.dmg || m.def.dmg, m.def.name || 'mob');
             if (m.def.inflict) for (const k in m.def.inflict) Game.Status.add(k, m.def.inflict[k]);
             if (hasAffix(m, 'blazing')) Game.Status.add('burn', Game.ELITE_AFFIXES.blazing.burn); // 業火: 接触で炎上
             m.attackCd = m.def.boss ? 30 : 42;
@@ -327,7 +327,7 @@ Game.Mobs = (function () {
       if (m.def.hostile && m.attackCd <= 0) {
         const d = Math.hypot(p.x - m.x, p.y - m.y);
         if (d < m.def.size * 0.5 + 12) {
-          Game.Survival.damage(m.def.dmg, 'mob');
+          Game.Survival.damage(m.def.dmg, m.def.name || 'mob');
           if (m.def.inflict) for (const k in m.def.inflict) Game.Status.add(k, m.def.inflict[k]);
           m.attackCd = 42;
         }

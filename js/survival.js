@@ -130,14 +130,46 @@ Game.Survival = (function () {
       amount = Math.max(1, amount - armor);
     }
     p.health -= amount;
+    p.deathCause = source; // 死因追跡（直近のダメージ源）
     if (Game.Render.spawnFloat) Game.Render.spawnFloat(p.x, p.y - 16, '-' + amount, '#ff6a6a');
     if (physical) { p.invuln = 30; Game.Audio.play('hurt'); if (Game.Render.hurtFlash) Game.Render.hurtFlash(); if (Game.Render.shake && amount >= 6) Game.Render.shake(Math.min(9, 3 + amount * 0.4)); }
     if (p.health <= 0) { p.health = 0; die(); }
     Game.UI.refreshStats();
   }
 
+  const CAUSE_LABEL = { starve: '餓死', sanity: '正気の崩壊', status: '状態異常', thorns: '棘の反射', mob: '魔物の襲撃' };
   function die() {
     const p = Game.state.player;
+    if (Game.state.deathPending) return; // 二重発火防止
+    Game.state.deathPending = true;
+    // 死亡サマリーを表示してから復活（マルチ参加中は簡略に即復活）
+    if (Game.UI && Game.UI.showDeath && !(Game.Net && Game.Net.isConnected())) {
+      const best = Game.state.bestiary || {};
+      let kills = 0; for (const k in best) kills += best[k];
+      const survTicks = Game.state.tick - (p.lifeStart || 0);
+      const dl = Game.DAY_LENGTH || 3600;
+      const summary = {
+        cause: CAUSE_LABEL[p.deathCause] || p.deathCause || '不明',
+        level: p.level,
+        days: Math.max(0, Math.floor(survTicks / dl)),
+        mins: Math.max(0, Math.floor(survTicks / 30 / 60)),
+        bosses: Game.Player.bossesDefeated ? Game.Player.bossesDefeated() : 0,
+        kills: kills,
+        gold: Game.Inventory.count('gold_bar'),
+      };
+      Game.state.paused = true;
+      Game.Audio.play('hurt');
+      Game.UI.showDeath(summary);
+      return;
+    }
+    respawn();
+  }
+
+  function respawn() {
+    Game.state.deathPending = false;
+    Game.state.paused = false;
+    const p = Game.state.player;
+    p.lifeStart = Game.state.tick;
     Game.UI.toast('力尽きた…リスポーンします');
     // 所持品の一部をその場にドロップ
     const TS = Game.CFG.TILE_SIZE;
@@ -164,5 +196,5 @@ Game.Survival = (function () {
     Game.UI.refreshAll();
   }
 
-  return { update, eat, damage, die, nearLight };
+  return { update, eat, damage, die, respawn, nearLight };
 })();
