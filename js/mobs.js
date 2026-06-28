@@ -126,6 +126,10 @@ Game.Mobs = (function () {
           // 毒の沼地: 沼特有の敵が出やすい
           const sp = ['bog_horror', 'mud_crawler', 'leech', 'swamp_wisp', 'swamp_wisp', 'giant_toad', 'giant_toad', 'viper'];
           type = sp[Math.floor(Math.random() * sp.length)];
+        } else if (g === Game.TILE.VOLCANIC && diffH && Math.random() < 0.55) {
+          // 火山地帯: 火の敵が出やすい
+          const vp = ['ember_imp', 'ember_imp', 'dust_mage', 'golem', 'cursed_armor'];
+          type = vp[Math.floor(Math.random() * vp.length)];
         }
       }
       if (type) { spawnMob(type, wx, wy); return; }

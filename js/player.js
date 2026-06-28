@@ -72,6 +72,10 @@ Game.Player = (function () {
       spd *= 0.72;
       if (Game.Status && Game.state.tick % 30 === 0 && Math.random() < 0.06) Game.Status.add('poison', 120);
     }
+    // 火山地帯: 稀に火傷（徒歩のみ・耐火装備が無い限り）
+    if (!p.vehicle && gUnder === Game.TILE.VOLCANIC) {
+      if (Game.Status && Game.state.tick % 30 === 0 && Math.random() < 0.05) Game.Status.add('burn', 90);
+    }
     // 砂嵐/吹雪は足が重い（飛行中は影響なし）
     const wt = Game.state.weather && Game.state.weather.type;
     if ((wt === 'sandstorm' || wt === 'blizzard') && p.vehicle !== 'plane' && p.vehicle !== 'carpet') spd *= 0.7;

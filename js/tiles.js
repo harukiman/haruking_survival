@@ -36,6 +36,13 @@ Game.Tiles = (function () {
       const s = 2 + Math.floor(rnd() * 3);
       x.fillRect(px, py, s, s);
     }
+    // 火山地帯は溶岩の亀裂＋熾火
+    if (id === Game.TILE.VOLCANIC) {
+      x.strokeStyle = '#c0381a'; x.lineWidth = 1.5; x.globalAlpha = 0.8;
+      for (let i = 0; i < 3; i++) { const yy = 4 + Math.floor(rnd() * (TS - 8)); x.beginPath(); x.moveTo(2, yy); x.lineTo(TS - 2, yy + (rnd() < 0.5 ? -3 : 3)); x.stroke(); }
+      x.globalAlpha = 1; x.fillStyle = '#ff8a3a';
+      for (let i = 0; i < 4; i++) x.fillRect(3 + Math.floor(rnd() * (TS - 6)), 3 + Math.floor(rnd() * (TS - 6)), 2, 2);
+    }
     // 沼地は淀んだ水たまり＋気泡
     if (id === Game.TILE.SWAMP) {
       x.fillStyle = shade(base, -22);
@@ -58,6 +65,14 @@ Game.Tiles = (function () {
     } else if (r === 'deadtree') {
       x.strokeStyle = '#5a4a38'; x.lineWidth = 3; x.beginPath(); x.moveTo(TS / 2, TS - 3); x.lineTo(TS / 2, 8); x.stroke();
       x.lineWidth = 2; x.beginPath(); x.moveTo(TS / 2, 14); x.lineTo(TS / 2 - 7, 7); x.moveTo(TS / 2, 18); x.lineTo(TS / 2 + 7, 11); x.moveTo(TS / 2, 12); x.lineTo(TS / 2 + 5, 5); x.stroke();
+    } else if (r === 'obsidian') {
+      x.fillStyle = '#241f38'; roundBlob(x);
+      x.fillStyle = '#4a3f6a'; x.beginPath(); x.moveTo(TS / 2 - 5, TS / 2 + 4); x.lineTo(TS / 2, TS / 2 - 6); x.lineTo(TS / 2 + 5, TS / 2 + 2); x.closePath(); x.fill();
+      x.fillStyle = 'rgba(180,160,220,0.5)'; x.fillRect(TS / 2 - 3, TS / 2 - 3, 2, 6);
+    } else if (r === 'sulfur') {
+      x.fillStyle = '#6a5a2a'; x.beginPath(); x.arc(TS / 2, TS - 6, 7, Math.PI, 0); x.fill();
+      x.fillStyle = '#e0d24a'; for (let i = 0; i < 5; i++) { const a = i * 1.2; circle(x, TS / 2 + Math.cos(a) * 5, TS / 2 + 2 + Math.sin(a) * 4, 2); }
+      x.fillStyle = 'rgba(230,210,120,0.35)'; circle(x, TS / 2, TS / 2 - 4, 4);
     } else if (r === 'pmushroom') {
       x.fillStyle = '#cfc7a8'; x.fillRect(TS / 2 - 2, TS / 2, 4, TS / 2 - 4);
       x.fillStyle = '#7a3a8a'; x.beginPath(); x.ellipse(TS / 2, TS / 2, 8, 5, 0, 0, Math.PI * 2); x.fill();

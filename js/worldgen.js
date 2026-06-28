@@ -37,6 +37,7 @@ Game.WorldGen = (function () {
     else if (e < 0.355) ground = T.WATER;
     else if (e < 0.40) ground = T.SAND;
     else if (m > 0.66 && e < 0.52) ground = T.SWAMP;   // 高湿・低地=毒の沼地
+    else if (e > 0.78 && m < 0.32) ground = T.VOLCANIC; // 高標高・乾燥=火山地帯
     else if (e > 0.82) ground = T.SNOW;
     else if (e > 0.70) ground = T.STONE;
     else if (m > 0.58) ground = T.FOREST;
@@ -198,6 +199,10 @@ Game.WorldGen = (function () {
       if (h < 0.07) obj = O.DEAD_TREE;
       else if (h < 0.14) obj = O.POISON_MUSHROOM;
       else if (h < 0.16) obj = O.BUSH;
+    } else if (ground === T.VOLCANIC) {
+      if (h < 0.08) obj = O.OBSIDIAN;
+      else if (h < 0.16) obj = O.SULFUR_VENT;
+      else if (h < 0.19) obj = O.ROCK;
     }
     return { ground, obj };
   }

@@ -33,7 +33,7 @@ Game.CFG = {
 };
 
 // 地面レイヤー
-Game.TILE = { DEEP_WATER:0, WATER:1, SAND:2, GRASS:3, FOREST:4, DIRT:5, STONE:6, SNOW:7, DUNGEON_FLOOR:8, SWAMP:9 };
+Game.TILE = { DEEP_WATER:0, WATER:1, SAND:2, GRASS:3, FOREST:4, DIRT:5, STONE:6, SNOW:7, DUNGEON_FLOOR:8, SWAMP:9, VOLCANIC:10 };
 
 // オブジェクトレイヤー（0=なし、50番台=影世界固有、100番台=プレイヤー設置物）
 Game.OBJ = {
@@ -60,6 +60,7 @@ Game.OBJ = {
   BOUNTY_BOARD:139,
   BANDIT_SPAWNER:140,
   DEAD_TREE:141, POISON_MUSHROOM:142,
+  OBSIDIAN:143, SULFUR_VENT:144,
 };
 
 // 地面の色（手続き描画のベース）
@@ -74,6 +75,7 @@ Game.TILE_COLOR = {
   [Game.TILE.SNOW]:       '#e8eef2',
   [Game.TILE.DUNGEON_FLOOR]: '#3a3540',
   [Game.TILE.SWAMP]:      '#3d4a2c',
+  [Game.TILE.VOLCANIC]:   '#2a1812',
 };
 
 // 影世界の地面パレット（同じTILE idを別色で描画）
@@ -88,6 +90,7 @@ Game.SHADOW_TILE_COLOR = {
   [Game.TILE.SNOW]:       '#5a5575',
   [Game.TILE.DUNGEON_FLOOR]: '#2a2438',
   [Game.TILE.SWAMP]:      '#26233a',
+  [Game.TILE.VOLCANIC]:   '#1a1020',
 };
 
 // 宇宙の地面パレット（虚空＝ほぼ黒、小惑星＝灰）
@@ -102,6 +105,7 @@ Game.SPACE_TILE_COLOR = {
   [Game.TILE.SNOW]:       '#b0b0c0',
   [Game.TILE.DUNGEON_FLOOR]: '#3a3a48',
   [Game.TILE.SWAMP]:      '#44443a',
+  [Game.TILE.VOLCANIC]:   '#3a342e',
 };
 
 Game.SOLID_TILE = {
@@ -150,6 +154,8 @@ Game.OBJ_META = {
   [Game.OBJ.CACTUS]:    { name:'サボテン', solid:true, mineable:true, tool:null, tier:0, hp:3, drops:[{item:'cactus', n:[1,2]}], render:'cactus', touchDamage:1 },
   [Game.OBJ.DEAD_TREE]: { name:'枯れ木', solid:true, mineable:true, tool:'axe', tier:0, hp:5, drops:[{item:'wood', n:[1,3]}], render:'deadtree' },
   [Game.OBJ.POISON_MUSHROOM]:{ name:'毒キノコ', solid:false, mineable:true, tool:null, tier:0, hp:1, drops:[{item:'glow_spore', n:[1,2]}], render:'pmushroom' },
+  [Game.OBJ.OBSIDIAN]:   { name:'黒曜石', solid:true, mineable:true, tool:'pickaxe', tier:2, hp:16, drops:[{item:'obsidian', n:[1,2]}], render:'obsidian' },
+  [Game.OBJ.SULFUR_VENT]:{ name:'硫黄噴気孔', solid:false, mineable:true, tool:null, tier:0, hp:2, light:4, drops:[{item:'sulfur', n:[1,2]}], render:'sulfur' },
   [Game.OBJ.FARMLAND]:  { name:'畑', solid:false, mineable:true, tool:null, tier:0, hp:1, drops:[], render:'farmland' },
   [Game.OBJ.WHEAT]:     { name:'小麦', solid:false, mineable:true, tool:null, tier:0, hp:1, drops:[], render:'wheat', crop:true },
   [Game.OBJ.CAMPFIRE]:  { name:'焚き火', solid:false, mineable:true, tool:null, tier:0, hp:3, light:9, drops:[{item:'campfire', n:[1,1]}], render:'campfire', cook:true },
@@ -218,10 +224,13 @@ Game.ITEMS = {
   apple:       { name:'りんご', stack:16, color:'#d33', food:25 },
   flower:      { name:'花', stack:99, color:'#e85ab0' },
   glow_spore:  { name:'光胞子', stack:99, color:'#7fe0a0', flavor:'毒キノコから採れる仄かに光る胞子。沼の解毒薬の材料。' },
+  obsidian:    { name:'黒曜石', stack:99, color:'#2a2440', flavor:'急冷した溶岩の黒い石。鋭く加工でき、頑丈な武具になる。' },
+  sulfur:      { name:'硫黄', stack:99, color:'#d8c84a', flavor:'噴気孔に結晶する黄色い鉱物。火炎の材料。' },
   wood_pickaxe:{ name:'木のツルハシ', stack:1, color:'#9c6b3f', tool:'pickaxe', tier:1 },
   stone_pickaxe:{ name:'石のツルハシ', stack:1, color:'#888d91', tool:'pickaxe', tier:2 },
   iron_pickaxe:{ name:'鉄のツルハシ', stack:1, color:'#d8d8dc', tool:'pickaxe', tier:3 },
   siege_pick:  { name:'破城のツルハシ', stack:1, color:'#e08a3a', tool:'pickaxe', tier:4, siege:true, flavor:'古の坑道を穿った特別なツルハシ。これでのみ堅牢なダンジョンの壁を砕ける。' },
+  obsidian_blade:{ name:'黒曜の刃', stack:1, color:'#3a2f55', tool:'sword', tier:3, attack:16, flavor:'黒曜石を鋭利に研いだ刃。鉄を超える切れ味。' },
   wood_axe:    { name:'木の斧', stack:1, color:'#9c6b3f', tool:'axe', tier:1 },
   stone_axe:   { name:'石の斧', stack:1, color:'#888d91', tool:'axe', tier:2 },
   wood_block:  { name:'木ブロック', stack:99, color:'#9c6b3f', place:Game.OBJ.WOOD_BLOCK },
@@ -519,6 +528,8 @@ Game.RECIPES = [
   { out:{id:'regen_potion', n:1}, in:{moonleaf:2, lumen:1}, station:'crafting_table' },
   { out:{id:'bomb', n:1}, in:{iron:2, coal:2}, station:'crafting_table' },
   { out:{id:'molotov', n:1}, in:{coal:1, string:1, hide:1}, station:'crafting_table' },
+  { out:{id:'molotov', n:2}, in:{sulfur:2, string:1}, station:'crafting_table' },
+  { out:{id:'obsidian_blade', n:1}, in:{obsidian:3, iron:1}, station:'crafting_table' },
   { out:{id:'fur_coat', n:1}, in:{hide:5}, station:'crafting_table' },
   { out:{id:'enchant_table', n:1}, in:{shadow_steel:2, lumen:3}, station:'crafting_table' },
   { out:{id:'leather', n:1}, in:{guts:2}, station:'crafting_table' },
@@ -765,7 +776,7 @@ Game.ITEM_GLYPH = {
   apple:'🍎', berry:'🫐', cactus:'🌵', raw_meat:'🥩', cooked_meat:'🍖', rotten_meat:'🤢', guts:'🩸', wheat:'🌾', wheat_seeds:'🌱', bread:'🍞', moonleaf:'🍃', fish:'🐟',
   frog_legs:'🐸', cooked_frog:'🍗', snake_meat:'🐍', cooked_snake:'🍢', swamp_stew:'🍲',
   carrot:'🥕', carrot_seeds:'🌱', pumpkin:'🎃', pumpkin_seeds:'🌱', tomato:'🍅', tomato_seeds:'🌱', veg_salad:'🥗', pumpkin_pie:'🥧', veg_stew:'🍲', hearty_stew:'🍲',
-  hide:'🟤', leather:'🟫', bone:'🦴', string:'🧵', slime_ball:'🟢', flower:'🌸', sapling:'🌱', glow_spore:'🍄',
+  hide:'🟤', leather:'🟫', bone:'🦴', string:'🧵', slime_ball:'🟢', flower:'🌸', sapling:'🌱', glow_spore:'🍄', obsidian:'⬛', sulfur:'🟡', obsidian_blade:'🗡️',
   wood_pickaxe:'⛏️', stone_pickaxe:'⛏️', iron_pickaxe:'⛏️', shadow_pickaxe:'⛏️', siege_pick:'⛏️',
   wood_axe:'🪓', stone_axe:'🪓', iron_axe:'🪓', shadow_axe:'🪓', wood_hoe:'🌾', stone_hoe:'🌾',
   wood_sword:'🗡️', stone_sword:'🗡️', iron_sword:'⚔️', shadow_blade:'⚔️',
