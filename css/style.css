@@ -179,6 +179,10 @@ body.left-handed #action-btns { right: auto; left: calc(12px + env(safe-area-ins
   background: rgba(8,12,20,0.7); border: 1px solid #3a4a64; color: #ffe9a0; font-size: .8rem;
   padding: 5px 14px; border-radius: 20px; max-width: 64vw; white-space: nowrap; overflow: hidden;
   text-overflow: ellipsis; pointer-events: auto; cursor: pointer; }
+#bounty-tracker { position: absolute; bottom: 96px; left: 50%; transform: translateX(-50%); z-index: 18;
+  background: rgba(20,14,8,0.72); border: 1px solid #6a5224; color: #ffd86b; font-size: .8rem;
+  padding: 5px 14px; border-radius: 20px; max-width: 64vw; white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; pointer-events: none; }
 .quest-list { display: flex; flex-direction: column; gap: 5px; }
 .quest-row { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px;
   background: rgba(30,40,58,0.6); font-size: .86rem; }

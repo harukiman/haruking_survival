@@ -178,6 +178,7 @@ Game.UI = (function () {
     { id: 'bomb', n: 2, price: 2 },
     { id: 'carrot_seeds', n: 3, price: 1 }, { id: 'pumpkin_seeds', n: 2, price: 1 }, { id: 'tomato_seeds', n: 3, price: 1 },
     { id: 'xp_orb', n: 1, price: 3 }, { id: 'wisdom_tome', n: 1, price: 8 },
+    { id: 'bounty_board', n: 1, price: 4 },
     { rand: true, price: 4, label: '謎の装備（ランダム）' },
   ];
   function openTrade() { const sc = document.getElementById('trade-screen'); if (!sc) return; sc.classList.remove('hidden'); Game.state.paused = true; refreshTrade(); }
@@ -908,6 +909,15 @@ Game.UI = (function () {
     }
     el.questTracker.classList.remove('hidden');
   }
+  function refreshBounty() {
+    const tr = document.getElementById('bounty-tracker'); if (!tr || !Game.state) return;
+    const b = Game.state.bounty;
+    if (!b) { tr.classList.add('hidden'); return; }
+    const txt = document.getElementById('bounty-text');
+    if (b.done) txt.textContent = '賞金首 達成! 掲示板で報酬を受け取れ';
+    else txt.textContent = '賞金首 ' + b.targetName + '  ' + b.count + '/' + b.need;
+    tr.classList.remove('hidden');
+  }
   function openQuest() {
     if (!Game.state) return;
     el.questList.innerHTML = '';
@@ -994,7 +1004,7 @@ Game.UI = (function () {
     init, showGameUI, refreshHotbar, refreshStats, refreshInventory,
     refreshCraft, refreshAll, toggleInventory, toast, updateMinimap,
     openChest, openSharedChest, closeChest, refreshChest, refreshWorld,
-    showLore, closeLore, refreshQuest, openQuest, closeQuest, showEnding, showIntro, refreshNet, refreshStatus,
+    showLore, closeLore, refreshQuest, openQuest, closeQuest, refreshBounty, showEnding, showIntro, refreshNet, refreshStatus,
     toggleOptions, openEnchant, closeEnchant,
     toggleBigMap, isBigMapOpen, updateBigMap, openStats, closeStats, renderStats, refreshBossBar, openTrade, closeTrade,
   };

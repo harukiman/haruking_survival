@@ -192,6 +192,15 @@ Game.Tiles = (function () {
       x.fillStyle = '#5a3a1e'; x.fillRect(TS / 2 - 1, TS / 2, 2, TS / 2 - 2);
       x.fillStyle = '#b5803f'; x.fillRect(6, 6, TS - 12, 12);
       x.strokeStyle = '#5a3d1f'; x.lineWidth = 1; x.strokeRect(6, 6, TS - 12, 12);
+    } else if (r === 'bounty') {
+      // 賞金掲示板: 2本の柱に張られた羊皮紙＋赤い「賞金」印
+      x.fillStyle = '#4a3218'; x.fillRect(5, TS - 12, 3, 11); x.fillRect(TS - 8, TS - 12, 3, 11);
+      x.fillStyle = '#6a4a26'; x.fillRect(3, 3, TS - 6, TS - 12);
+      x.strokeStyle = '#3a2812'; x.lineWidth = 1.5; x.strokeRect(3, 3, TS - 6, TS - 12);
+      x.fillStyle = '#e8dcc0'; x.fillRect(6, 6, TS - 12, TS - 17); // 羊皮紙
+      x.fillStyle = '#b03028'; x.fillRect(8, 8, TS - 16, 3); // 赤帯(WANTED)
+      x.fillStyle = '#7a5a3a'; for (let yy = 14; yy < TS - 12; yy += 3) x.fillRect(8, yy, TS - 16, 1); // 本文行
+      x.fillStyle = '#c0302a'; x.beginPath(); x.arc(TS / 2, TS - 14, 2.5, 0, Math.PI * 2); x.fill(); // 封蝋
     } else if (r === 'dwall') {
       x.fillStyle = '#5a5560'; x.fillRect(1, 1, TS - 2, TS - 2);
       x.strokeStyle = '#3a3640'; x.lineWidth = 1.5;

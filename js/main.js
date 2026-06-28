@@ -57,6 +57,8 @@ window.Game = window.Game || {};
       bestiary: {},
       eliteKills: 0,
       championKills: 0,
+      bounty: null,
+      bountyDone: 0,
       questIndex: 0,
       questDone: {},
       reunified: false,
@@ -151,6 +153,8 @@ window.Game = window.Game || {};
     Game.state.bestiary = data.bestiary || {};
     Game.state.eliteKills = data.eliteKills || 0;
     Game.state.championKills = data.championKills || 0;
+    Game.state.bounty = data.bounty || null;
+    Game.state.bountyDone = data.bountyDone || 0;
     Game.state.questIndex = data.questIndex || 0;
     Game.state.questDone = data.questDone || {};
     Game.state.reunified = !!data.reunified;
@@ -226,6 +230,7 @@ window.Game = window.Game || {};
     if (Game.state.tick % 10 === 0) Game.World.updateChunks(pt.tx, pt.ty);
     if (Game.state.tick % 20 === 0) { Game.UI.updateMinimap(); if (Game.UI.isBigMapOpen && Game.UI.isBigMapOpen()) Game.UI.updateBigMap(); }
     if (Game.state.tick % 6 === 0 && Game.UI.refreshBossBar) Game.UI.refreshBossBar();
+    if (Game.state.tick % 30 === 0 && Game.UI.refreshBounty) Game.UI.refreshBounty();
     if (Game.state.tick % 30 === 0) Game.Audio.updateMood();
     Game.state.tick++;
   }

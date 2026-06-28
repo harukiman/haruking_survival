@@ -54,6 +54,7 @@ Game.OBJ = {
   // 家具・家作り
   HEALING_TOTEM:129, STREET_LAMP:130, TABLE:131, CHAIR:132, BOOKSHELF:133, GLASS:134, RUG:135,
   TOMB_WALL:136, FORGE_WALL:137, CRYSTAL_WALL:138,
+  BOUNTY_BOARD:139,
 };
 
 // 地面の色（手続き描画のベース）
@@ -172,6 +173,7 @@ Game.OBJ_META = {
   [Game.OBJ.WINDOW]:     { name:'窓', solid:true, mineable:true, tool:null, tier:0, hp:4, drops:[{item:'window', n:[1,1]}], render:'window' },
   [Game.OBJ.BRIDGE]:     { name:'橋', solid:false, bridge:true, mineable:true, tool:null, tier:0, hp:3, drops:[{item:'bridge', n:[1,1]}], render:'bridge' },
   [Game.OBJ.SIGN]:       { name:'立て札', solid:false, mineable:true, tool:null, tier:0, hp:2, drops:[{item:'sign', n:[1,1]}], render:'sign' },
+  [Game.OBJ.BOUNTY_BOARD]:{ name:'賞金掲示板', solid:true, mineable:true, tool:null, tier:0, hp:5, drops:[{item:'bounty_board', n:[1,1]}], render:'bounty' },
   [Game.OBJ.ENCHANT_TABLE]:{ name:'エンチャント台', solid:true, mineable:true, tool:'pickaxe', tier:1, hp:8, light:5, drops:[{item:'enchant_table', n:[1,1]}], render:'enchant', enchant:true },
   // ダンジョン
   [Game.OBJ.DUNGEON_WALL]:{ name:'遺跡の壁', solid:true, mineable:true, tool:'pickaxe', tier:2, hp:20, drops:[{item:'stone', n:[1,2]}], render:'dwall' },
@@ -297,6 +299,7 @@ Game.ITEMS = {
   window:        { name:'窓', stack:99, color:'#a8d8e8', place:Game.OBJ.WINDOW },
   bridge:        { name:'橋', stack:99, color:'#9c6b3f', place:Game.OBJ.BRIDGE },
   sign:          { name:'立て札', stack:16, color:'#a9762f', place:Game.OBJ.SIGN },
+  bounty_board:  { name:'賞金掲示板', stack:8, color:'#c8a060', place:Game.OBJ.BOUNTY_BOARD, flavor:'賞金首の討伐依頼が貼り出される板。対話で依頼を受け、達成して報酬を得る。' },
   enchant_table: { name:'エンチャント台', stack:4, color:'#5a3a8a', place:Game.OBJ.ENCHANT_TABLE },
   void_heart:    { name:'虚の心臓', stack:16, color:'#d040b0', flavor:'飢餓の獣の核。喰らうほどに飢える、終わりなき渇望の結晶。' },
   // 上位武器（銃）
@@ -473,6 +476,7 @@ Game.RECIPES = [
   { out:{id:'window', n:2}, in:{wood:1, stone:1}, station:'crafting_table' },
   { out:{id:'bridge', n:4}, in:{wood:2}, station:null },
   { out:{id:'sign', n:1}, in:{wood:2}, station:null },
+  { out:{id:'bounty_board', n:1}, in:{wood:8, iron:1}, station:'crafting_table' },
   // 治療・防寒
   { out:{id:'bandage', n:2}, in:{string:2}, station:null },
   { out:{id:'antidote', n:1}, in:{moonleaf:2, flower:1}, station:null },
@@ -681,7 +685,7 @@ Game.ITEM_GLYPH = {
   wood_sword:'🗡️', stone_sword:'🗡️', iron_sword:'⚔️', shadow_blade:'⚔️',
   leather_helmet:'🎩', iron_helmet:'⛑️', shadow_helmet:'🪖', leather_chest:'🦺', iron_chest:'🛡️', shadow_chest:'🛡️', fur_coat:'🧥', lumen_charm:'🔆', sanity_charm:'🔮',
   bandage:'🩹', antidote:'🧪', strength_potion:'🧪', swift_potion:'🧪', iron_potion:'🧪', regen_potion:'🧪', bomb:'💣', molotov:'🍶',
-  torch:'🔥', campfire:'🔥', lantern:'🏮', lumen_lantern:'💡', crafting_table:'🛠️', furnace:'🔥', chest:'📦', bed:'🛏️', fence:'🚧', door:'🚪', wall:'🧱', window:'🪟', bridge:'🌉', sign:'🪧', wood_floor:'🟫', stone_floor:'⬜',
+  torch:'🔥', campfire:'🔥', lantern:'🏮', lumen_lantern:'💡', crafting_table:'🛠️', furnace:'🔥', chest:'📦', bed:'🛏️', fence:'🚧', door:'🚪', wall:'🧱', window:'🪟', bridge:'🌉', sign:'🪧', bounty_board:'📜', wood_floor:'🟫', stone_floor:'⬜',
   shadow_shard:'🌑', shadow_mirror:'🪞', shadow_crystal:'🔮', lumen:'✨', shadow_steel:'⬛', shadow_core:'💜', unity_core:'⭐', void_heart:'💗', rift_anchor:'🕳️', enchant_table:'✦',
   bullet:'🔸', pistol:'🔫', shadow_rifle:'🔫', car:'🚗', boat:'🛶', plane:'✈️',
   ammo_9mm:'🔸', ammo_556:'🔹', ammo_762:'🟤', shell_12g:'🔴', ammo_50:'🟠', rocket_ammo:'🧨',

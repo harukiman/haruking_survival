@@ -406,6 +406,8 @@ Game.Mobs = (function () {
     if (idx >= 0) Game.state.mobs.splice(idx, 1);
     // 魔物図鑑: 撃破した種別と撃破数を記録（友好NPC除く）
     if (m.def && !m.def.npc) { if (!Game.state.bestiary) Game.state.bestiary = {}; Game.state.bestiary[m.type] = (Game.state.bestiary[m.type] || 0) + 1; }
+    // 賞金首: 対象モブの討伐をカウント
+    if (Game.Bounty && m.def && !m.def.npc) Game.Bounty.notifyKill(m.type);
     // ドロップを集約（ローカル生成＋マルチ配信用）
     const items = [];
     if (m.def.drops) {

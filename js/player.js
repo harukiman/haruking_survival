@@ -220,6 +220,7 @@ Game.Player = (function () {
       }
       if (obj === Game.OBJ.RIFT_ANCHOR) { Game.UI.openSharedChest(t.tx, t.ty); return; }
       if (obj === Game.OBJ.STELA) { Game.Lore.read(t.tx, t.ty); return; }
+      if (obj === Game.OBJ.BOUNTY_BOARD) { Game.Bounty.open(t.tx, t.ty); return; }
       if (obj === Game.OBJ.SHADOW_ALTAR) { Game.Mobs.summonBoss(t.tx, t.ty); return; }
       if (obj === Game.OBJ.ENCHANT_TABLE) { Game.UI.openEnchant(); return; }
       if (obj === Game.OBJ.ROCKET) { Game.Rocket.board(); return; }

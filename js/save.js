@@ -36,6 +36,8 @@ Game.Save = (function () {
       bestiary: s.bestiary || {},
       eliteKills: s.eliteKills || 0,
       championKills: s.championKills || 0,
+      bounty: s.bounty || null,
+      bountyDone: s.bountyDone || 0,
       questIndex: s.questIndex || 0,
       questDone: s.questDone || {},
       reunified: !!s.reunified,
