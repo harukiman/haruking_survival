@@ -30,6 +30,7 @@ Game.Achievements = (function () {
     slay_hunger_beast: { name:'渇望を断つ', desc:'飢餓の獣を打ち倒した' },
     slay_abyss_dragon: { name:'屠竜', desc:'深淵の竜を打ち倒した' },
     slay_twilight_colossus: { name:'黄昏を砕く', desc:'黄昏の巨像を打ち倒した' },
+    slay_swamp_lord: { name:'澱みを断つ', desc:'沼の主を打ち倒した' },
     // マイルストーン
     level20:       { name:'熟達者', desc:'レベル20に到達' },
     level50:       { name:'達人', desc:'レベル50に到達' },
@@ -40,11 +41,11 @@ Game.Achievements = (function () {
     bounty_king:   { name:'賞金稼ぎの王', desc:'賞金首の大物を討ち取った' },
   };
   // ボス種別→実績ID
-  Game.BOSS_ACH = { tomb_king:'slay_tomb_king', forge_titan:'slay_forge_titan', star_guardian:'slay_star_guardian', crystal_queen:'slay_crystal_queen', hunger_beast:'slay_hunger_beast', abyss_dragon:'slay_abyss_dragon', twilight_colossus:'slay_twilight_colossus' };
+  Game.BOSS_ACH = { tomb_king:'slay_tomb_king', forge_titan:'slay_forge_titan', star_guardian:'slay_star_guardian', crystal_queen:'slay_crystal_queen', hunger_beast:'slay_hunger_beast', abyss_dragon:'slay_abyss_dragon', twilight_colossus:'slay_twilight_colossus', swamp_lord:'slay_swamp_lord' };
 
   // 種別判定用（手に入れた時の実績）
   Game.MAGIC_ITEMS = ['warp_staff', 'flame_staff', 'frost_staff', 'flying_carpet'];
-  Game.LEGENDARY_ITEMS = ['sand_greatsword', 'magma_hammer', 'pharaoh_crown', 'cosmic_blade', 'star_cannon', 'excalibur', 'gae_bolg', 'gate_babylon', 'prism_blade', 'dragon_fang'];
+  Game.LEGENDARY_ITEMS = ['sand_greatsword', 'magma_hammer', 'pharaoh_crown', 'cosmic_blade', 'star_cannon', 'excalibur', 'gae_bolg', 'gate_babylon', 'prism_blade', 'dragon_fang', 'colossus_blade', 'mire_scythe'];
 
   function set() { return Game.state.achievements || (Game.state.achievements = {}); }
 

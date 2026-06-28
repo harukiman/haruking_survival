@@ -98,6 +98,8 @@ Game.Mobs = (function () {
         // 血の月の夜は地上ボス「黄昏の巨像」が稀出現(1体まで)
         if (Game.state.bloodMoon && Game.state.worldName === 'light' && Math.random() < 0.02 && countType('twilight_colossus') === 0) {
           type = 'twilight_colossus';
+        } else if (g === Game.TILE.SWAMP && Game.state.worldName === 'light' && Math.random() < 0.02 && countType('swamp_lord') === 0) {
+          type = 'swamp_lord'; // 夜の毒の沼地に沼の主が稀出現
         } else {
           const pool = Game.state.bloodMoon
             ? ['zombie', 'zombie', 'skeleton', 'spider', 'leech', 'bandit', 'bat', 'gazer', 'troll', 'harpy']
