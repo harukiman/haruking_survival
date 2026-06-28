@@ -62,6 +62,7 @@ Game.Render = (function () {
     drawMiningCrack(ctx);
     drawDrops(ctx);
     Game.Mobs.draw(ctx, alpha);
+    drawPeers(ctx);
     drawPlayer(ctx, alpha);
     drawParticles(ctx);
     Game.Lighting.drawOverlay(ctx);
@@ -160,6 +161,30 @@ Game.Render = (function () {
       ctx.fillRect(s.x - 5, s.y - 5 + bob, 10, 10);
       ctx.strokeStyle = 'rgba(0,0,0,0.4)'; ctx.lineWidth = 1;
       ctx.strokeRect(s.x - 5, s.y - 5 + bob, 10, 10);
+    }
+  }
+
+  // 他プレイヤー（マルチプレイ）
+  function drawPeers(ctx) {
+    if (!Game.Net || !Game.Net.isConnected()) return;
+    const peers = Game.Net.getPeers();
+    for (const id in peers) {
+      const pe = peers[id];
+      if (!pe || pe.world !== Game.state.worldName || pe.x == null) continue;
+      const s = Game.Camera.worldToScreen(pe.x, pe.y);
+      if (s.x < -30 || s.y < -30 || s.x > Game.view.w + 30 || s.y > Game.view.h + 30) continue;
+      ctx.fillStyle = 'rgba(0,0,0,0.25)';
+      ctx.beginPath(); ctx.ellipse(s.x, s.y + 10, 9, 4, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#3fd07a';
+      ctx.beginPath(); ctx.arc(s.x, s.y, 10, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#f0c8a0';
+      ctx.beginPath(); ctx.arc(s.x, s.y - 3, 5, 0, Math.PI * 2); ctx.fill();
+      if (pe.name) {
+        ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(s.x - 24, s.y - 26, 48, 12);
+        ctx.fillStyle = '#cfe6b0'; ctx.fillText(pe.name, s.x, s.y - 17);
+        ctx.textAlign = 'left';
+      }
     }
   }
 

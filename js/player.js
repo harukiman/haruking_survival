@@ -149,6 +149,7 @@ Game.Player = (function () {
     }
     if (meta.dualPlaced) Game.World.setObjBothWorlds(tx, ty, Game.OBJ.NONE);
     else Game.World.setObj(tx, ty, Game.OBJ.NONE);
+    Game.Net.broadcastEdit(tx, ty, Game.OBJ.NONE, Game.state.worldName);
     const wx = tx * TS + TS / 2, wy = ty * TS + TS / 2;
     if (meta.drops) {
       for (let i = 0; i < meta.drops.length; i++) {
@@ -216,6 +217,7 @@ Game.Player = (function () {
     else Game.World.setObj(t.tx, t.ty, def.place);
     if (def.place === Game.OBJ.CHEST) Game.World.setTileData(t.tx, t.ty, { chest: new Array(27).fill(null) });
     if (def.place === Game.OBJ.SAPLING) Game.World.setTileData(t.tx, t.ty, { sapling: { timer: 0 } });
+    Game.Net.broadcastEdit(t.tx, t.ty, def.place, Game.state.worldName);
     Game.Inventory.remove(sel.id, 1);
     Game.Audio.play('place');
     Game.UI.refreshAll();

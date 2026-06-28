@@ -84,8 +84,23 @@ window.Game = window.Game || {};
     // スターターアイテム
     Game.STARTER_ITEMS.forEach(function (it) { Game.Inventory.add(it.id, it.count); });
     startWorld();
-    if (!ngLevel) Game.UI.showIntro(); // 初回のみ物語導入
+    if (!ngLevel && !opts.net) Game.UI.showIntro(); // 初回ソロのみ物語導入
   }
+
+  // マルチプレイ: ホストの世界(シード+差分)を採用して再構築
+  function adoptNetWorld(d) {
+    Game.state = freshState(d.seed);
+    Game.state.tick = d.tick || 0;
+    if (d.light) for (const k in d.light) Game.state.worlds.light.modifiedTiles.set(k, d.light[k]);
+    if (d.shadow) for (const k in d.shadow) Game.state.worlds.shadow.modifiedTiles.set(k, d.shadow[k]);
+    Game.World.setActiveWorld('light');
+    const sp = Game.WorldGen.findSpawn(Game.state.seed);
+    Game.state.spawn = sp; Game.Player.spawnAt(sp.tx, sp.ty);
+    Game.STARTER_ITEMS.forEach(function (it) { Game.Inventory.add(it.id, it.count); });
+    startWorld();
+    Game.UI.toast('仲間の世界に合流しました');
+  }
+  Game.adoptNetWorld = adoptNetWorld;
 
   // 周回（NG+）: 実績引継ぎ・難度上昇・新シード
   function startNGPlus() {
@@ -190,6 +205,7 @@ window.Game = window.Game || {};
     const alpha = Game.state.paused ? 1 : acc / STEP;
     Game.Render.draw(alpha);
     Game.Audio.tickBGM();
+    Game.Net.tick();
     requestAnimationFrame(frame);
   }
 
@@ -215,6 +231,22 @@ window.Game = window.Game || {};
     btnContinue.addEventListener('click', function () {
       if (this.disabled) return;
       continueGame();
+    });
+    // マルチプレイ
+    const roomInput = document.getElementById('room-input');
+    const roomCode = function () { return (roomInput.value.trim() || ('haru' + Math.floor(Math.random() * 9000 + 1000))); };
+    document.getElementById('btn-host').addEventListener('click', function () {
+      if (!Game.Net.available()) { alert('マルチプレイの読み込み中、またはネット未接続です。少し待って再度お試しください。'); return; }
+      const code = roomCode(); roomInput.value = code;
+      Game.Save.clear();
+      newGame(roomInput.value, { difficulty: chosenDiff, net: true });
+      Game.Net.start(code, true);
+    });
+    document.getElementById('btn-join').addEventListener('click', function () {
+      if (!Game.Net.available()) { alert('マルチプレイの読み込み中、またはネット未接続です。少し待って再度お試しください。'); return; }
+      const code = roomCode(); roomInput.value = code;
+      newGame('', { net: true });
+      Game.Net.start(code, false);
     });
   }
 

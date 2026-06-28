@@ -25,6 +25,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Segoe U
   background: #10182a; color: #b8c4d4; font-size: .9rem; font-weight: 700; cursor: pointer; }
 .diff-btn.selected { background: #2f5a8f; color: #fff; border-color: #5a8fd6; }
 .diff-desc { color: #8fa3bb; font-size: .78rem; margin: 0 0 6px; min-height: 1em; }
+.mp-row { display: flex; gap: 6px; margin: 14px 0 4px; flex-wrap: wrap; }
+.mp-row #room-input { flex: 1 1 100%; padding: 9px 10px; border-radius: 8px; border: 1px solid #33455e; background: #10182a; color: #e8edf2; }
+.mp-btn { flex: 1; padding: 10px 4px; border-radius: 9px; border: 1px solid #4a6e9e; background: #1f3a5a; color: #cfe0f0; font-weight: 700; cursor: pointer; }
+.mp-btn:hover { filter: brightness(1.15); }
+#net-badge { position: absolute; top: 92px; right: 8px; z-index: 23; background: rgba(8,30,16,0.7);
+  border: 1px solid #2f6b3a; color: #9fe0b0; font-size: .78rem; padding: 3px 9px; border-radius: 12px; pointer-events: none; }
 .big-btn { display: block; width: 100%; margin: 10px 0; padding: 14px; font-size: 1.1rem; font-weight: 700;
   border: none; border-radius: 12px; background: #4a8f3c; color: #fff; cursor: pointer; transition: filter .12s; }
 .big-btn:hover { filter: brightness(1.12); }

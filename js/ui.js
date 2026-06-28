@@ -125,6 +125,16 @@ Game.UI = (function () {
     }
   }
 
+  function refreshNet() {
+    const badge = document.getElementById('net-badge');
+    const cnt = document.getElementById('net-count');
+    if (!badge) return;
+    if (Game.Net && Game.Net.isConnected()) {
+      badge.classList.remove('hidden');
+      cnt.textContent = (Game.Net.peerCount() + 1) + '人';
+    } else badge.classList.add('hidden');
+  }
+
   function refreshWorld() {
     if (!el.world) return;
     const shadow = Game.state.worldName === 'shadow';
@@ -376,6 +386,6 @@ Game.UI = (function () {
     init, showGameUI, refreshHotbar, refreshStats, refreshInventory,
     refreshCraft, refreshAll, toggleInventory, toast, updateMinimap,
     openChest, openSharedChest, closeChest, refreshChest, refreshWorld,
-    showLore, closeLore, refreshQuest, openQuest, closeQuest, showEnding, showIntro,
+    showLore, closeLore, refreshQuest, openQuest, closeQuest, showEnding, showIntro, refreshNet,
   };
 })();
