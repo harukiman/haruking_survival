@@ -22,8 +22,8 @@ Game.Survival = (function () {
       p.regenTimer = 0;
       const wf = Game.Status && Game.Status.has('wellfed');
       const totem = nearHealTotem();
-      const regenSkill = Game.Player.skillBonus().regen;
-      if (regenSkill > 0 && p.health < p.maxHealth) p.health = Math.min(p.maxHealth, p.health + regenSkill); // スキル: 不屈
+      const regenSkill = Game.Player.skillBonus().regen + (Game.Status ? Game.Status.buffSum().regen : 0);
+      if (regenSkill > 0 && p.health < p.maxHealth) p.health = Math.min(p.maxHealth, p.health + regenSkill); // スキル不屈＋再生の薬
       if (totem && p.health < p.maxHealth) {
         p.health = Math.min(p.maxHealth, p.health + 3); // 癒しの祭壇
         Game.Render.spawnParticles(p.x, p.y - 6, '#7fd0a0', 1);

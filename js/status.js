@@ -8,7 +8,18 @@ Game.Status = (function () {
     infection: { name: '感染', icon: '🦠', dps: 1, color: '#b06ad0' },
     cold:      { name: '凍え', icon: '❄', dps: 1, color: '#7ac0e0' },
     wellfed:   { name: '満腹', icon: '🍗', buff: true, color: '#e0b04a' },
+    strength:  { name: '力の薬', icon: '💪', buff: true, color: '#ff8a4a' },
+    swiftness: { name: '俊足の薬', icon: '💨', buff: true, color: '#7fe0a0' },
+    ironskin:  { name: '守りの薬', icon: '🛡', buff: true, color: '#9fd8ff' },
+    regen_buff:{ name: '再生の薬', icon: '💗', buff: true, color: '#ff7aa0' },
   };
+  // バフの効果量（過剰にならない中庸値）
+  const BUFF = { strength: { atk: 4 }, swiftness: { spd: 0.15 }, ironskin: { armor: 4 }, regen_buff: { regen: 1 } };
+  function buffSum() {
+    const s = st(); const o = { atk: 0, spd: 0, armor: 0, regen: 0 };
+    for (const k in BUFF) { if (s[k] > 0) { for (const kk in BUFF[k]) o[kk] += BUFF[k][kk]; } }
+    return o;
+  }
 
   function st() { const p = Game.state.player; if (!p.status) p.status = {}; return p.status; }
   function apply(type, ticks) { const s = st(); s[type] = Math.max(s[type] || 0, ticks); flash(type); }
@@ -51,5 +62,5 @@ Game.Status = (function () {
     return out;
   }
 
-  return { TYPES, apply, add, has, cure, clearAll, update, activeList };
+  return { TYPES, apply, add, has, cure, clearAll, update, activeList, buffSum };
 })();

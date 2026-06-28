@@ -32,7 +32,7 @@ Game.Icons = (function () {
     if (def.vehicle) return 'vehicle';
     if (id === 'rocket') return 'rocket';
     if (def.respec) return 'book';
-    if (def.cures || def.heal != null) return 'potion';
+    if (def.cures || def.heal != null || def.buff) return 'potion';
     if (def.food != null) return 'food';
     if (/^ammo_|^shell|^bullet$|rocket_ammo|energy_cell/.test(id)) return 'ammo';
     if (def.place != null) return 'block';

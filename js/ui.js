@@ -587,7 +587,7 @@ Game.UI = (function () {
     if (def.flavor) h += '<div class="tt-flavor" style="margin-bottom:6px">' + def.flavor + '</div>';
     const btns = [];
     if (def.armor && def.slot) btns.push('<button id="inv-act" class="big-btn">装備する</button>');
-    else if (def.food || def.cures) btns.push('<button id="inv-act" class="big-btn">' + (def.cures ? '使う' : '食べる') + '</button>');
+    else if (def.food || def.cures || def.buff) btns.push('<button id="inv-act" class="big-btn">' + (def.food ? '食べる' : '使う') + '</button>');
     else if (Game.Loot.rollable(st.id) || def.tool) btns.push('<button id="inv-hot" class="big-btn alt">ホットバーへ装備</button>');
     if (Game.Net && Game.Net.isConnected()) btns.push('<button id="inv-give" class="big-btn alt">仲間に渡す</button>');
     btns.push('<button id="inv-drop" class="big-btn inv-discard">捨てる' + (st.count > 1 ? '（1個）' : '') + '</button>');

@@ -92,6 +92,14 @@ Game.Inventory = (function () {
     const def = Game.ITEMS[sl.id];
     const p = Game.state.player;
     // 治療アイテム（包帯/解毒薬）
+    if (def && def.buff) {
+      Game.Status.apply(def.buff.type, def.buff.dur);
+      Game.Player.applyEquipStats();
+      Game.Render.spawnParticles(p.x, p.y - 6, '#ffe9a0', 10);
+      remove(sl.id, 1); Game.Audio.play('eat');
+      Game.UI.toast(def.name + ' を飲んだ — ' + (Game.Status.TYPES[def.buff.type] ? Game.Status.TYPES[def.buff.type].name : '') + ' 効果');
+      Game.UI.refreshAll(); return true;
+    }
     if (def && def.cures) {
       def.cures.forEach(function (c) { Game.Status.cure(c); });
       if (def.heal) p.health = Math.min(p.maxHealth, p.health + def.heal);

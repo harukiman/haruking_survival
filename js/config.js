@@ -229,6 +229,11 @@ Game.ITEMS = {
   // 治療・薬
   bandage:     { name:'包帯', stack:16, color:'#eee', heal:8, cures:['bleed'] },
   antidote:    { name:'解毒薬', stack:16, color:'#7fd0a0', cures:['poison','infection'] },
+  // バフ薬（一時強化）
+  strength_potion:{ name:'力の薬', stack:16, color:'#ff8a4a', buff:{type:'strength', dur:1800}, flavor:'飲めば一時、膂力がみなぎる。' },
+  swift_potion:   { name:'俊足の薬', stack:16, color:'#7fe0a0', buff:{type:'swiftness', dur:1800}, flavor:'風のごとく駆ける。' },
+  iron_potion:    { name:'守りの薬', stack:16, color:'#9fd8ff', buff:{type:'ironskin', dur:1800}, flavor:'肌が鋼のごとく硬くなる。' },
+  regen_potion:   { name:'再生の薬', stack:16, color:'#ff7aa0', buff:{type:'regen_buff', dur:900}, flavor:'傷がみるみる塞がっていく。' },
   iron_helmet: { name:'鉄の兜', stack:1, color:'#d8d8dc', armor:2, slot:'head' },
   iron_chest:  { name:'鉄の鎧', stack:1, color:'#d8d8dc', armor:4, slot:'chest' },
   // 設置物
@@ -429,6 +434,10 @@ Game.RECIPES = [
   // 治療・防寒
   { out:{id:'bandage', n:2}, in:{string:2}, station:null },
   { out:{id:'antidote', n:1}, in:{moonleaf:2, flower:1}, station:null },
+  { out:{id:'strength_potion', n:1}, in:{flower:2, bone:1}, station:'crafting_table' },
+  { out:{id:'swift_potion', n:1}, in:{flower:1, moonleaf:1}, station:'crafting_table' },
+  { out:{id:'iron_potion', n:1}, in:{iron:1, flower:1}, station:'crafting_table' },
+  { out:{id:'regen_potion', n:1}, in:{moonleaf:2, lumen:1}, station:'crafting_table' },
   { out:{id:'fur_coat', n:1}, in:{hide:5}, station:'crafting_table' },
   { out:{id:'enchant_table', n:1}, in:{shadow_steel:2, lumen:3}, station:'crafting_table' },
   { out:{id:'leather', n:1}, in:{guts:2}, station:'crafting_table' },
@@ -604,7 +613,7 @@ Game.ITEM_GLYPH = {
   wood_axe:'🪓', stone_axe:'🪓', iron_axe:'🪓', shadow_axe:'🪓', wood_hoe:'🌾', stone_hoe:'🌾',
   wood_sword:'🗡️', stone_sword:'🗡️', iron_sword:'⚔️', shadow_blade:'⚔️',
   leather_helmet:'🎩', iron_helmet:'⛑️', shadow_helmet:'🪖', leather_chest:'🦺', iron_chest:'🛡️', shadow_chest:'🛡️', fur_coat:'🧥', lumen_charm:'🔆', sanity_charm:'🔮',
-  bandage:'🩹', antidote:'🧪',
+  bandage:'🩹', antidote:'🧪', strength_potion:'🧪', swift_potion:'🧪', iron_potion:'🧪', regen_potion:'🧪',
   torch:'🔥', campfire:'🔥', lantern:'🏮', lumen_lantern:'💡', crafting_table:'🛠️', furnace:'🔥', chest:'📦', bed:'🛏️', fence:'🚧', door:'🚪', wall:'🧱', window:'🪟', bridge:'🌉', sign:'🪧', wood_floor:'🟫', stone_floor:'⬜',
   shadow_shard:'🌑', shadow_mirror:'🪞', shadow_crystal:'🔮', lumen:'✨', shadow_steel:'⬛', shadow_core:'💜', unity_core:'⭐', void_heart:'💗', rift_anchor:'🕳️', enchant_table:'✦',
   bullet:'🔸', pistol:'🔫', shadow_rifle:'🔫', car:'🚗', boat:'🛶', plane:'✈️',

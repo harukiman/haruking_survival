@@ -68,7 +68,7 @@ Game.Player = (function () {
     // 砂嵐/吹雪は足が重い（飛行中は影響なし）
     const wt = Game.state.weather && Game.state.weather.type;
     if ((wt === 'sandstorm' || wt === 'blizzard') && p.vehicle !== 'plane' && p.vehicle !== 'carpet') spd *= 0.7;
-    if (!p.vehicle) spd *= (1 + skillBonus().moveSpd); // スキル: 健脚など
+    if (!p.vehicle) spd *= (1 + skillBonus().moveSpd + (Game.Status ? Game.Status.buffSum().spd : 0)); // スキル健脚＋俊足の薬
     if (moving) {
       dx /= len; dy /= len;
       p.dir = intent.dir || p.dir;
@@ -240,7 +240,7 @@ Game.Player = (function () {
     }
     if (def.shift) { Game.World.shift(); return; }
     if (def.respec) { const n = respec(); Game.Inventory.remove(sel.id, 1); Game.UI.toast('記憶の書を読んだ — スキルを振り直した（' + n + 'P返却）'); Game.UI.refreshAll(); return; }
-    if (def.food || def.cures) { Game.Inventory.useSelected(); return; }
+    if (def.food || def.cures || def.buff) { Game.Inventory.useSelected(); return; }
     if (def.armor) { equipSelectedArmor(); return; }
 
     // --- 以降はタイルが必要（耕作/植える/設置）---
@@ -376,7 +376,7 @@ Game.Player = (function () {
     const a = Game.state.player.armor;
     let s = 0;
     for (const k in a) if (a[k]) s += Game.Loot.stats(a[k]).armor;
-    return s + setBonus().armor + levelArmorBonus() + skillBonus().armor;
+    return s + setBonus().armor + levelArmorBonus() + skillBonus().armor + (Game.Status ? Game.Status.buffSum().armor : 0);
   }
 
   // 装備セット効果（head+chestが同セット）
@@ -428,7 +428,7 @@ Game.Player = (function () {
   function levelDmgBonus() { const p = Game.state.player; return (p.str || 0) + Math.floor((p.level - 1) * 0.5); }
   function levelArmorBonus() { const p = Game.state.player; return Math.floor(p.level / 4); }
   function attackCooldown() { const p = Game.state.player; return Math.max(7, Math.round(Game.TUNE.ATTACK_COOLDOWN * (1 - (p.dex || 0) * 0.02))); }
-  function effAttack(baseAtk) { return Math.max(1, baseAtk + levelDmgBonus() + skillBonus().atk); }
+  function effAttack(baseAtk) { return Math.max(1, baseAtk + levelDmgBonus() + skillBonus().atk + (Game.Status ? Game.Status.buffSum().atk : 0)); }
   // 装備比較用: 現在手持ち武器の実効攻撃 / 指定スロットの装備防御
   function currentWeaponAtk() {
     const sl = Game.Inventory.slots()[Game.state.player.hotbarIndex];
