@@ -33,8 +33,8 @@ window.Game = window.Game || {};
     const worlds = { light: mkWorld(), shadow: mkWorld() };
     const st = {
       seed: seed >>> 0,
-      tick: 0,
-      timeOfDay: 0.3,
+      tick: Math.floor(0.33 * Game.DAY_LENGTH), // 朝から開始（夜・敵から始めない）
+      timeOfDay: 0.33,
       player: Game.Player.makeDefault(),
       camera: { x: 0, y: 0 },
       inventory: Game.Inventory.makeEmpty(),

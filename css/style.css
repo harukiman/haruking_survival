@@ -92,17 +92,18 @@ body.shadow-mode #app::after {
 
 /* ===== モバイル操作 ===== */
 #touch-controls { position: absolute; inset: 0; z-index: 25; pointer-events: none; }
-#dpad { position: absolute; left: 18px; bottom: 90px; width: 150px; height: 150px; pointer-events: auto; }
-.dbtn { position: absolute; width: 50px; height: 50px; font-size: 1.1rem; border-radius: 10px;
-  background: rgba(40,52,72,0.7); border: 1px solid #4a5e7e; color: #e8edf2; }
-.dbtn.up { left: 50px; top: 0; } .dbtn.down { left: 50px; top: 100px; }
-.dbtn.left { left: 0; top: 50px; } .dbtn.right { left: 100px; top: 50px; }
-#action-btns { position: absolute; right: 18px; bottom: 90px; display: flex; flex-direction: column; gap: 12px; align-items: flex-end; pointer-events: auto; }
-.abtn { width: 78px; height: 60px; border-radius: 14px; font-size: 1rem; font-weight: 700;
-  background: rgba(74,143,60,0.82); border: 1px solid #6fc46b; color: #fff; }
-.abtn:active { filter: brightness(1.2); }
-#btn-place { background: rgba(47,90,143,0.82); border-color: #5a8fd6; }
-.abtn.small { width: 60px; height: 48px; background: rgba(60,70,90,0.82); border-color: #6a7894; }
+#dpad { position: absolute; left: 16px; bottom: 96px; width: 186px; height: 186px; pointer-events: auto; }
+.dbtn { position: absolute; width: 62px; height: 62px; font-size: 1.3rem; border-radius: 12px;
+  background: rgba(40,52,72,0.78); border: 1px solid #4a5e7e; color: #e8edf2; transition: transform .05s; }
+.dbtn.up { left: 62px; top: 0; } .dbtn.down { left: 62px; top: 124px; }
+.dbtn.left { left: 0; top: 62px; } .dbtn.right { left: 124px; top: 62px; }
+.dbtn:active { transform: scale(0.9); background: rgba(70,90,120,0.9); }
+#action-btns { position: absolute; right: 16px; bottom: 96px; display: flex; flex-direction: column; gap: 12px; align-items: flex-end; pointer-events: auto; }
+.abtn { width: 88px; height: 66px; border-radius: 16px; font-size: 1.05rem; font-weight: 700;
+  background: rgba(74,143,60,0.85); border: 1px solid #6fc46b; color: #fff; transition: transform .05s; }
+.abtn:active { transform: scale(0.92); filter: brightness(1.25); }
+#btn-place { background: rgba(47,90,143,0.85); border-color: #5a8fd6; }
+.abtn.small { width: 70px; height: 52px; background: rgba(60,70,90,0.85); border-color: #6a7894; }
 
 /* ===== トースト ===== */
 #toast { position: absolute; bottom: 78px; left: 50%; transform: translateX(-50%) translateY(10px);
@@ -112,18 +113,34 @@ body.shadow-mode #app::after {
 
 /* ===== スマホ最適化 ===== */
 @media (max-width: 560px) {
-  .bar { width: 110px; }
-  #minimap { width: 72px; height: 72px; }
+  #hud { padding: 6px 8px; gap: 7px; }
+  .bar { width: 88px; height: 11px; }
+  .bar-wrap { gap: 4px; }
+  .bar-label { width: 15px; font-size: .8rem; }
+  #stats { gap: 3px; }
+  #minimap { width: 64px; height: 64px; }
   #minimap-wrap { margin-left: auto; }
-  #level-badge { min-width: 64px; font-size: .72rem; padding: 3px 7px; }
-  #clock { font-size: .78rem; padding: 3px 7px; }
-  .slot { width: 40px; height: 40px; }
-  .slot .icon { width: 22px; height: 22px; }
-  #hotbar { bottom: 8px; gap: 3px; }
+  #level-badge { min-width: 58px; font-size: .68rem; padding: 2px 6px; gap: 2px; }
+  #world-label { font-size: .64rem; padding: 1px 0; }
+  #clock { font-size: .74rem; padding: 2px 7px; }
+  .slot { width: 44px; height: 44px; }
+  .slot .icon { width: 24px; height: 24px; }
+  #hotbar .slot { width: 37px; height: 37px; }
+  #hotbar .slot .icon { width: 20px; height: 20px; }
+  #hotbar { bottom: 8px; gap: 2px; padding: 4px; }
   .grid { grid-template-columns: repeat(6, 1fr); }
   .craft-row { flex-wrap: wrap; }
   .craft-row .cin { width: 100%; text-align: left; margin-left: 30px; }
   .title-box h1 { font-size: 1.8rem; }
+  #toast { bottom: 96px; font-size: .82rem; }
+}
+/* 横画面の小さい端末 */
+@media (max-height: 460px) {
+  #dpad { bottom: 64px; width: 156px; height: 156px; }
+  .dbtn { width: 52px; height: 52px; }
+  .dbtn.up{left:52px;top:0}.dbtn.down{left:52px;top:104px}.dbtn.left{left:0;top:52px}.dbtn.right{left:104px;top:52px}
+  #action-btns { bottom: 64px; gap: 8px; }
+  .abtn { height: 52px; }
 }
 @media (max-height: 480px) {
   #dpad, #action-btns { bottom: 56px; }
