@@ -9,7 +9,7 @@ Game.Survival = (function () {
     p.hungerTimer++;
     const moving = Game.Input.intent.dx !== 0 || Game.Input.intent.dy !== 0 || Game.Player.mining.active;
     let drainEvery = moving ? 110 : 170;
-    const hs = Game.Player.setBonus().hungerSlow;
+    const hs = Math.min(0.8, Game.Player.setBonus().hungerSlow + Game.Player.skillBonus().hungerSlow);
     if (hs) drainEvery = Math.round(drainEvery / (1 - hs)); // 革セットで空腹緩やか
     if (p.hungerTimer >= drainEvery) {
       p.hungerTimer = 0;
@@ -22,6 +22,8 @@ Game.Survival = (function () {
       p.regenTimer = 0;
       const wf = Game.Status && Game.Status.has('wellfed');
       const totem = nearHealTotem();
+      const regenSkill = Game.Player.skillBonus().regen;
+      if (regenSkill > 0 && p.health < p.maxHealth) p.health = Math.min(p.maxHealth, p.health + regenSkill); // スキル: 不屈
       if (totem && p.health < p.maxHealth) {
         p.health = Math.min(p.maxHealth, p.health + 3); // 癒しの祭壇
         Game.Render.spawnParticles(p.x, p.y - 6, '#7fd0a0', 1);
@@ -51,6 +53,7 @@ Game.Survival = (function () {
         if (a.roll && Game.Loot && Game.Loot.stats(a).sanityResist) sanityResist = true;
       }
       if (Game.Player.setBonus().sanityResist) sanityResist = true; // 影鋼セット
+      if (Game.Player.skillFlag('sanityResist')) sanityResist = true; // スキル: 精神統一
       if (sanityResist) drain *= 0.5;
       if (immune) drain = 0;
       if (nearLight()) drain *= 0.3;

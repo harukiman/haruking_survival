@@ -68,7 +68,7 @@ Game.Player = (function () {
     // 砂嵐/吹雪は足が重い（飛行中は影響なし）
     const wt = Game.state.weather && Game.state.weather.type;
     if ((wt === 'sandstorm' || wt === 'blizzard') && p.vehicle !== 'plane' && p.vehicle !== 'carpet') spd *= 0.7;
-    if (p.skills && p.skills.swift && !p.vehicle) spd *= 1.12; // スキル: 俊足
+    if (!p.vehicle) spd *= (1 + skillBonus().moveSpd); // スキル: 健脚など
     if (moving) {
       dx /= len; dy /= len;
       p.dir = intent.dir || p.dir;
@@ -166,7 +166,7 @@ Game.Player = (function () {
     mining.active = true;
     const sel = Game.Inventory.selectedItemDef();
     const matched = sel && sel.tool === meta.tool;
-    const speed = matched ? (1 + sel.tier) : 0.6;
+    const speed = (matched ? (1 + sel.tier) : 0.6) + skillBonus().mining;
     mining.progress += speed;
     if (Game.state.tick % 6 === 0) Game.Audio.play('mine');
     if (mining.progress >= meta.hp) { breakBlock(t.tx, t.ty, obj, meta); mining.active = false; mining.progress = 0; }
@@ -370,8 +370,7 @@ Game.Player = (function () {
     const a = Game.state.player.armor;
     let s = 0;
     for (const k in a) if (a[k]) s += Game.Loot.stats(a[k]).armor;
-    const p = Game.state.player;
-    return s + setBonus().armor + levelArmorBonus() + (p.skills && p.skills.tough ? 3 : 0);
+    return s + setBonus().armor + levelArmorBonus() + skillBonus().armor;
   }
 
   // 装備セット効果（head+chestが同セット）
@@ -398,17 +397,33 @@ Game.Player = (function () {
     let hpBonus = 0;
     for (const k in p.armor) if (p.armor[k]) hpBonus += Game.Loot.stats(p.armor[k]).hp;
     const base = p.baseMaxHealth || 100;
-    p.maxHealth = base + hpBonus + (p.vit || 0) * 5;
+    const sb = skillBonus();
+    p.maxHealth = base + hpBonus + (p.vit || 0) * 5 + sb.hp;
+    p.maxStamina = 100 + sb.staminaMax;
     if (p.health > p.maxHealth) p.health = p.maxHealth;
+    if (p.stamina > p.maxStamina) p.stamina = p.maxStamina;
   }
 
-  // ===== RPG: レベル/ステによる補正 =====
+  // ===== RPG: レベル/ステ/スキルツリーによる補正 =====
+  function skillBonus() {
+    const sk = Game.state.player.skills || {};
+    const o = { atk: 0, armor: 0, hp: 0, lifesteal: 0, moveSpd: 0, crit: 0, mining: 0, hungerSlow: 0, regen: 0, staminaMax: 0, xpBoost: 0 };
+    for (const id in sk) {
+      if (!sk[id]) continue; const n = Game.SKILL_BY_ID[id]; if (!n) continue;
+      for (const k in n.eff) { if (k === 'flag') continue; o[k] = (o[k] || 0) + n.eff[k]; }
+    }
+    return o;
+  }
+  function skillFlag(f) {
+    const sk = Game.state.player.skills || {};
+    for (const id in sk) { if (sk[id] && Game.SKILL_BY_ID[id] && Game.SKILL_BY_ID[id].eff.flag === f) return true; }
+    return false;
+  }
   function levelDmgBonus() { const p = Game.state.player; return (p.str || 0) + Math.floor((p.level - 1) * 0.5); }
   function levelArmorBonus() { const p = Game.state.player; return Math.floor(p.level / 4); }
   function attackCooldown() { const p = Game.state.player; return Math.max(7, Math.round(Game.TUNE.ATTACK_COOLDOWN * (1 - (p.dex || 0) * 0.02))); }
-  function effAttack(baseAtk) { return Math.max(1, baseAtk + levelDmgBonus()); }
+  function effAttack(baseAtk) { return Math.max(1, baseAtk + levelDmgBonus() + skillBonus().atk); }
 
-  // スキルポイントでステ強化／スキル習得
   function spendStat(stat) {
     const p = Game.state.player;
     if (p.skillPoints <= 0) return false;
@@ -417,14 +432,25 @@ Game.Player = (function () {
     applyEquipStats(); Game.UI.refreshStats && Game.UI.refreshStats();
     Game.Audio.play('levelup'); return true;
   }
-  function unlockSkill(id, cost) {
-    const p = Game.state.player;
-    if (p.skills[id] || p.skillPoints < cost) return false;
-    p.skills[id] = 1; p.skillPoints -= cost; Game.Audio.play('enchant'); return true;
+  // ツリー: 前提を満たし、ポイント足りれば習得
+  function canUnlock(id) {
+    const p = Game.state.player, n = Game.SKILL_BY_ID[id];
+    if (!n || p.skills[id]) return false;
+    if (p.skillPoints < n.cost) return false;
+    for (let i = 0; i < n.req.length; i++) if (!p.skills[n.req[i]]) return false;
+    return true;
+  }
+  function unlockSkill(id) {
+    const p = Game.state.player, n = Game.SKILL_BY_ID[id];
+    if (!n || !canUnlock(id)) return false;
+    p.skills[id] = 1; p.skillPoints -= n.cost;
+    applyEquipStats(); if (p.health > p.maxHealth) p.health = p.maxHealth;
+    Game.UI.refreshStats && Game.UI.refreshStats(); Game.Audio.play('enchant'); return true;
   }
   function respec() {
     const p = Game.state.player;
-    const refunded = (p.str || 0) + (p.vit || 0) + (p.dex || 0) + Object.keys(p.skills || {}).reduce(function (a, k) { return a + (Game.SKILLS[k] ? Game.SKILLS[k].cost : 1); }, 0);
+    let refunded = (p.str || 0) + (p.vit || 0) + (p.dex || 0);
+    for (const id in p.skills) { if (p.skills[id] && Game.SKILL_BY_ID[id]) refunded += Game.SKILL_BY_ID[id].cost; }
     p.str = 0; p.vit = 0; p.dex = 0; p.skills = {}; p.skillPoints += refunded;
     applyEquipStats(); if (p.health > p.maxHealth) p.health = p.maxHealth;
     Game.UI.refreshStats && Game.UI.refreshStats();
@@ -451,8 +477,9 @@ Game.Player = (function () {
 
   function gainXP(n) {
     const p = Game.state.player;
-    p.xp += n;
-    while (p.xp >= p.xpNext) {
+    if (p.level >= (Game.MAX_LEVEL || 9999)) { p.xp = 0; return; }
+    p.xp += Math.max(1, Math.round(n * (1 + skillBonus().xpBoost)));
+    while (p.xp >= p.xpNext && p.level < (Game.MAX_LEVEL || 9999)) {
       p.xp -= p.xpNext; p.level++; p.xpNext = 5 + p.level * 3;
       p.baseMaxHealth = (p.baseMaxHealth || 100) + 2;
       p.skillPoints = (p.skillPoints || 0) + 2; // レベルごとにスキルポイント
@@ -503,5 +530,6 @@ Game.Player = (function () {
     makeDefault, spawnAt, update, targetTile, mining, playerTile, breakBlock,
     interact, gainXP, totalArmor, setBonus, sleep, equipSelectedArmor, equipFromInventory, applyEquipStats,
     effAttack, attackCooldown, levelDmgBonus, levelArmorBonus, spendStat, unlockSkill, respec,
+    skillBonus, skillFlag, canUnlock,
   };
 })();

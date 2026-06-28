@@ -84,6 +84,20 @@ body.left-handed #action-btns { right: auto; left: calc(12px + env(safe-area-ins
 .skill-row .sk-buy { margin-left: auto; padding: 8px 14px; border-radius: 8px; background: #3a7a4a; border: 1px solid #6fc46b; color: #fff; font-weight: 700; cursor: pointer; white-space: nowrap; }
 .skill-row.owned { opacity: .7; } .skill-row.owned .sk-buy { background: #444; border-color: #666; cursor: default; }
 .sp-badge { color: #ffe27a; font-weight: 700; }
+/* スキルツリー */
+.sk-branch { margin: 8px 0; }
+.sk-branch-name { font-weight: 700; color: #cfe0f0; font-size: .9rem; margin-bottom: 4px; }
+.sk-tree { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
+.sk-tier { display: flex; flex-direction: column; gap: 6px; min-width: 92px; }
+.sk-node { text-align: left; border-radius: 9px; padding: 7px 8px; cursor: pointer; border: 1px solid #33455e;
+  background: rgba(30,40,58,0.7); color: #cfe0f0; display: flex; flex-direction: column; gap: 1px; }
+.sk-node b { font-size: .8rem; }
+.sk-node .sk-cost { font-size: .68rem; color: #ffe27a; }
+.sk-node .sk-desc { font-size: .66rem; color: #9fb0c4; line-height: 1.25; }
+.sk-node.owned { background: rgba(47,122,74,0.5); border-color: #6fc46b; }
+.sk-node.owned .sk-cost { color: #bdf0c4; }
+.sk-node.can { border-color: #e8c54a; box-shadow: 0 0 6px rgba(232,197,74,0.4); }
+.sk-node.locked { opacity: .42; }
 #level-badge { cursor: pointer; pointer-events: auto; }
 /* エンチャント詳細 */
 .ench-name { font-weight: 700; font-size: 1rem; margin: 8px 0 2px; }

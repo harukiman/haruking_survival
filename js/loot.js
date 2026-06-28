@@ -118,7 +118,7 @@ Game.Loot = (function () {
     if (Game.World.inDepths()) b += 0.15;
     b += (Game.state.ngLevel || 0) * 0.08;
     const pl = Game.state.player;
-    if (pl && pl.skills && pl.skills.forager) b += 0.12; // スキル: 採取の達人
+    if (Game.Player.skillFlag && Game.Player.skillFlag('forager')) b += 0.12; // スキル: 採取の達人
     return b;
   }
 

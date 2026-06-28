@@ -166,16 +166,28 @@ Game.UI = (function () {
     stats.forEach(function (s) {
       h += '<div class="stat-row"><span class="sname">' + s[1] + ' <em>' + s[2] + '</em></span><span class="sval">' + (p[s[0]] || 0) + '</span><button class="stat-plus" data-stat="' + s[0] + '"' + ((p.skillPoints || 0) <= 0 ? ' disabled' : '') + '>＋</button></div>';
     });
-    h += '<h2>スキル</h2>';
-    for (const id in Game.SKILLS) {
-      const sk = Game.SKILLS[id]; const owned = p.skills && p.skills[id];
-      h += '<div class="skill-row' + (owned ? ' owned' : '') + '"><div><b>' + sk.name + '</b> <span style="color:#8fa3bb">(' + sk.cost + 'P)</span><br><span style="color:#9fb0c4;font-size:.8rem">' + sk.desc + '</span></div>' +
-        (owned ? '<span class="sk-buy">習得済</span>' : '<button class="sk-buy" data-skill="' + id + '"' + ((p.skillPoints || 0) < sk.cost ? ' disabled style="opacity:.4"' : '') + '>習得</button>') + '</div>';
-    }
-    h += '<p class="hint">スキルPは好きな時に振れます。振り直しは「記憶の書」(レア)を使用。</p>';
+    h += '<h2>スキルツリー</h2>';
+    // 系統ごとに tier 列でツリー表示。前提未達は薄く、習得可は強調
+    Game.SKILL_BRANCHES.forEach(function (br) {
+      h += '<div class="sk-branch"><div class="sk-branch-name">' + br[1] + '</div><div class="sk-tree">';
+      const nodes = Game.SKILL_TREE.filter(function (n) { return n.branch === br[0]; });
+      for (let t = 1; t <= 4; t++) {
+        h += '<div class="sk-tier">';
+        nodes.filter(function (n) { return n.tier === t; }).forEach(function (n) {
+          const owned = p.skills && p.skills[n.id];
+          const can = Game.Player.canUnlock(n.id);
+          const cls = owned ? 'owned' : can ? 'can' : 'locked';
+          h += '<button class="sk-node ' + cls + '" data-skill="' + n.id + '" title="' + n.desc + '">' +
+            '<b>' + n.name + '</b><span class="sk-cost">' + (owned ? '習得済' : n.cost + 'P') + '</span><span class="sk-desc">' + n.desc + '</span></button>';
+        });
+        h += '</div>';
+      }
+      h += '</div></div>';
+    });
+    h += '<p class="hint">前提スキルを習得すると次が解放。振り直しは「記憶の書」(レア)。レベル上限 ' + (Game.MAX_LEVEL || 9999) + '。</p>';
     body.innerHTML = h;
     body.querySelectorAll('.stat-plus').forEach(function (b) { b.addEventListener('click', function () { Game.Player.spendStat(b.getAttribute('data-stat')); renderStats(); }); });
-    body.querySelectorAll('.sk-buy[data-skill]').forEach(function (b) { b.addEventListener('click', function () { const id = b.getAttribute('data-skill'); if (Game.Player.unlockSkill(id, Game.SKILLS[id].cost)) renderStats(); }); });
+    body.querySelectorAll('.sk-node[data-skill]').forEach(function (b) { b.addEventListener('click', function () { const id = b.getAttribute('data-skill'); if (Game.Player.unlockSkill(id)) renderStats(); }); });
   }
 
   // 発見済みランドマークのマーカー色

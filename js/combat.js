@@ -31,11 +31,16 @@ Game.Combat = (function () {
 
     const slot = Game.Inventory.selectedSlot();
     const st = Game.Loot.stats(slot);
-    // 武器ダメージにレベル/STR補正（同じ装備でもレベルで±）
-    const dmg = Game.Player.effAttack(st.atk > 0 ? st.atk : 1);
+    // 武器ダメージにレベル/STR/スキル補正（同じ装備でもレベルで±）
+    let dmg = Game.Player.effAttack(st.atk > 0 ? st.atk : 1);
+    // 会心（クリティカル）
+    const critCh = Game.Player.skillBonus().crit;
+    const isCrit = critCh > 0 && Math.random() < critCh;
+    if (isCrit) dmg = Math.round(dmg * 2);
     // 範囲攻撃: スキル「旋風斬り」 or 範囲武器(大剣/戦鎚)は範囲内の敵すべてに当てる
     const wdef = slot && Game.ITEMS[slot.id];
-    const aoe = (p.skills && p.skills.aoe) || (wdef && wdef.aoe);
+    const aoe = Game.Player.skillFlag('aoe') || (wdef && wdef.aoe);
+    if (isCrit && Game.Render.spawnFloat) Game.Render.spawnFloat(best.x, best.y - 18, 'CRIT!', '#ff5a4a', true);
     const targets = [];
     if (aoe) {
       for (let i = 0; i < mobs.length; i++) { const m = mobs[i]; if (m.def.friendly) continue; if (Math.hypot(m.x - p.x, m.y - p.y) <= rangePx + m.def.size * 0.5) targets.push(m); }
@@ -46,7 +51,7 @@ Game.Combat = (function () {
       else Game.Mobs.damageMob(tg, dmg, p.x, p.y);
     }
     // 吸血（装備のvampiric＋スキル lifesteal）
-    let ls = st.lifesteal || 0; if (p.skills && p.skills.lifesteal) ls += 0.12;
+    let ls = (st.lifesteal || 0) + Game.Player.skillBonus().lifesteal;
     if (ls > 0 && p.health < p.maxHealth) {
       p.health = Math.min(p.maxHealth, p.health + Math.max(1, Math.round(dmg * ls)));
       Game.UI.refreshStats();

@@ -430,14 +430,35 @@ Game.SETS = {
   star:    { name:'星鋼装束', items:['star_helmet','gravity_boots'], armor:3 },
 };
 
-// スキル（スキルポイントで習得・任意のタイミング、振り直しは記憶の書）
-Game.SKILLS = {
-  lifesteal: { name:'吸血', cost:3, desc:'攻撃時にダメージの一部を回復' },
-  aoe:       { name:'旋風斬り', cost:4, desc:'近接攻撃が周囲の敵すべてに当たる' },
-  tough:     { name:'鉄壁', cost:3, desc:'防御+3' },
-  swift:     { name:'俊足', cost:3, desc:'移動速度+12%' },
-  forager:   { name:'採取の達人', cost:3, desc:'戦利品の質が上がる' },
-};
+// スキルツリー（4系統・前提あり）。スキルポイントで習得、振り直しは記憶の書
+Game.SKILL_TREE = [
+  { id:'w1', branch:'war', name:'力の心得', tier:1, cost:1, req:[], eff:{atk:2}, desc:'攻撃+2' },
+  { id:'w2', branch:'war', name:'鋭刃', tier:2, cost:2, req:['w1'], eff:{atk:3}, desc:'攻撃+3' },
+  { id:'w3', branch:'war', name:'会心の極み', tier:2, cost:2, req:['w1'], eff:{crit:0.12}, desc:'会心率+12%(2倍)' },
+  { id:'w4', branch:'war', name:'旋風斬り', tier:3, cost:3, req:['w2'], eff:{flag:'aoe'}, desc:'近接が周囲の敵全てに当たる' },
+  { id:'w5', branch:'war', name:'吸血', tier:3, cost:3, req:['w3'], eff:{lifesteal:0.12}, desc:'与ダメの一部を回復' },
+  { id:'w6', branch:'war', name:'狂戦士', tier:4, cost:4, req:['w4','w5'], eff:{atk:6, crit:0.08}, desc:'攻撃+6・会心+8%' },
+  { id:'g1', branch:'guard', name:'頑健', tier:1, cost:1, req:[], eff:{hp:20}, desc:'最大HP+20' },
+  { id:'g2', branch:'guard', name:'鉄壁', tier:2, cost:2, req:['g1'], eff:{armor:3}, desc:'防御+3' },
+  { id:'g3', branch:'guard', name:'不屈', tier:2, cost:2, req:['g1'], eff:{regen:1}, desc:'自然回復+1' },
+  { id:'g4', branch:'guard', name:'重装', tier:3, cost:3, req:['g2'], eff:{armor:2, hp:10}, desc:'防御+2・HP+10' },
+  { id:'g5', branch:'guard', name:'守護霊', tier:4, cost:4, req:['g3','g4'], eff:{armor:4, hp:30}, desc:'防御+4・HP+30' },
+  { id:'s1', branch:'surv', name:'健脚', tier:1, cost:1, req:[], eff:{moveSpd:0.12}, desc:'移動速度+12%' },
+  { id:'s2', branch:'surv', name:'採掘の達人', tier:2, cost:2, req:['s1'], eff:{mining:1}, desc:'採掘速度UP' },
+  { id:'s3', branch:'surv', name:'採取の達人', tier:2, cost:2, req:['s1'], eff:{flag:'forager'}, desc:'戦利品の質UP' },
+  { id:'s4', branch:'surv', name:'健啖家', tier:3, cost:3, req:['s2'], eff:{hungerSlow:0.4}, desc:'空腹が減りにくい' },
+  { id:'s5', branch:'surv', name:'体力増強', tier:3, cost:3, req:['s3'], eff:{staminaMax:50}, desc:'最大スタミナ+50' },
+  { id:'s6', branch:'surv', name:'サバイバー', tier:4, cost:4, req:['s4','s5'], eff:{hp:20, moveSpd:0.08}, desc:'HP+20・移動+8%' },
+  { id:'a1', branch:'arcane', name:'探究心', tier:1, cost:1, req:[], eff:{xpBoost:0.15}, desc:'獲得経験値+15%' },
+  { id:'a2', branch:'arcane', name:'精神統一', tier:2, cost:2, req:['a1'], eff:{flag:'sanityResist'}, desc:'影で正気が減りにくい' },
+  { id:'a3', branch:'arcane', name:'魔の冴え', tier:2, cost:2, req:['a1'], eff:{crit:0.1}, desc:'会心率+10%' },
+  { id:'a4', branch:'arcane', name:'生命錬成', tier:3, cost:3, req:['a3'], eff:{lifesteal:0.08, hp:10}, desc:'吸血+8%・HP+10' },
+  { id:'a5', branch:'arcane', name:'賢者', tier:4, cost:4, req:['a2','a4'], eff:{atk:3, hp:20, xpBoost:0.15}, desc:'攻撃+3・HP+20・経験+15%' },
+];
+Game.SKILL_BY_ID = {};
+Game.SKILL_TREE.forEach(function (n) { Game.SKILL_BY_ID[n.id] = n; });
+Game.SKILL_BRANCHES = [['war', '⚔ 剣'], ['guard', '🛡 守'], ['surv', '🌿 探'], ['arcane', '✦ 魔']];
+Game.MAX_LEVEL = 9999;
 
 // 難易度（自由度: のんびり建築〜高難度）
 Game.DIFFICULTIES = {
