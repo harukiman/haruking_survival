@@ -43,6 +43,14 @@ Game.Render = (function () {
 
     Game.Camera.follow(alpha);
 
+    // 画面シェイク（設定 screenShake 尊重）: camera にフレーム限定オフセットを加える
+    if (Game.Settings && Game.Settings.get('screenShake') === false) shakeAmt = 0;
+    if (shakeAmt > 0.3) {
+      Game.state.camera.x += (Math.random() * 2 - 1) * shakeAmt;
+      Game.state.camera.y += (Math.random() * 2 - 1) * shakeAmt;
+      shakeAmt *= 0.84;
+    } else shakeAmt = 0;
+
     // 可視チャンクを blit
     const range = Game.Camera.visibleTileRange();
     const ccx0 = Game.World.toChunkCoord(range.tx0);
@@ -140,6 +148,11 @@ Game.Render = (function () {
 
   // 世界シフト時の画面フラッシュ
   let flashColor = null, flashT = 0;
+  let shakeAmt = 0;
+  function shake(amt) {
+    if (Game.Settings && Game.Settings.get('screenShake') === false) return;
+    shakeAmt = Math.min(16, Math.max(shakeAmt, amt));
+  }
   function flash(color) { flashColor = color; flashT = 22; }
   function drawFlash(ctx) {
     if (flashT <= 0) return;
@@ -427,5 +440,5 @@ Game.Render = (function () {
     ctx.textAlign = 'left';
   }
 
-  return { draw, buildChunkCache, spawnParticles, spawnBlood, spawnSlash, spawnFloat, spawnLightning, flash, hurtFlash };
+  return { draw, buildChunkCache, spawnParticles, spawnBlood, spawnSlash, spawnFloat, spawnLightning, flash, hurtFlash, shake };
 })();

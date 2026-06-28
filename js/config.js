@@ -648,6 +648,8 @@ Game.ARMOR_SLOTS = ['head', 'chest'];
 Game.TUNE = {
   ATTACK_COOLDOWN: 14,        // tick
   ATTACK_RANGE: 1.6,          // tile
+  BASE_CRIT: 0.08,            // 基礎会心率(スキル/装備で加算)
+  CRIT_MULT: 1.8,             // 会心ダメージ倍率(控えめ)
   MOB_CAP: 16,
   ELITE_CHANCE: 0.04,         // 非ボス敵対モブが精鋭(elite)化する確率
   ELITE_HP_MULT: 2.2,         // 精鋭のHP倍率(インフレ防止: 控えめ)

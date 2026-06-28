@@ -384,18 +384,24 @@ Game.Mobs = (function () {
   }
 
   // combat.js から呼ばれる
-  function damageMob(m, dmg, fromX, fromY) {
+  function damageMob(m, dmg, fromX, fromY, crit) {
     m.hp -= dmg;
-    m.hurt = 8;
+    m.hurt = crit ? 13 : 8; // クリは白フラッシュを長めに
     // 棘鎧アフィックス: 被ダメの一定割合を反射
     if (hasAffix(m, 'thorns') && m.hp > 0) {
       const refl = Math.max(1, Math.round(dmg * Game.ELITE_AFFIXES.thorns.thorns));
       Game.Survival.damage(refl, 'thorns');
     }
-    Game.Render.spawnBlood(m.x, m.y, 5);
-    if (Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - m.def.size * 0.5, dmg, '#ffe27a');
+    Game.Render.spawnBlood(m.x, m.y, crit ? 9 : 5);
+    if (Game.Render.spawnFloat) {
+      if (crit) Game.Render.spawnFloat(m.x, m.y - m.def.size * 0.5, dmg, '#ffd23a', true); // 会心: 大きい黄色数字
+      else Game.Render.spawnFloat(m.x, m.y - m.def.size * 0.5, dmg, '#ffe27a');
+    }
+    // 大ダメージ/ボス被弾でも軽くシェイク
+    if (!crit && (m.def.boss || dmg >= 16)) Game.Render.shake(m.def.boss ? 5 : 4);
     const dx = m.x - fromX, dy = m.y - fromY, l = Math.hypot(dx, dy) || 1;
-    m.knockX = (dx / l) * 7; m.knockY = (dy / l) * 7;
+    const kb = crit ? 11 : 7; // クリはノックバック強調
+    m.knockX = (dx / l) * kb; m.knockY = (dy / l) * kb;
     if (!m.def.hostile) m.fleeTimer = 180; // 動物は逃げる
     Game.Audio.play('hit');
     if (m.hp <= 0) killMob(m);
@@ -428,8 +434,10 @@ Game.Mobs = (function () {
     }
     // マルチ: ホストは全員にドロップを配信
     if (Game.Net.isConnected() && Game.Net.host) Game.Net.sendMobDeath(m.x, m.y, items);
-    Game.Render.spawnParticles(m.x, m.y, m.def.color, m.def.boss ? 40 : 10);
-    Game.Render.spawnBlood(m.x, m.y, m.def.boss ? 24 : 8);
+    Game.Render.spawnParticles(m.x, m.y, m.def.color, m.def.boss ? 40 : 12);
+    Game.Render.spawnBlood(m.x, m.y, m.def.boss ? 24 : 10);
+    // 撃破ヒットストップ風: 軽いシェイク(ボス/大型ほど強め)
+    if (Game.Render.shake) Game.Render.shake(m.def.boss ? 8 : m.def.big ? 5 : 3);
     Game.Player.gainXP(Math.round((m.def.xp || 1) * (1 + (Game.state.ngLevel || 0) * 0.2)) * (m.elite ? 3 : 1)); // 強い敵(NG)・精鋭ほど経験値増
     if (Game.Achievements && m.def.hostile) Game.Achievements.unlock('first_night');
     // 精鋭撃破演出＆実績

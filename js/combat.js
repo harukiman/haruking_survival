@@ -47,14 +47,14 @@ Game.Combat = (function () {
     const st = Game.Loot.stats(slot);
     // 武器ダメージにレベル/STR/スキル補正（同じ装備でもレベルで±）
     let dmg = Game.Player.effAttack(st.atk > 0 ? st.atk : 1);
-    // 会心（クリティカル）
-    const critCh = Game.Player.skillBonus().crit;
-    const isCrit = critCh > 0 && Math.random() < critCh;
-    if (isCrit) dmg = Math.round(dmg * 2);
+    // 会心（クリティカル）: 基礎8% ＋ スキル ＋ 装備affix。クリ時 1.8x
+    const critCh = (Game.TUNE.BASE_CRIT || 0.08) + Game.Player.skillBonus().crit + (st.crit || 0);
+    const isCrit = Math.random() < critCh;
+    if (isCrit) { dmg = Math.round(dmg * (Game.TUNE.CRIT_MULT || 1.8)); Game.Render.shake(7); }
     // 範囲攻撃: スキル「旋風斬り」 or 範囲武器(大剣/戦鎚)は範囲内の敵すべてに当てる
     const wdef = slot && Game.ITEMS[slot.id];
     const aoe = Game.Player.skillFlag('aoe') || (wdef && wdef.aoe);
-    if (isCrit && Game.Render.spawnFloat) Game.Render.spawnFloat(best.x, best.y - 18, 'CRIT!', '#ff5a4a', true);
+    if (isCrit && Game.Render.spawnFloat) Game.Render.spawnFloat(best.x, best.y - 22, '会心!', '#ff5a4a', true);
     const targets = [];
     if (aoe) {
       for (let i = 0; i < mobs.length; i++) { const m = mobs[i]; if (m.def.friendly) continue; if (Math.hypot(m.x - p.x, m.y - p.y) <= rangePx + m.def.size * 0.5) targets.push(m); }
@@ -62,7 +62,7 @@ Game.Combat = (function () {
     for (let i = 0; i < targets.length; i++) {
       const tg = targets[i];
       if (Game.Net.isConnected() && !Game.Net.host) { Game.Net.sendHit(tg.id, dmg, p.x, p.y); Game.Render.spawnBlood(tg.x, tg.y, 4); }
-      else Game.Mobs.damageMob(tg, dmg, p.x, p.y);
+      else Game.Mobs.damageMob(tg, dmg, p.x, p.y, isCrit);
     }
     // 吸血（装備のvampiric＋スキル lifesteal）
     let ls = (st.lifesteal || 0) + Game.Player.skillBonus().lifesteal;
