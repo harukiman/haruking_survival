@@ -259,6 +259,12 @@ Game.Render = (function () {
     } else if (type === 'boat') {
       ctx.fillStyle = '#9c6b3f'; ctx.beginPath(); ctx.ellipse(x, y + 8, 20, 10, 0, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#7a5230'; ctx.fillRect(x - 16, y + 4, 32, 4);
+    } else if (type === 'carpet') {
+      ctx.fillStyle = 'rgba(0,0,0,0.22)'; ctx.beginPath(); ctx.ellipse(x, y + 22, 20, 6, 0, 0, Math.PI * 2); ctx.fill();
+      const wob = Math.sin(Game.state.tick * 0.2) * 2;
+      ctx.fillStyle = '#c0407a'; roundRectC(ctx, x - 18, y + 4 + wob, 36, 12, 3); ctx.fill();
+      ctx.fillStyle = '#ffd86b'; ctx.fillRect(x - 16, y + 6 + wob, 32, 2); ctx.fillRect(x - 16, y + 12 + wob, 32, 2);
+      ctx.fillStyle = '#7fd0ff'; for (let i = -2; i <= 2; i++) ctx.fillRect(x + i * 7 - 1, y + 8 + wob, 2, 2);
     } else if (type === 'plane') {
       ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.beginPath(); ctx.ellipse(x, y + 24, 22, 6, 0, 0, Math.PI * 2); ctx.fill(); // 影（飛行）
       ctx.fillStyle = '#8a96c0'; ctx.fillRect(x - 22, y - 2, 44, 6); // 翼

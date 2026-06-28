@@ -4,13 +4,13 @@ window.Game = window.Game || {};
 Game.Projectiles = (function () {
   const TS = Game.CFG.TILE_SIZE;
 
-  function spawn(x, y, vx, vy, dmg) {
+  function spawn(x, y, vx, vy, dmg, kind) {
     if (!Game.state.projectiles) Game.state.projectiles = [];
-    Game.state.projectiles.push({ x: x, y: y, prevX: x, prevY: y, vx: vx, vy: vy, life: 55, dmg: dmg });
+    Game.state.projectiles.push({ x: x, y: y, prevX: x, prevY: y, vx: vx, vy: vy, life: 55, dmg: dmg, kind: kind || 'bullet' });
   }
 
-  // プレイヤーから発射（カーソル/向き方向）
-  function fire(dmg) {
+  // プレイヤーから発射（カーソル/向き方向）。kind: bullet/fire/frost
+  function fire(dmg, kind) {
     const p = Game.state.player;
     let dx = 0, dy = 0;
     const it = Game.Input.intent;
@@ -23,8 +23,8 @@ Game.Projectiles = (function () {
       if (d === 'up') dy = -1; else if (d === 'down') dy = 1; else if (d === 'left') dx = -1; else dx = 1;
     }
     const len = Math.hypot(dx, dy) || 1;
-    const sp = 9;
-    spawn(p.x + dx / len * 14, p.y + dy / len * 14, dx / len * sp, dy / len * sp, dmg);
+    const sp = kind === 'bullet' || !kind ? 9 : 7;
+    spawn(p.x + dx / len * 14, p.y + dy / len * 14, dx / len * sp, dy / len * sp, dmg, kind);
   }
 
   function update() {
@@ -61,9 +61,10 @@ Game.Projectiles = (function () {
       const pr = arr[i];
       const s = Game.Camera.worldToScreen(pr.x, pr.y);
       const ps = Game.Camera.worldToScreen(pr.prevX, pr.prevY);
-      ctx.strokeStyle = '#ffe9a0'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+      const col = pr.kind === 'fire' ? '#ff7a3c' : pr.kind === 'frost' ? '#9fd8ff' : '#ffe9a0';
+      ctx.strokeStyle = col; ctx.lineWidth = pr.kind === 'bullet' ? 3 : 5; ctx.lineCap = 'round';
       ctx.beginPath(); ctx.moveTo(ps.x, ps.y); ctx.lineTo(s.x, s.y); ctx.stroke();
-      ctx.fillStyle = '#fff7d8'; ctx.beginPath(); ctx.arc(s.x, s.y, 2.2, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#fff7d8'; ctx.beginPath(); ctx.arc(s.x, s.y, pr.kind === 'bullet' ? 2.2 : 3.5, 0, Math.PI * 2); ctx.fill();
     }
   }
 

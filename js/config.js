@@ -36,6 +36,8 @@ Game.OBJ = {
   DUNGEON_WALL:124, ICE_WALL:125, SPAWNER:126,
   // ロケット/宇宙
   ROCKET:127, STAR_ORE:128,
+  // 家具・家作り
+  HEALING_TOTEM:129, STREET_LAMP:130, TABLE:131, CHAIR:132, BOOKSHELF:133, GLASS:134, RUG:135,
 };
 
 // 地面の色（手続き描画のベース）
@@ -98,6 +100,8 @@ Game.LIGHT_LEVEL = {
   [Game.OBJ.SPAWNER]: 3,
   [Game.OBJ.ROCKET]: 6,
   [Game.OBJ.STAR_ORE]: 4,
+  [Game.OBJ.HEALING_TOTEM]: 7,
+  [Game.OBJ.STREET_LAMP]: 11,
 };
 
 // オブジェクトのメタ情報。solid=移動阻害, drops=破壊時ドロップ
@@ -160,6 +164,14 @@ Game.OBJ_META = {
   // ロケット/宇宙
   [Game.OBJ.ROCKET]:     { name:'ロケット', solid:true, mineable:true, tool:'pickaxe', tier:1, hp:30, light:6, drops:[{item:'rocket', n:[1,1]}], render:'rocket_obj', rocket:true },
   [Game.OBJ.STAR_ORE]:   { name:'星鉱', solid:true, mineable:true, tool:'pickaxe', tier:3, hp:16, light:4, drops:[{item:'star_metal', n:[1,2]}], render:'starore' },
+  // 家具・家作り
+  [Game.OBJ.HEALING_TOTEM]:{ name:'癒しの祭壇', solid:true, mineable:true, tool:null, tier:0, hp:6, light:7, drops:[{item:'healing_totem', n:[1,1]}], render:'totem', healAura:true },
+  [Game.OBJ.STREET_LAMP]:{ name:'街灯', solid:false, mineable:true, tool:null, tier:0, hp:3, light:11, drops:[{item:'street_lamp', n:[1,1]}], render:'streetlamp' },
+  [Game.OBJ.TABLE]:      { name:'テーブル', solid:true, mineable:true, tool:null, tier:0, hp:3, drops:[{item:'table', n:[1,1]}], render:'table_f' },
+  [Game.OBJ.CHAIR]:      { name:'椅子', solid:false, mineable:true, tool:null, tier:0, hp:2, drops:[{item:'chair', n:[1,1]}], render:'chair' },
+  [Game.OBJ.BOOKSHELF]:  { name:'本棚', solid:true, mineable:true, tool:null, tier:0, hp:4, drops:[{item:'bookshelf', n:[1,1]}], render:'bookshelf' },
+  [Game.OBJ.GLASS]:      { name:'ガラス', solid:true, mineable:true, tool:null, tier:0, hp:2, drops:[{item:'glass', n:[1,1]}], render:'glass' },
+  [Game.OBJ.RUG]:        { name:'絨毯', solid:false, mineable:true, tool:null, tier:0, hp:2, drops:[{item:'rug', n:[1,1]}], render:'rug' },
 };
 
 // アイテム定義。place=設置するOBJ id, tool/tier=道具, food=空腹回復
@@ -263,6 +275,19 @@ Game.ITEMS = {
   cosmic_blade:  { name:'コズミックブレード', stack:1, color:'#aee0ff', tool:'sword', tier:5, attack:18, flavor:'星鋼で鍛えし剣。一閃が闇を裂く。' },
   star_cannon:   { name:'スターキャノン', stack:1, color:'#aee0ff', tool:'gun', ammo:'bullet', fireDmg:22, flavor:'星の力を撃ち放つ砲。' },
   gravity_boots: { name:'重力ブーツ', stack:1, color:'#88a', armor:4, slot:'chest', flavor:'星の重力を御す靴。' },
+  // 家具・家作り
+  healing_totem: { name:'癒しの祭壇', stack:16, color:'#7fd0a0', place:Game.OBJ.HEALING_TOTEM, flavor:'傍にいる者の傷を癒す祭壇。' },
+  street_lamp:   { name:'街灯', stack:16, color:'#ffe9a0', place:Game.OBJ.STREET_LAMP },
+  table:         { name:'テーブル', stack:16, color:'#9c6b3f', place:Game.OBJ.TABLE },
+  chair:         { name:'椅子', stack:16, color:'#9c6b3f', place:Game.OBJ.CHAIR },
+  bookshelf:     { name:'本棚', stack:16, color:'#7a5230', place:Game.OBJ.BOOKSHELF },
+  glass:         { name:'ガラス', stack:99, color:'#a8d8e8', place:Game.OBJ.GLASS },
+  rug:           { name:'絨毯', stack:99, color:'#b04a6a', place:Game.OBJ.RUG },
+  // 魔法武器（ボスドロップのレア）
+  warp_staff:    { name:'ワープの杖', stack:1, color:'#b06ad0', tool:'warp', flavor:'空間を歪め、一瞬で間合いを詰める/離す。' },
+  flame_staff:   { name:'炎の杖', stack:1, color:'#ff7a3c', tool:'staff', fireDmg:16, magic:'fire', flavor:'業火の弾を放つ。弾は要らぬ、己が魔力で。' },
+  frost_staff:   { name:'氷結の杖', stack:1, color:'#9fd8ff', tool:'staff', fireDmg:12, magic:'frost', flavor:'凍てつく弾で敵を縛る。' },
+  flying_carpet: { name:'空飛ぶ絨毯', stack:1, color:'#c0407a', vehicle:'carpet', flavor:'古の魔法で織られた絨毯。空を自在に駆ける。' },
   shadow_altar:  { name:'影の祭壇', stack:4, color:'#3a2050', place:Game.OBJ.SHADOW_ALTAR },
   // ボス報酬
   shadow_core:   { name:'影核', stack:16, color:'#c060ff', flavor:'影の主の心臓。世界を裂いた最初の祈りが、結晶となって残ったもの。' },
@@ -334,6 +359,14 @@ Game.RECIPES = [
   { out:{id:'cosmic_blade', n:1}, in:{star_metal:5, shadow_steel:3}, station:'crafting_table' },
   { out:{id:'star_cannon', n:1}, in:{star_metal:4, lumen:5}, station:'crafting_table' },
   { out:{id:'gravity_boots', n:1}, in:{star_metal:4}, station:'crafting_table' },
+  // 家具・家作り
+  { out:{id:'healing_totem', n:1}, in:{lumen:3, wood:4}, station:'crafting_table' },
+  { out:{id:'street_lamp', n:2}, in:{iron:1, coal:1}, station:'crafting_table' },
+  { out:{id:'table', n:1}, in:{wood:4}, station:'crafting_table' },
+  { out:{id:'chair', n:1}, in:{wood:3}, station:'crafting_table' },
+  { out:{id:'bookshelf', n:1}, in:{wood:6}, station:'crafting_table' },
+  { out:{id:'glass', n:4}, in:{stone:2}, station:'furnace' },
+  { out:{id:'rug', n:2}, in:{hide:2}, station:'crafting_table' },
   { out:{id:'unity_core', n:1}, in:{shadow_core:3, lumen:10, shadow_crystal:10}, station:'crafting_table' }, // 世界統合
   // 建築・自由度
   { out:{id:'wood_floor', n:4}, in:{wood:1}, station:null },
@@ -377,20 +410,20 @@ Game.MOBS = {
   wraith:   { name:'影霊', hostile:true, hp:16, speed:2.0, color:'#6a4f9a', size:11, drops:[{item:'shadow_shard',n:[1,2]}], dmg:5, xp:4, shadow:true, ghost:true },
   watcher:  { name:'見張り目', hostile:true, hp:24, speed:0.8, color:'#241a3a', size:13, drops:[{item:'shadow_crystal',n:[0,2]},{item:'shadow_shard',n:[1,1]}], dmg:6, xp:5, shadow:true },
   // ボスと手下
-  sovereign:{ name:'影の主', hostile:true, hp:260, speed:1.4, color:'#7a30c0', size:30, drops:[{item:'shadow_core',n:[2,4]},{item:'shadow_steel',n:[4,8]},{item:'shadow_crystal',n:[5,10]}], dmg:10, xp:60, shadow:true, boss:true },
+  sovereign:{ name:'影の主', hostile:true, hp:260, speed:1.4, color:'#7a30c0', size:30, drops:[{item:'shadow_core',n:[2,4]},{item:'shadow_steel',n:[4,8]},{item:'shadow_crystal',n:[5,10]},{item:'warp_staff',n:[0,1]}], dmg:10, xp:60, shadow:true, boss:true },
   shadow_spawn:{ name:'影の落とし子', hostile:true, hp:6, speed:2.4, color:'#5a3a8a', size:8, drops:[{item:'shadow_shard',n:[0,1]}], dmg:3, xp:1, shadow:true, ghost:true },
   // 深層の徘徊者（影の深層でのみ出現）
   abyss_stalker:{ name:'深淵の徘徊者', hostile:true, hp:34, speed:2.0, color:'#48206a', size:15, drops:[{item:'shadow_crystal',n:[1,3]},{item:'lumen',n:[0,2]},{item:'shadow_core',n:[0,1]}], dmg:8, xp:8, shadow:true },
   // グロ: 蛭（出血+感染）
   leech:    { name:'蛭', hostile:true, hp:5, speed:2.3, color:'#5a2030', size:7, drops:[{item:'guts',n:[1,2]}], dmg:2, xp:2, inflict:{bleed:240, infection:300} },
   // 深層の徘徊ボス
-  hunger_beast:{ name:'飢餓の獣', hostile:true, hp:140, speed:1.7, color:'#7a1840', size:26, drops:[{item:'void_heart',n:[1,2]},{item:'shadow_core',n:[1,3]},{item:'shadow_crystal',n:[3,6]},{item:'guts',n:[2,4]}], dmg:9, xp:35, shadow:true, big:true, inflict:{bleed:300} },
+  hunger_beast:{ name:'飢餓の獣', hostile:true, hp:140, speed:1.7, color:'#7a1840', size:26, drops:[{item:'void_heart',n:[1,2]},{item:'shadow_core',n:[1,3]},{item:'shadow_crystal',n:[3,6]},{item:'guts',n:[2,4]},{item:'flame_staff',n:[0,1]}], dmg:9, xp:35, shadow:true, big:true, inflict:{bleed:300} },
   // ダンジョン系
   frost_wisp:{ name:'氷霊', hostile:true, hp:10, speed:1.6, color:'#9fd8ff', size:9, drops:[{item:'lumen',n:[0,1]},{item:'bone',n:[0,1]}], dmg:3, xp:3, inflict:{cold:240} },
   cursed_armor:{ name:'呪鎧', hostile:true, hp:30, speed:0.9, color:'#7a7a86', size:13, drops:[{item:'iron',n:[1,3]},{item:'iron_ore',n:[1,2]}], dmg:6, xp:5 },
   // 宇宙
   void_drone:{ name:'虚空ドローン', hostile:true, hp:18, speed:2.2, color:'#7fa0d0', size:10, drops:[{item:'star_metal',n:[0,2]},{item:'lumen',n:[0,1]}], dmg:5, xp:5, space:true, ghost:true },
-  star_guardian:{ name:'星の守護者', hostile:true, hp:320, speed:1.4, color:'#cfe0ff', size:30, drops:[{item:'star_core',n:[2,4]},{item:'star_metal',n:[6,12]}], dmg:11, xp:80, space:true, big:true },
+  star_guardian:{ name:'星の守護者', hostile:true, hp:320, speed:1.4, color:'#cfe0ff', size:30, drops:[{item:'star_core',n:[2,4]},{item:'star_metal',n:[6,12]},{item:'flying_carpet',n:[0,1]},{item:'frost_staff',n:[0,1]}], dmg:11, xp:80, space:true, big:true },
   // 友好NPC: 謎の旅人
   wanderer: { name:'謎の旅人', hostile:false, hp:20, speed:1.0, color:'#caa84a', size:11, drops:[], xp:0, friendly:true, npc:true },
 };
@@ -438,6 +471,8 @@ Game.ITEM_GLYPH = {
   shadow_shard:'🌑', shadow_mirror:'🪞', shadow_crystal:'🔮', lumen:'✨', shadow_steel:'⬛', shadow_core:'💜', unity_core:'⭐', void_heart:'💗', rift_anchor:'🕳️', enchant_table:'✦',
   bullet:'🔸', pistol:'🔫', shadow_rifle:'🔫', car:'🚗', boat:'🛶', plane:'✈️',
   rocket:'🚀', star_metal:'🌟', star_core:'💫', cosmic_blade:'🌠', star_cannon:'🔫', gravity_boots:'👢',
+  warp_staff:'🪄', flame_staff:'🔥', frost_staff:'❄️', flying_carpet:'🧞',
+  healing_totem:'⛲', street_lamp:'🪔', table:'🪑', chair:'🪑', bookshelf:'📚', glass:'🪟', rug:'🟥',
 };
 
 Game.INV_SIZE = 36;       // 先頭9 = ホットバー

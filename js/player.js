@@ -32,7 +32,7 @@ Game.Player = (function () {
 
   function blocked(wx, wy) {
     const v = Game.state.player.vehicle;
-    if (v === 'plane') return false; // 飛行機は全障害を越える
+    if (v === 'plane' || v === 'carpet') return false; // 飛行機・絨毯は全障害を越える
     const pts = [[wx - R, wy - R], [wx + R, wy - R], [wx - R, wy + R], [wx + R, wy + R]];
     for (let i = 0; i < pts.length; i++) {
       const tx = Math.floor(pts[i][0] / TS), ty = Math.floor(pts[i][1] / TS);
@@ -58,6 +58,7 @@ Game.Player = (function () {
     let spd = p.speed * (dashing ? 1.85 : 1);
     if (p.vehicle === 'car') spd = p.speed * 2.3;
     else if (p.vehicle === 'plane') spd = p.speed * 2.7;
+    else if (p.vehicle === 'carpet') spd = p.speed * 2.4;
     else if (p.vehicle === 'boat') spd = p.speed * 1.5;
     // 浅瀬は減速＋水音（乗り物なし・徒歩のみ）
     const onWater = !p.vehicle && Game.World.groundAt(Math.floor(p.x / TS), Math.floor(p.y / TS)) === Game.TILE.WATER;
@@ -81,6 +82,8 @@ Game.Player = (function () {
     if (intent.mine) {
       const sel = Game.Inventory.selectedItemDef();
       if (sel && sel.tool === 'gun') { tryFire(sel); mining.active = false; }
+      else if (sel && sel.tool === 'staff') { tryStaff(sel); mining.active = false; }
+      else if (sel && sel.tool === 'warp') { tryWarp(); mining.active = false; }
       else if (Game.Combat.tryAttack()) { mining.active = false; mining.progress = 0; }
       else mineTick();
     } else { mining.active = false; if (mining.progress > 0) mining.progress -= 0.5; }
@@ -305,6 +308,33 @@ Game.Player = (function () {
     Game.Render.spawnParticles(p.x, p.y, '#ffe9a0', 2);
     Game.Audio.play('gun');
     Game.UI.refreshHotbar();
+  }
+
+  function tryStaff(sel) {
+    const p = Game.state.player;
+    if (p.attackCd > 0) return;
+    Game.Projectiles.fire(sel.fireDmg || 12, sel.magic || 'fire');
+    p.attackCd = 16;
+    Game.Render.spawnParticles(p.x, p.y, sel.magic === 'frost' ? '#9fd8ff' : '#ff7a3c', 4);
+    Game.Audio.play('gun');
+  }
+  function tryWarp() {
+    const p = Game.state.player;
+    if (p.attackCd > 0) return;
+    let dx = 0, dy = 0; const it = Game.Input.intent;
+    if (it.usePointer && it.mouseTile) { dx = (it.mouseTile.tx * TS + TS / 2) - p.x; dy = (it.mouseTile.ty * TS + TS / 2) - p.y; }
+    if (Math.abs(dx) < 1 && Math.abs(dy) < 1) { if (p.dir === 'up') dy = -1; else if (p.dir === 'down') dy = 1; else if (p.dir === 'left') dx = -1; else dx = 1; }
+    const len = Math.hypot(dx, dy) || 1; const dist = 6 * TS;
+    let tx = p.x + dx / len * dist, ty = p.y + dy / len * dist;
+    // 着地点が塞がっていたら手前に詰める
+    for (let s = 6; s >= 1; s--) {
+      const cx = p.x + dx / len * s * TS, cy = p.y + dy / len * s * TS;
+      if (!blocked(cx, cy)) { tx = cx; ty = cy; break; }
+    }
+    Game.Render.spawnParticles(p.x, p.y, '#b06ad0', 10);
+    p.x = tx; p.y = ty; p.prevX = tx; p.prevY = ty;
+    Game.Render.spawnParticles(tx, ty, '#d8b0ff', 10);
+    p.attackCd = 24; Game.Audio.play('shift');
   }
 
   function equipFromInventory(idx) {

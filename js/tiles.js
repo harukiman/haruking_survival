@@ -216,6 +216,33 @@ Game.Tiles = (function () {
       x.fillStyle = '#74747e'; roundBlob(x);
       x.fillStyle = '#aee0ff'; for (let i = 0; i < 5; i++) { const a = i * 1.3; circle(x, TS / 2 + Math.cos(a) * 6, TS / 2 + Math.sin(a) * 6, 2.2); }
       x.fillStyle = '#fff'; circle(x, TS / 2, TS / 2, 1.6);
+    } else if (r === 'totem') {
+      x.fillStyle = '#3a6a5a'; x.fillRect(TS / 2 - 6, 8, 12, TS - 12);
+      x.fillStyle = '#7fd0a0'; circle(x, TS / 2, 12, 5);
+      x.fillStyle = '#d8fff0'; circle(x, TS / 2, 12, 2);
+      x.fillStyle = '#2f5a4a'; x.fillRect(TS / 2 - 9, TS - 6, 18, 4);
+    } else if (r === 'streetlamp') {
+      x.fillStyle = '#3a3a44'; x.fillRect(TS / 2 - 2, 8, 4, TS - 10);
+      x.fillStyle = '#ffe9a0'; circle(x, TS / 2, 8, 5);
+      x.fillStyle = '#fff7d8'; circle(x, TS / 2, 8, 2.5);
+    } else if (r === 'table_f') {
+      x.fillStyle = '#9c6b3f'; x.fillRect(4, 10, TS - 8, 6);
+      x.fillStyle = '#7a5230'; x.fillRect(6, 16, 3, TS - 18); x.fillRect(TS - 9, 16, 3, TS - 18);
+    } else if (r === 'chair') {
+      x.fillStyle = '#9c6b3f'; x.fillRect(9, 13, TS - 18, 5); x.fillRect(9, 8, 3, TS - 12);
+      x.fillStyle = '#7a5230'; x.fillRect(10, 18, 2, TS - 20); x.fillRect(TS - 12, 18, 2, TS - 20);
+    } else if (r === 'bookshelf') {
+      x.fillStyle = '#5a3d22'; x.fillRect(3, 3, TS - 6, TS - 6);
+      const cols = ['#c44', '#4a8', '#48c', '#ca4', '#a4c'];
+      for (let row = 0; row < 2; row++) for (let i = 0; i < 5; i++) { x.fillStyle = cols[(i + row) % 5]; x.fillRect(5 + i * 4.4, 5 + row * 11, 3.6, 9); }
+    } else if (r === 'glass') {
+      x.fillStyle = 'rgba(168,216,232,0.5)'; x.fillRect(2, 2, TS - 4, TS - 4);
+      x.strokeStyle = '#cfeefa'; x.lineWidth = 1.5; x.strokeRect(2, 2, TS - 4, TS - 4);
+      x.strokeStyle = 'rgba(255,255,255,0.7)'; x.beginPath(); x.moveTo(5, 6); x.lineTo(11, 6); x.stroke();
+    } else if (r === 'rug') {
+      x.fillStyle = '#b04a6a'; x.fillRect(2, 2, TS - 4, TS - 4);
+      x.strokeStyle = '#e8c54a'; x.lineWidth = 2; x.strokeRect(5, 5, TS - 10, TS - 10);
+      x.fillStyle = '#e8c54a'; circle(x, TS / 2, TS / 2, 2);
     } else if (r === 'enchant') {
       x.fillStyle = '#2a1f44'; x.fillRect(4, 12, TS - 8, TS - 14);
       x.fillStyle = '#3a2a5a'; x.fillRect(6, 8, TS - 12, 8);

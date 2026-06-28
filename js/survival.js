@@ -21,7 +21,12 @@ Game.Survival = (function () {
     if (p.regenTimer >= 60) {
       p.regenTimer = 0;
       const wf = Game.Status && Game.Status.has('wellfed');
-      if ((p.hunger > 70 || (wf && p.hunger > 40)) && p.health < p.maxHealth) {
+      const totem = nearHealTotem();
+      if (totem && p.health < p.maxHealth) {
+        p.health = Math.min(p.maxHealth, p.health + 3); // 癒しの祭壇
+        Game.Render.spawnParticles(p.x, p.y - 6, '#7fd0a0', 1);
+        Game.UI.refreshStats();
+      } else if ((p.hunger > 70 || (wf && p.hunger > 40)) && p.health < p.maxHealth) {
         p.health = Math.min(p.maxHealth, p.health + (wf ? 2 : 1));
         Game.UI.refreshStats();
       } else if (p.hunger <= 0 && p.health > 0) {
@@ -79,6 +84,15 @@ Game.Survival = (function () {
         Game.Inventory.add('rotten_meat', 1);
       }
     }
+  }
+
+  function nearHealTotem() {
+    const TS = Game.CFG.TILE_SIZE, p = Game.state.player;
+    const ptx = Math.floor(p.x / TS), pty = Math.floor(p.y / TS);
+    for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) {
+      if (Game.World.objAt(ptx + dx, pty + dy) === Game.OBJ.HEALING_TOTEM) return true;
+    }
+    return false;
   }
 
   function nearLight() {
