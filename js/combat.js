@@ -31,19 +31,26 @@ Game.Combat = (function () {
 
     const slot = Game.Inventory.selectedSlot();
     const st = Game.Loot.stats(slot);
-    const dmg = st.atk > 0 ? st.atk : 1; // 素手=1
-    if (Game.Net.isConnected() && !Game.Net.host) {
-      Game.Net.sendHit(best.id, dmg, p.x, p.y); // クライアントはホストに被ダメ要求
-      Game.Render.spawnBlood(best.x, best.y, 4); // 手応えの演出
-    } else {
-      Game.Mobs.damageMob(best, dmg, p.x, p.y);
+    // 武器ダメージにレベル/STR補正（同じ装備でもレベルで±）
+    const dmg = Game.Player.effAttack(st.atk > 0 ? st.atk : 1);
+    // スキル「旋風斬り」: 範囲内の敵すべてに当てる
+    const aoe = p.skills && p.skills.aoe;
+    const targets = [];
+    if (aoe) {
+      for (let i = 0; i < mobs.length; i++) { const m = mobs[i]; if (m.def.friendly) continue; if (Math.hypot(m.x - p.x, m.y - p.y) <= rangePx + m.def.size * 0.5) targets.push(m); }
+    } else targets.push(best);
+    for (let i = 0; i < targets.length; i++) {
+      const tg = targets[i];
+      if (Game.Net.isConnected() && !Game.Net.host) { Game.Net.sendHit(tg.id, dmg, p.x, p.y); Game.Render.spawnBlood(tg.x, tg.y, 4); }
+      else Game.Mobs.damageMob(tg, dmg, p.x, p.y);
     }
-    // 吸血
-    if (st.lifesteal > 0 && p.health < p.maxHealth) {
-      p.health = Math.min(p.maxHealth, p.health + Math.max(1, Math.round(dmg * st.lifesteal)));
+    // 吸血（装備のvampiric＋スキル lifesteal）
+    let ls = st.lifesteal || 0; if (p.skills && p.skills.lifesteal) ls += 0.12;
+    if (ls > 0 && p.health < p.maxHealth) {
+      p.health = Math.min(p.maxHealth, p.health + Math.max(1, Math.round(dmg * ls)));
       Game.UI.refreshStats();
     }
-    p.attackCd = Game.TUNE.ATTACK_COOLDOWN;
+    p.attackCd = Game.Player.attackCooldown();
     Game.Render.spawnSlash(p.x, p.y, p.dir, st.atk >= 8 ? '#ffd86b' : '#ffffff');
     Game.Audio.play('swing');
     return true;

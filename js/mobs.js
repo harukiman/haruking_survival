@@ -354,7 +354,7 @@ Game.Mobs = (function () {
     if (Game.Net.isConnected() && Game.Net.host) Game.Net.sendMobDeath(m.x, m.y, items);
     Game.Render.spawnParticles(m.x, m.y, m.def.color, m.def.boss ? 40 : 10);
     Game.Render.spawnBlood(m.x, m.y, m.def.boss ? 24 : 8);
-    Game.Player.gainXP(m.def.xp || 1);
+    Game.Player.gainXP(Math.round((m.def.xp || 1) * (1 + (Game.state.ngLevel || 0) * 0.2))); // 強い敵(NG)ほど経験値増
     if (Game.Achievements && m.def.hostile) Game.Achievements.unlock('first_night');
     if (m.def.boss) {
       if (m.type === 'sovereign') {

@@ -21,6 +21,8 @@ Game.Player = (function () {
       stamina: 100, maxStamina: 100,
       vehicle: null, // null|'car'|'boat'|'plane'
       armor: { head: null, chest: null }, // {id, roll} インスタンス
+      // RPGステータス（スキルポイントで振る）
+      str: 0, vit: 0, dex: 0, skillPoints: 0, skills: {},
     };
   }
 
@@ -66,6 +68,7 @@ Game.Player = (function () {
     // 砂嵐/吹雪は足が重い（飛行中は影響なし）
     const wt = Game.state.weather && Game.state.weather.type;
     if ((wt === 'sandstorm' || wt === 'blizzard') && p.vehicle !== 'plane' && p.vehicle !== 'carpet') spd *= 0.7;
+    if (p.skills && p.skills.swift && !p.vehicle) spd *= 1.12; // スキル: 俊足
     if (moving) {
       dx /= len; dy /= len;
       p.dir = intent.dir || p.dir;
@@ -236,6 +239,7 @@ Game.Player = (function () {
       Game.Audio.play('engine'); return;
     }
     if (def.shift) { Game.World.shift(); return; }
+    if (def.respec) { const n = respec(); Game.Inventory.remove(sel.id, 1); Game.UI.toast('記憶の書を読んだ — スキルを振り直した（' + n + 'P返却）'); Game.UI.refreshAll(); return; }
     if (def.food || def.cures) { Game.Inventory.useSelected(); return; }
     if (def.armor) { equipSelectedArmor(); return; }
 
@@ -366,7 +370,8 @@ Game.Player = (function () {
     const a = Game.state.player.armor;
     let s = 0;
     for (const k in a) if (a[k]) s += Game.Loot.stats(a[k]).armor;
-    return s + setBonus().armor;
+    const p = Game.state.player;
+    return s + setBonus().armor + levelArmorBonus() + (p.skills && p.skills.tough ? 3 : 0);
   }
 
   // 装備セット効果（head+chestが同セット）
@@ -387,14 +392,43 @@ Game.Player = (function () {
     return out;
   }
 
-  // 装備由来の最大HP等を反映
+  // 装備由来の最大HP等を反映（VIT＋レベルも加味）
   function applyEquipStats() {
     const p = Game.state.player;
     let hpBonus = 0;
     for (const k in p.armor) if (p.armor[k]) hpBonus += Game.Loot.stats(p.armor[k]).hp;
     const base = p.baseMaxHealth || 100;
-    p.maxHealth = base + hpBonus;
+    p.maxHealth = base + hpBonus + (p.vit || 0) * 5;
     if (p.health > p.maxHealth) p.health = p.maxHealth;
+  }
+
+  // ===== RPG: レベル/ステによる補正 =====
+  function levelDmgBonus() { const p = Game.state.player; return (p.str || 0) + Math.floor((p.level - 1) * 0.5); }
+  function levelArmorBonus() { const p = Game.state.player; return Math.floor(p.level / 4); }
+  function attackCooldown() { const p = Game.state.player; return Math.max(7, Math.round(Game.TUNE.ATTACK_COOLDOWN * (1 - (p.dex || 0) * 0.02))); }
+  function effAttack(baseAtk) { return Math.max(1, baseAtk + levelDmgBonus()); }
+
+  // スキルポイントでステ強化／スキル習得
+  function spendStat(stat) {
+    const p = Game.state.player;
+    if (p.skillPoints <= 0) return false;
+    if (stat !== 'str' && stat !== 'vit' && stat !== 'dex') return false;
+    p[stat] = (p[stat] || 0) + 1; p.skillPoints--;
+    applyEquipStats(); Game.UI.refreshStats && Game.UI.refreshStats();
+    Game.Audio.play('levelup'); return true;
+  }
+  function unlockSkill(id, cost) {
+    const p = Game.state.player;
+    if (p.skills[id] || p.skillPoints < cost) return false;
+    p.skills[id] = 1; p.skillPoints -= cost; Game.Audio.play('enchant'); return true;
+  }
+  function respec() {
+    const p = Game.state.player;
+    const refunded = (p.str || 0) + (p.vit || 0) + (p.dex || 0) + Object.keys(p.skills || {}).reduce(function (a, k) { return a + (Game.SKILLS[k] ? Game.SKILLS[k].cost : 1); }, 0);
+    p.str = 0; p.vit = 0; p.dex = 0; p.skills = {}; p.skillPoints += refunded;
+    applyEquipStats(); if (p.health > p.maxHealth) p.health = p.maxHealth;
+    Game.UI.refreshStats && Game.UI.refreshStats();
+    return refunded;
   }
 
   function sleep() {
@@ -421,10 +455,11 @@ Game.Player = (function () {
     while (p.xp >= p.xpNext) {
       p.xp -= p.xpNext; p.level++; p.xpNext = 5 + p.level * 3;
       p.baseMaxHealth = (p.baseMaxHealth || 100) + 2;
+      p.skillPoints = (p.skillPoints || 0) + 2; // レベルごとにスキルポイント
       applyEquipStats();
       p.health = p.maxHealth;
       Game.Audio.play('levelup');
-      Game.UI.toast('レベルアップ！ Lv.' + p.level);
+      Game.UI.toast('レベルアップ！ Lv.' + p.level + '（スキルP +2）');
       if (Game.Achievements && p.level >= 5) Game.Achievements.unlock('level5');
     }
     Game.UI.refreshStats();
@@ -466,5 +501,6 @@ Game.Player = (function () {
   return {
     makeDefault, spawnAt, update, targetTile, mining, playerTile, breakBlock,
     interact, gainXP, totalArmor, setBonus, sleep, equipSelectedArmor, equipFromInventory, applyEquipStats,
+    effAttack, attackCooldown, levelDmgBonus, levelArmorBonus, spendStat, unlockSkill, respec,
   };
 })();

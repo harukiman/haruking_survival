@@ -74,6 +74,11 @@ Game.UI = (function () {
     if (opBtn) opBtn.addEventListener('click', function (e) { e.stopPropagation(); cycleBigMapOpacity(); });
     const clBtn = document.getElementById('bigmap-close');
     if (clBtn) clBtn.addEventListener('click', function (e) { e.stopPropagation(); if (bigMapOpen) toggleBigMap(); });
+    // ステータス画面: レベルバッジをタップで開く
+    const lb = document.getElementById('level-badge');
+    if (lb) lb.addEventListener('click', openStats);
+    const csb = document.getElementById('btn-close-stats');
+    if (csb) csb.addEventListener('click', closeStats);
 
     el.loreScreen = document.getElementById('lore-screen');
     el.loreTitle = document.getElementById('lore-title');
@@ -133,6 +138,35 @@ Game.UI = (function () {
     if (bigMapOpen) { applyBigMapOpacity(); updateBigMap(); }
   }
   function isBigMapOpen() { return bigMapOpen; }
+
+  // ===== ステータス & スキル画面 =====
+  function openStats() {
+    const sc = document.getElementById('stats-screen'); if (!sc) return;
+    sc.classList.remove('hidden'); Game.state.paused = true; renderStats();
+  }
+  function closeStats() { const sc = document.getElementById('stats-screen'); if (sc) sc.classList.add('hidden'); Game.state.paused = false; }
+  function renderStats() {
+    const p = Game.state.player; const body = document.getElementById('stats-body'); if (!body || !p) return;
+    const slot = Game.Inventory.selectedSlot(); const wst = Game.Loot.stats(slot);
+    const eff = Game.Player.effAttack(wst.atk > 0 ? wst.atk : 1);
+    let h = '';
+    h += '<div class="ench-stat">Lv.' + p.level + '（EXP ' + p.xp + '/' + p.xpNext + '）　スキルP: <span class="sp-badge">' + (p.skillPoints || 0) + '</span></div>';
+    h += '<div class="ench-stat">攻撃力(手持ち) <b style="color:#ffd86b">' + eff + '</b>　防御力 <b style="color:#9fd8ff">' + Game.Player.totalArmor() + '</b>　最大HP <b style="color:#ff8a8a">' + p.maxHealth + '</b></div>';
+    const stats = [['str', '力 STR', '攻撃 +1 / pt'], ['vit', '体 VIT', '最大HP +5 / pt'], ['dex', '技 DEX', '攻撃速度UP / pt']];
+    stats.forEach(function (s) {
+      h += '<div class="stat-row"><span class="sname">' + s[1] + ' <em>' + s[2] + '</em></span><span class="sval">' + (p[s[0]] || 0) + '</span><button class="stat-plus" data-stat="' + s[0] + '"' + ((p.skillPoints || 0) <= 0 ? ' disabled' : '') + '>＋</button></div>';
+    });
+    h += '<h2>スキル</h2>';
+    for (const id in Game.SKILLS) {
+      const sk = Game.SKILLS[id]; const owned = p.skills && p.skills[id];
+      h += '<div class="skill-row' + (owned ? ' owned' : '') + '"><div><b>' + sk.name + '</b> <span style="color:#8fa3bb">(' + sk.cost + 'P)</span><br><span style="color:#9fb0c4;font-size:.8rem">' + sk.desc + '</span></div>' +
+        (owned ? '<span class="sk-buy">習得済</span>' : '<button class="sk-buy" data-skill="' + id + '"' + ((p.skillPoints || 0) < sk.cost ? ' disabled style="opacity:.4"' : '') + '>習得</button>') + '</div>';
+    }
+    h += '<p class="hint">スキルPは好きな時に振れます。振り直しは「記憶の書」(レア)を使用。</p>';
+    body.innerHTML = h;
+    body.querySelectorAll('.stat-plus').forEach(function (b) { b.addEventListener('click', function () { Game.Player.spendStat(b.getAttribute('data-stat')); renderStats(); }); });
+    body.querySelectorAll('.sk-buy[data-skill]').forEach(function (b) { b.addEventListener('click', function () { const id = b.getAttribute('data-skill'); if (Game.Player.unlockSkill(id, Game.SKILLS[id].cost)) renderStats(); }); });
+  }
 
   // 発見済みランドマークのマーカー色
   const LANDMARK_COL = { dungeon: '#e0644a', vault: '#e3c24a', stela: '#b6a6f0', treasure: '#ffd86b', cosmic: '#7fc8ff', boss: '#ff5a4a' };
@@ -651,6 +685,6 @@ Game.UI = (function () {
     openChest, openSharedChest, closeChest, refreshChest, refreshWorld,
     showLore, closeLore, refreshQuest, openQuest, closeQuest, showEnding, showIntro, refreshNet, refreshStatus,
     toggleOptions, openEnchant, closeEnchant,
-    toggleBigMap, isBigMapOpen, updateBigMap,
+    toggleBigMap, isBigMapOpen, updateBigMap, openStats, closeStats, renderStats,
   };
 })();

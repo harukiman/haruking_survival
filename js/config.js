@@ -317,6 +317,7 @@ Game.ITEMS = {
   sand_greatsword:{ name:'砂塵の大剣', stack:1, color:'#d8b048', tool:'sword', tier:4, attack:14, flavor:'墳墓の王の遺刃。振るうたび、千年の砂塵が舞う。' },
   magma_hammer:  { name:'溶岩の戦槌', stack:1, color:'#c0502a', tool:'sword', tier:5, attack:17, flavor:'溶炉の巨人の鎚。打てば大地が灼ける。' },
   pharaoh_crown: { name:'王の冠', stack:1, color:'#e8c54a', armor:4, slot:'head', flavor:'墳墓に眠りし王の黄金の冠。威厳が身を護る。' },
+  mind_tome:     { name:'記憶の書', stack:8, color:'#d0c0ff', respec:true, flavor:'稀少な記憶の書。読めばスキルを振り直せる。' },
 };
 
 // クラフトレシピ。station=null は手作り、それ以外は近接が必要
@@ -429,6 +430,15 @@ Game.SETS = {
   star:    { name:'星鋼装束', items:['star_helmet','gravity_boots'], armor:3 },
 };
 
+// スキル（スキルポイントで習得・任意のタイミング、振り直しは記憶の書）
+Game.SKILLS = {
+  lifesteal: { name:'吸血', cost:3, desc:'攻撃時にダメージの一部を回復' },
+  aoe:       { name:'旋風斬り', cost:4, desc:'近接攻撃が周囲の敵すべてに当たる' },
+  tough:     { name:'鉄壁', cost:3, desc:'防御+3' },
+  swift:     { name:'俊足', cost:3, desc:'移動速度+12%' },
+  forager:   { name:'採取の達人', cost:3, desc:'戦利品の質が上がる' },
+};
+
 // 難易度（自由度: のんびり建築〜高難度）
 Game.DIFFICULTIES = {
   peaceful: { name:'のんびり', desc:'敵が出ず、正気では死なない。建築と探索を満喫', spawnHostiles:false, sanityKill:false, dmgMult:0 },
@@ -449,7 +459,7 @@ Game.MOBS = {
   wraith:   { name:'影霊', hostile:true, hp:16, speed:2.0, color:'#6a4f9a', size:11, drops:[{item:'shadow_shard',n:[1,2]}], dmg:5, xp:4, shadow:true, ghost:true },
   watcher:  { name:'見張り目', hostile:true, hp:24, speed:0.8, color:'#241a3a', size:13, drops:[{item:'shadow_crystal',n:[0,2]},{item:'shadow_shard',n:[1,1]}], dmg:6, xp:5, shadow:true },
   // ボスと手下
-  sovereign:{ name:'影の主', hostile:true, hp:260, speed:1.4, color:'#7a30c0', size:30, drops:[{item:'shadow_core',n:[2,4]},{item:'shadow_steel',n:[4,8]},{item:'shadow_crystal',n:[5,10]},{item:'warp_staff',n:[0,1]}], dmg:10, xp:60, shadow:true, boss:true },
+  sovereign:{ name:'影の主', hostile:true, hp:260, speed:1.4, color:'#7a30c0', size:30, drops:[{item:'shadow_core',n:[2,4]},{item:'shadow_steel',n:[4,8]},{item:'shadow_crystal',n:[5,10]},{item:'warp_staff',n:[0,1]},{item:'mind_tome',n:[0,1]}], dmg:10, xp:60, shadow:true, boss:true },
   shadow_spawn:{ name:'影の落とし子', hostile:true, hp:6, speed:2.4, color:'#5a3a8a', size:8, drops:[{item:'shadow_shard',n:[0,1]}], dmg:3, xp:1, shadow:true, ghost:true },
   // 深層の徘徊者（影の深層でのみ出現）
   abyss_stalker:{ name:'深淵の徘徊者', hostile:true, hp:34, speed:2.0, color:'#48206a', size:15, drops:[{item:'shadow_crystal',n:[1,3]},{item:'lumen',n:[0,2]},{item:'shadow_core',n:[0,1]}], dmg:8, xp:8, shadow:true },
@@ -532,7 +542,7 @@ Game.ITEM_GLYPH = {
   healing_totem:'⛲', street_lamp:'🪔', table:'🪑', chair:'🪑', bookshelf:'📚', glass:'🪟', rug:'🟥',
   chitin:'🦂', bone_club:'🦴', gold_sword:'⚔️', war_hammer:'🔨', crystal_blade:'⚔️', chitin_spear:'🔱',
   gold_helmet:'⛑️', gold_chest:'🛡️', crystal_helmet:'🪖', crystal_chest:'🛡️', star_helmet:'⛑️', chitin_armor:'🦺',
-  sand_greatsword:'⚔️', magma_hammer:'🔨', pharaoh_crown:'👑',
+  sand_greatsword:'⚔️', magma_hammer:'🔨', pharaoh_crown:'👑', mind_tome:'📖',
 };
 
 Game.INV_SIZE = 36;       // 先頭9 = ホットバー

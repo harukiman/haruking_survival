@@ -57,6 +57,18 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Segoe U
 .map-btn { pointer-events: auto; background: rgba(30,42,62,0.92); border: 1px solid #4a5e7e; color: #cfe0f0;
   font-size: .8rem; font-weight: 700; padding: 7px 14px; border-radius: 9px; cursor: pointer; }
 .map-btn:active { filter: brightness(1.2); }
+/* ステータス & スキル画面 */
+.stat-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.stat-row .sname { flex: 1; font-weight: 700; }
+.stat-row .sname em { font-weight: 400; font-style: normal; font-size: .78rem; }
+.stat-row .sval { font-weight: 700; color: #ffe9a0; min-width: 34px; text-align: right; }
+.stat-plus { width: 36px; height: 32px; border-radius: 8px; background: #2f5a8f; border: 1px solid #5a8fd6; color: #fff; font-weight: 700; cursor: pointer; }
+.stat-plus:disabled { opacity: .35; cursor: not-allowed; }
+.skill-row { display: flex; align-items: center; gap: 8px; padding: 9px; border: 1px solid #33455e; border-radius: 9px; margin-top: 6px; }
+.skill-row .sk-buy { margin-left: auto; padding: 8px 14px; border-radius: 8px; background: #3a7a4a; border: 1px solid #6fc46b; color: #fff; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.skill-row.owned { opacity: .7; } .skill-row.owned .sk-buy { background: #444; border-color: #666; cursor: default; }
+.sp-badge { color: #ffe27a; font-weight: 700; }
+#level-badge { cursor: pointer; pointer-events: auto; }
 /* エンチャント詳細 */
 .ench-name { font-weight: 700; font-size: 1rem; margin: 8px 0 2px; }
 .ench-stat { color: #9fb0c4; font-size: .85rem; margin-bottom: 8px; }

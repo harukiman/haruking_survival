@@ -139,6 +139,15 @@ Game.Survival = (function () {
       }
     }
     if (Game.Status) Game.Status.clearAll();
+    // レベルは完全リセットせず 1/3 を失う（経験値ペナルティ）
+    const lost = Math.floor(p.level / 3);
+    if (lost > 0) {
+      p.level = Math.max(1, p.level - lost);
+      p.baseMaxHealth = 100 + (p.level - 1) * 2;
+      p.xp = 0; p.xpNext = 5 + p.level * 3;
+      Game.Player.applyEquipStats();
+      Game.UI.toast('力尽きた… レベルが ' + lost + ' 失われた（Lv.' + p.level + '）');
+    }
     p.health = p.maxHealth; p.hunger = Math.max(40, p.hunger);
     p.invuln = 60;
     Game.Player.spawnAt(Game.state.spawn.tx, Game.state.spawn.ty);
