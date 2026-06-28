@@ -49,25 +49,26 @@ Game.Mobs = (function () {
         const deep = Game.World.inDepths();
         if (deep && Math.random() < 0.04 && countType('hunger_beast') === 0) { type = 'hunger_beast'; }
         const pool = deep
-          ? ['wraith', 'watcher', 'abyss_stalker', 'abyss_stalker', 'spider']
-          : ['wraith', 'wraith', 'watcher', 'spider'];
+          ? ['wraith', 'watcher', 'abyss_stalker', 'abyss_stalker', 'spider', 'hex_caster']
+          : ['wraith', 'wraith', 'watcher', 'spider', 'hex_caster', 'gazer'];
         if (!type)
         type = pool[Math.floor(Math.random() * pool.length)];
       } else if (night && diff.spawnHostiles) {
         // 夜は敵対モブ（のんびりは出ない）。血の月は強敵寄り
         const pool = Game.state.bloodMoon
-          ? ['zombie', 'zombie', 'skeleton', 'spider', 'leech', 'bandit', 'bat']
-          : ['zombie', 'skeleton', 'spider', 'slime', 'leech', 'bat'];
+          ? ['zombie', 'zombie', 'skeleton', 'spider', 'leech', 'bandit', 'bat', 'gazer', 'troll']
+          : ['zombie', 'skeleton', 'spider', 'slime', 'leech', 'bat', 'gazer'];
         type = pool[Math.floor(Math.random() * pool.length)];
       } else {
-        // 昼: 動物＋環境ごとの敵（砂漠=サソリ, 雪原=白熊, 草地森=稀に猪/旅人）
+        // 昼: 動物＋環境ごとの敵（砂漠=サソリ/呪術師, 雪原=白熊, 森=稀に猪/トロル/旅人）
         const diffH = diff.spawnHostiles;
         if (g === Game.TILE.GRASS || g === Game.TILE.FOREST) {
           if (Math.random() < 0.04 && countType('wanderer') === 0) type = 'wanderer';
+          else if (diffH && g === Game.TILE.FOREST && Math.random() < 0.05) type = 'troll';
           else if (diffH && Math.random() < 0.12) type = 'boar';
           else { const pool = ['rabbit', 'deer', 'sheep']; type = pool[Math.floor(Math.random() * pool.length)]; }
         } else if (g === Game.TILE.SAND && diffH && Math.random() < 0.5) {
-          type = 'scorpion';
+          type = Math.random() < 0.3 ? 'dust_mage' : 'scorpion';
         } else if (g === Game.TILE.SNOW && diffH && Math.random() < 0.35) {
           type = 'ice_bear';
         } else if (g === Game.TILE.STONE && Math.random() < 0.3) {
@@ -91,10 +92,10 @@ Game.Mobs = (function () {
         const g = Game.World.groundAt(stx, sty);
         let pool;
         if (Game.state.worldName === 'space') { pool = (Math.random() < 0.04 && countType('star_guardian') === 0) ? ['star_guardian'] : ['void_drone', 'void_drone', 'astral_serpent']; }
-        else if (Game.state.worldName === 'shadow') pool = ['wraith', 'watcher'];
+        else if (Game.state.worldName === 'shadow') pool = ['wraith', 'watcher', 'hex_caster', 'gazer'];
         else if (g === Game.TILE.SNOW) pool = ['frost_wisp', 'frost_wisp', 'cursed_armor', 'ice_bear'];
-        else if (g === Game.TILE.SAND) pool = ['scorpion', 'scorpion', 'cursed_armor', 'golem'];
-        else pool = ['zombie', 'skeleton', 'spider', 'cursed_armor', 'golem'];
+        else if (g === Game.TILE.SAND) pool = ['scorpion', 'scorpion', 'dust_mage', 'cursed_armor', 'golem'];
+        else pool = ['zombie', 'skeleton', 'spider', 'cursed_armor', 'golem', 'ember_imp', 'bog_horror'];
         // テーマ別ダンジョンボス（稀・1体まで）
         let type = null;
         if (Game.state.worldName === 'light') {
@@ -147,6 +148,7 @@ Game.Mobs = (function () {
       m.prevX = m.x; m.prevY = m.y;
       if (m.hurt > 0) m.hurt--;
       if (m.attackCd > 0) m.attackCd--;
+      if (m.rangedCd > 0) m.rangedCd--;
       if (m.leaveTimer) { m.leaveTimer--; if (m.leaveTimer <= 0) { mobs.splice(i, 1); continue; } }
       if (m.stateTimer > 0) m.stateTimer--;
 
@@ -170,8 +172,15 @@ Game.Mobs = (function () {
           const minion = m.def.summon || 'shadow_spawn';
           if (countType(minion) < 8) { for (let k = 0; k < 3; k++) spawnMob(minion, m.x + (Math.random() - 0.5) * 60, m.y + (Math.random() - 0.5) * 60); Game.Audio.play('shift'); }
         }
-        // 敵対: プレイヤーを追跡（プレイヤーから逃げ切れるよう追跡速度を抑制）
-        if (distP < aggro) {
+        const rg = m.def.ranged;
+        // 遠距離魔法攻撃タイプ: 距離を取りつつ魔法弾を撃つ
+        if (rg && distP < rg.range * TS && distP > (m.def.size * 0.5 + 14)) {
+          if ((m.rangedCd || 0) <= 0) { Game.Projectiles.enemyShoot(m, rg.dmg, rg.kind, rg.status); m.rangedCd = rg.cd; }
+          if (distP < rg.range * TS * 0.5) moveMob(m, -dxp, -dyp, m.def.speed * 0.8);      // 近すぎ→離れる
+          else if (distP > rg.range * TS * 0.82) moveMob(m, dxp, dyp, m.def.speed * 0.8);  // 遠い→寄る
+          m.dir = Math.abs(dxp) > Math.abs(dyp) ? (dxp < 0 ? 'left' : 'right') : (dyp < 0 ? 'up' : 'down');
+        } else if (distP < aggro) {
+          // 敵対: プレイヤーを追跡（逃げ切れるよう追跡速度を抑制）
           moveMob(m, dxp, dyp, m.def.speed * 0.82);
           // 接触攻撃
           if (distP < (m.def.size * 0.5 + 12) && m.attackCd <= 0) {
@@ -378,22 +387,45 @@ Game.Mobs = (function () {
       // 影
       ctx.fillStyle = 'rgba(0,0,0,0.25)';
       ctx.beginPath(); ctx.ellipse(0, r + hop, r, r * 0.4, 0, 0, Math.PI * 2); ctx.fill();
-      // 本体
+      // 本体（形状バリエーション）
       ctx.fillStyle = m.hurt > 0 ? '#fff' : m.def.color;
-      if (m.type === 'slime') {
-        roundRect(ctx, -r, -r * 0.7, r * 2, r * 1.5, 5); ctx.fill();
-      } else if (m.type === 'spider') {
+      const shape = m.def.shape || (m.type === 'slime' ? 'blob' : m.type === 'spider' ? 'spider' : 'round');
+      let eyeY = -r * 0.3;
+      if (shape === 'blob') {
+        roundRect(ctx, -r, -r * 0.7, r * 2, r * 1.5, 6); ctx.fill();
+      } else if (shape === 'spider') {
         ctx.strokeStyle = m.def.color; ctx.lineWidth = 2;
         for (let a = 0; a < 4; a++) { const ang = a * 0.5 + 0.3; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(ang) * r * 1.6, Math.sin(ang) * r); ctx.moveTo(0, 0); ctx.lineTo(-Math.cos(ang) * r * 1.6, Math.sin(ang) * r); ctx.stroke(); }
         ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+      } else if (shape === 'tall') {
+        // 巨人系: 縦長の胴体＋頭＋肩
+        roundRect(ctx, -r * 0.7, -r * 1.3, r * 1.4, r * 2.3, 5); ctx.fill();
+        ctx.beginPath(); ctx.arc(0, -r * 1.25, r * 0.55, 0, Math.PI * 2); ctx.fill();
+        ctx.fillRect(-r * 0.95, -r * 0.9, r * 0.35, r * 1.1); ctx.fillRect(r * 0.6, -r * 0.9, r * 0.35, r * 1.1);
+        eyeY = -r * 1.3;
+      } else if (shape === 'orb') {
+        // 浮遊する眼
+        ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(0, 0, r * 0.6, 0, Math.PI * 2); ctx.fill();
+        const ex0 = m.dir === 'left' ? -r * 0.25 : m.dir === 'right' ? r * 0.25 : 0;
+        ctx.fillStyle = '#c0203a'; ctx.beginPath(); ctx.arc(ex0, 0, r * 0.32, 0, Math.PI * 2); ctx.fill();
+      } else if (shape === 'wisp') {
+        // 揺らめく霊体
+        ctx.beginPath(); ctx.moveTo(0, -r);
+        for (let a = 1; a <= 8; a++) { const ang = a / 8 * Math.PI * 2; const rr = r * (a % 2 ? 0.78 : 1) * (1 + Math.sin(m.hopPhase + a) * 0.06); ctx.lineTo(Math.cos(ang) * rr, Math.sin(ang) * rr); }
+        ctx.closePath(); ctx.fill();
+      } else if (shape === 'spiky') {
+        ctx.beginPath();
+        for (let a = 0; a < 10; a++) { const ang = a / 10 * Math.PI * 2; const rr = a % 2 ? r * 0.55 : r * 1.15; const fn = a === 0 ? 'moveTo' : 'lineTo'; ctx[fn](Math.cos(ang) * rr, Math.sin(ang) * rr); }
+        ctx.closePath(); ctx.fill();
       } else {
         ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
       }
-      // 目
-      if (m.type !== 'slime' || true) {
+      // 目（orbは独自描画済）
+      if (shape !== 'orb') {
         ctx.fillStyle = m.def.hostile ? '#e33' : '#222';
         const ex = m.dir === 'left' ? -2 : m.dir === 'right' ? 2 : 0;
-        ctx.fillRect(-3 + ex, -r * 0.3, 2, 2); ctx.fillRect(2 + ex, -r * 0.3, 2, 2);
+        ctx.fillRect(-3 + ex, eyeY, 2, 2); ctx.fillRect(2 + ex, eyeY, 2, 2);
       }
       ctx.restore();
       // NPCマーカー

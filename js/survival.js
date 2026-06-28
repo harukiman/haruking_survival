@@ -26,7 +26,8 @@ Game.Survival = (function () {
         p.health = Math.min(p.maxHealth, p.health + 3); // 癒しの祭壇
         Game.Render.spawnParticles(p.x, p.y - 6, '#7fd0a0', 1);
         Game.UI.refreshStats();
-      } else if ((p.hunger > 70 || (wf && p.hunger > 40)) && p.health < p.maxHealth) {
+      } else if ((p.hunger > 70 || (wf && p.hunger > 40) || (p.stamina >= 70 && p.hunger > 0)) && p.health < p.maxHealth) {
+        // 満腹 or スタミナが十分(=休息)なら HP 徐々に回復
         p.health = Math.min(p.maxHealth, p.health + (wf ? 2 : 1));
         Game.UI.refreshStats();
       } else if (p.hunger <= 0 && p.health > 0) {
