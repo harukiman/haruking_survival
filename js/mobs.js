@@ -429,6 +429,11 @@ Game.Mobs = (function () {
       const ed = Game.Loot.rollEliteDrop(m.def);
       for (let g = 0; g < ed.length; g++) items.push({ id: ed[g].id, count: ed[g].count, roll: ed[g].roll || null });
     }
+    // 遺物(relic)ドロップ: ボス12% / 精鋭6%（チャンピオンは別途上乗せ）
+    if (Game.RELIC_IDS && (m.def.boss || m.elite)) {
+      const rc = m.def.boss ? 0.12 : 0.06;
+      if (Math.random() < rc) items.push({ id: Game.RELIC_IDS[Math.floor(Math.random() * Game.RELIC_IDS.length)], count: 1 });
+    }
     for (let g = 0; g < items.length; g++) {
       Game.state.drops.push({ id: items[g].id, count: items[g].count, roll: items[g].roll || null, x: m.x + (Math.random() - 0.5) * 14, y: m.y + (Math.random() - 0.5) * 14 });
     }
@@ -455,6 +460,7 @@ Game.Mobs = (function () {
         if (Game.Loot.rollEliteDrop) { champDrops.push.apply(champDrops, Game.Loot.rollEliteDrop(m.def)); champDrops.push.apply(champDrops, Game.Loot.rollEliteDrop(m.def)); }
         champDrops.push({ id: 'xp_orb', count: 1 });
         if (Math.random() < 0.25) champDrops.push({ id: 'wisdom_tome', count: 1 });
+        if (Math.random() < 0.22 && Game.RELIC_IDS) champDrops.push({ id: Game.RELIC_IDS[Math.floor(Math.random() * Game.RELIC_IDS.length)], count: 1 }); // 遺物
         for (let g = 0; g < champDrops.length; g++) Game.state.drops.push({ id: champDrops[g].id, count: champDrops[g].count, roll: champDrops[g].roll || null, x: m.x + (Math.random() - 0.5) * 22, y: m.y + (Math.random() - 0.5) * 22 });
         Game.Player.gainXP(Math.round((m.def.xp || 1) * 5)); // チャンピオンは追加経験値
         if (Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - m.def.size * 0.7, 'CHAMPION撃破!!', '#ff8ad8', true);

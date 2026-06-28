@@ -28,6 +28,7 @@ Game.Icons = (function () {
       if (/dagger|短剣/.test(id)) return 'sword';
       return 'sword';
     }
+    if (def.relic) return 'relic';
     if (def.armor != null) return def.slot === 'head' ? 'helmet' : 'chest';
     if (def.vehicle) return 'vehicle';
     if (id === 'rocket') return 'rocket';
@@ -184,6 +185,17 @@ Game.Icons = (function () {
         ctx.fillStyle = c.accent; ctx.fillRect(12, 12, 24, 28); ctx.strokeRect(12, 12, 24, 28);
         ctx.fillStyle = mix(c.accent, '#fff', 0.7); ctx.fillRect(16, 14, 18, 24);
         ctx.strokeStyle = c.edge; ctx.lineWidth = 1; for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.moveTo(18, 19 + i * 5); ctx.lineTo(32, 19 + i * 5); ctx.stroke(); } break;
+      }
+      case 'relic': {
+        // 遺物: 鎖の付いたペンダント＋輝く宝石
+        ctx.strokeStyle = mix(c.base, '#fff', 0.4); ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(M, 16, 9, Math.PI * 0.15, Math.PI * 0.85); ctx.stroke();
+        ctx.fillStyle = c.base; ctx.beginPath();
+        ctx.moveTo(M, 22); ctx.lineTo(M + 10, 30); ctx.lineTo(M, 42); ctx.lineTo(M - 10, 30); ctx.closePath();
+        ctx.fill(); ctx.strokeStyle = c.edge; ctx.lineWidth = 1.5; ctx.stroke();
+        ctx.fillStyle = c.hi; ctx.globalAlpha = 0.6; ctx.beginPath(); ctx.moveTo(M, 22); ctx.lineTo(M - 10, 30); ctx.lineTo(M, 32); ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1;
+        ctx.fillStyle = '#fff'; ctx.globalAlpha = 0.8; ctx.beginPath(); ctx.arc(M - 3, 28, 1.6, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
+        break;
       }
       case 'material': {
         // 結晶/インゴット風

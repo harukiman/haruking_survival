@@ -7,6 +7,9 @@ Game.CHAMPION_NAMES = {
   name:  ['グラル', 'ヴォルグ', 'ザイン', 'モルガ', 'ドレク', 'ネブロス', 'カイン', 'ルゴス', 'ヴェイン', 'オルガ'],
 };
 
+// 遺物(relic)アクセサリーのドロップ抽選用ID一覧
+Game.RELIC_IDS = ['ring_crit', 'amulet_swift', 'fang_vamp', 'heart_regen', 'eye_xp', 'band_power', 'crest_guard'];
+
 // 精鋭(elite)個体の特殊変異アフィックス。spawn時に1つ抽選 → 名前接頭辞/オーラ色/固有効果。
 Game.ELITE_AFFIXES = {
   swift:     { name:'俊足の',   aura:'#5fffd0', speed:1.45 },                  // 移動速度UP
@@ -386,6 +389,14 @@ Game.ITEMS = {
   mind_tome:     { name:'記憶の書', stack:8, color:'#d0c0ff', respec:true, flavor:'稀少な記憶の書。読めばスキルを振り直せる。' },
   wisdom_tome:   { name:'知恵の書', stack:8, color:'#ffd86b', skillTome:1, flavor:'古の知恵が宿る稀覯本。読めばスキルポイントを1得る。' },
   xp_orb:        { name:'経験の宝珠', stack:16, color:'#7fd0ff', xpGain:40, flavor:'砕けば膨大な経験が流れ込む輝く珠。' },
+  // ===== 遺物(relic) アクセサリー: 装備スロット1つに1個。控えめなパッシブ効果 =====
+  ring_crit:     { name:'会心の指輪', stack:1, color:'#ff7a5a', relic:{crit:0.08}, flavor:'急所を見抜く力が宿る指輪。会心率+8%。' },
+  amulet_swift:  { name:'俊足の護符', stack:1, color:'#5fffd0', relic:{moveSpd:0.12}, flavor:'風の加護を纏う護符。移動速度+12%。' },
+  fang_vamp:     { name:'吸血の牙', stack:1, color:'#c03050', relic:{lifesteal:0.06}, flavor:'生命を吸い上げる牙の首飾り。吸血+6%。' },
+  heart_regen:   { name:'再生の心臓', stack:1, color:'#ff7aa0', relic:{regen:0.4}, flavor:'絶えず脈打つ不思議な心臓。HP自然回復+。' },
+  eye_xp:        { name:'星霜の眼', stack:1, color:'#7fd0ff', relic:{xpBoost:0.15}, flavor:'時の流れを見通す瞳。獲得経験+15%。' },
+  band_power:    { name:'力の腕輪', stack:1, color:'#ff8a4a', relic:{atk:4}, flavor:'膂力を増す重厚な腕輪。攻撃+4。' },
+  crest_guard:   { name:'守護の紋章', stack:1, color:'#9fd8ff', relic:{armor:3, hp:10}, flavor:'古の盾に刻まれた紋章。防御+3・最大HP+10。' },
 };
 
 // クラフトレシピ。station=null は手作り、それ以外は近接が必要
@@ -700,6 +711,7 @@ Game.ITEM_GLYPH = {
   chitin:'🦂', bone_club:'🦴', gold_sword:'⚔️', war_hammer:'🔨', crystal_blade:'⚔️', chitin_spear:'🔱',
   gold_helmet:'⛑️', gold_chest:'🛡️', crystal_helmet:'🪖', crystal_chest:'🛡️', star_helmet:'⛑️', chitin_armor:'🦺',
   sand_greatsword:'⚔️', magma_hammer:'🔨', pharaoh_crown:'👑', mind_tome:'📖', wisdom_tome:'📗', xp_orb:'🔮',
+  ring_crit:'💍', amulet_swift:'📿', fang_vamp:'🦷', heart_regen:'❤️‍🔥', eye_xp:'👁️', band_power:'💪', crest_guard:'🛡️',
   energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️', prism_blade:'⚔️', dragon_fang:'⚔️', colossus_blade:'⚔️',
 };
 

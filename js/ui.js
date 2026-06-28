@@ -179,6 +179,7 @@ Game.UI = (function () {
     { id: 'carrot_seeds', n: 3, price: 1 }, { id: 'pumpkin_seeds', n: 2, price: 1 }, { id: 'tomato_seeds', n: 3, price: 1 },
     { id: 'xp_orb', n: 1, price: 3 }, { id: 'wisdom_tome', n: 1, price: 8 },
     { id: 'bounty_board', n: 1, price: 4 },
+    { id: 'ring_crit', n: 1, price: 10 }, { id: 'heart_regen', n: 1, price: 10 },
     { rand: true, price: 4, label: '謎の装備（ランダム）' },
   ];
   function openTrade() { const sc = document.getElementById('trade-screen'); if (!sc) return; sc.classList.remove('hidden'); Game.state.paused = true; refreshTrade(); }
@@ -224,6 +225,8 @@ Game.UI = (function () {
     let h = '';
     h += '<div class="ench-stat">Lv.' + p.level + '（EXP ' + p.xp + '/' + p.xpNext + '）　スキルP: <span class="sp-badge">' + (p.skillPoints || 0) + '</span></div>';
     h += '<div class="ench-stat">攻撃力(手持ち) <b style="color:#ffd86b">' + eff + '</b>　防御力 <b style="color:#9fd8ff">' + Game.Player.totalArmor() + '</b>　最大HP <b style="color:#ff8a8a">' + p.maxHealth + '</b></div>';
+    { const acc = p.accessory; const ad = acc && Game.ITEMS[acc.id || acc];
+      h += '<div class="ench-stat">💠 遺物 <b style="color:#ffd86b">' + (ad ? ad.name : 'なし') + '</b>' + (ad && ad.flavor ? '<span style="color:#7a8494;font-size:.78rem">　' + ad.flavor + '</span>' : '') + '</div>'; }
     const stats = [['str', '力 STR', '攻撃 +1 / pt'], ['vit', '体 VIT', '最大HP +5 / pt'], ['dex', '技 DEX', '攻撃速度UP / pt']];
     stats.forEach(function (s) {
       h += '<div class="stat-row"><span class="sname">' + s[1] + ' <em>' + s[2] + '</em></span><span class="sval">' + (p[s[0]] || 0) + '</span><button class="stat-plus" data-stat="' + s[0] + '"' + ((p.skillPoints || 0) <= 0 ? ' disabled' : '') + '>＋</button></div>';
@@ -667,9 +670,17 @@ Game.UI = (function () {
       h += '<div class="ench-stat">' + (def.aoe ? '🌀 範囲攻撃' : '🗡 単体攻撃') + '　実効攻撃力 <b style="color:#ffd86b">' + eff + '</b> ' + cmpDelta(eff - Game.Player.currentWeaponAtk()) + '<span style="color:#7a8494;font-size:.78rem">（手持ち比）</span></div>';
     }
     if (def.armor != null) { const av = Game.Loot.stats(st).armor; h += '<div class="ench-stat">🛡 防御 <b style="color:#9fd8ff">' + av + '</b> ' + cmpDelta(av - Game.Player.equippedArmorAt(def.slot)) + '<span style="color:#7a8494;font-size:.78rem">（装備中比）</span></div>'; }
+    if (def.relic) {
+      const RL = { atk: '攻撃', armor: '防御', hp: '最大HP', crit: '会心率', moveSpd: '移動速度', lifesteal: '吸血', regen: 'HP回復', xpBoost: '経験', staminaMax: 'スタミナ' };
+      const parts = [];
+      for (const k in def.relic) { const v = def.relic[k]; const pct = (k === 'crit' || k === 'moveSpd' || k === 'lifesteal' || k === 'xpBoost'); parts.push((RL[k] || k) + ' +' + (pct ? Math.round(v * 100) + '%' : v)); }
+      h += '<div class="ench-stat">💠 遺物効果 <b style="color:#ffd86b">' + parts.join('・') + '</b></div>';
+      const eq = Game.state.player.accessory; if (eq) { const ed = Game.ITEMS[eq.id || eq]; if (ed) h += '<div class="tt-flavor" style="color:#7a8494">装備中: ' + ed.name + '（入替）</div>'; }
+    }
     if (def.flavor) h += '<div class="tt-flavor" style="margin-bottom:6px">' + def.flavor + '</div>';
     const btns = [];
     if (def.armor && def.slot) btns.push('<button id="inv-act" class="big-btn">装備する</button>');
+    else if (def.relic) btns.push('<button id="inv-act" class="big-btn">遺物を装備</button>');
     else if (def.food || def.cures || def.buff || def.skillTome || def.xpGain) btns.push('<button id="inv-act" class="big-btn">' + (def.food ? '食べる' : def.skillTome ? '読む' : '使う') + '</button>');
     else if (Game.Loot.rollable(st.id) || def.tool) btns.push('<button id="inv-hot" class="big-btn alt">ホットバーへ装備</button>');
     if (Game.Net && Game.Net.isConnected()) btns.push('<button id="inv-give" class="big-btn alt">仲間に渡す</button>');
@@ -694,6 +705,7 @@ Game.UI = (function () {
       const cur = Game.Inventory.slots()[invSelected]; if (!cur) return;
       const d2 = Game.ITEMS[cur.id];
       if (d2.armor) Game.Player.equipFromInventory(invSelected);
+      else if (d2.relic) Game.Player.equipRelic(invSelected);
       else { const tmp = Game.state.player.hotbarIndex; const sl = Game.Inventory.slots(); const k = sl.indexOf(cur); Game.state.player.hotbarIndex = k; Game.Inventory.useSelected(); Game.state.player.hotbarIndex = Math.min(tmp, Game.HOTBAR_SIZE - 1); }
       invSelected = -1; refreshInventory();
     });

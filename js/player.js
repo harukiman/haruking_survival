@@ -21,6 +21,7 @@ Game.Player = (function () {
       stamina: 100, maxStamina: 100,
       vehicle: null, // null|'car'|'boat'|'plane'
       armor: { head: null, chest: null }, // {id, roll} インスタンス
+      accessory: null, // 遺物(relic) {id}
       // RPGステータス（スキルポイントで振る）
       str: 0, vit: 0, dex: 0, skillPoints: 0, skills: {},
     };
@@ -244,6 +245,7 @@ Game.Player = (function () {
     if (def.respec) { const n = respec(); Game.Inventory.remove(sel.id, 1); Game.UI.toast('記憶の書を読んだ — スキルを振り直した（' + n + 'P返却）'); Game.UI.refreshAll(); return; }
     if (def.food || def.cures || def.buff || def.skillTome || def.xpGain) { Game.Inventory.useSelected(); return; }
     if (def.armor) { equipSelectedArmor(); return; }
+    if (def.relic) { equipRelic(); return; }
 
     // --- 以降はタイルが必要（耕作/植える/設置）---
     if (!hasTile) return;
@@ -383,6 +385,23 @@ Game.Player = (function () {
     Game.UI.refreshAll();
   }
 
+  // 遺物(relic)アクセサリーを装備（スロット1つ・入替式）
+  function equipRelic(idx) {
+    const p = Game.state.player;
+    if (idx == null) idx = p.hotbarIndex;
+    const slot = Game.Inventory.slots()[idx];
+    if (!slot) return;
+    const def = Game.ITEMS[slot.id];
+    if (!def || !def.relic) return;
+    const prev = p.accessory;
+    p.accessory = { id: slot.id };
+    Game.Inventory.slots()[idx] = prev ? { id: prev.id, count: 1 } : null;
+    applyEquipStats();
+    Game.Audio.play('equip');
+    Game.UI.toast(def.name + ' を装備（遺物）');
+    Game.UI.refreshAll();
+  }
+
   function totalArmor() {
     const a = Game.state.player.armor;
     let s = 0;
@@ -423,12 +442,16 @@ Game.Player = (function () {
 
   // ===== RPG: レベル/ステ/スキルツリーによる補正 =====
   function skillBonus() {
-    const sk = Game.state.player.skills || {};
+    const p = Game.state.player;
+    const sk = p.skills || {};
     const o = { atk: 0, armor: 0, hp: 0, lifesteal: 0, moveSpd: 0, crit: 0, mining: 0, hungerSlow: 0, regen: 0, staminaMax: 0, xpBoost: 0 };
     for (const id in sk) {
       if (!sk[id]) continue; const n = Game.SKILL_BY_ID[id]; if (!n) continue;
       for (const k in n.eff) { if (k === 'flag') continue; o[k] = (o[k] || 0) + n.eff[k]; }
     }
+    // 遺物(relic)アクセサリーの効果を合流
+    const acc = p.accessory;
+    if (acc) { const d = Game.ITEMS[acc.id || acc]; if (d && d.relic) for (const k in d.relic) o[k] = (o[k] || 0) + d.relic[k]; }
     return o;
   }
   function skillFlag(f) {
@@ -552,7 +575,7 @@ Game.Player = (function () {
 
   return {
     makeDefault, spawnAt, update, targetTile, mining, playerTile, breakBlock,
-    interact, gainXP, totalArmor, setBonus, sleep, equipSelectedArmor, equipFromInventory, applyEquipStats,
+    interact, gainXP, totalArmor, setBonus, sleep, equipSelectedArmor, equipFromInventory, equipRelic, applyEquipStats,
     effAttack, attackCooldown, levelDmgBonus, levelArmorBonus, spendStat, unlockSkill, respec,
     skillBonus, skillFlag, canUnlock, currentWeaponAtk, equippedArmorAt,
   };
