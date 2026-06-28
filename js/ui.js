@@ -268,6 +268,13 @@ Game.UI = (function () {
     }
   }
 
+  // 装備比較の差分表示（緑▲ / 赤▼ / ±0）
+  function cmpDelta(d) {
+    if (d > 0) return '<span style="color:#7fe07f;font-weight:700">▲+' + d + '</span>';
+    if (d < 0) return '<span style="color:#ff7a7a;font-weight:700">▼' + d + '</span>';
+    return '<span style="color:#9fb0c4">±0</span>';
+  }
+
   function slotHTML(stack) {
     if (!stack) return '';
     const def = Game.ITEMS[stack.id];
@@ -298,7 +305,12 @@ Game.UI = (function () {
     const def = Game.ITEMS[stack.id]; if (!def) return null;
     let html = '<div class="tt-name" style="color:' + (stack.roll ? Game.Loot.rarityColor(stack) : (def.color || '#fff')) + '">' + (stack.roll ? Game.Loot.displayName(stack) : def.name) + '</div>';
     if (Game.Loot.rollable(stack.id)) html += '<div class="tt-stat">' + Game.Loot.statText(stack) + '</div>';
-    else {
+    // 装備比較（武器=手持ち比 / 防具=装備中比）
+    if (Game.Player.currentWeaponAtk) {
+      if (def.attack != null) { const eff = Game.Player.effAttack(Game.Loot.stats(stack).atk); html += '<div class="tt-stat">攻撃 ' + eff + ' ' + cmpDelta(eff - Game.Player.currentWeaponAtk()) + '</div>'; }
+      else if (def.armor != null) { const av = Game.Loot.stats(stack).armor; html += '<div class="tt-stat">防御 ' + av + ' ' + cmpDelta(av - Game.Player.equippedArmorAt(def.slot)) + '</div>'; }
+    }
+    if (!Game.Loot.rollable(stack.id)) {
       const s = [];
       if (def.food) s.push('空腹+' + def.food); if (def.heal) s.push('回復+' + def.heal);
       if (def.place !== undefined) s.push('設置可'); if (def.tool) s.push(def.tool + ' Lv' + def.tier);
@@ -569,9 +581,9 @@ Game.UI = (function () {
     if (Game.Loot.rollable(st.id)) h += '<div class="ench-stat">' + Game.Loot.statText(st) + '</div>';
     if (def.attack != null) {
       const eff = Game.Player.effAttack(Game.Loot.stats(st).atk);
-      h += '<div class="ench-stat">' + (def.aoe ? '🌀 範囲攻撃' : '🗡 単体攻撃') + '　実効攻撃力 <b style="color:#ffd86b">' + eff + '</b>（Lv/STR補正込）</div>';
+      h += '<div class="ench-stat">' + (def.aoe ? '🌀 範囲攻撃' : '🗡 単体攻撃') + '　実効攻撃力 <b style="color:#ffd86b">' + eff + '</b> ' + cmpDelta(eff - Game.Player.currentWeaponAtk()) + '<span style="color:#7a8494;font-size:.78rem">（手持ち比）</span></div>';
     }
-    if (def.armor != null) h += '<div class="ench-stat">🛡 防御 <b style="color:#9fd8ff">' + Game.Loot.stats(st).armor + '</b></div>';
+    if (def.armor != null) { const av = Game.Loot.stats(st).armor; h += '<div class="ench-stat">🛡 防御 <b style="color:#9fd8ff">' + av + '</b> ' + cmpDelta(av - Game.Player.equippedArmorAt(def.slot)) + '<span style="color:#7a8494;font-size:.78rem">（装備中比）</span></div>'; }
     if (def.flavor) h += '<div class="tt-flavor" style="margin-bottom:6px">' + def.flavor + '</div>';
     const btns = [];
     if (def.armor && def.slot) btns.push('<button id="inv-act" class="big-btn">装備する</button>');

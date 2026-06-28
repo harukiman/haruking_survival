@@ -429,6 +429,13 @@ Game.Player = (function () {
   function levelArmorBonus() { const p = Game.state.player; return Math.floor(p.level / 4); }
   function attackCooldown() { const p = Game.state.player; return Math.max(7, Math.round(Game.TUNE.ATTACK_COOLDOWN * (1 - (p.dex || 0) * 0.02))); }
   function effAttack(baseAtk) { return Math.max(1, baseAtk + levelDmgBonus() + skillBonus().atk); }
+  // 装備比較用: 現在手持ち武器の実効攻撃 / 指定スロットの装備防御
+  function currentWeaponAtk() {
+    const sl = Game.Inventory.slots()[Game.state.player.hotbarIndex];
+    const d = sl && Game.ITEMS[sl.id];
+    return (d && d.attack != null) ? effAttack(Game.Loot.stats(sl).atk) : effAttack(1);
+  }
+  function equippedArmorAt(slot) { const a = Game.state.player.armor[slot]; return a ? Game.Loot.stats(a).armor : 0; }
 
   function spendStat(stat) {
     const p = Game.state.player;
@@ -536,6 +543,6 @@ Game.Player = (function () {
     makeDefault, spawnAt, update, targetTile, mining, playerTile, breakBlock,
     interact, gainXP, totalArmor, setBonus, sleep, equipSelectedArmor, equipFromInventory, applyEquipStats,
     effAttack, attackCooldown, levelDmgBonus, levelArmorBonus, spendStat, unlockSkill, respec,
-    skillBonus, skillFlag, canUnlock,
+    skillBonus, skillFlag, canUnlock, currentWeaponAtk, equippedArmorAt,
   };
 })();
