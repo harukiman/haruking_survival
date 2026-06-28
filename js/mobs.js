@@ -376,7 +376,7 @@ Game.Mobs = (function () {
       } else {
         Game.Render.flash('#ffcaa0');
         Game.UI.toast(m.def.name + 'を打ち倒した！');
-        if (Game.Achievements) Game.Achievements.unlock('dungeon_boss');
+        if (Game.Achievements) { Game.Achievements.unlock('dungeon_boss'); if (Game.BOSS_ACH && Game.BOSS_ACH[m.type]) Game.Achievements.unlock(Game.BOSS_ACH[m.type]); }
       }
       // 撃破アニメムービー（ローカル再生）
       if (Game.Cutscene && Game.Cutscene.playBossOutro && !(Game.Net.isConnected() && !Game.Net.host)) {

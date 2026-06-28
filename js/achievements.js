@@ -22,11 +22,25 @@ Game.Achievements = (function () {
     space_traveler:{ name:'星の海へ', desc:'宇宙へ旅立った' },
     dungeon_boss:  { name:'迷宮の覇者', desc:'ダンジョンの主を打ち倒した' },
     explorer:      { name:'大いなる探究者', desc:'ランドマークを5つ発見した' },
+    // 各ボス討伐
+    slay_tomb_king:   { name:'砂塵を制す', desc:'墳墓の王を打ち倒した' },
+    slay_forge_titan: { name:'溶炉を鎮めし者', desc:'溶炉の巨人を打ち倒した' },
+    slay_star_guardian:{ name:'星を超えて', desc:'星の守護者を打ち倒した' },
+    slay_crystal_queen:{ name:'氷晶の終焉', desc:'水晶の女王を打ち倒した' },
+    slay_hunger_beast: { name:'渇望を断つ', desc:'飢餓の獣を打ち倒した' },
+    slay_abyss_dragon: { name:'屠竜', desc:'深淵の竜を打ち倒した' },
+    // マイルストーン
+    level20:       { name:'熟達者', desc:'レベル20に到達' },
+    level50:       { name:'達人', desc:'レベル50に到達' },
+    gun_user:      { name:'ガンスリンガー', desc:'銃を手に入れた' },
+    potion_master: { name:'錬金の心得', desc:'バフ薬を使った' },
   };
+  // ボス種別→実績ID
+  Game.BOSS_ACH = { tomb_king:'slay_tomb_king', forge_titan:'slay_forge_titan', star_guardian:'slay_star_guardian', crystal_queen:'slay_crystal_queen', hunger_beast:'slay_hunger_beast', abyss_dragon:'slay_abyss_dragon' };
 
   // 種別判定用（手に入れた時の実績）
   Game.MAGIC_ITEMS = ['warp_staff', 'flame_staff', 'frost_staff', 'flying_carpet'];
-  Game.LEGENDARY_ITEMS = ['sand_greatsword', 'magma_hammer', 'pharaoh_crown', 'cosmic_blade', 'star_cannon'];
+  Game.LEGENDARY_ITEMS = ['sand_greatsword', 'magma_hammer', 'pharaoh_crown', 'cosmic_blade', 'star_cannon', 'excalibur', 'gae_bolg', 'gate_babylon', 'prism_blade', 'dragon_fang'];
 
   function set() { return Game.state.achievements || (Game.state.achievements = {}); }
 

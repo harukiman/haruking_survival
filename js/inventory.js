@@ -48,6 +48,7 @@ Game.Inventory = (function () {
     else if (id === 'lumen') Game.Achievements.unlock('lumen');
     if (Game.MAGIC_ITEMS && Game.MAGIC_ITEMS.indexOf(id) >= 0) Game.Achievements.unlock('magic_user');
     if (Game.LEGENDARY_ITEMS && Game.LEGENDARY_ITEMS.indexOf(id) >= 0) Game.Achievements.unlock('legendary');
+    const d = Game.ITEMS[id]; if (d && d.tool === 'gun') Game.Achievements.unlock('gun_user');
   }
 
   // rolled装備など個別インスタンスを空きスロットへ（スタックしない）。成功でtrue
@@ -94,6 +95,7 @@ Game.Inventory = (function () {
     // 治療アイテム（包帯/解毒薬）
     if (def && def.buff) {
       Game.Status.apply(def.buff.type, def.buff.dur);
+      if (Game.Achievements) Game.Achievements.unlock('potion_master');
       Game.Player.applyEquipStats();
       Game.Render.spawnParticles(p.x, p.y - 6, '#ffe9a0', 10);
       remove(sl.id, 1); Game.Audio.play('eat');
