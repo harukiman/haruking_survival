@@ -21,9 +21,10 @@ Game.Icons = (function () {
     if (def.tool === 'axe') return 'axe';
     if (def.tool === 'hoe') return 'hoe';
     if (def.attack != null || def.tool === 'sword') {
-      if (def.aoe || /hammer|hamr|戦鎚|magma_hammer|war_hammer/.test(id)) return 'hammer';
-      if (/spear|槍|chitin_spear/.test(id)) return 'spear';
+      if (/hammer|戦鎚|magma_hammer|war_hammer/.test(id)) return 'hammer';
+      if (/spear|槍|chitin_spear|gae_bolg/.test(id)) return 'spear';
       if (/club|bone_club|棍/.test(id)) return 'club';
+      if (/boomerang|_axe$/.test(id)) return 'axe';
       return 'sword';
     }
     if (def.armor != null) return def.slot === 'head' ? 'helmet' : 'chest';
@@ -32,7 +33,7 @@ Game.Icons = (function () {
     if (def.respec) return 'book';
     if (def.cures || def.heal != null) return 'potion';
     if (def.food != null) return 'food';
-    if (/^ammo_|^shell|^bullet$|rocket_ammo/.test(id)) return 'ammo';
+    if (/^ammo_|^shell|^bullet$|rocket_ammo|energy_cell/.test(id)) return 'ammo';
     if (def.place != null) return 'block';
     if (/ore|_bar|_ore$|^iron$|^coal$|^stone$|crystal|lumen|shadow_steel|star_metal|star_core|chitin|shadow_core|void_heart|shadow_shard|_shard/.test(id)) return 'material';
     return 'misc';

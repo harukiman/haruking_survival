@@ -10,6 +10,16 @@ Game.Combat = (function () {
     if (p.attackCd > 0) return false;
     const mobs = Game.state.mobs;
     const rangePx = Game.TUNE.ATTACK_RANGE * TS;
+    // 飛ぶ斬撃などの projectile 武器: 標的の有無に関わらず発射
+    const _slot = Game.Inventory.selectedSlot(), _def = _slot && Game.ITEMS[_slot.id];
+    let projFired = false;
+    if (_def && _def.proj) {
+      const pj = _def.proj;
+      Game.Projectiles.fire(Game.Player.effAttack(pj.dmg || (Game.Loot.stats(_slot).atk)), pj.kind, { count: pj.count, spread: pj.spread, pierce: pj.pierce, chain: pj.chain, boomerang: pj.boomerang, speed: pj.speed, big: pj.big });
+      if (_def.wsfx) Game.Audio.play(_def.wsfx);
+      Game.Render.spawnSlash(p.x, p.y, p.dir, pj.kind === 'chain' ? '#fff07a' : pj.kind === 'pierce' ? '#7fe0ff' : '#cfefff');
+      projFired = true;
+    }
     // 向きベクトル
     let fx = 0, fy = 0;
     if (p.dir === 'up') fy = -1; else if (p.dir === 'down') fy = 1;
@@ -27,7 +37,11 @@ Game.Combat = (function () {
       if (d > 14 && dot < 0) continue;
       if (d < bestD) { bestD = d; best = m; }
     }
-    if (!best) return false;
+    if (!best) {
+      // 近接標的が無くても、飛ぶ斬撃等は撃ったのでクールダウンを消費
+      if (projFired) { p.attackCd = (_def.proj.cd) || Game.Player.attackCooldown(); Game.Audio.play('swing'); return true; }
+      return false;
+    }
 
     const slot = Game.Inventory.selectedSlot();
     const st = Game.Loot.stats(slot);
@@ -56,7 +70,7 @@ Game.Combat = (function () {
       p.health = Math.min(p.maxHealth, p.health + Math.max(1, Math.round(dmg * ls)));
       Game.UI.refreshStats();
     }
-    p.attackCd = Game.Player.attackCooldown();
+    p.attackCd = (projFired && _def.proj.cd) ? _def.proj.cd : Game.Player.attackCooldown();
     Game.Render.spawnSlash(p.x, p.y, p.dir, st.atk >= 8 ? '#ffd86b' : '#ffffff');
     Game.Audio.play('swing');
     return true;

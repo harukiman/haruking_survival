@@ -71,6 +71,7 @@ Game.Render = (function () {
     drawSlashes(ctx);
     Game.Projectiles.draw(ctx);
     drawParticles(ctx);
+    drawBolts(ctx);
     drawFloaters(ctx);
     Game.Lighting.drawOverlay(ctx);
     drawWeather(ctx);
@@ -340,6 +341,22 @@ Game.Render = (function () {
     }
   }
 
+  // 連鎖雷（chain武器）
+  const bolts = [];
+  function spawnLightning(x1, y1, x2, y2) { bolts.push({ x1: x1, y1: y1, x2: x2, y2: y2, life: 8 }); }
+  function drawBolts(ctx) {
+    if (!bolts.length) return;
+    for (let i = bolts.length - 1; i >= 0; i--) {
+      const b = bolts[i]; b.life--;
+      if (b.life <= 0) { bolts.splice(i, 1); continue; }
+      const a = Game.Camera.worldToScreen(b.x1, b.y1), c = Game.Camera.worldToScreen(b.x2, b.y2);
+      ctx.globalAlpha = b.life / 8; ctx.strokeStyle = '#fff07a'; ctx.lineWidth = 2.5; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(a.x, a.y);
+      const seg = 4; for (let k = 1; k < seg; k++) { const t = k / seg; ctx.lineTo(a.x + (c.x - a.x) * t + (Math.random() - 0.5) * 10, a.y + (c.y - a.y) * t + (Math.random() - 0.5) * 10); }
+      ctx.lineTo(c.x, c.y); ctx.stroke(); ctx.globalAlpha = 1;
+    }
+  }
+
   // 浮遊コンバットテキスト（ダメージ/回復/レベルアップ）
   const floaters = [];
   function spawnFloat(wx, wy, text, color, big) {
@@ -363,5 +380,5 @@ Game.Render = (function () {
     ctx.textAlign = 'left';
   }
 
-  return { draw, buildChunkCache, spawnParticles, spawnBlood, spawnSlash, spawnFloat, flash };
+  return { draw, buildChunkCache, spawnParticles, spawnBlood, spawnSlash, spawnFloat, spawnLightning, flash };
 })();

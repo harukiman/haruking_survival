@@ -281,6 +281,16 @@ Game.ITEMS = {
   m870:        { name:'レミントンM870', stack:1, color:'#1e1e22', tool:'gun', ammo:'shell_12g', fireDmg:6, cd:24, pellets:5, spread:0.5, bkind:'bullet', gunsfx:'gun_shotgun', flavor:'散弾を撒くポンプアクション。' },
   barrett:     { name:'バレットM82', stack:1, color:'#18181c', tool:'gun', ammo:'ammo_50', fireDmg:34, cd:42, bspeed:14, bkind:'tracer', gunsfx:'gun_sniper', flavor:'対物狙撃銃。隔絶した一撃。' },
   rpg7:        { name:'RPG-7', stack:1, color:'#26261e', tool:'gun', ammo:'rocket_ammo', fireDmg:46, cd:55, explosive:2.4, bspeed:6, bkind:'rocket', gunsfx:'gun_rocket', flavor:'携行式ロケット。着弾で爆発し範囲を吹き飛ばす。' },
+  // ===== P33 ワクワク武器（飛ぶ斬撃/雷/ブーメラン/ビーム）＋Fate風レジェンダリ =====
+  energy_cell: { name:'エネルギーセル', stack:99, color:'#2aa0d0', flavor:'エネルギー兵器の動力。青く脈動する。' },
+  wind_blade:  { name:'風斬りの剣', stack:1, color:'#bfe8d8', tool:'sword', tier:3, attack:9, proj:{kind:'slash', dmg:7, cd:14}, wsfx:'slash_air', flavor:'振るたび刃から斬撃が飛ぶ。間合いの外から斬れ。' },
+  thunder_sword:{ name:'雷鳴剣', stack:1, color:'#ffe27a', tool:'sword', tier:4, attack:11, proj:{kind:'chain', dmg:9, chain:3, cd:18}, wsfx:'thunder', flavor:'放たれた雷は敵から敵へ飛び移る。' },
+  boomerang_axe:{ name:'回帰の戦斧', stack:1, color:'#caa86a', tool:'sword', tier:3, attack:12, proj:{kind:'boomerang', dmg:13, cd:28}, wsfx:'whirl', flavor:'投げれば貫き、手元へ還る。' },
+  laser_rifle: { name:'レーザーライフル', stack:1, color:'#141416', tool:'gun', ammo:'energy_cell', fireDmg:14, cd:8, bkind:'laser', gunsfx:'beam', flavor:'敵を貫く収束光。' },
+  railgun:     { name:'レールガン', stack:1, color:'#101014', tool:'gun', ammo:'energy_cell', fireDmg:38, cd:40, bspeed:16, bkind:'pierce', gunsfx:'beam', flavor:'超電磁加速。直線上の全てを撃ち抜く。' },
+  excalibur:   { name:'約束された勝利の剣', stack:1, color:'#ffe9a0', tool:'sword', tier:5, attack:22, proj:{kind:'slash', dmg:34, big:true, cd:40}, wsfx:'beam', flavor:'掲げれば光の砲撃となりて、邪悪を薙ぎ払う。' },
+  gae_bolg:    { name:'刺し穿つ死棘の槍', stack:1, color:'#c0303a', tool:'sword', tier:5, attack:18, proj:{kind:'pierce', dmg:24, cd:22}, wsfx:'slash_air', flavor:'放てば因果を捻じ曲げ、必ず心臓を貫く朱槍。' },
+  gate_babylon:{ name:'王の財宝', stack:1, color:'#e8c54a', tool:'sword', tier:5, attack:16, proj:{kind:'slash', dmg:11, count:5, spread:0.7, cd:34}, wsfx:'slash_air', flavor:'無数の宝具を雨と降らせる、王の蔵。' },
   // 乗り物
   car:           { name:'車', stack:1, color:'#c0444a', vehicle:'car', flavor:'大地を駆ける鉄の馬。' },
   boat:          { name:'ボート', stack:1, color:'#9c6b3f', vehicle:'boat', flavor:'水を越えるための小舟。' },
@@ -446,6 +456,13 @@ Game.RECIPES = [
   { out:{id:'m870', n:1}, in:{iron:7, wood:2}, station:'crafting_table' },
   { out:{id:'barrett', n:1}, in:{iron:12, gold_bar:3, shadow_steel:1}, station:'crafting_table' },
   { out:{id:'rpg7', n:1}, in:{iron:14, gold_bar:4, shadow_steel:2}, station:'crafting_table' },
+  // ===== P33 ワクワク武器 =====
+  { out:{id:'energy_cell', n:4}, in:{lumen:1, iron:1}, station:'crafting_table' },
+  { out:{id:'wind_blade', n:1}, in:{iron:5, lumen:1}, station:'crafting_table' },
+  { out:{id:'thunder_sword', n:1}, in:{iron:6, lumen:2, gold_bar:1}, station:'crafting_table' },
+  { out:{id:'boomerang_axe', n:1}, in:{iron:5, wood:3}, station:'crafting_table' },
+  { out:{id:'laser_rifle', n:1}, in:{iron:8, lumen:3, gold_bar:2}, station:'crafting_table' },
+  { out:{id:'railgun', n:1}, in:{iron:12, star_metal:2, lumen:4}, station:'crafting_table' },
 ];
 
 // 装備セット効果（head+chest が同セットで発動）
@@ -508,7 +525,7 @@ Game.MOBS = {
   wraith:   { name:'影霊', hostile:true, hp:16, speed:2.0, color:'#6a4f9a', size:11, drops:[{item:'shadow_shard',n:[1,2]}], dmg:5, xp:4, shadow:true, ghost:true },
   watcher:  { name:'見張り目', hostile:true, hp:24, speed:0.8, color:'#241a3a', size:13, drops:[{item:'shadow_crystal',n:[0,2]},{item:'shadow_shard',n:[1,1]}], dmg:6, xp:5, shadow:true },
   // ボスと手下
-  sovereign:{ name:'影の主', hostile:true, hp:260, speed:1.4, color:'#7a30c0', size:30, drops:[{item:'shadow_core',n:[2,4]},{item:'shadow_steel',n:[4,8]},{item:'shadow_crystal',n:[5,10]},{item:'warp_staff',n:[0,1]},{item:'mind_tome',n:[0,1]}], dmg:10, xp:60, shadow:true, boss:true },
+  sovereign:{ name:'影の主', hostile:true, hp:260, speed:1.4, color:'#7a30c0', size:30, drops:[{item:'shadow_core',n:[2,4]},{item:'shadow_steel',n:[4,8]},{item:'shadow_crystal',n:[5,10]},{item:'warp_staff',n:[0,1]},{item:'mind_tome',n:[0,1]},{item:'excalibur',n:[0,1]}], dmg:10, xp:60, shadow:true, boss:true },
   shadow_spawn:{ name:'影の落とし子', hostile:true, hp:6, speed:2.4, color:'#5a3a8a', size:8, drops:[{item:'shadow_shard',n:[0,1]}], dmg:3, xp:1, shadow:true, ghost:true },
   // 深層の徘徊者（影の深層でのみ出現）
   abyss_stalker:{ name:'深淵の徘徊者', hostile:true, hp:34, speed:2.0, color:'#48206a', size:15, drops:[{item:'shadow_crystal',n:[1,3]},{item:'lumen',n:[0,2]},{item:'shadow_core',n:[0,1]}], dmg:8, xp:8, shadow:true },
@@ -521,7 +538,7 @@ Game.MOBS = {
   cursed_armor:{ name:'呪鎧', hostile:true, hp:30, speed:0.9, color:'#7a7a86', size:13, drops:[{item:'iron',n:[1,3]},{item:'iron_ore',n:[1,2]}], dmg:6, xp:5 },
   // 宇宙
   void_drone:{ name:'虚空ドローン', hostile:true, hp:18, speed:2.2, color:'#7fa0d0', size:10, drops:[{item:'star_metal',n:[0,2]},{item:'lumen',n:[0,1]}], dmg:5, xp:5, space:true, ghost:true },
-  star_guardian:{ name:'星の守護者', hostile:true, hp:320, speed:1.4, color:'#cfe0ff', size:30, drops:[{item:'star_core',n:[2,4]},{item:'star_metal',n:[6,12]},{item:'flying_carpet',n:[0,1]},{item:'frost_staff',n:[0,1]}], dmg:11, xp:80, space:true, big:true },
+  star_guardian:{ name:'星の守護者', hostile:true, hp:320, speed:1.4, color:'#cfe0ff', size:30, drops:[{item:'star_core',n:[2,4]},{item:'star_metal',n:[6,12]},{item:'flying_carpet',n:[0,1]},{item:'frost_staff',n:[0,1]},{item:'gate_babylon',n:[0,1]}], dmg:11, xp:80, space:true, big:true },
   // 友好NPC: 謎の旅人
   wanderer: { name:'謎の旅人', hostile:false, hp:20, speed:1.0, color:'#caa84a', size:11, drops:[], xp:0, friendly:true, npc:true },
   // ===== P25 コンテンツ拡張: 新モブ =====
@@ -533,7 +550,7 @@ Game.MOBS = {
   ice_bear: { name:'白熊', hostile:true, hp:40, speed:1.4, color:'#e8eef2', size:16, drops:[{item:'raw_meat',n:[2,4]},{item:'hide',n:[2,3]}], dmg:7, xp:8, inflict:{cold:240}, big:true },
   astral_serpent:{ name:'宇宙の大蛇', hostile:true, hp:60, speed:2.0, color:'#b0a0ff', size:16, drops:[{item:'star_metal',n:[1,3]},{item:'star_core',n:[0,1]}], dmg:8, xp:14, space:true, ghost:true, big:true },
   // ===== P27 ダンジョンボス（大型ダンジョンの巣から稀に出現）=====
-  tomb_king:  { name:'墳墓の王', hostile:true, hp:200, speed:1.3, color:'#d8b048', size:26, drops:[{item:'sand_greatsword',n:[1,1]},{item:'pharaoh_crown',n:[0,1]},{item:'gold_bar',n:[3,6]},{item:'chitin',n:[2,4]}], dmg:9, xp:45, boss:true, big:true, summon:'scorpion', inflict:{poison:240} },
+  tomb_king:  { name:'墳墓の王', hostile:true, hp:200, speed:1.3, color:'#d8b048', size:26, drops:[{item:'sand_greatsword',n:[1,1]},{item:'pharaoh_crown',n:[0,1]},{item:'gold_bar',n:[3,6]},{item:'chitin',n:[2,4]},{item:'gae_bolg',n:[0,1]}], dmg:9, xp:45, boss:true, big:true, summon:'scorpion', inflict:{poison:240} },
   forge_titan:{ name:'溶炉の巨人', hostile:true, hp:280, speed:1.1, color:'#c0502a', size:30, drops:[{item:'magma_hammer',n:[1,1]},{item:'iron',n:[4,8]},{item:'gold_bar',n:[2,5]}], dmg:12, xp:60, boss:true, big:true, summon:'golem', shape:'tall' },
   // ===== P30 敵の多様化: 遠距離魔法・巨人・形状バリエーション =====
   hex_caster:{ name:'影の呪術師', hostile:true, hp:18, speed:1.0, color:'#a060e0', size:11, drops:[{item:'shadow_crystal',n:[0,1]},{item:'shadow_shard',n:[1,2]}], dmg:4, xp:5, shadow:true, ghost:true, shape:'wisp', ranged:{dmg:6,range:7,cd:80,kind:'hex'} },
@@ -594,6 +611,7 @@ Game.ITEM_GLYPH = {
   chitin:'🦂', bone_club:'🦴', gold_sword:'⚔️', war_hammer:'🔨', crystal_blade:'⚔️', chitin_spear:'🔱',
   gold_helmet:'⛑️', gold_chest:'🛡️', crystal_helmet:'🪖', crystal_chest:'🛡️', star_helmet:'⛑️', chitin_armor:'🦺',
   sand_greatsword:'⚔️', magma_hammer:'🔨', pharaoh_crown:'👑', mind_tome:'📖',
+  energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️',
 };
 
 Game.INV_SIZE = 36;       // 先頭9 = ホットバー
