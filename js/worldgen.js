@@ -33,6 +33,24 @@ Game.WorldGen = (function () {
 
     // 影世界: 同じ地形形状(標高)・別オブジェクト
     const shadow = Game.state && Game.state.worldName === 'shadow';
+
+    // 共鳴遺跡（両世界の同座標に対構造）
+    if (ground !== T.DEEP_WATER && ground !== T.WATER) {
+      const G = 96;
+      const ax = Math.round(wx / G) * G, ay = Math.round(wy / G) * G;
+      const dxv = wx - ax, dyv = wy - ay;
+      if (Math.abs(dxv) <= 1 && Math.abs(dyv) <= 1 && U.hash3(ax, ay, seed + 5151) < 0.085) {
+        const key = ax + ',' + ay;
+        const resonated = Game.state && Game.state.resonated && Game.state.resonated[key];
+        const center = dxv === 0 && dyv === 0;
+        if (shadow) {
+          return { ground: T.STONE, obj: center ? (resonated ? O.NONE : O.RESONANCE_CORE) : O.NONE };
+        }
+        if (resonated) return { ground: T.DIRT, obj: center ? O.TREASURE_CHEST : O.NONE };
+        return { ground: T.STONE, obj: O.SEAL_WALL };
+      }
+    }
+
     if (shadow) {
       if (ground === T.FOREST || ground === T.GRASS) {
         if (h < 0.16) obj = O.SHADOW_TREE;

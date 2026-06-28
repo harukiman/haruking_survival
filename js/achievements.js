@@ -15,6 +15,7 @@ Game.Achievements = (function () {
     madness_sight: { name:'狂気の視界', desc:'幻影鉱脈を掘り当てた' },
     boss_slain:    { name:'影を統べし者', desc:'影の主を打ち倒した' },
     lore_complete: { name:'碑文の蒐集家', desc:'全ての石碑を読んだ' },
+    resonance:     { name:'共鳴', desc:'二相を繋ぎ封印を解いた' },
   };
 
   function set() { return Game.state.achievements || (Game.state.achievements = {}); }

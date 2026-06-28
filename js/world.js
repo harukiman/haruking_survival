@@ -171,10 +171,25 @@ Game.World = (function () {
     if (val === Game.OBJ.NONE) { Game.state.worlds.light.tileData.delete(U.tileKey(tx, ty)); Game.state.worlds.shadow.tileData.delete(U.tileKey(tx, ty)); }
   }
 
+  // 共鳴: 影で核を壊すと両世界の該当遺跡を再生成（光の封印が解け宝が出現）
+  function resonate(tx, ty) {
+    const key = tx + ',' + ty;
+    if (!Game.state.resonated) Game.state.resonated = {};
+    if (Game.state.resonated[key]) return;
+    Game.state.resonated[key] = 1;
+    ['light', 'shadow'].forEach(function (name) {
+      Game.state.worlds[name].chunks.delete(U.chunkKey(toChunkCoord(tx), toChunkCoord(ty)));
+    });
+    Game.Render.flash('#ffe9a0');
+    Game.Audio.play('levelup');
+    Game.UI.toast('遠くで封印が解ける音がした… 光の世界に宝が現れた');
+    if (Game.Achievements) Game.Achievements.unlock('resonance');
+  }
+
   return {
     Chunk, getChunk, groundAt, objAt, setObj, setGround,
     getTileData, setTileData, clearTileData,
     isWalkable, updateChunks, toChunkCoord,
-    setActiveWorld, shift, setObjBothWorlds,
+    setActiveWorld, shift, setObjBothWorlds, resonate,
   };
 })();

@@ -110,6 +110,12 @@ Game.Player = (function () {
     if (!t || !t.inReach) { mining.active = false; return; }
     const obj = t.obj;
     const meta = Game.OBJ_META[obj];
+    // 封印壁は破壊不可（二相連動で解く）。ヒント提示
+    if (obj === Game.OBJ.SEAL_WALL) {
+      mining.active = false;
+      if (Game.state.tick % 40 === 0) Game.UI.toast('固い封印だ… 影の世界の同じ場所に「共鳴核」があるはず');
+      return;
+    }
     if (obj === Game.OBJ.NONE || !meta || !meta.mineable) { mining.active = false; return; }
 
     // 幻影鉱脈は正気度が低いときだけ掘れる
@@ -133,8 +139,8 @@ Game.Player = (function () {
   }
 
   function breakBlock(tx, ty, obj, meta) {
-    // チェスト中身を放出
-    if (obj === Game.OBJ.CHEST) {
+    // チェスト/宝箱の中身を放出
+    if (obj === Game.OBJ.CHEST || obj === Game.OBJ.TREASURE_CHEST) {
       const d = Game.World.getTileData(tx, ty);
       if (d && d.chest) d.chest.forEach(function (sl) {
         if (sl) Game.state.drops.push({ id: sl.id, count: sl.count, x: tx * TS + TS / 2, y: ty * TS + TS / 2 });
@@ -155,6 +161,7 @@ Game.Player = (function () {
     const col = (Game.ITEMS[meta.drops && meta.drops[0] && meta.drops[0].item] || {}).color || '#999';
     Game.Render.spawnParticles(wx, wy, col, 8);
     if (meta.phantom && Game.Achievements) Game.Achievements.unlock('madness_sight');
+    if (meta.resonator) Game.World.resonate(tx, ty);  // 共鳴核破壊→封印解除
     Game.Audio.play('break');
   }
 
@@ -165,6 +172,11 @@ Game.Player = (function () {
     const obj = Game.World.objAt(t.tx, t.ty);
 
     if (obj === Game.OBJ.CHEST) { Game.UI.openChest(t.tx, t.ty); return; }
+    if (obj === Game.OBJ.TREASURE_CHEST) {
+      let d = Game.World.getTileData(t.tx, t.ty);
+      if (!d || !d.chest) { Game.World.setTileData(t.tx, t.ty, { chest: makeTreasureLoot() }); }
+      Game.UI.openChest(t.tx, t.ty); return;
+    }
     if (obj === Game.OBJ.RIFT_ANCHOR) { Game.UI.openSharedChest(t.tx, t.ty); return; }
     if (obj === Game.OBJ.STELA) { Game.Lore.read(t.tx, t.ty); return; }
     if (obj === Game.OBJ.SHADOW_ALTAR) { Game.Mobs.summonBoss(t.tx, t.ty); return; }
@@ -203,6 +215,17 @@ Game.Player = (function () {
     Game.Inventory.remove(sel.id, 1);
     Game.Audio.play('place');
     Game.UI.refreshAll();
+  }
+
+  function makeTreasureLoot() {
+    const arr = new Array(27).fill(null);
+    const pool = [['lumen', 2, 5], ['shadow_steel', 1, 3], ['shadow_crystal', 2, 5], ['gold_ore', 2, 6], ['shadow_core', 1, 2], ['iron', 2, 5]];
+    const n = 4 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < n; i++) {
+      const it = pool[Math.floor(Math.random() * pool.length)];
+      arr[i] = { id: it[0], count: it[1] + Math.floor(Math.random() * (it[2] - it[1] + 1)) };
+    }
+    return arr;
   }
 
   function equipArmor(id) {

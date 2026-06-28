@@ -30,6 +30,7 @@ Game.Save = (function () {
       achievements: s.achievements || {},
       lore: s.lore || {},
       riftBank: s.riftBank || null,
+      resonated: s.resonated || {},
       worlds: { light: dumpWorld(s.worlds.light), shadow: dumpWorld(s.worlds.shadow) },
       player: {
         x: p.x, y: p.y, dir: p.dir,

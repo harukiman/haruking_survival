@@ -172,6 +172,23 @@ Game.Tiles = (function () {
       x.fillStyle = '#3a2050'; x.fillRect(7, 7, TS - 14, 8);
       x.fillStyle = '#c060ff'; circle(x, TS/2, 12, 3);
       x.strokeStyle = '#7a30c0'; x.lineWidth = 2; x.strokeRect(5, 11, TS - 10, TS - 16);
+    } else if (r === 'seal') {
+      x.fillStyle = '#4a4458'; x.fillRect(1, 1, TS - 2, TS - 2);
+      x.fillStyle = '#5a5470'; x.fillRect(4, 4, TS - 8, TS - 8);
+      x.strokeStyle = '#c8a8ff'; x.lineWidth = 1.5;
+      x.beginPath(); x.arc(TS/2, TS/2, 7, 0, Math.PI*2); x.stroke();
+      x.beginPath(); x.moveTo(TS/2-7,TS/2); x.lineTo(TS/2+7,TS/2); x.moveTo(TS/2,TS/2-7); x.lineTo(TS/2,TS/2+7); x.stroke();
+    } else if (r === 'rcore') {
+      x.fillStyle = '#2a2040';
+      x.beginPath(); x.arc(TS/2, TS/2, 11, 0, Math.PI*2); x.fill();
+      x.fillStyle = '#c8a0ff';
+      x.beginPath(); x.moveTo(TS/2,5); x.lineTo(TS/2+7,TS/2); x.lineTo(TS/2,TS-5); x.lineTo(TS/2-7,TS/2); x.closePath(); x.fill();
+      x.fillStyle = '#fff'; circle(x, TS/2, TS/2, 2.4);
+    } else if (r === 'tchest') {
+      x.fillStyle = '#b58a2a'; x.fillRect(4, 9, TS - 8, TS - 13);
+      x.fillStyle = '#e8c54a'; x.fillRect(4, 9, TS - 8, 6);
+      x.strokeStyle = '#7a5a1a'; x.lineWidth = 1.5; x.strokeRect(4, 9, TS - 8, TS - 13);
+      x.fillStyle = '#fff3c0'; x.fillRect(TS/2 - 2, 15, 4, 5);
     }
     objAtlas[id] = c;
   }

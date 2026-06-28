@@ -24,6 +24,8 @@ Game.OBJ = {
   // 影世界固有
   SHADOW_TREE:50, SHADOW_CRYSTAL:51, LUMEN_ORE:52, SOUL_FLOWER:53, VOID_ROCK:54,
   PHANTOM_ORE:55, STELA:57,
+  // 共鳴遺跡（二相連動）
+  SEAL_WALL:58, RESONANCE_CORE:59, TREASURE_CHEST:60,
   WOOD_BLOCK:100, STONE_BLOCK:101, CRAFTING_TABLE:102, FURNACE:103, TORCH:104, CHEST:105,
   FARMLAND:106, WHEAT:107, CAMPFIRE:108, LANTERN:109, FENCE:110, DOOR:111, BED:112, SAPLING:113,
   RIFT_ANCHOR:114, LUMEN_LANTERN:115, SHADOW_ALTAR:116,
@@ -68,6 +70,8 @@ Game.LIGHT_LEVEL = {
   [Game.OBJ.RIFT_ANCHOR]: 8,
   [Game.OBJ.LUMEN_ORE]: 6,        // 光鉱はほのかに光る
   [Game.OBJ.SHADOW_ALTAR]: 4,
+  [Game.OBJ.RESONANCE_CORE]: 7,   // 影で目印として光る
+  [Game.OBJ.TREASURE_CHEST]: 4,
 };
 
 // オブジェクトのメタ情報。solid=移動阻害, drops=破壊時ドロップ
@@ -111,6 +115,10 @@ Game.OBJ_META = {
   [Game.OBJ.STELA]:     { name:'石碑', solid:true, mineable:false, tool:null, tier:0, hp:999, drops:[], render:'stela', lore:true },
   // 影の祭壇（ボス召喚）
   [Game.OBJ.SHADOW_ALTAR]:{ name:'影の祭壇', solid:true, mineable:true, tool:'pickaxe', tier:2, hp:12, light:4, drops:[{item:'shadow_altar', n:[1,1]}], render:'altar', altar:true },
+  // 共鳴遺跡: 封印壁(破壊不可)・共鳴核(影で破壊→光の封印解除)・宝箱
+  [Game.OBJ.SEAL_WALL]:  { name:'封印壁', solid:true, mineable:false, tool:null, tier:0, hp:999, drops:[], render:'seal' },
+  [Game.OBJ.RESONANCE_CORE]:{ name:'共鳴核', solid:true, mineable:true, tool:'pickaxe', tier:2, hp:16, light:6, drops:[{item:'shadow_crystal', n:[1,2]}], render:'rcore', resonator:true },
+  [Game.OBJ.TREASURE_CHEST]:{ name:'宝箱', solid:true, mineable:true, tool:null, tier:0, hp:6, light:3, drops:[], render:'tchest', treasure:true },
 };
 
 // アイテム定義。place=設置するOBJ id, tool/tier=道具, food=空腹回復

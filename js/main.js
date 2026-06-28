@@ -51,6 +51,7 @@ window.Game = window.Game || {};
       achievements: {},
       lore: {},
       riftBank: null,
+      resonated: {},
       // active 参照（worlds[worldName] を指す）
       chunks: worlds.light.chunks,
       modifiedTiles: worlds.light.modifiedTiles,
@@ -84,6 +85,7 @@ window.Game = window.Game || {};
     Game.state.achievements = data.achievements || {};
     Game.state.lore = data.lore || {};
     Game.state.riftBank = data.riftBank || null;
+    Game.state.resonated = data.resonated || {};
     if (data.weather) Game.state.weather = data.weather;
     // 両世界の差分/タイルデータ復元
     const restoreWorld = function (name, wd) {
