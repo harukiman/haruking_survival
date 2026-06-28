@@ -90,6 +90,7 @@ Game.Player = (function () {
       if (sel && sel.tool === 'gun') { tryFire(sel); mining.active = false; }
       else if (sel && sel.tool === 'staff') { tryStaff(sel); mining.active = false; }
       else if (sel && sel.tool === 'warp') { tryWarp(); mining.active = false; }
+      else if (sel && sel.throw) { tryThrow(sel); mining.active = false; }
       else if (Game.Combat.tryAttack()) { mining.active = false; mining.progress = 0; }
       else mineTick();
     } else { mining.active = false; if (mining.progress > 0) mining.progress -= 0.5; }
@@ -337,6 +338,15 @@ Game.Player = (function () {
     p.attackCd = 16;
     Game.Render.spawnParticles(p.x, p.y, sel.magic === 'frost' ? '#9fd8ff' : '#ff7a3c', 4);
     Game.Audio.play('gun');
+  }
+  function tryThrow(sel) {
+    const p = Game.state.player;
+    if (p.attackCd > 0) return;
+    const slot = Game.Inventory.selectedSlot(); if (!slot) return; // 投擲アイテムのID取得
+    const t = sel.throw;
+    Game.Projectiles.fire(t.dmg, t.kind, { explosive: t.explosive, speed: t.speed });
+    Game.Inventory.remove(slot.id, 1);
+    p.attackCd = 26; Game.Audio.play('gun_rocket'); Game.UI.refreshHotbar();
   }
   function tryWarp() {
     const p = Game.state.player;

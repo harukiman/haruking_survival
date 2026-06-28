@@ -32,6 +32,7 @@ Game.Icons = (function () {
     if (def.vehicle) return 'vehicle';
     if (id === 'rocket') return 'rocket';
     if (def.respec) return 'book';
+    if (def.throw) return 'bomb';
     if (def.cures || def.heal != null || def.buff) return 'potion';
     if (def.food != null) return 'food';
     if (/^ammo_|^shell|^bullet$|rocket_ammo|energy_cell/.test(id)) return 'ammo';
@@ -170,6 +171,13 @@ Game.Icons = (function () {
         ctx.fillStyle = c.base; ctx.beginPath(); ctx.moveTo(M, 10); ctx.lineTo(M + 14, 18); ctx.lineTo(M + 14, 34); ctx.lineTo(M, 42); ctx.lineTo(M - 14, 34); ctx.lineTo(M - 14, 18); ctx.closePath(); ctx.fill(); ctx.stroke();
         ctx.fillStyle = shade(c.base, 0.7); ctx.beginPath(); ctx.moveTo(M, 26); ctx.lineTo(M + 14, 18); ctx.lineTo(M + 14, 34); ctx.lineTo(M, 42); ctx.closePath(); ctx.fill();
         ctx.fillStyle = mix(c.base, '#fff', 0.25); ctx.beginPath(); ctx.moveTo(M, 10); ctx.lineTo(M + 14, 18); ctx.lineTo(M, 26); ctx.lineTo(M - 14, 18); ctx.closePath(); ctx.fill(); break;
+      }
+      case 'bomb': {
+        ctx.fillStyle = mix(c.base, '#000', 0.4); ctx.beginPath(); ctx.arc(M, M + 4, 13, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.beginPath(); ctx.arc(M - 4, M, 4, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#8a6a3a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(M + 6, M - 8); ctx.quadraticCurveTo(M + 12, M - 16, M + 8, M - 18); ctx.stroke();
+        ctx.fillStyle = '#ffb04a'; ctx.beginPath(); ctx.arc(M + 8, M - 19, 2.5, 0, Math.PI * 2); ctx.fill();
+        break;
       }
       case 'book': {
         ctx.fillStyle = c.accent; ctx.fillRect(12, 12, 24, 28); ctx.strokeRect(12, 12, 24, 28);
