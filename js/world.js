@@ -148,6 +148,26 @@ Game.World = (function () {
   function nudgeToWalkable() {
     const p = Game.state.player, TS = Game.CFG.TILE_SIZE;
     const ptx = Math.floor(p.x / TS), pty = Math.floor(p.y / TS);
+    // まず歩けるタイルから BFS で「壁を越えずに到達できる」最寄りの開けたマスへ救出（壁抜け防止）
+    const start = isWalkable(ptx, pty) ? { x: ptx, y: pty } : null;
+    if (start) {
+      const seen = {}, q = [start]; seen[ptx + ',' + pty] = 1;
+      const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+      let head = 0;
+      while (head < q.length && head < 80) {
+        const c = q[head++];
+        // 自分の現在地でなく、4方向すべて歩ける広い場所なら脱出成功
+        if (!(c.x === ptx && c.y === pty)) {
+          let open = 0; for (let i = 0; i < 4; i++) if (isWalkable(c.x + dirs[i][0], c.y + dirs[i][1])) open++;
+          if (open >= 3) { p.x = c.x * TS + TS / 2; p.y = c.y * TS + TS / 2; p.prevX = p.x; p.prevY = p.y; return; }
+        }
+        for (let i = 0; i < 4; i++) {
+          const nx = c.x + dirs[i][0], ny = c.y + dirs[i][1], k = nx + ',' + ny;
+          if (!seen[k] && isWalkable(nx, ny)) { seen[k] = 1; q.push({ x: nx, y: ny }); }
+        }
+      }
+    }
+    // フォールバック: 壁の中に埋まっている等で BFS 起点が無い場合のみ、近傍スキャン（最終手段）
     for (let r = 1; r < 6; r++) {
       for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
         if (isWalkable(ptx + dx, pty + dy)) {

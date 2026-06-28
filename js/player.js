@@ -168,6 +168,16 @@ Game.Player = (function () {
     }
     if (obj === Game.OBJ.NONE || !meta || !meta.mineable) { mining.active = false; return; }
 
+    // ダンジョンの壁は「破城のツルハシ(siege)」を装備している時のみ破壊可能（壁抜き不可）
+    if (meta.dungeonWall) {
+      const sel0 = Game.Inventory.selectedItemDef();
+      if (!sel0 || !sel0.siege) {
+        mining.active = false; mining.progress = 0;
+        if (Game.state.tick % 40 === 0) Game.UI.toast('壁が硬すぎる… 「破城のツルハシ」が必要だ');
+        return;
+      }
+    }
+
     // 設置物(OBJ番号100以上=プレイヤー設置/建材)は、近くに敵がいる間は採掘しない（戦闘中の誤破壊防止）
     if (obj >= 100) {
       const mobs = Game.state.mobs, px = Game.state.player.x, py = Game.state.player.y;
@@ -341,6 +351,7 @@ Game.Player = (function () {
     arr[n + 1] = { id: 'gold_bar', count: 1 + Math.floor(Math.random() * 3) };
     if (Game.RELIC_IDS && Math.random() < 0.12) arr[n + 2] = { id: Game.RELIC_IDS[Math.floor(Math.random() * Game.RELIC_IDS.length)], count: 1 };
     if (Math.random() < 0.08) arr[n + 3] = { id: 'expand_pouch', count: 1 }; // 稀に拡張のポーチ
+    if (Math.random() < 0.06) arr[n + 4] = { id: 'siege_pick', count: 1 };   // ごく稀に破城のツルハシ
     return arr;
   }
 

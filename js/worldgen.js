@@ -70,19 +70,34 @@ Game.WorldGen = (function () {
           else wall = O.DUNGEON_WALL;
           const edge = Math.abs(dx) === hw || Math.abs(dy) === hh;
           const entrance = dy === hh && Math.abs(dx) <= 1; // 下側に入口
-          if (edge && !entrance) return { ground: T.DUNGEON_FLOOR, obj: wall };
-          // 中央: 宝箱
+          if (entrance) return { ground: T.DUNGEON_FLOOR, obj: O.NONE }; // 入口は確実に開ける
+          if (edge) return { ground: T.DUNGEON_FLOOR, obj: wall };
+          // 内部を十字の通路(中央3x3ハブ＋幅1の縦横回廊)で4部屋に区切る迷路状レイアウト
+          // 縦仕切り(dx=0)・横仕切り(dy=0)。中央付近(|*|<=1)は開けてハブ＆回廊を残す → 連結性保証
+          const innerV = dx === 0 && Math.abs(dy) > 1;
+          const innerH = dy === 0 && Math.abs(dx) > 1;
+          if (innerV || innerH) return { ground: T.DUNGEON_FLOOR, obj: wall };
+          // 中央ハブに主宝箱
           if (dx === 0 && dy === 0) return { ground: T.DUNGEON_FLOOR, obj: O.TREASURE_CHEST };
-          // 巣: 標準は左右、大型は四隅寄り＋追加宝箱
-          if (!big && dy === 0 && Math.abs(dx) === 3) return { ground: T.DUNGEON_FLOOR, obj: O.SPAWNER };
-          if (big) {
-            if (Math.abs(dx) === 5 && Math.abs(dy) === 3) return { ground: T.DUNGEON_FLOOR, obj: O.SPAWNER };
-            if (Math.abs(dx) === 6 && dy === 0) return { ground: T.DUNGEON_FLOOR, obj: O.TREASURE_CHEST };
-            // 柱
-            if (Math.abs(dx) === 3 && Math.abs(dy) === 3) return { ground: T.DUNGEON_FLOOR, obj: wall };
+          // 各部屋(4象限)の奥に特徴物: 宝箱/巣/空 をハッシュで決定
+          if (Math.abs(dx) === hw - 2 && Math.abs(dy) === hh - 2) {
+            const q = (dx > 0 ? 1 : 0) + (dy > 0 ? 2 : 0);
+            const hv = U.hash3(ax + q * 17, ay + q * 29, seed + 555);
+            if (hv < 0.5) return { ground: T.DUNGEON_FLOOR, obj: O.TREASURE_CHEST };
+            if (hv < 0.9) return { ground: T.DUNGEON_FLOOR, obj: O.SPAWNER };
           }
-          const rh = U.hash3(wx, wy, seed + 99);
-          return { ground: T.DUNGEON_FLOOR, obj: rh < 0.05 ? O.ROCK : O.NONE };
+          // 大型は各部屋にもう1段の仕切り(開口付き)で入り組ませる
+          if (big) {
+            const subV = Math.abs(dx) === 4 && Math.abs(dy) > 2 && Math.abs(dy) < hh;
+            if (subV) { const gapY = 3 + (U.hash3(ax + (dx > 0 ? 5 : -5), ay, seed + 71) < 0.5 ? 0 : 1); if (Math.abs(dy) !== gapY) return { ground: T.DUNGEON_FLOOR, obj: wall }; }
+          }
+          // 部屋内に散発的な柱/岩(回廊 |dx|<=1 or |dy|<=1 は除外して通路を確保)
+          if (Math.abs(dx) > 1 && Math.abs(dy) > 1) {
+            const rh = U.hash3(wx, wy, seed + 99);
+            if (rh < 0.05) return { ground: T.DUNGEON_FLOOR, obj: wall };
+            if (rh < 0.09) return { ground: T.DUNGEON_FLOOR, obj: O.ROCK };
+          }
+          return { ground: T.DUNGEON_FLOOR, obj: O.NONE };
         }
       }
     }
