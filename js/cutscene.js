@@ -297,6 +297,80 @@ Game.Cutscene = (function () {
     ctx.globalAlpha = 1; ctx.textAlign = 'left';
   }
 
+  // ===== ボス専用アニメムービー（登場/撃破）=====
+  const BOSS = {
+    sovereign:   { name: '影の主', col: '#9a40e0', sil: 'tall', intro: ['玉座の影が、ゆらりと起き上がる', '「光なき世界こそ、真の安寧——」'], outro: ['影の主は砕け、世界に深い罅が走った', '— 影核を、その手に —'] },
+    hunger_beast:{ name: '飢餓の獣', col: '#c0204a', sil: 'beast', intro: ['深淵の底で、飢えが目を覚ます', '「喰らう…全てを、喰らい尽くす…」'], outro: ['獣は静かになり、虚の心臓が残された', '— 終わりなき渇望、断ち切れり —'] },
+    tomb_king:   { name: '墳墓の王', col: '#e8c54a', sil: 'tall', intro: ['砂塵が渦巻き、古の王が蘇る', '「我が眠りを妨げし者よ、塵に還れ」'], outro: ['王は再び砂となり、黄金が零れ落ちた', '— 砂塵の大剣を継ぐ者よ —'] },
+    forge_titan: { name: '溶炉の巨人', col: '#ff6a2a', sil: 'tall', intro: ['溶岩がうねり、鋼の巨体が形を成す', '「鋼となりて、砕け散れ」'], outro: ['巨人は崩れ、溶岩が冷えて鎮まった', '— 溶岩の戦槌、ここに —'] },
+    star_guardian:{ name: '星の守護者', col: '#bfe0ff', sil: 'orb', intro: ['星々が集い、守護者が顕現する', '「星の理を乱す者を、われは許さぬ」'], outro: ['守護者は星屑となって、宙に還った', '— 星核の輝き、掌中に —'] },
+  };
+  function drawBossSilhouette(d, cx, cy, sc, mode) {
+    ctx.save(); ctx.translate(cx, cy); ctx.scale(sc, sc);
+    ctx.fillStyle = mode === 'fall' || mode === 'win' ? shadeHex(d.col, 0.5) : d.col;
+    if (d.sil === 'beast') {
+      ctx.beginPath(); ctx.moveTo(0, -30);
+      for (let a = 0; a <= 12; a++) { const ang = a / 12 * Math.PI * 2; const r = 34 * (a % 2 ? 0.7 : 1); ctx.lineTo(Math.cos(ang) * r, Math.sin(ang) * r * 0.8 + 6); }
+      ctx.closePath(); ctx.fill();
+    } else if (d.sil === 'orb') {
+      const g = ctx.createRadialGradient(0, 0, 4, 0, 0, 40); g.addColorStop(0, '#fff'); g.addColorStop(0.5, d.col); g.addColorStop(1, shadeHex(d.col, 0.4));
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, 38, 0, 7); ctx.fill();
+    } else {
+      // 巨人/人型シルエット
+      ctx.beginPath(); ctx.arc(0, -34, 16, 0, 7); ctx.fill(); // 頭
+      ctx.fillRect(-22, -20, 44, 50); // 胴
+      ctx.fillRect(-34, -16, 12, 38); ctx.fillRect(22, -16, 12, 38); // 腕
+      ctx.fillRect(-18, 30, 14, 28); ctx.fillRect(4, 30, 14, 28); // 脚
+    }
+    // 光る眼
+    ctx.fillStyle = mode === 'win' ? 'rgba(255,255,255,0.6)' : '#fff';
+    ctx.shadowColor = d.col; ctx.shadowBlur = 16;
+    ctx.fillRect(-10, -36, 5, 5); ctx.fillRect(5, -36, 5, 5); ctx.shadowBlur = 0;
+    ctx.restore();
+  }
+  function shadeHex(hex, f) { const c = hex.replace('#', ''); const r = parseInt(c.slice(0, 2), 16) * f, g = parseInt(c.slice(2, 4), 16) * f, b = parseInt(c.slice(4, 6), 16) * f; return 'rgb(' + (r | 0) + ',' + (g | 0) + ',' + (b | 0) + ')'; }
+  function bossScene(t, now, d, mode) {
+    // 暗い舞台＋テーマカラーのオーラ
+    const bg = ctx.createRadialGradient(W / 2, H * 0.45, 10, W / 2, H * 0.45, Math.max(W, H) * 0.7);
+    bg.addColorStop(0, shadeHex(d.col, 0.28)); bg.addColorStop(1, '#05060c');
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+    // 放射光
+    ctx.save(); ctx.translate(W / 2, H * 0.45); ctx.globalAlpha = 0.08 + (mode === 'name' ? 0.06 : 0);
+    for (let i = 0; i < 10; i++) { ctx.rotate(Math.PI / 5 + now * 0.0003); ctx.fillStyle = d.col; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-24, -Math.max(W, H)); ctx.lineTo(24, -Math.max(W, H)); ctx.closePath(); ctx.fill(); }
+    ctx.restore(); ctx.globalAlpha = 1;
+    const cx = W / 2, cy = H * 0.42;
+    let sc = (W < 460 ? 1.5 : 2.4), sy = cy;
+    if (mode === 'rise') { sy = cy + (1 - t) * 60; ctx.globalAlpha = Math.min(1, t * 1.6); }
+    else if (mode === 'fall') { sc *= (1 - t * 0.2); ctx.globalAlpha = 1 - t * 0.6; if (t > 0.3 && Math.random() < 0.5) ctx.translate((Math.random() - 0.5) * 8, 0); }
+    else if (mode === 'win') { ctx.globalAlpha = Math.max(0, 0.5 - t * 0.5); }
+    drawBossSilhouette(d, cx, sy, sc, mode);
+    ctx.globalAlpha = 1;
+    // 撃破時の砕け粒子/勝利の光
+    if (mode === 'fall') { ctx.fillStyle = d.col; for (let i = 0; i < 30; i++) { const a = i * 0.7 + now * 0.004; const r = t * 160; ctx.globalAlpha = 1 - t; ctx.fillRect(cx + Math.cos(a) * r, cy + Math.sin(a) * r, 3, 3); } ctx.globalAlpha = 1; }
+    if (mode === 'win') { const g = ctx.createRadialGradient(cx, cy, 4, cx, cy, 160); g.addColorStop(0, 'rgba(255,255,255,' + (0.3 + t * 0.4) + ')'); g.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, 160, 0, 7); ctx.fill(); }
+    // 名前
+    if (mode === 'name' || mode === 'rise') {
+      const a = Math.max(0, Math.min(1, (t - 0.2) / 0.3));
+      ctx.globalAlpha = a; ctx.textAlign = 'center'; ctx.fillStyle = d.col; ctx.shadowColor = d.col; ctx.shadowBlur = 20;
+      ctx.font = '800 ' + (W < 460 ? 30 : 46) + 'px -apple-system,"Hiragino Sans",sans-serif';
+      ctx.fillText(d.name, cx, H * 0.74); ctx.shadowBlur = 0; ctx.globalAlpha = 1; ctx.textAlign = 'left';
+    }
+  }
+  function playBossIntro(type, cb) {
+    const d = BOSS[type] || BOSS.sovereign;
+    runScenes([
+      { d: 2800, draw: function (t, n) { bossScene(t, n, d, 'rise'); }, text: d.intro[0], shake: 0.35, onEnter: function () { Game.Audio.cineStart(); Game.Audio.cue('boom'); } },
+      { d: 3000, draw: function (t, n) { bossScene(t, n, d, 'name'); }, text: d.intro[1], shake: 0.15, onEnter: function () { Game.Audio.cue('riser'); } },
+    ], cb);
+  }
+  function playBossOutro(type, cb) {
+    const d = BOSS[type] || BOSS.sovereign;
+    runScenes([
+      { d: 2600, draw: function (t, n) { bossScene(t, n, d, 'fall'); }, text: d.outro[0], shake: 0.6, onEnter: function () { Game.Audio.cineStart(); Game.Audio.cue('impact'); } },
+      { d: 2800, draw: function (t, n) { bossScene(t, n, d, 'win'); }, text: d.outro[1], onEnter: function () { Game.Audio.cue('choir'); Game.Audio.cue('shimmer'); } },
+    ], cb);
+  }
+
   function runScenes(scenes, cb) {
     playing = true; onDone = cb; curScene = -1; shakeMag = 0;
     cv = document.createElement('canvas'); cv.id = 'cutscene-canvas';
@@ -370,5 +444,5 @@ Game.Cutscene = (function () {
     ctx.restore();
   }
 
-  return { play, playLaunch, playDiscovery, isPlaying: function () { return playing; } };
+  return { play, playLaunch, playDiscovery, playBossIntro, playBossOutro, isPlaying: function () { return playing; } };
 })();

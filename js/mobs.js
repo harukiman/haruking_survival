@@ -24,6 +24,15 @@ Game.Mobs = (function () {
       hurt: 0, fleeTimer: 0, hopPhase: Math.random() * 6,
       knockX: 0, knockY: 0,
     });
+    // ボス登場アニメムービー（種別ごと初回・ローカル再生）
+    if (def.boss && Game.Cutscene && Game.Cutscene.playBossIntro && !(Game.Net.isConnected() && !Game.Net.host)) {
+      if (!Game.state.bossSeen) Game.state.bossSeen = {};
+      if (!Game.state.bossSeen[type] && !Game.Cutscene.isPlaying()) {
+        Game.state.bossSeen[type] = 1;
+        Game.state.paused = true;
+        Game.Cutscene.playBossIntro(type, function () { Game.state.paused = false; });
+      }
+    }
   }
 
   // 周辺の空き walkable タイルを探してスポーン
@@ -366,6 +375,12 @@ Game.Mobs = (function () {
         Game.Render.flash('#ffcaa0');
         Game.UI.toast(m.def.name + 'を打ち倒した！');
         if (Game.Achievements) Game.Achievements.unlock('dungeon_boss');
+      }
+      // 撃破アニメムービー（ローカル再生）
+      if (Game.Cutscene && Game.Cutscene.playBossOutro && !(Game.Net.isConnected() && !Game.Net.host)) {
+        Game.state.paused = true;
+        const bt = m.type;
+        Game.Cutscene.playBossOutro(bt, function () { Game.state.paused = false; });
       }
     }
     Game.Audio.play('mobdie');

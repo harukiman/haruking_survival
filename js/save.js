@@ -32,6 +32,7 @@ Game.Save = (function () {
       riftBank: s.riftBank || null,
       resonated: s.resonated || {},
       discovered: s.discovered || {},
+      bossSeen: s.bossSeen || {},
       questIndex: s.questIndex || 0,
       questDone: s.questDone || {},
       reunified: !!s.reunified,

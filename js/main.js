@@ -53,6 +53,7 @@ window.Game = window.Game || {};
       riftBank: null,
       resonated: {},
       discovered: {},
+      bossSeen: {},
       questIndex: 0,
       questDone: {},
       reunified: false,
@@ -143,6 +144,7 @@ window.Game = window.Game || {};
     Game.state.riftBank = data.riftBank || null;
     Game.state.resonated = data.resonated || {};
     Game.state.discovered = data.discovered || {};
+    Game.state.bossSeen = data.bossSeen || {};
     Game.state.questIndex = data.questIndex || 0;
     Game.state.questDone = data.questDone || {};
     Game.state.reunified = !!data.reunified;
