@@ -110,6 +110,12 @@ Game.Render = (function () {
       } else if (g === Game.TILE.FOREST) {
         ctx.fillStyle = '#8ab450';
         for (let i = 0; i < 8; i++) { const x = ((i * 149 + Math.sin(t * 0.02 + i) * 30) % w + w) % w; const y = (i * 61 + t * 0.8) % h; ctx.globalAlpha = 0.22; ctx.fillRect(x, y, 3, 3); }
+      } else if (g === Game.TILE.SWAMP) {
+        // 立ち上る瘴気（緑のもや・ゆらめき）
+        ctx.fillStyle = '#6a8a3a';
+        for (let i = 0; i < 7; i++) { const x = ((i * 113 + Math.sin(t * 0.015 + i) * 24) % w + w) % w; const y = h - ((i * 67 + t * 0.6) % (h + 30)); ctx.globalAlpha = 0.1; ctx.fillRect(x, y, 5, 5); }
+        // 漂う光胞子（明滅）
+        for (let i = 0; i < 6; i++) { const ph = t * 0.025 + i * 1.7; const x = ((i * 151) % w + Math.sin(ph) * 18 + w) % w; const y = h - ((i * 91 + t * 0.4) % (h + 20)); const gl = 0.4 + Math.sin(t * 0.1 + i) * 0.35; ctx.globalAlpha = Math.max(0, gl) * 0.5; ctx.fillStyle = '#aef07a'; ctx.beginPath(); ctx.arc(x, y, 1.6, 0, Math.PI * 2); ctx.fill(); }
       }
     }
     ctx.globalAlpha = 1; ctx.restore();
