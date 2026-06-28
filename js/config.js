@@ -601,6 +601,12 @@ Game.MOBS = {
   ember_imp:{ name:'灰の小鬼', hostile:true, hp:12, speed:1.5, color:'#e06030', size:8, drops:[{item:'coal',n:[1,2]},{item:'iron_ore',n:[0,1]}], dmg:4, xp:4, shape:'spiky', ranged:{dmg:5,range:5,cd:70,kind:'fire'} },
   troll:    { name:'森のトロル', hostile:true, hp:70, speed:0.85, color:'#6a8a4a', size:30, drops:[{item:'raw_meat',n:[2,4]},{item:'hide',n:[1,3]},{item:'bone',n:[1,2]}], dmg:11, xp:12, big:true, shape:'tall' },
   bog_horror:{ name:'沼の怪異', hostile:true, hp:50, speed:0.9, color:'#5a6a3a', size:22, drops:[{item:'guts',n:[1,3]},{item:'string',n:[0,1]}], dmg:8, xp:9, shape:'blob', inflict:{infection:300} },
+  // ===== P40 バイオーム多様化: 新通常モブ =====
+  harpy:    { name:'ハーピー', hostile:true, hp:12, speed:2.4, color:'#a06a9a', size:10, drops:[{item:'string',n:[0,1]},{item:'bone',n:[0,1]}], dmg:4, xp:4, ghost:true, shape:'wisp', ranged:{dmg:5,range:6,cd:80,kind:'hex'} },
+  dune_serpent:{ name:'砂蛇', hostile:true, hp:14, speed:2.0, color:'#cda050', size:10, drops:[{item:'chitin',n:[0,1]},{item:'hide',n:[0,1]}], dmg:5, xp:4, shape:'spiky', inflict:{poison:220} },
+  frost_wolf:{ name:'雪狼', hostile:true, hp:16, speed:2.1, color:'#cfe0ee', size:11, drops:[{item:'hide',n:[1,2]},{item:'raw_meat',n:[0,1]}], dmg:5, xp:4, inflict:{cold:200} },
+  mud_crawler:{ name:'沼の這う者', hostile:true, hp:18, speed:0.85, color:'#6a5a3a', size:12, drops:[{item:'guts',n:[0,1]},{item:'string',n:[0,1]}], dmg:4, xp:4, shape:'blob', inflict:{infection:260} },
+  void_jelly:{ name:'虚空クラゲ', hostile:true, hp:14, speed:1.3, color:'#8fb0ff', size:12, drops:[{item:'star_metal',n:[0,1]},{item:'lumen',n:[0,1]}], dmg:5, xp:5, space:true, ghost:true, shape:'orb', ranged:{dmg:5,range:6,cd:75,kind:'frost'} },
 };
 
 // 防具スロット
