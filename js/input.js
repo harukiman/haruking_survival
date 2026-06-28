@@ -24,6 +24,7 @@ Game.Input = (function () {
       if (k >= '1' && k <= '9') Game.Inventory.setHotbar(parseInt(k, 10) - 1);
       if (k === 'e') { Game.UI.toggleInventory(); }
       if (k === 'f') { Game.World.shift(); }          // 世界シフト
+      if (k === 'm') { const on = Game.Audio.toggle(); Game.UI.toast(on ? 'サウンド ON' : 'サウンド OFF'); }
       if (k === 'k' || k === 'q') placeQueued = true; // facing設置
       if (k === ' ') e.preventDefault();
     });
@@ -82,16 +83,36 @@ Game.Input = (function () {
     if (shiftBtn) shiftBtn.addEventListener('click', function (e) { e.preventDefault(); Game.World.shift(); });
   }
 
-  // ゲームパッド（接続時のみ）
+  // ゲームパッド（PS4/DualShock4 標準配置）
+  const padPrev = [];
   function pollGamepad(out) {
     const pads = navigator.getGamepads ? navigator.getGamepads() : [];
-    const gp = pads && pads[0];
+    let gp = null;
+    for (let i = 0; i < pads.length; i++) if (pads[i]) { gp = pads[i]; break; }
     if (!gp) return;
+    const btn = function (i) { return gp.buttons[i] && gp.buttons[i].pressed; };
+    const edge = function (i) { const p = btn(i); const e = p && !padPrev[i]; padPrev[i] = p; return e; };
+
+    // 移動: 左スティック + 十字キー
     const ax = gp.axes[0] || 0, ay = gp.axes[1] || 0;
-    if (Math.abs(ax) > 0.25) out.dx += ax;
-    if (Math.abs(ay) > 0.25) out.dy += ay;
-    if (gp.buttons[0] && gp.buttons[0].pressed) out.mine = true;       // A
-    if (gp.buttons[1] && gp.buttons[1].pressed) placeQueued = true;    // B
+    if (Math.abs(ax) > 0.28) out.dx += ax;
+    if (Math.abs(ay) > 0.28) out.dy += ay;
+    if (btn(14)) out.dx -= 1; if (btn(15)) out.dx += 1;   // dpad L/R
+    if (btn(12)) out.dy -= 1; if (btn(13)) out.dy += 1;   // dpad U/D
+
+    // ×(0)=採掘/攻撃(押しっぱ)
+    if (btn(0)) out.mine = true;
+    // □(2)/○(1)=設置/対話(エッジ)
+    if (edge(2) || edge(1)) placeQueued = true;
+    // △(3)=影渡り(エッジ)
+    if (edge(3)) Game.World.shift();
+    // L1(4)/R1(5)=ホットバー切替(エッジ)
+    if (edge(4)) { let n = Game.state.player.hotbarIndex - 1; if (n < 0) n = Game.HOTBAR_SIZE - 1; Game.Inventory.setHotbar(n); }
+    if (edge(5)) { let n = Game.state.player.hotbarIndex + 1; if (n >= Game.HOTBAR_SIZE) n = 0; Game.Inventory.setHotbar(n); }
+    // OPTIONS(9)=インベントリ(エッジ)
+    if (edge(9)) Game.UI.toggleInventory();
+    // 他ボタンのprev更新（エッジ漏れ防止）
+    [6, 7, 8, 10, 11, 16].forEach(function (i) { padPrev[i] = btn(i); });
   }
 
   function poll() {

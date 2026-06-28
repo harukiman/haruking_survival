@@ -175,11 +175,11 @@ Game.ITEMS = {
   door:        { name:'扉', stack:99, color:'#a9762f', place:Game.OBJ.DOOR },
   bed:         { name:'ベッド', stack:1, color:'#c44', place:Game.OBJ.BED },
   // ===== 二相世界（光と影）=====
-  shadow_shard:  { name:'影の欠片', stack:99, color:'#7a4fb0' },     // 夜の敵がドロップ
-  shadow_mirror: { name:'影鏡', stack:1, color:'#3a2a55', shift:true }, // 使用で世界シフト
+  shadow_shard:  { name:'影の欠片', stack:99, color:'#7a4fb0', flavor:'裂け目から零れた世界の傷。夜の住人がその身に宿す。' },
+  shadow_mirror: { name:'影鏡', stack:1, color:'#3a2a55', shift:true, flavor:'二つの世界を映す鏡。覗き込めば、もう一方へ渡れる——戻れる保証はない。' },
   shadow_wood:   { name:'影樹の幹', stack:99, color:'#3a2c4a' },
-  shadow_crystal:{ name:'影晶', stack:99, color:'#9a5fe0' },
-  lumen:         { name:'光素', stack:99, color:'#ffe9a0' },
+  shadow_crystal:{ name:'影晶', stack:99, color:'#9a5fe0', flavor:'影の側にのみ実る結晶。世界が割れた、その断面そのものだという。' },
+  lumen:         { name:'光素', stack:99, color:'#ffe9a0', flavor:'闇の中で消えずに灯る光の欠片。正気をつなぎとめる。' },
   moonleaf:      { name:'月光草', stack:99, color:'#a8e0c0', food:14 },
   shadow_steel:  { name:'影鋼', stack:99, color:'#6a5a8a' },
   // 固有装備（影晶/影鋼/光素 由来）
@@ -194,10 +194,10 @@ Game.ITEMS = {
   lumen_lantern: { name:'光のランタン', stack:16, color:'#ffe9a0', place:Game.OBJ.LUMEN_LANTERN },
   shadow_altar:  { name:'影の祭壇', stack:4, color:'#3a2050', place:Game.OBJ.SHADOW_ALTAR },
   // ボス報酬
-  shadow_core:   { name:'影核', stack:16, color:'#c060ff' },
+  shadow_core:   { name:'影核', stack:16, color:'#c060ff', flavor:'影の主の心臓。世界を裂いた最初の祈りが、結晶となって残ったもの。' },
   sanity_charm:  { name:'影核のお守り', stack:1, color:'#c060ff', armor:2, slot:'head', lumen:true, immuneSanity:true },
   // エンディング
-  unity_core:    { name:'統合の核', stack:1, color:'#ffffff', ending:true },
+  unity_core:    { name:'統合の核', stack:1, color:'#ffffff', ending:true, flavor:'光と影、ふたつの祈りを束ねる核。掲げれば、割れた世界はひとつに還る。' },
 };
 
 // クラフトレシピ。station=null は手作り、それ以外は近接が必要

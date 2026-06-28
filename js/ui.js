@@ -16,6 +16,12 @@ Game.UI = (function () {
     el.invGrid = document.getElementById('inv-grid');
     el.craftList = document.getElementById('craft-list');
     el.toast = document.getElementById('toast');
+    el.sound = document.getElementById('btn-sound');
+    if (el.sound) el.sound.addEventListener('click', function () {
+      const on = Game.Audio.toggle();
+      el.sound.textContent = on ? '♪' : '🔇';
+      el.sound.classList.toggle('off', !on);
+    });
     el.touch = document.getElementById('touch-controls');
     el.minimap = document.getElementById('minimap');
     el.level = document.getElementById('level-text');
@@ -62,6 +68,7 @@ Game.UI = (function () {
   function showGameUI() {
     el.hud.classList.remove('hidden');
     el.hotbar.classList.remove('hidden');
+    if (el.sound) el.sound.classList.remove('hidden');
   }
 
   function buildHotbar() {
@@ -153,6 +160,8 @@ Game.UI = (function () {
               if (st.count > 0 && Game.state.player.hunger < Game.state.player.maxHunger) {
                 Game.Survival.eat(def.food); Game.Inventory.remove(st.id, 1); Game.Audio.play('eat'); refreshAll();
               }
+            } else if (def && def.flavor) {
+              toast(def.flavor); // 物語フレーバー
             }
           };
         })(i));
@@ -312,6 +321,15 @@ Game.UI = (function () {
   }
   function closeQuest() { el.questScreen.classList.add('hidden'); Game.state.paused = false; }
 
+  // ===== オープニング =====
+  function showIntro() {
+    const sc = document.getElementById('intro-screen');
+    sc.classList.remove('hidden');
+    Game.state.paused = true;
+    const btn = document.getElementById('btn-intro-start');
+    btn.onclick = function () { sc.classList.add('hidden'); Game.state.paused = false; Game.Audio.ensure(); Game.Audio.startBGM(); };
+  }
+
   // ===== エンディング =====
   function showEnding(stats) {
     el.endingStats.innerHTML =
@@ -358,6 +376,6 @@ Game.UI = (function () {
     init, showGameUI, refreshHotbar, refreshStats, refreshInventory,
     refreshCraft, refreshAll, toggleInventory, toast, updateMinimap,
     openChest, openSharedChest, closeChest, refreshChest, refreshWorld,
-    showLore, closeLore, refreshQuest, openQuest, closeQuest, showEnding,
+    showLore, closeLore, refreshQuest, openQuest, closeQuest, showEnding, showIntro,
   };
 })();

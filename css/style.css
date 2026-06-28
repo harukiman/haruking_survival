@@ -68,6 +68,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Segoe U
 .quest-row.current { border: 1px solid #e8c54a; background: rgba(80,66,30,0.5); }
 .quest-row.current .qmark { color: #e8c54a; }
 .quest-row.locked { opacity: .4; }
+/* サウンド切替ボタン */
+#btn-sound { position: absolute; left: 8px; top: 44%; z-index: 22; width: 38px; height: 38px;
+  border-radius: 50%; background: rgba(8,12,20,0.6); border: 1px solid #3a4a64; color: #cfe0f0;
+  font-size: 1rem; pointer-events: auto; cursor: pointer; }
+#btn-sound.off { color: #7a8494; }
 /* エンディング */
 .ending-box { text-align: center; max-width: 440px; width: 100%; padding: 28px 22px;
   background: radial-gradient(circle at 50% 0%, #2a2450, #0e0c1a); border: 1px solid #6a5a9a; border-radius: 16px; }

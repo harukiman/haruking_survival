@@ -82,6 +82,7 @@ window.Game = window.Game || {};
     // スターターアイテム
     Game.STARTER_ITEMS.forEach(function (it) { Game.Inventory.add(it.id, it.count); });
     startWorld();
+    if (!ngLevel) Game.UI.showIntro(); // 初回のみ物語導入
   }
 
   // 周回（NG+）: 実績引継ぎ・難度上昇・新シード
@@ -155,6 +156,7 @@ window.Game = window.Game || {};
     const pt = Game.Player.playerTile();
     Game.World.updateChunks(pt.tx, pt.ty);
     Game.Audio.ensure();
+    Game.Audio.startBGM();
     if (!running) { running = true; last = performance.now(); requestAnimationFrame(frame); }
   }
 
@@ -171,6 +173,7 @@ window.Game = window.Game || {};
     const pt = Game.Player.playerTile();
     if (Game.state.tick % 10 === 0) Game.World.updateChunks(pt.tx, pt.ty);
     if (Game.state.tick % 20 === 0) Game.UI.updateMinimap();
+    if (Game.state.tick % 30 === 0) Game.Audio.updateMood();
     Game.state.tick++;
   }
 
@@ -182,6 +185,7 @@ window.Game = window.Game || {};
     while (acc >= STEP && steps < 5) { update(); acc -= STEP; steps++; }
     const alpha = Game.state.paused ? 1 : acc / STEP;
     Game.Render.draw(alpha);
+    Game.Audio.tickBGM();
     requestAnimationFrame(frame);
   }
 

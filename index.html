@@ -12,7 +12,7 @@
 <meta property="og:type" content="website">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%234a8f3c'/%3E%3Crect x='10' y='6' width='12' height='8' fill='%23805333'/%3E%3Crect x='8' y='12' width='16' height='12' fill='%232f7d27'/%3E%3C/svg%3E">
 <title>Haruking Survival — 俯瞰サンドボックス</title>
-<link rel="stylesheet" href="css/style.css?v=8">
+<link rel="stylesheet" href="css/style.css?v=9">
 </head>
 <body>
 <div id="app">
@@ -59,6 +59,20 @@
     <div class="inv-box">
       <div class="inv-header"><h2>目標</h2><button id="btn-close-quest" class="x-btn">✕</button></div>
       <div id="quest-list" class="quest-list"></div>
+    </div>
+  </div>
+
+  <!-- オープニング（物語導入） -->
+  <div id="intro-screen" class="overlay hidden">
+    <div class="lore-box">
+      <h2 style="color:#ffe9c0">― 割れた世界にて ―</h2>
+      <p id="intro-body">かつて、世界はひとつだった。<br>
+      だが「永遠の昼」を願う者と「安らぎの夜」を望む者が現れ、相反するふたつの祈りが大地を裂いた。<br><br>
+      いまあなたが立つのは <b>光の世界</b>。<br>
+      裂け目の残響に導かれ、記憶も持たぬままこの地に降り立った。<br><br>
+      生き延び、夜を越え、やがて <b>影の世界</b> へ渡れ。<br>
+      割れたふたつを再びひとつに還す——それを成せるのは、世界の狭間に立つあなただけだ。</p>
+      <button id="btn-intro-start" class="big-btn">旅をはじめる</button>
     </div>
   </div>
 
@@ -119,34 +133,35 @@
     </div>
   </div>
 
+  <button id="btn-sound" class="hidden" title="サウンド切替">♪</button>
   <div id="toast"></div>
 </div>
 
-<script src="js/config.js?v=8"></script>
-<script src="js/utils.js?v=8"></script>
-<script src="js/noise.js?v=8"></script>
-<script src="js/tiles.js?v=8"></script>
-<script src="js/worldgen.js?v=8"></script>
-<script src="js/world.js?v=8"></script>
-<script src="js/camera.js?v=8"></script>
-<script src="js/lighting.js?v=8"></script>
-<script src="js/render.js?v=8"></script>
-<script src="js/inventory.js?v=8"></script>
-<script src="js/loot.js?v=8"></script>
-<script src="js/crafting.js?v=8"></script>
-<script src="js/combat.js?v=8"></script>
-<script src="js/player.js?v=8"></script>
-<script src="js/survival.js?v=8"></script>
-<script src="js/farming.js?v=8"></script>
-<script src="js/daynight.js?v=8"></script>
-<script src="js/mobs.js?v=8"></script>
-<script src="js/input.js?v=8"></script>
-<script src="js/audio.js?v=8"></script>
-<script src="js/ui.js?v=8"></script>
-<script src="js/lore.js?v=8"></script>
-<script src="js/achievements.js?v=8"></script>
-<script src="js/quests.js?v=8"></script>
-<script src="js/save.js?v=8"></script>
-<script src="js/main.js?v=8"></script>
+<script src="js/config.js?v=9"></script>
+<script src="js/utils.js?v=9"></script>
+<script src="js/noise.js?v=9"></script>
+<script src="js/tiles.js?v=9"></script>
+<script src="js/worldgen.js?v=9"></script>
+<script src="js/world.js?v=9"></script>
+<script src="js/camera.js?v=9"></script>
+<script src="js/lighting.js?v=9"></script>
+<script src="js/render.js?v=9"></script>
+<script src="js/inventory.js?v=9"></script>
+<script src="js/loot.js?v=9"></script>
+<script src="js/crafting.js?v=9"></script>
+<script src="js/combat.js?v=9"></script>
+<script src="js/player.js?v=9"></script>
+<script src="js/survival.js?v=9"></script>
+<script src="js/farming.js?v=9"></script>
+<script src="js/daynight.js?v=9"></script>
+<script src="js/mobs.js?v=9"></script>
+<script src="js/input.js?v=9"></script>
+<script src="js/audio.js?v=9"></script>
+<script src="js/ui.js?v=9"></script>
+<script src="js/lore.js?v=9"></script>
+<script src="js/achievements.js?v=9"></script>
+<script src="js/quests.js?v=9"></script>
+<script src="js/save.js?v=9"></script>
+<script src="js/main.js?v=9"></script>
 </body>
 </html>
