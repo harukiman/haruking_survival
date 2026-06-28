@@ -504,7 +504,7 @@ Game.Mobs = (function () {
       const hop = m.def.hop ? Math.abs(Math.sin(m.hopPhase)) * 5 : 0;
       ctx.save();
       // 精鋭オーラ: 脈動する金色の発光リング
-      if (m.elite) {
+      if (m.elite || m.bountyBoss) {
         m.auraPhase = (m.auraPhase || 0) + 0.08;
         const pulse = 0.5 + Math.sin(m.auraPhase) * 0.5;
         const ar = r * (1.7 + pulse * 0.25);

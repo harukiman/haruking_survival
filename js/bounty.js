@@ -9,7 +9,20 @@ Game.Bounty = (function () {
 
   function eligible() { return POOL.filter(function (id) { return Game.MOBS && Game.MOBS[id]; }); }
 
+  function makeName() {
+    const N = Game.CHAMPION_NAMES || { title: ['名うての'], name: ['ならず者'] };
+    return N.title[Math.floor(Math.random() * N.title.length)] + N.name[Math.floor(Math.random() * N.name.length)];
+  }
+
   function generate() {
+    // 低確率(~20%)で通常賞金首の代わりに「大物(boss)」討伐依頼
+    if (Game.MOBS && Game.MOBS.wanted_boss && Math.random() < 0.20) {
+      return {
+        big: true, target: 'wanted_boss', targetName: '賞金首の大物', bossName: makeName(),
+        need: 1, count: 0, rewardGold: 12 + Math.floor(Math.random() * 9),
+        rewardItem: { id: 'wisdom_tome', count: 1 }, done: false, spawned: false,
+      };
+    }
     const pool = eligible();
     const target = pool[Math.floor(Math.random() * pool.length)];
     const def = Game.MOBS[target];
@@ -32,14 +45,51 @@ Game.Bounty = (function () {
   }
 
   function announce(b) {
+    if (b.big) { Game.UI.toast('★ 大物の手配書！「' + b.bossName + '」を討て——掲示板で受けよ'); Game.Audio.play('select'); return; }
     Game.UI.toast('賞金首: 「' + b.targetName + '」を ' + b.need + ' 体討伐せよ！ 報酬 ' + rewardText(b));
     Game.Audio.play('select');
+  }
+
+  // 大物ボスを出現させる(複数アフィックス＋固有名＋専用カラー)
+  function spawnBoss(b) {
+    const p = Game.state.player;
+    Game.Mobs.spawnMob('wanted_boss', p.x + 130, p.y);
+    const mobs = Game.state.mobs, m = mobs[mobs.length - 1];
+    if (m && m.type === 'wanted_boss') {
+      b.spawned = true;
+      m.bountyBoss = true; m.championName = b.bossName;
+      const opts = ['regened', 'blazing', 'thorns', 'swift'].filter(function (k) { return Game.ELITE_AFFIXES[k]; });
+      m.eliteAffix = opts[Math.floor(Math.random() * opts.length)];
+      const others = opts.filter(function (k) { return k !== m.eliteAffix; });
+      m.eliteAffix2 = others[Math.floor(Math.random() * others.length)];
+      if ((m.eliteAffix === 'swift' || m.eliteAffix2 === 'swift') && Game.ELITE_AFFIXES.swift) m.eliteSpeedMult = Game.ELITE_AFFIXES.swift.speed;
+      m.auraRGB = [255, 80, 80];
+    }
+    Game.UI.toast('賞金首の大物「' + b.bossName + '」が現れた！ 討ち取れ');
+    if (Game.UI.refreshBounty) Game.UI.refreshBounty();
   }
 
   // killMob から対象討伐を通知
   function notifyKill(type) {
     const b = Game.state && Game.state.bounty;
     if (!b || b.done || type !== b.target) return;
+    if (b.big) {
+      // 大物討伐: 即時 大報酬
+      b.count = b.need; b.done = true;
+      Game.Inventory.add('gold_bar', b.rewardGold);
+      Game.Inventory.add('xp_orb', 1);
+      if (b.rewardItem) Game.Inventory.add(b.rewardItem.id, b.rewardItem.count);
+      Game.state.bountyDone = (Game.state.bountyDone || 0) + 1;
+      if (Game.Achievements) Game.Achievements.unlock('bounty_king');
+      Game.UI.toast('★ 賞金首の大物を討伐！ 金塊 x' + b.rewardGold + ' ＋ 財宝を得た');
+      Game.Audio.play('levelup');
+      Game.state.bounty = generate(); // 次の依頼へ
+      if (!Game.state.bounty.big) announce(Game.state.bounty);
+      else Game.UI.toast('新たな大物の手配書が掲示板に貼り出された');
+      Game.UI.refreshAll();
+      if (Game.UI.refreshBounty) Game.UI.refreshBounty();
+      return;
+    }
     b.count++;
     if (b.count >= b.need) {
       b.done = true;
@@ -54,6 +104,13 @@ Game.Bounty = (function () {
   // 掲示板との対話
   function open() {
     let b = Game.state.bounty;
+    // 大物依頼: ボスが居なければ出現させる(初回/リロード後)
+    if (b && b.big && !b.done) {
+      const alive = Game.state.mobs.some(function (m) { return m.type === 'wanted_boss'; });
+      if (!alive) spawnBoss(b);
+      else Game.UI.toast('賞金首の大物「' + b.bossName + '」を討て！');
+      return;
+    }
     if (b && b.done) {
       Game.Inventory.add('gold_bar', b.rewardGold);
       if (b.rewardItem) Game.Inventory.add(b.rewardItem.id, b.rewardItem.count);

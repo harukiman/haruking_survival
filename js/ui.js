@@ -161,9 +161,9 @@ Game.UI = (function () {
     if (!boss) { for (let i = 0; i < mobs.length; i++) { const m = mobs[i]; if (m.champion) { if (!boss || m.maxHp > boss.maxHp) boss = m; } } }
     if (!boss) { if (!bbEl.classList.contains('hidden')) bbEl.classList.add('hidden'); bbEl.classList.remove('champion'); return; }
     bbEl.classList.remove('hidden');
-    const isChamp = !boss.def.boss;
+    const isChamp = !boss.def.boss || boss.bountyBoss;
     bbEl.classList.toggle('champion', isChamp);
-    const nm = isChamp ? (boss.championName || 'チャンピオン') : boss.def.name;
+    const nm = boss.championName || (isChamp ? 'チャンピオン' : boss.def.name);
     if (bbName.textContent !== nm) bbName.textContent = nm;
     bbFill.style.width = Math.max(0, boss.hp / boss.maxHp * 100) + '%';
   }
@@ -914,7 +914,8 @@ Game.UI = (function () {
     const b = Game.state.bounty;
     if (!b) { tr.classList.add('hidden'); return; }
     const txt = document.getElementById('bounty-text');
-    if (b.done) txt.textContent = '賞金首 達成! 掲示板で報酬を受け取れ';
+    if (b.big) txt.textContent = b.done ? '大物 討伐済' : ('大物 ' + (b.bossName || '賞金首') + ' を討て');
+    else if (b.done) txt.textContent = '賞金首 達成! 掲示板で報酬を受け取れ';
     else txt.textContent = '賞金首 ' + b.targetName + '  ' + b.count + '/' + b.need;
     tr.classList.remove('hidden');
   }
