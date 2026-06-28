@@ -21,7 +21,7 @@ Game.Player = (function () {
       stamina: 100, maxStamina: 100,
       vehicle: null, // null|'car'|'boat'|'plane'
       armor: { head: null, chest: null }, // {id, roll} インスタンス
-      accessory: null, // 遺物(relic) {id}
+      accessory: null, accessory2: null, // 遺物(relic) {id} ×2枠
       // RPGステータス（スキルポイントで振る）
       str: 0, vit: 0, dex: 0, skillPoints: 0, skills: {},
     };
@@ -438,13 +438,32 @@ Game.Player = (function () {
     if (!slot) return;
     const def = Game.ITEMS[slot.id];
     if (!def || !def.relic) return;
-    const prev = p.accessory;
-    p.accessory = { id: slot.id };
+    // 空いている遺物枠へ。両方埋まっていれば1枠目を入替
+    const key = !p.accessory ? 'accessory' : (!p.accessory2 ? 'accessory2' : 'accessory');
+    const prev = p[key];
+    p[key] = { id: slot.id };
     Game.Inventory.slots()[idx] = prev ? { id: prev.id, count: 1 } : null;
     applyEquipStats();
     Game.Audio.play('relic_get');
     Game.UI.toast(def.name + ' を装備（遺物）');
     Game.UI.refreshAll();
+  }
+
+  // 装備スロットを外してインベントリへ戻す。key: head/chest/accessory/accessory2
+  function unequipSlot(key) {
+    const p = Game.state.player;
+    let item = null;
+    if (key === 'head' || key === 'chest') { item = p.armor && p.armor[key]; }
+    else if (key === 'accessory' || key === 'accessory2') { item = p[key]; }
+    if (!item) return false;
+    const stack = key === 'accessory' || key === 'accessory2' ? { id: item.id, count: 1 } : { id: item.id, roll: item.roll || null };
+    const ok = item.roll ? Game.Inventory.addInstance(stack) : (Game.Inventory.add(stack.id, 1) === 0);
+    if (!ok) { Game.UI.toast('インベントリに空きがない'); return false; }
+    if (key === 'head' || key === 'chest') p.armor[key] = null; else p[key] = null;
+    applyEquipStats();
+    Game.Audio.play('equip');
+    Game.UI.refreshAll();
+    return true;
   }
 
   function totalArmor() {
@@ -509,9 +528,10 @@ Game.Player = (function () {
       if (!sk[id]) continue; const n = Game.SKILL_BY_ID[id]; if (!n) continue;
       for (const k in n.eff) { if (k === 'flag') continue; o[k] = (o[k] || 0) + n.eff[k]; }
     }
-    // 遺物(relic)アクセサリーの効果を合流
-    const acc = p.accessory;
-    if (acc) { const d = Game.ITEMS[acc.id || acc]; if (d && d.relic) for (const k in d.relic) o[k] = (o[k] || 0) + d.relic[k]; }
+    // 遺物(relic)アクセサリー2枠の効果を合流
+    [p.accessory, p.accessory2].forEach(function (acc) {
+      if (!acc) return; const d = Game.ITEMS[acc.id || acc]; if (d && d.relic) for (const k in d.relic) o[k] = (o[k] || 0) + d.relic[k];
+    });
     return o;
   }
   function skillFlag(f) {
@@ -638,7 +658,7 @@ Game.Player = (function () {
 
   return {
     makeDefault, spawnAt, update, targetTile, mining, playerTile, breakBlock,
-    interact, useNearby, gainXP, totalArmor, setBonus, sleep, equipSelectedArmor, equipFromInventory, equipRelic, applyEquipStats, bossesDefeated, bossTitle,
+    interact, useNearby, gainXP, totalArmor, setBonus, sleep, equipSelectedArmor, equipFromInventory, equipRelic, unequipSlot, applyEquipStats, bossesDefeated, bossTitle,
     effAttack, attackCooldown, levelDmgBonus, levelArmorBonus, spendStat, unlockSkill, respec,
     skillBonus, skillFlag, canUnlock, currentWeaponAtk, equippedArmorAt,
   };

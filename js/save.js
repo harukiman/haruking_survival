@@ -47,7 +47,7 @@ Game.Save = (function () {
         health: p.health, maxHealth: p.maxHealth,
         hunger: p.hunger, maxHunger: p.maxHunger,
         hotbarIndex: p.hotbarIndex,
-        xp: p.xp, level: p.level, xpNext: p.xpNext, armor: p.armor, accessory: p.accessory || null,
+        xp: p.xp, level: p.level, xpNext: p.xpNext, armor: p.armor, accessory: p.accessory || null, accessory2: p.accessory2 || null,
         baseMaxHealth: p.baseMaxHealth, status: p.status || {},
         str: p.str || 0, vit: p.vit || 0, dex: p.dex || 0, skillPoints: p.skillPoints || 0, skills: p.skills || {},
       },

@@ -242,7 +242,8 @@ Game.UI = (function () {
     h += gearCell('武器', heldSlot, '素手');
     h += gearCell('頭', p.armor && p.armor.head);
     h += gearCell('胴', p.armor && p.armor.chest);
-    h += gearCell('遺物', p.accessory);
+    h += gearCell('遺物1', p.accessory);
+    h += gearCell('遺物2', p.accessory2);
     h += '</div>';
     // 派生ステータス（%）
     const sb = Game.Player.skillBonus();
@@ -694,9 +695,42 @@ Game.UI = (function () {
       el.invGrid.appendChild(d);
     }
     setupTooltip(el.invGrid);
+    renderEquipPanel();
     renderInvQuest();
     renderInvDetail();
     refreshCraft();
+  }
+
+  // 装備欄(5スロット): 武器(手持ち表示)/頭/胴/遺物1/遺物2。タップで解除(武器以外)
+  function renderEquipPanel() {
+    const ep = document.getElementById('equip-panel'); if (!ep || !Game.state) return;
+    const p = Game.state.player;
+    const held = Game.Inventory.selectedSlot();
+    const heldW = held && (Game.Loot.rollable(held.id) || (Game.ITEMS[held.id] && Game.ITEMS[held.id].attack != null)) ? held : null;
+    const cells = [
+      { key: 'weapon', label: '武器', item: heldW, ro: true },
+      { key: 'head', label: '頭', item: p.armor && p.armor.head },
+      { key: 'chest', label: '胴', item: p.armor && p.armor.chest },
+      { key: 'accessory', label: '遺物1', item: p.accessory },
+      { key: 'accessory2', label: '遺物2', item: p.accessory2 },
+    ];
+    let h = '';
+    cells.forEach(function (c) {
+      let inner = '<span class="eq-none">—</span>', nm = '空き';
+      if (c.item && c.item.id) {
+        const def = Game.ITEMS[c.item.id];
+        nm = (c.item.roll && Game.Loot.displayName) ? Game.Loot.displayName(c.item) : (def ? def.name : c.item.id);
+        try { inner = '<img class="eq-ic" src="' + Game.Icons.dataURL(c.item.id, c.item.roll || null) + '" alt="">'; } catch (e) {}
+      }
+      h += '<div class="eq-cell' + (c.item ? ' filled' : '') + (c.ro ? ' ro' : '') + '" data-key="' + c.key + '"><span class="eq-lbl">' + c.label + '</span>' + inner + '<span class="eq-nm">' + nm + '</span></div>';
+    });
+    ep.innerHTML = h;
+    const list = ep.querySelectorAll('.eq-cell');
+    for (let i = 0; i < list.length; i++) {
+      const key = list[i].getAttribute('data-key');
+      if (key === 'weapon') continue; // 武器枠は表示のみ
+      list[i].addEventListener('click', function () { if (Game.Player.unequipSlot(key)) refreshInventory(); });
+    }
   }
 
   // インベントリで現在の目標を表示
