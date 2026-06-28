@@ -203,27 +203,31 @@ Game.Player = (function () {
     const npc = Game.Mobs.nearbyNPC(2.2 * TS);
     if (npc) { Game.Mobs.interactNPC(npc); return; }
     const t = targetTile();
-    if (!t || !t.inReach) return;
-    const obj = Game.World.objAt(t.tx, t.ty);
+    const hasTile = !!(t && t.inReach);
+    const obj = hasTile ? Game.World.objAt(t.tx, t.ty) : Game.OBJ.NONE;
 
-    if (obj === Game.OBJ.CHEST) { Game.UI.openChest(t.tx, t.ty); return; }
-    if (obj === Game.OBJ.TREASURE_CHEST) {
-      let d = Game.World.getTileData(t.tx, t.ty);
-      if (!d || !d.chest) { Game.World.setTileData(t.tx, t.ty, { chest: makeTreasureLoot() }); }
-      Game.UI.openChest(t.tx, t.ty); return;
+    // --- タイル対象の操作（狙っている時のみ・優先）---
+    if (hasTile) {
+      if (obj === Game.OBJ.CHEST) { Game.UI.openChest(t.tx, t.ty); return; }
+      if (obj === Game.OBJ.TREASURE_CHEST) {
+        let d = Game.World.getTileData(t.tx, t.ty);
+        if (!d || !d.chest) { Game.World.setTileData(t.tx, t.ty, { chest: makeTreasureLoot() }); }
+        Game.UI.openChest(t.tx, t.ty); return;
+      }
+      if (obj === Game.OBJ.RIFT_ANCHOR) { Game.UI.openSharedChest(t.tx, t.ty); return; }
+      if (obj === Game.OBJ.STELA) { Game.Lore.read(t.tx, t.ty); return; }
+      if (obj === Game.OBJ.SHADOW_ALTAR) { Game.Mobs.summonBoss(t.tx, t.ty); return; }
+      if (obj === Game.OBJ.ENCHANT_TABLE) { Game.UI.openEnchant(); return; }
+      if (obj === Game.OBJ.ROCKET) { Game.Rocket.board(); return; }
+      if (obj === Game.OBJ.BED) { sleep(); return; }
+      if (obj === Game.OBJ.WHEAT && Game.Farming.isGrown(t.tx, t.ty)) { Game.Farming.harvest(t.tx, t.ty); return; }
     }
-    if (obj === Game.OBJ.RIFT_ANCHOR) { Game.UI.openSharedChest(t.tx, t.ty); return; }
-    if (obj === Game.OBJ.STELA) { Game.Lore.read(t.tx, t.ty); return; }
-    if (obj === Game.OBJ.SHADOW_ALTAR) { Game.Mobs.summonBoss(t.tx, t.ty); return; }
-    if (obj === Game.OBJ.ENCHANT_TABLE) { Game.UI.openEnchant(); return; }
-    if (obj === Game.OBJ.ROCKET) { Game.Rocket.board(); return; }
-    if (obj === Game.OBJ.BED) { sleep(); return; }
-    if (obj === Game.OBJ.WHEAT && Game.Farming.isGrown(t.tx, t.ty)) { Game.Farming.harvest(t.tx, t.ty); return; }
 
     const sel = Game.Inventory.selectedSlot();
     const def = sel ? Game.ITEMS[sel.id] : null;
     if (!def) return;
 
+    // --- 手持ちアイテムの使用（タイル不要・モバイルでも確実に使える）---
     if (def.ending) { Game.Quests.reunify(); return; }
     if (def.vehicle) {
       const p = Game.state.player;
@@ -232,8 +236,11 @@ Game.Player = (function () {
       Game.Audio.play('engine'); return;
     }
     if (def.shift) { Game.World.shift(); return; }
-    if (def.food) { Game.Inventory.useSelected(); return; }
+    if (def.food || def.cures) { Game.Inventory.useSelected(); return; }
     if (def.armor) { equipSelectedArmor(); return; }
+
+    // --- 以降はタイルが必要（耕作/植える/設置）---
+    if (!hasTile) return;
     if (def.tool === 'hoe' && obj === Game.OBJ.NONE) {
       const g = Game.World.groundAt(t.tx, t.ty);
       if (g === Game.TILE.GRASS || g === Game.TILE.DIRT || g === Game.TILE.FOREST) { Game.Farming.till(t.tx, t.ty); return; }
@@ -391,14 +398,20 @@ Game.Player = (function () {
   }
 
   function sleep() {
-    if (Game.Lighting.ambientDarkness() < 0.3) { Game.UI.toast('夜だけ眠れる'); return; }
     const p = Game.state.player;
+    // リスポーン地点をこのベッドに更新（死亡時はここへ戻る）
+    const pt = playerTile();
+    Game.state.spawn = { tx: pt.tx, ty: pt.ty };
+    if (Game.Lighting.ambientDarkness() < 0.3) {
+      Game.UI.toast('リスポーン地点をここに設定した（昼は眠れない）');
+      Game.Audio.play('select'); Game.UI.refreshAll(); return;
+    }
     const cur = Game.state.tick % Game.DAY_LENGTH;
     const morning = Math.floor(0.30 * Game.DAY_LENGTH);
     Game.state.tick += ((morning - cur) + Game.DAY_LENGTH) % Game.DAY_LENGTH;
     p.health = Math.min(p.maxHealth, p.health + 20);
     Game.Audio.play('craft');
-    Game.UI.toast('おやすみ… 朝になった');
+    Game.UI.toast('おやすみ… 朝になった（リスポーン地点をここに設定）');
     Game.UI.refreshAll();
   }
 

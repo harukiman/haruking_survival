@@ -2,7 +2,9 @@
 window.Game = window.Game || {};
 
 Game.Cutscene = (function () {
-  let cv, ctx, raf, onDone, t0, skipBtn, playing = false, W = 0, H = 0, curScene = -1, shakeMag = 0;
+  let cv, ctx, raf, onDone, t0, skipBtn, playing = false, W = 0, H = 0, curScene = -1, shakeMag = 0, clickArmedAt = 0;
+  // モバイルで「はじめから」タップが新規キャンバスへ貫通し即スキップされるのを防ぐ
+  function canvasClick() { if (performance.now() >= clickArmedAt) finish(); }
 
   const SCENES = [
     { d: 4400, draw: sceneUnified, text: 'かつて、世界はひとつだった。', onEnter: function () { Game.Audio.cineStart(); Game.Audio.cue('swell'); } },
@@ -27,7 +29,8 @@ Game.Cutscene = (function () {
     skipBtn.id = 'cutscene-skip'; skipBtn.textContent = 'スキップ ▶';
     skipBtn.addEventListener('click', function (e) { e.stopPropagation(); finish(); });
     document.getElementById('app').appendChild(skipBtn);
-    cv.addEventListener('click', finish);
+    clickArmedAt = performance.now() + 800;
+    cv.addEventListener('click', canvasClick);
     t0 = performance.now();
     raf = requestAnimationFrame(frame);
   }
@@ -303,7 +306,8 @@ Game.Cutscene = (function () {
     skipBtn = document.createElement('button'); skipBtn.id = 'cutscene-skip'; skipBtn.textContent = 'スキップ ▶';
     skipBtn.addEventListener('click', function (e) { e.stopPropagation(); finish(); });
     document.getElementById('app').appendChild(skipBtn);
-    cv.addEventListener('click', finish);
+    clickArmedAt = performance.now() + 700;
+    cv.addEventListener('click', canvasClick);
     const total = scenes.reduce(function (a, s) { return a + s.d; }, 0);
     t0 = performance.now();
     (function loop(now) {

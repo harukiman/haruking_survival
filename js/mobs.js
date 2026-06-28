@@ -170,9 +170,9 @@ Game.Mobs = (function () {
           const minion = m.def.summon || 'shadow_spawn';
           if (countType(minion) < 8) { for (let k = 0; k < 3; k++) spawnMob(minion, m.x + (Math.random() - 0.5) * 60, m.y + (Math.random() - 0.5) * 60); Game.Audio.play('shift'); }
         }
-        // 敵対: プレイヤーを追跡
+        // 敵対: プレイヤーを追跡（プレイヤーから逃げ切れるよう追跡速度を抑制）
         if (distP < aggro) {
-          moveMob(m, dxp, dyp, m.def.speed);
+          moveMob(m, dxp, dyp, m.def.speed * 0.82);
           // 接触攻撃
           if (distP < (m.def.size * 0.5 + 12) && m.attackCd <= 0) {
             Game.Survival.damage(m.dmg || m.def.dmg, 'mob');
