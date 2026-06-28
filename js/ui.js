@@ -5,6 +5,7 @@ Game.UI = (function () {
   let el = {};
   let toastTimer = null;
   let mmCtx = null;
+  let bmCtx = null, bigMapOpen = false;
   let invSelected = -1;
 
   function init() {
@@ -61,6 +62,11 @@ Game.UI = (function () {
     el.chestGrid = document.getElementById('chest-grid');
     el.chestInvGrid = document.getElementById('chest-inv-grid');
     mmCtx = el.minimap.getContext('2d');
+    el.bigmapScreen = document.getElementById('bigmap-screen');
+    el.bigmap = document.getElementById('bigmap');
+    bmCtx = el.bigmap.getContext('2d');
+    el.btnMap = document.getElementById('btn-map');
+    if (el.btnMap) el.btnMap.addEventListener('click', toggleBigMap);
 
     el.loreScreen = document.getElementById('lore-screen');
     el.loreTitle = document.getElementById('lore-title');
@@ -97,6 +103,68 @@ Game.UI = (function () {
     el.hotbar.classList.remove('hidden');
     if (el.sound) el.sound.classList.remove('hidden');
     const ob = document.getElementById('btn-options'); if (ob) ob.classList.remove('hidden');
+    if (el.btnMap) el.btnMap.classList.remove('hidden');
+  }
+
+  // ===== 大マップ（半透明オーバーレイ・操作継続）=====
+  function toggleBigMap() {
+    if (!el.bigmapScreen) return;
+    bigMapOpen = !bigMapOpen;
+    el.bigmapScreen.classList.toggle('hidden', !bigMapOpen);
+    if (el.btnMap) el.btnMap.classList.toggle('active', bigMapOpen);
+    if (bigMapOpen) updateBigMap();
+  }
+  function isBigMapOpen() { return bigMapOpen; }
+
+  // 発見済みランドマークのマーカー色
+  const LANDMARK_COL = { dungeon: '#e0644a', vault: '#e3c24a', stela: '#b6a6f0', treasure: '#ffd86b', cosmic: '#7fc8ff', boss: '#ff5a4a' };
+
+  function updateBigMap() {
+    if (!bmCtx || !bigMapOpen || !Game.state) return;
+    const size = el.bigmap.width, span = 120; // 120タイル四方の俯瞰
+    const scale = size / span;
+    const p = Game.state.player, TS = Game.CFG.TILE_SIZE;
+    const ptx = Math.floor(p.x / TS), pty = Math.floor(p.y / TS);
+    const half = span / 2;
+    const palette = Game.state.worldName === 'shadow' ? Game.SHADOW_TILE_COLOR
+      : (Game.state.worldName === 'space' && Game.SPACE_TILE_COLOR) ? Game.SPACE_TILE_COLOR : Game.TILE_COLOR;
+    bmCtx.clearRect(0, 0, size, size);
+    // 2タイルおきにサンプリングして負荷を抑える
+    const stepT = 2;
+    for (let y = 0; y < span; y += stepT) {
+      for (let x = 0; x < span; x += stepT) {
+        const t = Game.WorldGen.genTile(ptx - half + x, pty - half + y, Game.state.seed);
+        bmCtx.fillStyle = palette[t.ground] || '#333';
+        bmCtx.fillRect(x * scale, y * scale, scale * stepT + 0.6, scale * stepT + 0.6);
+      }
+    }
+    // 発見済みランドマーク（現在世界・視野内）
+    const disc = Game.state.discovered || {};
+    for (const key in disc) {
+      const parts = key.split(':'); if (parts[0] !== Game.state.worldName) continue;
+      const kind = parts[1], rc = (parts[2] || '0,0').split(',');
+      const ltx = parseInt(rc[0], 10) * 40 + 20, lty = parseInt(rc[1], 10) * 40 + 20;
+      const mx = (ltx - (ptx - half)) * scale, my = (lty - (pty - half)) * scale;
+      if (mx < 0 || my < 0 || mx > size || my > size) continue;
+      bmCtx.fillStyle = LANDMARK_COL[kind] || '#fff';
+      bmCtx.beginPath(); bmCtx.arc(mx, my, 5, 0, Math.PI * 2); bmCtx.fill();
+      bmCtx.strokeStyle = 'rgba(0,0,0,0.6)'; bmCtx.lineWidth = 1.5; bmCtx.stroke();
+    }
+    // 仲間（MP・同一世界）
+    if (Game.Net && Game.Net.isConnected()) {
+      const peers = Game.Net.getPeers();
+      for (const id in peers) {
+        const pe = peers[id]; if (!pe || pe.world !== Game.state.worldName || pe.tx == null) continue;
+        const mx = (pe.tx - (ptx - half)) * scale, my = (pe.ty - (pty - half)) * scale;
+        if (mx < 0 || my < 0 || mx > size || my > size) continue;
+        bmCtx.fillStyle = '#5fd0ff'; bmCtx.fillRect(mx - 3, my - 3, 6, 6);
+      }
+    }
+    // プレイヤー（中央・向き）
+    const c = size / 2;
+    bmCtx.fillStyle = '#fff'; bmCtx.beginPath(); bmCtx.arc(c, c, 4, 0, Math.PI * 2); bmCtx.fill();
+    bmCtx.strokeStyle = '#000'; bmCtx.lineWidth = 1.5; bmCtx.stroke();
+    bmCtx.strokeStyle = 'rgba(180,200,240,0.5)'; bmCtx.lineWidth = 2; bmCtx.strokeRect(1, 1, size - 2, size - 2);
   }
 
   function buildHotbar() {
@@ -561,5 +629,6 @@ Game.UI = (function () {
     openChest, openSharedChest, closeChest, refreshChest, refreshWorld,
     showLore, closeLore, refreshQuest, openQuest, closeQuest, showEnding, showIntro, refreshNet, refreshStatus,
     toggleOptions, openEnchant, closeEnchant,
+    toggleBigMap, isBigMapOpen, updateBigMap,
   };
 })();

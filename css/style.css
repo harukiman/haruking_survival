@@ -39,6 +39,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Segoe U
 #tooltip .tt-flavor { color: #b0a0d0; font-size: .74rem; font-style: italic; margin-top: 2px; }
 #btn-options { position: absolute; left: 8px; top: calc(44% - 46px); z-index: 22; width: 38px; height: 38px;
   border-radius: 50%; background: rgba(8,12,20,0.6); border: 1px solid #3a4a64; color: #cfe0f0; font-size: 1.05rem; pointer-events: auto; cursor: pointer; }
+#btn-map { position: absolute; left: 8px; top: calc(44% - 92px); z-index: 22; width: 38px; height: 38px;
+  border-radius: 50%; background: rgba(8,12,20,0.6); border: 1px solid #3a4a64; color: #cfe0f0; font-size: 1.05rem; pointer-events: auto; cursor: pointer; }
+#btn-map.active { background: rgba(47,90,143,0.85); border-color: #5a8fd6; }
+/* 大マップ: 半透明・操作を妨げない（pointer-events none で下層へタップ透過） */
+#bigmap-screen { position: absolute; inset: 0; z-index: 24; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+#bigmap-panel { background: rgba(8,12,20,0.45); border: 1px solid rgba(120,150,200,0.4); border-radius: 14px;
+  padding: 10px; box-shadow: 0 6px 30px rgba(0,0,0,0.5); backdrop-filter: blur(1.5px); }
+#bigmap { display: block; width: min(78vmin, 560px); height: min(78vmin, 560px); image-rendering: pixelated;
+  border-radius: 8px; opacity: 0.92; }
+#bigmap-cap { color: #cdd8ee; font-size: .72rem; text-align: center; margin-top: 6px; opacity: 0.85; }
 /* エンチャント詳細 */
 .ench-name { font-weight: 700; font-size: 1rem; margin: 8px 0 2px; }
 .ench-stat { color: #9fb0c4; font-size: .85rem; margin-bottom: 8px; }

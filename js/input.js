@@ -28,6 +28,7 @@ Game.Input = (function () {
       if (k === 'f') { Game.World.shift(); }          // 世界シフト
       if (k === 'm') { const on = Game.Audio.toggle(); Game.UI.toast(on ? 'サウンド ON' : 'サウンド OFF'); }
       if (k === 'escape' || k === 'p') { Game.UI.toggleOptions(); }
+      if (k === 'n' || k === 'tab') { e.preventDefault(); Game.UI.toggleBigMap(); } // 大マップ
       if (k === 'k' || k === 'q') placeQueued = true; // facing設置
       if (k === ' ') e.preventDefault();
     });
@@ -145,8 +146,10 @@ Game.Input = (function () {
     if (btn(6)) out.dash = true;
     // OPTIONS(9)=インベントリ(エッジ)
     if (edge(9)) Game.UI.toggleInventory();
+    // R3(11)=大マップ開閉(エッジ)
+    if (edge(11)) Game.UI.toggleBigMap();
     // 他ボタンのprev更新（エッジ漏れ防止）
-    [8, 10, 11, 16].forEach(function (i) { padPrev[i] = btn(i); });
+    [8, 10, 16].forEach(function (i) { padPrev[i] = btn(i); });
   }
 
   // カーソル位置のDOM要素がボタンならクリック（メニュー操作）

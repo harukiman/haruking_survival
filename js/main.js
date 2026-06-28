@@ -214,7 +214,7 @@ window.Game = window.Game || {};
     if (Game.Discovery && Game.state.tick % 15 === 7) Game.Discovery.scan();
     const pt = Game.Player.playerTile();
     if (Game.state.tick % 10 === 0) Game.World.updateChunks(pt.tx, pt.ty);
-    if (Game.state.tick % 20 === 0) Game.UI.updateMinimap();
+    if (Game.state.tick % 20 === 0) { Game.UI.updateMinimap(); if (Game.UI.isBigMapOpen && Game.UI.isBigMapOpen()) Game.UI.updateBigMap(); }
     if (Game.state.tick % 30 === 0) Game.Audio.updateMood();
     Game.state.tick++;
   }
