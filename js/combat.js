@@ -44,6 +44,7 @@ Game.Combat = (function () {
       Game.UI.refreshStats();
     }
     p.attackCd = Game.TUNE.ATTACK_COOLDOWN;
+    Game.Render.spawnSlash(p.x, p.y, p.dir, st.atk >= 8 ? '#ffd86b' : '#ffffff');
     Game.Audio.play('swing');
     return true;
   }

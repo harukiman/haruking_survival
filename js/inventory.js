@@ -90,6 +90,7 @@ Game.Inventory = (function () {
     if (def && def.cures) {
       def.cures.forEach(function (c) { Game.Status.cure(c); });
       if (def.heal) p.health = Math.min(p.maxHealth, p.health + def.heal);
+      Game.Render.spawnParticles(p.x, p.y, '#9fe0b0', 8);
       remove(sl.id, 1); Game.Audio.play('eat');
       Game.UI.toast(def.name + ' を使った');
       Game.UI.refreshAll(); return true;
@@ -104,6 +105,7 @@ Game.Inventory = (function () {
       } else if (def.food >= 35) {
         Game.Status.apply('wellfed', 900); // 良い食料で満腹バフ
       }
+      Game.Render.spawnParticles(p.x, p.y, def.sick ? '#6b7a3a' : '#ffd86b', 6);
       remove(sl.id, 1);
       Game.Audio.play('eat');
       Game.UI.refreshAll();

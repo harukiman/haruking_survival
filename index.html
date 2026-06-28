@@ -12,7 +12,7 @@
 <meta property="og:type" content="website">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%234a8f3c'/%3E%3Crect x='10' y='6' width='12' height='8' fill='%23805333'/%3E%3Crect x='8' y='12' width='16' height='12' fill='%232f7d27'/%3E%3C/svg%3E">
 <title>Haruking Survival — 俯瞰サンドボックス</title>
-<link rel="stylesheet" href="css/style.css?v=14">
+<link rel="stylesheet" href="css/style.css?v=15">
 </head>
 <body>
 <div id="app">
@@ -35,6 +35,7 @@
       <button id="btn-new" class="big-btn">はじめから</button>
       <button id="btn-continue" class="big-btn alt">つづきから</button>
       <div class="mp-row">
+        <input id="name-input" type="text" placeholder="あなたの名前" maxlength="12">
         <input id="room-input" type="text" placeholder="ルーム合言葉" maxlength="24">
         <button id="btn-host" class="mp-btn">仲間を招く</button>
         <button id="btn-join" class="mp-btn">参加する</button>
@@ -106,6 +107,7 @@
     <div class="inv-box">
       <div class="inv-header"><h2>インベントリ</h2><button id="btn-close-inv" class="x-btn">✕</button></div>
       <div id="inv-grid" class="grid"></div>
+      <div id="inv-detail"></div>
       <h2>クラフト</h2>
       <div id="craft-list" class="craft-list"></div>
     </div>
@@ -139,12 +141,13 @@
       <button id="opt-save" class="big-btn">この場で保存</button>
       <button id="opt-zoom" class="big-btn alt">マップ表示: 標準</button>
       <button id="opt-sound" class="big-btn alt">サウンド: ON</button>
+      <button id="opt-name" class="big-btn alt">名前を変更</button>
       <button id="opt-title" class="big-btn alt">保存してタイトルへ</button>
       <h2 style="font-size:1rem;margin-top:14px">操作説明</h2>
       <div class="ctrl-ref">
         <p><b>PC</b>：WASD/矢印=移動 ／ Shift=ダッシュ ／ 左クリック=採掘・攻撃 ／ 右クリック=設置・対話・使用 ／ 1-9・ホイール=ホットバー ／ E=インベントリ ／ F=影渡り ／ M=音 ／ Esc=このメニュー</p>
         <p><b>スマホ</b>：左下=移動 ／ 右下=採掘・設置・走る・影渡り・袋 ／ 上の⚙=オプション</p>
-        <p><b>PS4パッド</b>：左スティック/十字=移動 ／ ×=採掘・攻撃 ／ □○=設置・対話 ／ △=影渡り ／ L1/R1=ホットバー ／ L2/R2=ダッシュ ／ OPTIONS=インベントリ</p>
+        <p><b>PS4パッド</b>：左スティック/十字=移動 ／ 右スティック=カーソル ／ ×=採掘・攻撃 ／ R2=カーソルでクリック ／ □○=設置・対話 ／ △=影渡り ／ L1/R1=ホットバー ／ L2=ダッシュ ／ OPTIONS=インベントリ</p>
       </div>
       <p class="hint">自動保存も有効です（30秒ごと／離脱時）</p>
     </div>
@@ -179,6 +182,7 @@
   <button id="btn-options" class="hidden" title="オプション">⚙</button>
   <button id="btn-sound" class="hidden" title="サウンド切替">♪</button>
   <div id="net-badge" class="hidden">🟢 <span id="net-count">0</span></div>
+  <div id="tooltip"></div>
   <div id="toast"></div>
 </div>
 
@@ -190,33 +194,34 @@
   } catch (e) { console.warn('Trystero load failed (multiplayer disabled):', e); }
 </script>
 
-<script src="js/config.js?v=14"></script>
-<script src="js/utils.js?v=14"></script>
-<script src="js/noise.js?v=14"></script>
-<script src="js/tiles.js?v=14"></script>
-<script src="js/worldgen.js?v=14"></script>
-<script src="js/world.js?v=14"></script>
-<script src="js/camera.js?v=14"></script>
-<script src="js/lighting.js?v=14"></script>
-<script src="js/render.js?v=14"></script>
-<script src="js/inventory.js?v=14"></script>
-<script src="js/loot.js?v=14"></script>
-<script src="js/crafting.js?v=14"></script>
-<script src="js/combat.js?v=14"></script>
-<script src="js/player.js?v=14"></script>
-<script src="js/survival.js?v=14"></script>
-<script src="js/status.js?v=14"></script>
-<script src="js/farming.js?v=14"></script>
-<script src="js/daynight.js?v=14"></script>
-<script src="js/mobs.js?v=14"></script>
-<script src="js/input.js?v=14"></script>
-<script src="js/audio.js?v=14"></script>
-<script src="js/ui.js?v=14"></script>
-<script src="js/net.js?v=14"></script>
-<script src="js/lore.js?v=14"></script>
-<script src="js/achievements.js?v=14"></script>
-<script src="js/quests.js?v=14"></script>
-<script src="js/save.js?v=14"></script>
-<script src="js/main.js?v=14"></script>
+<script src="js/config.js?v=15"></script>
+<script src="js/utils.js?v=15"></script>
+<script src="js/noise.js?v=15"></script>
+<script src="js/tiles.js?v=15"></script>
+<script src="js/worldgen.js?v=15"></script>
+<script src="js/world.js?v=15"></script>
+<script src="js/camera.js?v=15"></script>
+<script src="js/lighting.js?v=15"></script>
+<script src="js/render.js?v=15"></script>
+<script src="js/inventory.js?v=15"></script>
+<script src="js/loot.js?v=15"></script>
+<script src="js/crafting.js?v=15"></script>
+<script src="js/combat.js?v=15"></script>
+<script src="js/player.js?v=15"></script>
+<script src="js/survival.js?v=15"></script>
+<script src="js/status.js?v=15"></script>
+<script src="js/farming.js?v=15"></script>
+<script src="js/daynight.js?v=15"></script>
+<script src="js/mobs.js?v=15"></script>
+<script src="js/input.js?v=15"></script>
+<script src="js/audio.js?v=15"></script>
+<script src="js/ui.js?v=15"></script>
+<script src="js/cutscene.js?v=15"></script>
+<script src="js/net.js?v=15"></script>
+<script src="js/lore.js?v=15"></script>
+<script src="js/achievements.js?v=15"></script>
+<script src="js/quests.js?v=15"></script>
+<script src="js/save.js?v=15"></script>
+<script src="js/main.js?v=15"></script>
 </body>
 </html>

@@ -85,7 +85,11 @@ window.Game = window.Game || {};
     // スターターアイテム
     Game.STARTER_ITEMS.forEach(function (it) { Game.Inventory.add(it.id, it.count); });
     startWorld();
-    if (!ngLevel && !opts.net) Game.UI.showIntro(); // 初回ソロのみ物語導入
+    // 初回ソロは アニメーション・オープニングを再生
+    if (!ngLevel && !opts.net && Game.Cutscene) {
+      Game.state.paused = true;
+      Game.Cutscene.play(function () { Game.state.paused = false; });
+    }
   }
 
   // マルチプレイ: ホストの世界(シード+差分)を採用して再構築
@@ -249,9 +253,12 @@ window.Game = window.Game || {};
     // マルチプレイ
     const roomInput = document.getElementById('room-input');
     const roomCode = function () { return (roomInput.value.trim() || ('haru' + Math.floor(Math.random() * 9000 + 1000))); };
+    const nameInput = document.getElementById('name-input');
+    const applyName = function () { const n = nameInput && nameInput.value.trim(); if (n) Game.Net.setName(n); };
     document.getElementById('btn-host').addEventListener('click', function () {
       if (!Game.Net.available()) { alert('マルチプレイの読み込み中、またはネット未接続です。少し待って再度お試しください。'); return; }
       const code = roomCode(); roomInput.value = code;
+      applyName();
       Game.Save.clear();
       newGame(roomInput.value, { difficulty: chosenDiff, net: true });
       Game.Net.start(code, true);
@@ -259,6 +266,7 @@ window.Game = window.Game || {};
     document.getElementById('btn-join').addEventListener('click', function () {
       if (!Game.Net.available()) { alert('マルチプレイの読み込み中、またはネット未接続です。少し待って再度お試しください。'); return; }
       const code = roomCode(); roomInput.value = code;
+      applyName();
       newGame('', { net: true });
       Game.Net.start(code, false);
     });

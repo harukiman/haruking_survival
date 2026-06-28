@@ -66,10 +66,24 @@ Game.Render = (function () {
     Game.Mobs.draw(ctx, alpha);
     drawPeers(ctx);
     drawPlayer(ctx, alpha);
+    drawSlashes(ctx);
     drawParticles(ctx);
     Game.Lighting.drawOverlay(ctx);
     drawWeather(ctx);
+    drawCursor(ctx);
     drawFlash(ctx);
+  }
+
+  // ゲームパッド選択カーソル
+  function drawCursor(ctx) {
+    const c = Game.Input && Game.Input.cursor;
+    if (!c || !c.active) return;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(c.x, c.y, 9, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(c.x - 14, c.y); ctx.lineTo(c.x - 4, c.y); ctx.moveTo(c.x + 4, c.y); ctx.lineTo(c.x + 14, c.y);
+    ctx.moveTo(c.x, c.y - 14); ctx.lineTo(c.x, c.y - 4); ctx.moveTo(c.x, c.y + 4); ctx.lineTo(c.x, c.y + 14); ctx.stroke();
+    ctx.restore();
   }
 
   // 世界シフト時の画面フラッシュ
@@ -175,6 +189,8 @@ Game.Render = (function () {
     for (const id in peers) {
       const pe = peers[id];
       if (!pe || pe.world !== Game.state.worldName || pe.x == null) continue;
+      // 補間でなめらかに（リアルタイム描画）
+      if (pe.tx != null) { pe.x += (pe.tx - pe.x) * 0.3; pe.y += (pe.ty - pe.y) * 0.3; }
       const s = Game.Camera.worldToScreen(pe.x, pe.y);
       if (s.x < -30 || s.y < -30 || s.x > Game.view.w + 30 || s.y > Game.view.h + 30) continue;
       ctx.fillStyle = 'rgba(0,0,0,0.25)';
@@ -226,6 +242,30 @@ Game.Render = (function () {
       });
     }
   }
+  const slashes = [];
+  function spawnSlash(wx, wy, dir, color) {
+    let a = 0;
+    if (dir === 'up') a = -Math.PI / 2; else if (dir === 'down') a = Math.PI / 2; else if (dir === 'left') a = Math.PI; else a = 0;
+    slashes.push({ x: wx, y: wy, a: a, life: 8, color: color || '#ffffff' });
+  }
+  function drawSlashes(ctx) {
+    for (let i = slashes.length - 1; i >= 0; i--) {
+      const s = slashes[i]; s.life--;
+      if (s.life <= 0) { slashes.splice(i, 1); continue; }
+      const sc = Game.Camera.worldToScreen(s.x, s.y);
+      const z = Game.Camera.zoom();
+      const prog = 1 - s.life / 8;
+      ctx.save();
+      ctx.globalAlpha = (s.life / 8) * 0.9;
+      ctx.strokeStyle = s.color; ctx.lineWidth = 3;
+      ctx.beginPath();
+      const r = 26 * z;
+      ctx.arc(sc.x + Math.cos(s.a) * 16 * z, sc.y + Math.sin(s.a) * 16 * z, r, s.a - 1.1 + prog * 1.4, s.a + 0.3 + prog * 1.4);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
   function spawnBlood(wx, wy, n) {
     const cols = ['#a01a28', '#c0303a', '#7a1420'];
     for (let i = 0; i < n; i++) {
@@ -246,5 +286,5 @@ Game.Render = (function () {
     }
   }
 
-  return { draw, buildChunkCache, spawnParticles, spawnBlood, flash };
+  return { draw, buildChunkCache, spawnParticles, spawnBlood, spawnSlash, flash };
 })();

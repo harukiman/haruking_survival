@@ -14,7 +14,7 @@ Game.Net = (function () {
   function getPeers() { return peers; }
   function peerCount() { return connected ? Object.keys(peers).length : 0; }
   function isConnected() { return connected; }
-  function setName(n) { if (n) myName = n; }
+  function setName(n) { if (n) { myName = n; if (connected && sendHello) sendHello({ name: myName }); } }
 
   function start(code, host) {
     if (!available()) { Game.UI.toast('マルチプレイ準備中… ネット接続を確認してください'); return false; }
@@ -33,7 +33,7 @@ Game.Net = (function () {
     const a6 = room.makeAction('mobs');  sendMobsA = a6[0];
     const a7 = room.makeAction('hit');   sendHitA = a7[0];
 
-    a1[1](function (d, id) { const p = peers[id] || (peers[id] = {}); p.x = d.x; p.y = d.y; p.dir = d.dir; p.world = d.world; });
+    a1[1](function (d, id) { const p = peers[id] || (peers[id] = {}); if (p.x == null) { p.x = d.x; p.y = d.y; } p.tx = d.x; p.ty = d.y; p.dir = d.dir; p.world = d.world; });
     a3[1](function (d, id) { const p = peers[id] || (peers[id] = {}); p.name = d.name; });
     a4[1](function (d) { if (!isHost) adoptWorld(d); });
     a2[1](function (d) { applyRemoteEdit(d.tx, d.ty, d.o, d.w); });

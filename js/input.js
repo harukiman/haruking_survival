@@ -7,6 +7,8 @@ Game.Input = (function () {
   const touch = { up: false, down: false, left: false, right: false, mine: false, dash: false };
   let placeQueued = false;   // 設置エッジ
   let lastDir = 'down';
+  const cursor = { x: 200, y: 200, active: false }; // ゲームパッド右スティックの選択カーソル
+  function clamp(v, lo, hi) { return v < lo ? lo : (v > hi ? hi : v); }
 
   const intent = { dx: 0, dy: 0, dir: 'down', mine: false, place: false, dash: false, usePointer: false, mouseTile: null };
 
@@ -55,6 +57,13 @@ Game.Input = (function () {
     }, { passive: false });
 
     initTouch();
+    // コントローラ接続でタッチUIを隠す
+    window.addEventListener('gamepadconnected', function () { document.body.classList.add('has-pad'); if (Game.UI) Game.UI.toast('コントローラを接続しました'); });
+    window.addEventListener('gamepaddisconnected', function () {
+      const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+      let any = false; for (let i = 0; i < pads.length; i++) if (pads[i]) any = true;
+      if (!any) { document.body.classList.remove('has-pad'); cursor.active = false; }
+    });
   }
 
   function initTouch() {
@@ -111,8 +120,20 @@ Game.Input = (function () {
     if (btn(14)) out.dx -= 1; if (btn(15)) out.dx += 1;   // dpad L/R
     if (btn(12)) out.dy -= 1; if (btn(13)) out.dy += 1;   // dpad U/D
 
+    // 右スティック=選択カーソル移動（マウス代替）
+    const rx = gp.axes[2] || 0, ry = gp.axes[3] || 0;
+    if (Math.abs(rx) > 0.18 || Math.abs(ry) > 0.18) {
+      cursor.active = true;
+      cursor.x = clamp(cursor.x + rx * 9, 0, Game.view ? Game.view.w : window.innerWidth);
+      cursor.y = clamp(cursor.y + ry * 9, 0, Game.view ? Game.view.h : window.innerHeight);
+      mouse.x = cursor.x; mouse.y = cursor.y; mouse.inside = true; mouse.moved = true;
+    }
+
     // ×(0)=採掘/攻撃(押しっぱ)
     if (btn(0)) out.mine = true;
+    // R2(7)=クリック: メニュー上ならボタン押下、フィールドならカーソル位置を採掘/攻撃
+    if (cursor.active && btn(7)) { out.mine = true; mouse.x = cursor.x; mouse.y = cursor.y; mouse.inside = true; mouse.moved = true; }
+    if (edge(7)) clickAtCursor();
     // □(2)/○(1)=設置/対話(エッジ)
     if (edge(2) || edge(1)) placeQueued = true;
     // △(3)=影渡り(エッジ)
@@ -120,12 +141,21 @@ Game.Input = (function () {
     // L1(4)/R1(5)=ホットバー切替(エッジ)
     if (edge(4)) { let n = Game.state.player.hotbarIndex - 1; if (n < 0) n = Game.HOTBAR_SIZE - 1; Game.Inventory.setHotbar(n); }
     if (edge(5)) { let n = Game.state.player.hotbarIndex + 1; if (n >= Game.HOTBAR_SIZE) n = 0; Game.Inventory.setHotbar(n); }
-    // L2(6)/R2(7)=ダッシュ
-    if (btn(6) || btn(7)) out.dash = true;
+    // L2(6)=ダッシュ
+    if (btn(6)) out.dash = true;
     // OPTIONS(9)=インベントリ(エッジ)
     if (edge(9)) Game.UI.toggleInventory();
     // 他ボタンのprev更新（エッジ漏れ防止）
     [8, 10, 11, 16].forEach(function (i) { padPrev[i] = btn(i); });
+  }
+
+  // カーソル位置のDOM要素がボタンならクリック（メニュー操作）
+  function clickAtCursor() {
+    if (!cursor.active) return;
+    const el = document.elementFromPoint(cursor.x, cursor.y);
+    if (el && (el.tagName === 'BUTTON' || el.closest('button'))) {
+      (el.tagName === 'BUTTON' ? el : el.closest('button')).click();
+    }
   }
 
   function poll() {
@@ -153,5 +183,5 @@ Game.Input = (function () {
     return intent;
   }
 
-  return { init, poll, intent };
+  return { init, poll, intent, cursor };
 })();

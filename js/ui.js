@@ -5,6 +5,7 @@ Game.UI = (function () {
   let el = {};
   let toastTimer = null;
   let mmCtx = null;
+  let invSelected = -1;
 
   function init() {
     el.hud = document.getElementById('hud');
@@ -14,6 +15,7 @@ Game.UI = (function () {
     el.clock = document.getElementById('clock-text');
     el.invScreen = document.getElementById('inv-screen');
     el.invGrid = document.getElementById('inv-grid');
+    el.invDetail = document.getElementById('inv-detail');
     el.craftList = document.getElementById('craft-list');
     el.toast = document.getElementById('toast');
     el.sound = document.getElementById('btn-sound');
@@ -35,6 +37,7 @@ Game.UI = (function () {
     document.getElementById('btn-close-options').addEventListener('click', toggleOptions);
     document.getElementById('opt-save').addEventListener('click', function () { Game.manualSave(); });
     document.getElementById('opt-title').addEventListener('click', function () { if (confirm('保存してタイトルに戻りますか？')) Game.toTitle(); });
+    document.getElementById('opt-name').addEventListener('click', function () { const n = window.prompt('名前を入力:'); if (n) { Game.Net.setName(n); toast('名前を ' + n + ' に変更'); } });
     document.getElementById('opt-sound').addEventListener('click', function () { const on = Game.Audio.toggle(); this.textContent = 'サウンド: ' + (on ? 'ON' : 'OFF'); });
     document.getElementById('opt-zoom').addEventListener('click', function () {
       Game.state.zoom = Game.state.zoom > 0.85 ? 0.7 : 1;
@@ -115,12 +118,68 @@ Game.UI = (function () {
     const def = Game.ITEMS[stack.id];
     const col = (def && def.color) || '#888';
     const cnt = stack.count > 1 ? '<span class="cnt">' + stack.count + '</span>' : '';
-    // rolled装備はレアリティ色のリング
     let ring = '';
     if (stack.roll) ring = ';box-shadow:0 0 0 2px ' + Game.Loot.rarityColor(stack) + ',0 0 6px ' + Game.Loot.rarityColor(stack);
     const title = stack.roll ? Game.Loot.displayName(stack) : (def ? def.name : stack.id);
-    return '<span class="icon" style="background:' + col + ring + '" title="' + title + '"></span>' + cnt;
+    const glyph = Game.ITEM_GLYPH[stack.id];
+    if (glyph) {
+      // 絵文字アイコン＋レアリティ枠（区別しやすく）
+      return '<span class="icon glyph" style="' + (stack.roll ? 'background:transparent' + ring : 'background:transparent') + '" data-tip="' + stack.id + '">' + glyph + '</span>' + cnt;
+    }
+    return '<span class="icon" style="background:' + col + ring + '" title="' + title + '" data-tip="' + stack.id + '"></span>' + cnt;
   }
+
+  // ツールチップ（hover/カーソル）
+  function setupTooltip(container) {
+    if (!el.tooltip) el.tooltip = document.getElementById('tooltip');
+    container.querySelectorAll('.slot').forEach(function (cell, i) {
+      cell.addEventListener('mouseenter', function (e) { showTip(cell, container, i); });
+      cell.addEventListener('mousemove', function (e) { moveTip(e); });
+      cell.addEventListener('mouseleave', hideTip);
+    });
+  }
+  function tipFor(stack) {
+    if (!stack) return null;
+    const def = Game.ITEMS[stack.id]; if (!def) return null;
+    let html = '<div class="tt-name" style="color:' + (stack.roll ? Game.Loot.rarityColor(stack) : (def.color || '#fff')) + '">' + (stack.roll ? Game.Loot.displayName(stack) : def.name) + '</div>';
+    if (Game.Loot.rollable(stack.id)) html += '<div class="tt-stat">' + Game.Loot.statText(stack) + '</div>';
+    else {
+      const s = [];
+      if (def.food) s.push('空腹+' + def.food); if (def.heal) s.push('回復+' + def.heal);
+      if (def.place !== undefined) s.push('設置可'); if (def.tool) s.push(def.tool + ' Lv' + def.tier);
+      if (def.cures) s.push('治療: ' + def.cures.join('/'));
+      if (s.length) html += '<div class="tt-stat">' + s.join(' / ') + '</div>';
+    }
+    if (def.flavor) html += '<div class="tt-flavor">' + def.flavor + '</div>';
+    return html;
+  }
+  function showTip(cell, container, i) {
+    if (!el.tooltip) return;
+    const arr = container === el.hotbar ? Game.Inventory.slots() : null;
+    // どのスロット配列か特定（hotbar/inv/chest/enchant 共通: data-index or order）
+    const slots = Game.Inventory.slots();
+    const idxAttr = cell.dataset.index != null ? parseInt(cell.dataset.index, 10) : i;
+    let stack = null;
+    const tipId = cell.querySelector('[data-tip]');
+    if (tipId) stack = { id: tipId.getAttribute('data-tip') };
+    // 正確なstack（roll込）を配列から取得
+    const html = tipId ? tipFor(findStackById(tipId.getAttribute('data-tip'), idxAttr)) : null;
+    if (!html) return;
+    el.tooltip.innerHTML = html; el.tooltip.style.display = 'block';
+  }
+  function findStackById(id, idx) {
+    const s = Game.Inventory.slots();
+    if (s[idx] && s[idx].id === id) return s[idx];
+    for (let i = 0; i < s.length; i++) if (s[i] && s[i].id === id) return s[i];
+    return { id: id };
+  }
+  function moveTip(e) {
+    if (!el.tooltip || el.tooltip.style.display !== 'block') return;
+    const x = (e.clientX || 0) + 14, y = (e.clientY || 0) + 14;
+    el.tooltip.style.left = Math.min(x, window.innerWidth - 230) + 'px';
+    el.tooltip.style.top = Math.min(y, window.innerHeight - 80) + 'px';
+  }
+  function hideTip() { if (el.tooltip) el.tooltip.style.display = 'none'; }
 
   function refreshHotbar() {
     if (!el.hotbar || !Game.state) return;
@@ -130,6 +189,7 @@ Game.UI = (function () {
       slots[i].innerHTML = slotHTML(s[i]);
       slots[i].classList.toggle('selected', i === Game.state.player.hotbarIndex);
     }
+    setupTooltip(el.hotbar);
   }
 
   function refreshStats() {
@@ -160,6 +220,7 @@ Game.UI = (function () {
 
   // ===== エンチャント台 =====
   let enchantSel = -1;
+  // (invSelected declared near top via closure)
   function openEnchant() {
     enchantSel = -1;
     el.enchantScreen.classList.remove('hidden');
@@ -250,27 +311,46 @@ Game.UI = (function () {
       if (s[i]) {
         d.title = Game.ITEMS[s[i].id] ? Game.ITEMS[s[i].id].name : s[i].id;
         d.addEventListener('click', (function (idx) {
-          return function () {
-            const st = Game.Inventory.slots()[idx];
-            if (!st) return;
-            const def = Game.ITEMS[st.id];
-            if (def && def.armor && def.slot) {
-              Game.Player.equipFromInventory(idx); // 防具はタップで装備
-            } else if (def && (def.attack != null)) {
-              toast(Game.Loot.displayName(st) + ' — ' + Game.Loot.statText(st)); // 武器はステ表示
-            } else if (def && def.food) {
-              if (st.count > 0 && Game.state.player.hunger < Game.state.player.maxHunger) {
-                Game.Survival.eat(def.food); Game.Inventory.remove(st.id, 1); Game.Audio.play('eat'); refreshAll();
-              }
-            } else if (def && def.flavor) {
-              toast(def.flavor); // 物語フレーバー
-            }
-          };
+          return function () { invSelected = idx; refreshInventory(); };
         })(i));
+        if (i === invSelected) d.classList.add('selected');
       }
       el.invGrid.appendChild(d);
     }
+    setupTooltip(el.invGrid);
+    renderInvDetail();
     refreshCraft();
+  }
+
+  // 選択中アイテムの詳細＋操作（誤使用防止: 確認ボタン式）
+  function renderInvDetail() {
+    if (!el.invDetail) return;
+    const st = Game.Inventory.slots()[invSelected];
+    if (!st) { el.invDetail.innerHTML = '<p class="hint">アイテムをタップで選択</p>'; return; }
+    const def = Game.ITEMS[st.id];
+    let h = '<div class="ench-name" style="color:' + (st.roll ? Game.Loot.rarityColor(st) : (def.color || '#fff')) + '">' + (st.roll ? Game.Loot.displayName(st) : def.name) + '</div>';
+    if (Game.Loot.rollable(st.id)) h += '<div class="ench-stat">' + Game.Loot.statText(st) + '</div>';
+    if (def.flavor) h += '<div class="tt-flavor" style="margin-bottom:6px">' + def.flavor + '</div>';
+    const btns = [];
+    if (def.armor && def.slot) btns.push('<button id="inv-act" class="big-btn">装備する</button>');
+    else if (def.food || def.cures) btns.push('<button id="inv-act" class="big-btn">' + (def.cures ? '使う' : '食べる') + '</button>');
+    else if (Game.Loot.rollable(st.id) || def.tool) btns.push('<button id="inv-hot" class="big-btn alt">ホットバーへ装備</button>');
+    el.invDetail.innerHTML = h + btns.join('');
+    const act = document.getElementById('inv-act');
+    if (act) act.addEventListener('click', function () {
+      const cur = Game.Inventory.slots()[invSelected]; if (!cur) return;
+      const d2 = Game.ITEMS[cur.id];
+      if (d2.armor) Game.Player.equipFromInventory(invSelected);
+      else { const tmp = Game.state.player.hotbarIndex; const sl = Game.Inventory.slots(); const k = sl.indexOf(cur); Game.state.player.hotbarIndex = k; Game.Inventory.useSelected(); Game.state.player.hotbarIndex = Math.min(tmp, Game.HOTBAR_SIZE - 1); }
+      invSelected = -1; refreshInventory();
+    });
+    const hot = document.getElementById('inv-hot');
+    if (hot) hot.addEventListener('click', function () {
+      // 選択スロットをホットバー(現在の手持ち枠)と入れ替え
+      const sl = Game.Inventory.slots(); const hb = Game.state.player.hotbarIndex;
+      const tmp = sl[hb]; sl[hb] = sl[invSelected]; sl[invSelected] = tmp;
+      toast('ホットバー' + (hb + 1) + 'に装備'); invSelected = -1; refreshInventory();
+    });
   }
 
   function refreshCraft() {
@@ -379,7 +459,7 @@ Game.UI = (function () {
   function toggleInventory() {
     el.invScreen.classList.toggle('hidden');
     Game.state.paused = !el.invScreen.classList.contains('hidden');
-    if (!el.invScreen.classList.contains('hidden')) refreshInventory();
+    if (!el.invScreen.classList.contains('hidden')) { invSelected = -1; refreshInventory(); }
   }
 
   // ===== 石碑（ロア） =====

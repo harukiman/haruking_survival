@@ -362,6 +362,20 @@ Game.STARTER_ITEMS = [
   { id:'apple', count:3 },
 ];
 
+// アイテム絵文字アイコン（視認性向上）。未定義は色付き四角＋頭文字
+Game.ITEM_GLYPH = {
+  wood:'🪵', shadow_wood:'🪵', stone:'🪨', stone_block:'🧱', wood_block:'🟫', coal:'⚫', iron_ore:'🪨', iron:'🔩', gold_ore:'🟡', gold_bar:'🟨',
+  apple:'🍎', berry:'🫐', cactus:'🌵', raw_meat:'🥩', cooked_meat:'🍖', rotten_meat:'🤢', guts:'🩸', wheat:'🌾', wheat_seeds:'🌱', bread:'🍞', moonleaf:'🍃', fish:'🐟',
+  hide:'🟤', leather:'🟫', bone:'🦴', string:'🧵', slime_ball:'🟢', flower:'🌸', sapling:'🌱',
+  wood_pickaxe:'⛏️', stone_pickaxe:'⛏️', iron_pickaxe:'⛏️', shadow_pickaxe:'⛏️',
+  wood_axe:'🪓', stone_axe:'🪓', iron_axe:'🪓', shadow_axe:'🪓', wood_hoe:'🌾', stone_hoe:'🌾',
+  wood_sword:'🗡️', stone_sword:'🗡️', iron_sword:'⚔️', shadow_blade:'⚔️',
+  leather_helmet:'🎩', iron_helmet:'⛑️', shadow_helmet:'🪖', leather_chest:'🦺', iron_chest:'🛡️', shadow_chest:'🛡️', fur_coat:'🧥', lumen_charm:'🔆', sanity_charm:'🔮',
+  bandage:'🩹', antidote:'🧪',
+  torch:'🔥', campfire:'🔥', lantern:'🏮', lumen_lantern:'💡', crafting_table:'🛠️', furnace:'🔥', chest:'📦', bed:'🛏️', fence:'🚧', door:'🚪', wall:'🧱', window:'🪟', bridge:'🌉', sign:'🪧', wood_floor:'🟫', stone_floor:'⬜',
+  shadow_shard:'🌑', shadow_mirror:'🪞', shadow_crystal:'🔮', lumen:'✨', shadow_steel:'⬛', shadow_core:'💜', unity_core:'⭐', void_heart:'💗', rift_anchor:'🕳️', enchant_table:'✦',
+};
+
 Game.INV_SIZE = 36;       // 先頭9 = ホットバー
 Game.HOTBAR_SIZE = 9;
 Game.DAY_LENGTH = 24000;  // 1日のtick数（昼夜は次波で本格化）

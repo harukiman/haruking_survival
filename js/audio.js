@@ -10,11 +10,12 @@ Game.Audio = (function () {
   // BGM 状態
   const bgm = { started: false, mood: null, pads: [], filter: null, nextNote: 0, cfg: null };
 
+  // 穏やかで協和的なペンタトニック。耳障りにならないよう sine 主体・低音量・ゆったり
   const MOODS = {
-    day:    { root: 220.0, scale: [0, 2, 4, 7, 9], tempo: 1.3, wave: 'triangle', padVol: 0.05, noteVol: 0.05, detune: 4 },
-    night:  { root: 164.8, scale: [0, 3, 5, 7, 10], tempo: 2.1, wave: 'sine', padVol: 0.06, noteVol: 0.045, detune: 6 },
-    shadow: { root: 110.0, scale: [0, 1, 5, 6, 8], tempo: 1.7, wave: 'sine', padVol: 0.07, noteVol: 0.05, detune: 10 },
-    boss:   { root: 146.8, scale: [0, 2, 3, 6, 7], tempo: 0.55, wave: 'sawtooth', padVol: 0.05, noteVol: 0.05, detune: 8 },
+    day:    { root: 261.63, scale: [0, 2, 4, 7, 9],  tempo: 2.8, wave: 'sine', padVol: 0.028, noteVol: 0.03, detune: 2 },
+    night:  { root: 196.00, scale: [0, 3, 5, 7, 10], tempo: 3.4, wave: 'sine', padVol: 0.032, noteVol: 0.026, detune: 2 },
+    shadow: { root: 174.61, scale: [0, 3, 5, 7, 10], tempo: 3.0, wave: 'sine', padVol: 0.034, noteVol: 0.026, detune: 3 },
+    boss:   { root: 196.00, scale: [0, 3, 5, 7, 10], tempo: 1.5, wave: 'triangle', padVol: 0.03, noteVol: 0.03, detune: 3 },
   };
 
   function ensure() {
@@ -23,7 +24,7 @@ Game.Audio = (function () {
       catch (e) { enabled = false; return; }
       master = ctx.createGain(); master.gain.value = 0.9; master.connect(ctx.destination);
       sfxGain = ctx.createGain(); sfxGain.gain.value = 1.0; sfxGain.connect(master);
-      bgmGain = ctx.createGain(); bgmGain.gain.value = enabled ? 0.5 : 0; bgmGain.connect(master);
+      bgmGain = ctx.createGain(); bgmGain.gain.value = enabled ? 0.32 : 0; bgmGain.connect(master);
     }
     if (ctx && ctx.state === 'suspended') ctx.resume();
   }
@@ -74,7 +75,7 @@ Game.Audio = (function () {
   function startBGM() {
     if (!enabled) return; ensure(); if (!ctx || bgm.started) return;
     bgm.started = true;
-    bgm.filter = ctx.createBiquadFilter(); bgm.filter.type = 'lowpass'; bgm.filter.frequency.value = 1400; bgm.filter.connect(bgmGain);
+    bgm.filter = ctx.createBiquadFilter(); bgm.filter.type = 'lowpass'; bgm.filter.frequency.value = 900; bgm.filter.connect(bgmGain);
     // 3声のパッド（root, 5th, octave）
     for (let i = 0; i < 3; i++) {
       const osc = ctx.createOscillator(), g = ctx.createGain();
