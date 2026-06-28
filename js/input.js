@@ -7,6 +7,7 @@ Game.Input = (function () {
   const touch = { up: false, down: false, left: false, right: false, mine: false, dash: false };
   const joy = { active: false, id: null, ox: 0, oy: 0, dx: 0, dy: 0 }; // フローティング仮想スティック
   let placeQueued = false;   // 設置エッジ
+  let useQueued = false;     // 開く/使うエッジ
   let lastDir = 'down';
   const cursor = { x: 200, y: 200, active: false }; // ゲームパッド右スティックの選択カーソル
   function clamp(v, lo, hi) { return v < lo ? lo : (v > hi ? hi : v); }
@@ -32,6 +33,7 @@ Game.Input = (function () {
       if (k === 'n' || k === 'tab') { e.preventDefault(); Game.UI.toggleBigMap(); } // 大マップ
       if (k === 'c') { Game.UI.openStats(); } // ステータス&スキル
       if (k === 'k' || k === 'q') placeQueued = true; // facing設置
+      if (k === 'g') useQueued = true;   // 開く/使う(近隣のチェスト等)
       if (k === ' ') e.preventDefault();
     });
     window.addEventListener('keyup', function (e) { keys[e.key.toLowerCase()] = false; });
@@ -131,6 +133,8 @@ Game.Input = (function () {
     placeBtn.addEventListener('touchstart', doPlace, { passive: false });
     placeBtn.addEventListener('click', doPlace);
     document.getElementById('btn-inv').addEventListener('click', function () { Game.UI.toggleInventory(); });
+    const useBtn = document.getElementById('btn-use');
+    if (useBtn) { const doUse = function (e) { e.preventDefault(); useQueued = true; }; useBtn.addEventListener('touchstart', doUse, { passive: false }); useBtn.addEventListener('click', doUse); }
     const shiftBtn = document.getElementById('btn-shift');
     if (shiftBtn) shiftBtn.addEventListener('click', function (e) { e.preventDefault(); Game.World.shift(); });
     const dashBtn = document.getElementById('btn-dash');
@@ -223,6 +227,7 @@ Game.Input = (function () {
     intent.dx = dx; intent.dy = dy; intent.dir = lastDir;
     intent.mine = mouse.down || touch.mine || !!keys[' '] || !!keys['j'] || tmp.mine;
     intent.place = placeQueued; placeQueued = false;
+    intent.use = useQueued; useQueued = false;
     intent.dash = !!keys['shift'] || touch.dash || tmp.dash;
     intent.usePointer = usePointer;
     intent.mouseTile = usePointer ? Game.Camera.screenToTile(mouse.x, mouse.y) : null;

@@ -33,15 +33,24 @@ Game.Discovery = (function () {
     }
   }
 
-  // 同種は「世界＋40タイル区画」ごとに一度きり
+  const KIND_LABEL = { dungeon: 'ダンジョン', vault: '封印遺跡', stela: '石碑', treasure: '宝の在り処', cosmic: '星の宝', boss: '強敵' };
+
+  // 同種は「世界＋40タイル区画」ごとに地図記録は一度きり。
+  // 発見ムービー(全画面演出)は「種別ごと初回のみ」。2回目以降は控えめなトーストだけで中断しない。
   function tryTrigger(kind, tx, ty) {
     if (!Game.state.discovered) Game.state.discovered = {};
     const key = Game.state.worldName + ':' + kind + ':' + Math.floor(tx / 40) + ',' + Math.floor(ty / 40);
     if (Game.state.discovered[key]) return false;
+    // この種別を過去に発見済みか（演出を出すかの判定。記録キー追加より前に確認）
+    const firstOfKind = !Object.keys(Game.state.discovered).some(function (k) { return k.split(':')[1] === kind; });
     Game.state.discovered[key] = 1;
     if (Game.Achievements && Object.keys(Game.state.discovered).length >= 5) Game.Achievements.unlock('explorer');
-    fire(kind);
-    if (Game.Net && Game.Net.isConnected() && Game.Net.broadcastDiscovery) Game.Net.broadcastDiscovery(kind);
+    if (firstOfKind) {
+      fire(kind);
+      if (Game.Net && Game.Net.isConnected() && Game.Net.broadcastDiscovery) Game.Net.broadcastDiscovery(kind);
+    } else if (Game.UI && Game.UI.toast) {
+      Game.UI.toast((KIND_LABEL[kind] || '何か') + 'を見つけた');
+    }
     return true;
   }
 

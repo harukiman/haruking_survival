@@ -29,8 +29,8 @@ Game.WorldGen = (function () {
 
   function genTile(wx, wy, seed) {
     if (Game.state && Game.state.worldName === 'space') return genSpace(wx, wy, seed);
-    const e = N.fbm(wx * 0.012, wy * 0.012, seed, 5);          // 標高
-    const m = N.fbm(wx * 0.02 + 911, wy * 0.02 + 911, seed ^ 0x9e37, 4); // 湿度
+    const e = N.fbm(wx * 0.0085, wy * 0.0085, seed, 5);        // 標高（低周波=大陸/バイオームを広大に）
+    const m = N.fbm(wx * 0.014 + 911, wy * 0.014 + 911, seed ^ 0x9e37, 4); // 湿度
 
     let ground;
     if (e < 0.30) ground = T.DEEP_WATER;

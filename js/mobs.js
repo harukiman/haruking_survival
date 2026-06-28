@@ -506,6 +506,13 @@ Game.Mobs = (function () {
         Game.UI.toast(m.def.name + 'を打ち倒した！');
         if (Game.Achievements) { Game.Achievements.unlock('dungeon_boss'); if (Game.BOSS_ACH && Game.BOSS_ACH[m.type]) Game.Achievements.unlock(Game.BOSS_ACH[m.type]); }
       }
+      // 恒久報酬: ユニークボス初撃破で最大HP+5（applyEquipStatsがbossesDefeated*5を反映）
+      const firstKill = Game.state.bestiary && Game.state.bestiary[m.type] === 1;
+      Game.Player.applyEquipStats();
+      if (firstKill) {
+        const pl = Game.state.player; pl.health = Math.min(pl.maxHealth, pl.health + 5);
+        Game.UI.toast('討伐の証を得た — 最大HP +5　称号「' + Game.Player.bossTitle() + '」');
+      }
       // 撃破アニメムービー（ローカル再生）
       if (Game.Cutscene && Game.Cutscene.playBossOutro && !(Game.Net.isConnected() && !Game.Net.host)) {
         Game.state.paused = true;

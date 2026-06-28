@@ -79,14 +79,20 @@ Game.Player = (function () {
     if (moving) {
       dx /= len; dy /= len;
       p.dir = intent.dir || p.dir;
+      const ox = p.x, oy = p.y;
       const nx = p.x + dx * spd;
       if (!blocked(nx, p.y)) p.x = nx;
       const ny = p.y + dy * spd;
       if (!blocked(p.x, ny)) p.y = ny;
+      // スタック対策: 動こうとしているのに両軸とも進めない状態が続いたら歩ける場所へ救出
+      if (Math.abs(p.x - ox) < 0.01 && Math.abs(p.y - oy) < 0.01 && !p.vehicle) {
+        p.stuckT = (p.stuckT || 0) + 1;
+        if (p.stuckT > 18 && Game.World.rescueStuck) { Game.World.rescueStuck(); p.stuckT = 0; }
+      } else p.stuckT = 0;
       if (dashing && Game.state.tick % 4 === 0) Game.Render.spawnParticles(p.x, p.y, '#cfe0ff', 1);
       if (onWater && Game.state.tick % 16 === 0) { Game.Audio.play('splash'); Game.Render.spawnParticles(p.x, p.y + 8, '#a8d0f0', 3); }
       if (p.vehicle && Game.state.tick % 24 === 0) Game.Audio.play('engine');
-    }
+    } else p.stuckT = 0;
 
     if (p.invuln > 0) p.invuln--;
     if (p.attackCd > 0) p.attackCd--;
@@ -104,6 +110,8 @@ Game.Player = (function () {
 
     // 右クリック/設置ボタン: 対話/設置/使用
     if (intent.place) interact();
+    // 開く/使うボタン: 近隣のチェスト等を開く（無ければ通常操作）
+    if (intent.use) useNearby();
 
     // とげダメージ（サボテン等）
     checkHazard();
@@ -209,6 +217,27 @@ Game.Player = (function () {
   }
 
   // 対話/設置/使用
+  // 「開く/使う」ボタン用: 近隣の対話可能オブジェクト(チェスト等)を探して開く。無ければ通常interact
+  function useNearby() {
+    const npc = Game.Mobs.nearbyNPC(2.2 * TS);
+    if (npc) { Game.Mobs.interactNPC(npc); return; }
+    const O = Game.OBJ, p = Game.state.player;
+    const ptx = Math.floor(p.x / TS), pty = Math.floor(p.y / TS);
+    const off = [[0, 0], [0, 1], [0, -1], [1, 0], [-1, 0], [1, 1], [-1, 1], [1, -1], [-1, -1]];
+    for (let i = 0; i < off.length; i++) {
+      const tx = ptx + off[i][0], ty = pty + off[i][1], o = Game.World.objAt(tx, ty);
+      if (o === O.CHEST) { Game.UI.openChest(tx, ty); return; }
+      if (o === O.TREASURE_CHEST) { const d = Game.World.getTileData(tx, ty); if (!d || !d.chest) Game.World.setTileData(tx, ty, { chest: makeTreasureLoot() }); Game.UI.openChest(tx, ty); return; }
+      if (o === O.RIFT_ANCHOR) { Game.UI.openSharedChest(tx, ty); return; }
+      if (o === O.BOUNTY_BOARD) { Game.Bounty.open(tx, ty); return; }
+      if (o === O.STELA) { Game.Lore.read(tx, ty); return; }
+      if (o === O.SHADOW_ALTAR) { Game.Mobs.summonBoss(tx, ty); return; }
+      if (o === O.ENCHANT_TABLE) { Game.UI.openEnchant(); return; }
+      if (o === O.BED) { sleep(); return; }
+    }
+    interact(); // 近隣に対話対象が無ければ通常操作（手持ち使用/設置など）
+  }
+
   function interact() {
     // 友好NPC（謎の旅人）が近ければ対話優先
     const npc = Game.Mobs.nearbyNPC(2.2 * TS);
@@ -436,14 +465,29 @@ Game.Player = (function () {
     return out;
   }
 
-  // 装備由来の最大HP等を反映（VIT＋レベルも加味）
+  // 撃破したユニークボス種数（恒久報酬/称号の基礎）
+  function bossesDefeated() {
+    const best = (Game.state && Game.state.bestiary) || {}; let n = 0;
+    for (const k in best) { const d = Game.MOBS[k]; if (d && d.boss && !d.npc && best[k] > 0) n++; }
+    return n;
+  }
+  function bossTitle() {
+    const n = bossesDefeated();
+    if (n >= 9) return '二相の覇者';
+    if (n >= 6) return '魔物狩りの達人';
+    if (n >= 3) return '歴戦の討伐者';
+    if (n >= 1) return 'ボスハンター';
+    return '旅人';
+  }
+
+  // 装備由来の最大HP等を反映（VIT＋レベル＋ボス討伐の恒久報酬も加味）
   function applyEquipStats() {
     const p = Game.state.player;
     let hpBonus = 0;
     for (const k in p.armor) if (p.armor[k]) hpBonus += Game.Loot.stats(p.armor[k]).hp;
     const base = p.baseMaxHealth || 100;
     const sb = skillBonus();
-    p.maxHealth = base + hpBonus + (p.vit || 0) * 5 + sb.hp;
+    p.maxHealth = base + hpBonus + (p.vit || 0) * 5 + sb.hp + bossesDefeated() * 5; // ボス討伐ごとに最大HP+5
     p.maxStamina = 100 + sb.staminaMax;
     if (p.health > p.maxHealth) p.health = p.maxHealth;
     if (p.stamina > p.maxStamina) p.stamina = p.maxStamina;
@@ -584,7 +628,7 @@ Game.Player = (function () {
 
   return {
     makeDefault, spawnAt, update, targetTile, mining, playerTile, breakBlock,
-    interact, gainXP, totalArmor, setBonus, sleep, equipSelectedArmor, equipFromInventory, equipRelic, applyEquipStats,
+    interact, useNearby, gainXP, totalArmor, setBonus, sleep, equipSelectedArmor, equipFromInventory, equipRelic, applyEquipStats, bossesDefeated, bossTitle,
     effAttack, attackCooldown, levelDmgBonus, levelArmorBonus, spendStat, unlockSkill, respec,
     skillBonus, skillFlag, canUnlock, currentWeaponAtk, equippedArmorAt,
   };

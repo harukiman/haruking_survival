@@ -224,7 +224,7 @@ Game.UI = (function () {
     const slot = Game.Inventory.selectedSlot(); const wst = Game.Loot.stats(slot);
     const eff = Game.Player.effAttack(wst.atk > 0 ? wst.atk : 1);
     let h = '';
-    h += '<div class="ench-stat">Lv.' + p.level + '（EXP ' + p.xp + '/' + p.xpNext + '）　スキルP: <span class="sp-badge">' + (p.skillPoints || 0) + '</span></div>';
+    h += '<div class="ench-stat">Lv.' + p.level + '（EXP ' + p.xp + '/' + p.xpNext + '）　スキルP: <span class="sp-badge">' + (p.skillPoints || 0) + '</span>　称号 <b style="color:#ffd86b">' + Game.Player.bossTitle() + '</b></div>';
     h += '<div class="ench-stat">攻撃力(手持ち) <b style="color:#ffd86b">' + eff + '</b>　防御力 <b style="color:#9fd8ff">' + Game.Player.totalArmor() + '</b>　最大HP <b style="color:#ff8a8a">' + p.maxHealth + '</b></div>';
     // ===== 装備サマリー＆派生ステータス =====
     function gearCell(label, slotObj, fallback) {
@@ -260,6 +260,19 @@ Game.UI = (function () {
     h += '<div class="derived-stats">';
     derived.forEach(function (d) { h += '<span class="ds-chip">' + d[0] + ' <b style="color:' + d[2] + '">' + d[1] + '</b></span>'; });
     h += '</div>';
+    // ===== 討伐の証（ボス図鑑・恒久報酬） =====
+    if (Game.MOBS) {
+      const best = Game.state.bestiary || {};
+      const bosses = Object.keys(Game.MOBS).filter(function (id) { return Game.MOBS[id].boss && !Game.MOBS[id].npc; });
+      const nDef = Game.Player.bossesDefeated();
+      h += '<h2>討伐の証 <span style="color:#ffe27a;font-size:.9rem">' + nDef + ' / ' + bosses.length + '</span><span style="color:#7a8494;font-size:.78rem">　最大HP +' + (nDef * 5) + '</span></h2>';
+      h += '<div class="trophy-row">';
+      bosses.forEach(function (id) {
+        const got = best[id] > 0; const m = Game.MOBS[id];
+        h += '<span class="trophy ' + (got ? 'got' : '') + '" title="' + (got ? m.name : '？？？') + '">' + (got ? '👑' : '🔒') + '<span class="tname">' + (got ? m.name : '？？？') + '</span></span>';
+      });
+      h += '</div>';
+    }
     const stats = [['str', '力 STR', '攻撃 +1 / pt'], ['vit', '体 VIT', '最大HP +5 / pt'], ['dex', '技 DEX', '攻撃速度UP / pt']];
     stats.forEach(function (s) {
       h += '<div class="stat-row"><span class="sname">' + s[1] + ' <em>' + s[2] + '</em></span><span class="sval">' + (p[s[0]] || 0) + '</span><button class="stat-plus" data-stat="' + s[0] + '"' + ((p.skillPoints || 0) <= 0 ? ' disabled' : '') + '>＋</button></div>';

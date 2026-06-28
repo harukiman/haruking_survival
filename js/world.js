@@ -213,7 +213,7 @@ Game.World = (function () {
   return {
     Chunk, getChunk, groundAt, objAt, setObj, setGround,
     getTileData, setTileData, clearTileData,
-    isWalkable, updateChunks, toChunkCoord,
+    isWalkable, updateChunks, toChunkCoord, rescueStuck: nudgeToWalkable,
     setActiveWorld, shift, setObjBothWorlds, resonate, depthOf, inDepths, travelTo,
   };
 })();
