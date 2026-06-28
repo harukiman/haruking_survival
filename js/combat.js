@@ -18,6 +18,7 @@ Game.Combat = (function () {
     let best = null, bestD = Infinity;
     for (let i = 0; i < mobs.length; i++) {
       const m = mobs[i];
+      if (m.def.friendly) continue; // 友好NPCは攻撃しない
       const dx = m.x - p.x, dy = m.y - p.y;
       const d = Math.hypot(dx, dy);
       if (d > rangePx + m.def.size * 0.5) continue;

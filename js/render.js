@@ -222,6 +222,13 @@ Game.Render = (function () {
       });
     }
   }
+  function spawnBlood(wx, wy, n) {
+    const cols = ['#a01a28', '#c0303a', '#7a1420'];
+    for (let i = 0; i < n; i++) {
+      particles.push({ x: wx, y: wy, vx: (Math.random() - 0.5) * 4, vy: (Math.random() - 0.5) * 4, life: 16 + Math.random() * 10, color: cols[Math.floor(Math.random() * cols.length)] });
+    }
+  }
+
   function drawParticles(ctx) {
     for (let i = particles.length - 1; i >= 0; i--) {
       const p = particles[i];
@@ -235,5 +242,5 @@ Game.Render = (function () {
     }
   }
 
-  return { draw, buildChunkCache, spawnParticles, flash };
+  return { draw, buildChunkCache, spawnParticles, spawnBlood, flash };
 })();

@@ -41,7 +41,7 @@ Game.Save = (function () {
         hunger: p.hunger, maxHunger: p.maxHunger,
         hotbarIndex: p.hotbarIndex,
         xp: p.xp, level: p.level, xpNext: p.xpNext, armor: p.armor,
-        baseMaxHealth: p.baseMaxHealth,
+        baseMaxHealth: p.baseMaxHealth, status: p.status || {},
       },
       ngLevel: s.ngLevel || 0,
       difficulty: s.difficulty || 'normal',

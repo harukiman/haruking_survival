@@ -153,6 +153,7 @@ window.Game = window.Game || {};
     p.xp = sp.xp || 0; p.level = sp.level || 1; p.xpNext = sp.xpNext || 5;
     p.baseMaxHealth = sp.baseMaxHealth || sp.maxHealth || 100;
     p.armor = sp.armor || { head: null, chest: null };
+    p.status = sp.status || {};
     Game.state.ngLevel = data.ngLevel || 0;
     // インベントリ
     if (data.inventory) {

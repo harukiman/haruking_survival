@@ -8,7 +8,9 @@ Game.Survival = (function () {
     // 空腹減少（移動/採掘でやや速く）
     p.hungerTimer++;
     const moving = Game.Input.intent.dx !== 0 || Game.Input.intent.dy !== 0 || Game.Player.mining.active;
-    const drainEvery = moving ? 110 : 170;
+    let drainEvery = moving ? 110 : 170;
+    const hs = Game.Player.setBonus().hungerSlow;
+    if (hs) drainEvery = Math.round(drainEvery / (1 - hs)); // 革セットで空腹緩やか
     if (p.hungerTimer >= drainEvery) {
       p.hungerTimer = 0;
       if (p.hunger > 0) { p.hunger--; Game.UI.refreshStats(); }
@@ -18,8 +20,9 @@ Game.Survival = (function () {
     p.regenTimer++;
     if (p.regenTimer >= 60) {
       p.regenTimer = 0;
-      if (p.hunger > 70 && p.health < p.maxHealth) {
-        p.health = Math.min(p.maxHealth, p.health + 1);
+      const wf = Game.Status && Game.Status.has('wellfed');
+      if ((p.hunger > 70 || (wf && p.hunger > 40)) && p.health < p.maxHealth) {
+        p.health = Math.min(p.maxHealth, p.health + (wf ? 2 : 1));
         Game.UI.refreshStats();
       } else if (p.hunger <= 0 && p.health > 0) {
         damage(1, 'starve');
@@ -41,6 +44,7 @@ Game.Survival = (function () {
         else if (def.lumen) drain *= 0.4;
         if (a.roll && Game.Loot && Game.Loot.stats(a).sanityResist) sanityResist = true;
       }
+      if (Game.Player.setBonus().sanityResist) sanityResist = true; // 影鋼セット
       if (sanityResist) drain *= 0.5;
       if (immune) drain = 0;
       if (nearLight()) drain *= 0.3;
@@ -58,7 +62,23 @@ Game.Survival = (function () {
     } else if (Game.state.sanity < T.SANITY_MAX) {
       Game.state.sanity = Math.min(T.SANITY_MAX, Game.state.sanity + 0.06);
     }
+    // 状態異常・腐敗
+    Game.Status.update();
+    if (Game.state.tick % 600 === 0) spoilFood();
     if (Game.state.tick % 15 === 0) Game.UI.refreshStats();
+  }
+
+  // 生肉などが時間で腐る（グロ）
+  function spoilFood() {
+    const s = Game.Inventory.slots();
+    for (let i = 0; i < s.length; i++) {
+      const sl = s[i]; if (!sl) continue;
+      const def = Game.ITEMS[sl.id];
+      if (def && def.spoils && Math.random() < Game.TUNE.SPOIL_CHANCE) {
+        sl.count--; if (sl.count <= 0) s[i] = null;
+        Game.Inventory.add('rotten_meat', 1);
+      }
+    }
   }
 
   function nearLight() {
@@ -78,7 +98,7 @@ Game.Survival = (function () {
 
   function damage(amount, source) {
     const p = Game.state.player;
-    const physical = source !== 'starve' && source !== 'sanity';
+    const physical = source !== 'starve' && source !== 'sanity' && source !== 'status';
     if (p.invuln > 0 && physical) return;
     // 防具で軽減（飢餓・正気崩壊は無視）
     if (physical) {
@@ -99,15 +119,16 @@ Game.Survival = (function () {
     const s = Game.Inventory.slots();
     for (let i = 0; i < s.length; i++) {
       if (s[i] && Math.random() < 0.5) {
-        Game.state.drops.push({ id: s[i].id, count: s[i].count, x: p.x + (Math.random() - 0.5) * 30, y: p.y + (Math.random() - 0.5) * 30 });
+        Game.state.drops.push({ id: s[i].id, count: s[i].count, roll: s[i].roll || null, x: p.x + (Math.random() - 0.5) * 30, y: p.y + (Math.random() - 0.5) * 30 });
         s[i] = null;
       }
     }
+    if (Game.Status) Game.Status.clearAll();
     p.health = p.maxHealth; p.hunger = Math.max(40, p.hunger);
     p.invuln = 60;
     Game.Player.spawnAt(Game.state.spawn.tx, Game.state.spawn.ty);
     Game.UI.refreshAll();
   }
 
-  return { update, eat, damage, die };
+  return { update, eat, damage, die, nearLight };
 })();

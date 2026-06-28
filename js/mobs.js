@@ -49,14 +49,16 @@ Game.Mobs = (function () {
           : ['wraith', 'wraith', 'watcher', 'spider'];
         type = pool[Math.floor(Math.random() * pool.length)];
       } else if (night && diff.spawnHostiles) {
-        // 夜は敵対モブ（のんびりは出ない）
-        const pool = ['zombie', 'skeleton', 'spider', 'slime'];
+        // 夜は敵対モブ（のんびりは出ない）。血の月は強敵寄り
+        const pool = Game.state.bloodMoon
+          ? ['zombie', 'zombie', 'skeleton', 'spider', 'leech']
+          : ['zombie', 'skeleton', 'spider', 'slime', 'leech'];
         type = pool[Math.floor(Math.random() * pool.length)];
       } else {
-        // 昼は動物（草地/森）
+        // 昼は動物（草地/森）。稀に謎の旅人
         if (g === Game.TILE.GRASS || g === Game.TILE.FOREST) {
-          const pool = ['rabbit', 'deer', 'sheep'];
-          type = pool[Math.floor(Math.random() * pool.length)];
+          if (Math.random() < 0.04 && countType('wanderer') === 0) type = 'wanderer';
+          else { const pool = ['rabbit', 'deer', 'sheep']; type = pool[Math.floor(Math.random() * pool.length)]; }
         } else if (g === Game.TILE.STONE && Math.random() < 0.3) {
           type = 'slime';
         }
@@ -90,13 +92,14 @@ Game.Mobs = (function () {
     const mobs = Game.state.mobs;
     const p = Game.state.player;
 
-    if (Game.state.tick % TUNE.SPAWN_INTERVAL === 0) trySpawn();
+    if (Game.state.tick % TUNE.SPAWN_INTERVAL === 0) { trySpawn(); if (Game.state.bloodMoon) { trySpawn(); trySpawn(); } }
 
     for (let i = mobs.length - 1; i >= 0; i--) {
       const m = mobs[i];
       m.prevX = m.x; m.prevY = m.y;
       if (m.hurt > 0) m.hurt--;
       if (m.attackCd > 0) m.attackCd--;
+      if (m.leaveTimer) { m.leaveTimer--; if (m.leaveTimer <= 0) { mobs.splice(i, 1); continue; } }
       if (m.stateTimer > 0) m.stateTimer--;
 
       // ノックバック
@@ -125,6 +128,7 @@ Game.Mobs = (function () {
           // 接触攻撃
           if (distP < (m.def.size * 0.5 + 12) && m.attackCd <= 0) {
             Game.Survival.damage(m.dmg || m.def.dmg, 'mob');
+            if (m.def.inflict) for (const k in m.def.inflict) Game.Status.add(k, m.def.inflict[k]);
             m.attackCd = m.def.boss ? 30 : 42;
             const kl = distP || 1;
             p.x += (dxp / kl) * (m.def.boss ? 12 : 6); p.y += (dyp / kl) * (m.def.boss ? 12 : 6);
@@ -143,6 +147,34 @@ Game.Mobs = (function () {
       }
       m.hopPhase += 0.2;
     }
+  }
+
+  // 友好NPC（謎の旅人）との対話
+  function nearbyNPC(rangePx) {
+    const p = Game.state.player; const mobs = Game.state.mobs;
+    for (let i = 0; i < mobs.length; i++) {
+      const m = mobs[i];
+      if (m.def.npc && Math.hypot(m.x - p.x, m.y - p.y) < rangePx) return m;
+    }
+    return null;
+  }
+  const WANDER_LINES = [
+    'よくぞ世界の狭間まで。これも縁、餞別を受け取りなさい。',
+    'わしは二相のあわいを行き来する者。光も影も、いずれは還る。',
+    '影に呑まれぬよう…光を持て。これを役立てるがよい。',
+    'あんたの旅、見届けさせてもらうよ。ほら、土産だ。',
+  ];
+  function interactNPC(m) {
+    if (m.traded) { Game.UI.toast('旅人：「達者でな」'); return; }
+    m.traded = true;
+    const gifts = ['bandage', 'antidote', 'apple', 'lumen', 'torch', 'cooked_meat', 'iron'];
+    const gift = gifts[Math.floor(Math.random() * gifts.length)];
+    const n = 1 + Math.floor(Math.random() * 2);
+    Game.Inventory.add(gift, n);
+    Game.UI.toast('旅人：「' + WANDER_LINES[Math.floor(Math.random() * WANDER_LINES.length)] + '」（' + Game.ITEMS[gift].name + '×' + n + '）');
+    Game.Audio.play('craft');
+    m.fleeTimer = 0; m.leaveTimer = 200; // 少ししたら去る
+    Game.UI.refreshAll();
   }
 
   function countType(type) {
@@ -180,6 +212,7 @@ Game.Mobs = (function () {
   function damageMob(m, dmg, fromX, fromY) {
     m.hp -= dmg;
     m.hurt = 8;
+    Game.Render.spawnBlood(m.x, m.y, 5);
     const dx = m.x - fromX, dy = m.y - fromY, l = Math.hypot(dx, dy) || 1;
     m.knockX = (dx / l) * 7; m.knockY = (dy / l) * 7;
     if (!m.def.hostile) m.fleeTimer = 180; // 動物は逃げる
@@ -203,6 +236,7 @@ Game.Mobs = (function () {
     const gear = Game.Loot.rollMobDrop(m.def, m.x, m.y);
     for (let g = 0; g < gear.length; g++) Game.state.drops.push(gear[g]);
     Game.Render.spawnParticles(m.x, m.y, m.def.color, m.def.boss ? 40 : 10);
+    Game.Render.spawnBlood(m.x, m.y, m.def.boss ? 24 : 8);
     Game.Player.gainXP(m.def.xp || 1);
     if (Game.Achievements && m.def.hostile) Game.Achievements.unlock('first_night');
     if (m.def.boss) {
@@ -248,8 +282,13 @@ Game.Mobs = (function () {
         ctx.fillRect(-3 + ex, -r * 0.3, 2, 2); ctx.fillRect(2 + ex, -r * 0.3, 2, 2);
       }
       ctx.restore();
+      // NPCマーカー
+      if (m.def.npc) {
+        ctx.fillStyle = '#ffe66b'; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText(m.traded ? '✓' : '!', s.x, s.y - r - hop - 8); ctx.textAlign = 'left';
+      }
       // HPバー
-      if (m.hp < m.maxHp) {
+      if (m.hp < m.maxHp && !m.def.npc) {
         const bw = m.def.size + 6;
         ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(s.x - bw / 2, s.y - r - hop - 9, bw, 4);
         ctx.fillStyle = m.def.hostile ? '#e44' : '#6c6';
@@ -268,5 +307,5 @@ Game.Mobs = (function () {
     ctx.closePath();
   }
 
-  return { list, update, draw, spawnMob, damageMob, killMob, summonBoss };
+  return { list, update, draw, spawnMob, damageMob, killMob, summonBoss, nearbyNPC, interactNPC };
 })();

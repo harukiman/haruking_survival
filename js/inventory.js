@@ -85,11 +85,25 @@ Game.Inventory = (function () {
     const sl = selectedSlot();
     if (!sl) return false;
     const def = Game.ITEMS[sl.id];
+    const p = Game.state.player;
+    // 治療アイテム（包帯/解毒薬）
+    if (def && def.cures) {
+      def.cures.forEach(function (c) { Game.Status.cure(c); });
+      if (def.heal) p.health = Math.min(p.maxHealth, p.health + def.heal);
+      remove(sl.id, 1); Game.Audio.play('eat');
+      Game.UI.toast(def.name + ' を使った');
+      Game.UI.refreshAll(); return true;
+    }
     if (def && def.food) {
-      if (Game.state.player.hunger >= Game.state.player.maxHunger) {
-        Game.UI.toast('お腹いっぱい'); return false;
-      }
+      if (p.hunger >= p.maxHunger && !def.sick) { Game.UI.toast('お腹いっぱい'); return false; }
       Game.Survival.eat(def.food);
+      if (def.sick) { // 腐肉
+        if (Math.random() < 0.75) Game.Status.add('poison', 300);
+        if (Math.random() < 0.4) Game.Status.add('infection', 360);
+        Game.UI.toast('うっ…腐っていた');
+      } else if (def.food >= 35) {
+        Game.Status.apply('wellfed', 900); // 良い食料で満腹バフ
+      }
       remove(sl.id, 1);
       Game.Audio.play('eat');
       Game.UI.refreshAll();

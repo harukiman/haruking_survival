@@ -5,6 +5,12 @@ Game.DayNight = (function () {
   function update() {
     const s = Game.state;
     s.timeOfDay = (s.tick % Game.DAY_LENGTH) / Game.DAY_LENGTH; // 0..1
+    // 血の月: 数日ごとの夜
+    const day = Math.floor(s.tick / Game.DAY_LENGTH);
+    const isBloodDay = ((day + 1) % Game.TUNE.BLOOD_MOON_EVERY) === 0;
+    const nowBlood = isBloodDay && isNight();
+    if (nowBlood && !s.bloodMoon) { Game.UI.toast('🌑 血の月だ… 今宵は魔物が荒れ狂う。光を絶やすな'); Game.Audio.play('shift'); }
+    s.bloodMoon = nowBlood;
     // 天候: 一定間隔でランダム遷移
     if (!s.weather) s.weather = { type: 'clear', timer: 0 };
     s.weather.timer--;

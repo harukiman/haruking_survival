@@ -27,6 +27,7 @@ Game.Lighting = (function () {
 
   // 空のティント色（影世界=紫, 夜=青, 夕焼け=橙）
   function skyTint() {
+    if (Game.state.bloodMoon && Game.state.worldName === 'light') return [70, 8, 12]; // 血の月
     if (Game.state.worldName === 'shadow') return [26, 10, 44]; // 影の紫
     const t = Game.state.timeOfDay;
     if (t >= 0.68 && t < 0.80) return [70, 30, 20];   // 夕焼け

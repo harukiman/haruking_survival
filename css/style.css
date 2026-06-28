@@ -54,6 +54,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Segoe U
 .bar.xp { width: 100%; height: 6px; border-radius: 4px; }
 .bar-fill.xpfill { background: linear-gradient(90deg, #4a9fe0, #6fd0ff); }
 .bar-fill.sanity { background: linear-gradient(90deg, #7a4fb0, #b884e8); }
+#status-row { display: flex; gap: 3px; margin-top: 2px; flex-wrap: wrap; }
+.st-chip { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px;
+  font-size: 12px; background: rgba(0,0,0,0.45); border: 1px solid #888; border-radius: 5px; }
 #world-label { font-size: .72rem; font-weight: 700; text-align: center; padding: 2px 0; border-radius: 5px; margin-top: 2px; }
 #world-label.world-light { background: rgba(120,170,90,0.25); color: #cfe6b0; }
 #world-label.world-shadow { background: rgba(122,79,176,0.3); color: #d8b0ff; }

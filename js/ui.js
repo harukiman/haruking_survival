@@ -29,6 +29,7 @@ Game.UI = (function () {
     el.xp = document.getElementById('xp-bar');
     el.sanity = document.getElementById('sanity-bar');
     el.sanityWrap = document.getElementById('sanity-wrap');
+    el.statusRow = document.getElementById('status-row');
     el.world = document.getElementById('world-label');
     el.chestScreen = document.getElementById('chest-screen');
     el.chestGrid = document.getElementById('chest-grid');
@@ -123,6 +124,14 @@ Game.UI = (function () {
       // 正気度バーは影世界でのみ表示
       el.sanityWrap.style.display = Game.state.worldName === 'shadow' ? 'flex' : 'none';
     }
+  }
+
+  function refreshStatus() {
+    if (!el.statusRow || !Game.Status) return;
+    const list = Game.Status.activeList();
+    el.statusRow.innerHTML = list.map(function (s) {
+      return '<span class="st-chip" style="border-color:' + s.color + '" title="' + s.name + '">' + s.icon + '</span>';
+    }).join('');
   }
 
   function refreshNet() {
@@ -386,6 +395,6 @@ Game.UI = (function () {
     init, showGameUI, refreshHotbar, refreshStats, refreshInventory,
     refreshCraft, refreshAll, toggleInventory, toast, updateMinimap,
     openChest, openSharedChest, closeChest, refreshChest, refreshWorld,
-    showLore, closeLore, refreshQuest, openQuest, closeQuest, showEnding, showIntro, refreshNet,
+    showLore, closeLore, refreshQuest, openQuest, closeQuest, showEnding, showIntro, refreshNet, refreshStatus,
   };
 })();

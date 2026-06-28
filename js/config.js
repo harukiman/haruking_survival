@@ -154,8 +154,10 @@ Game.ITEMS = {
   // 食料・素材
   berry:       { name:'木の実', stack:32, color:'#c0307a', food:12 },
   cactus:      { name:'サボテン', stack:32, color:'#3b8a3b', food:6 },
-  raw_meat:    { name:'生肉', stack:16, color:'#c85a5a', food:10, cookTo:'cooked_meat' },
+  raw_meat:    { name:'生肉', stack:16, color:'#c85a5a', food:10, cookTo:'cooked_meat', spoils:true },
   cooked_meat: { name:'焼き肉', stack:16, color:'#9c5a2a', food:40 },
+  rotten_meat: { name:'腐肉', stack:16, color:'#6b7a3a', food:6, sick:true },
+  guts:        { name:'臓物', stack:16, color:'#8a2a3a' },
   hide:        { name:'毛皮', stack:99, color:'#b08858' },
   leather:     { name:'なめし革', stack:99, color:'#8a5a30' },
   bone:        { name:'骨', stack:99, color:'#e8e4d0' },
@@ -175,6 +177,10 @@ Game.ITEMS = {
   // 防具（armor=ダメージ軽減）
   leather_helmet: { name:'革の帽子', stack:1, color:'#8a5a30', armor:1, slot:'head' },
   leather_chest:  { name:'革の服', stack:1, color:'#8a5a30', armor:2, slot:'chest' },
+  fur_coat:    { name:'毛皮のコート', stack:1, color:'#b08858', armor:2, slot:'chest', warm:true },
+  // 治療・薬
+  bandage:     { name:'包帯', stack:16, color:'#eee', heal:8, cures:['bleed'] },
+  antidote:    { name:'解毒薬', stack:16, color:'#7fd0a0', cures:['poison','infection'] },
   iron_helmet: { name:'鉄の兜', stack:1, color:'#d8d8dc', armor:2, slot:'head' },
   iron_chest:  { name:'鉄の鎧', stack:1, color:'#d8d8dc', armor:4, slot:'chest' },
   // 設置物
@@ -275,7 +281,19 @@ Game.RECIPES = [
   { out:{id:'window', n:2}, in:{wood:1, stone:1}, station:'crafting_table' },
   { out:{id:'bridge', n:4}, in:{wood:2}, station:null },
   { out:{id:'sign', n:1}, in:{wood:2}, station:null },
+  // 治療・防寒
+  { out:{id:'bandage', n:2}, in:{string:2}, station:null },
+  { out:{id:'antidote', n:1}, in:{moonleaf:2, flower:1}, station:null },
+  { out:{id:'fur_coat', n:1}, in:{hide:5}, station:'crafting_table' },
+  { out:{id:'leather', n:1}, in:{guts:2}, station:'crafting_table' },
 ];
+
+// 装備セット効果（head+chest が同セットで発動）
+Game.SETS = {
+  leather: { name:'革装束', items:['leather_helmet','leather_chest'], hungerSlow:0.5 },
+  iron:    { name:'鉄装束', items:['iron_helmet','iron_chest'], armor:2 },
+  shadow:  { name:'影鋼装束', items:['shadow_helmet','shadow_chest'], armor:1, sanityResist:true },
+};
 
 // 難易度（自由度: のんびり建築〜高難度）
 Game.DIFFICULTIES = {
@@ -290,7 +308,7 @@ Game.MOBS = {
   deer:     { name:'鹿', hostile:false, hp:8,  speed:1.4, color:'#a9762f', size:11, drops:[{item:'raw_meat',n:[1,3]},{item:'hide',n:[1,2]}], flee:true, xp:2 },
   sheep:    { name:'羊', hostile:false, hp:6,  speed:1.0, color:'#eee', size:10, drops:[{item:'raw_meat',n:[1,2]},{item:'hide',n:[1,2]}], flee:true, xp:1 },
   slime:    { name:'スライム', hostile:true, hp:6,  speed:1.1, color:'#5fc46b', size:10, drops:[{item:'slime_ball',n:[1,2]},{item:'shadow_shard',n:[0,1]}], dmg:2, hop:true, xp:2 },
-  zombie:   { name:'ゾンビ', hostile:true, hp:14, speed:1.3, color:'#4a7a4a', size:11, drops:[{item:'raw_meat',n:[0,1]},{item:'shadow_shard',n:[0,1]}], dmg:4, xp:3 },
+  zombie:   { name:'ゾンビ', hostile:true, hp:14, speed:1.3, color:'#4a7a4a', size:11, drops:[{item:'raw_meat',n:[0,1]},{item:'guts',n:[0,1]},{item:'shadow_shard',n:[0,1]}], dmg:4, xp:3, inflict:{infection:200} },
   skeleton: { name:'スケルトン', hostile:true, hp:12, speed:1.5, color:'#dcdcd0', size:10, drops:[{item:'bone',n:[1,3]},{item:'shadow_shard',n:[0,1]}], dmg:3, xp:3 },
   spider:   { name:'クモ', hostile:true, hp:10, speed:2.2, color:'#3a2a3a', size:12, drops:[{item:'string',n:[1,2]},{item:'shadow_shard',n:[0,1]}], dmg:3, xp:3 },
   // 影世界固有モブ
@@ -301,6 +319,10 @@ Game.MOBS = {
   shadow_spawn:{ name:'影の落とし子', hostile:true, hp:6, speed:2.4, color:'#5a3a8a', size:8, drops:[{item:'shadow_shard',n:[0,1]}], dmg:3, xp:1, shadow:true, ghost:true },
   // 深層の徘徊者（影の深層でのみ出現）
   abyss_stalker:{ name:'深淵の徘徊者', hostile:true, hp:34, speed:2.0, color:'#48206a', size:15, drops:[{item:'shadow_crystal',n:[1,3]},{item:'lumen',n:[0,2]},{item:'shadow_core',n:[0,1]}], dmg:8, xp:8, shadow:true },
+  // グロ: 蛭（出血+感染）
+  leech:    { name:'蛭', hostile:true, hp:5, speed:2.3, color:'#5a2030', size:7, drops:[{item:'guts',n:[1,2]}], dmg:2, xp:2, inflict:{bleed:240, infection:300} },
+  // 友好NPC: 謎の旅人
+  wanderer: { name:'謎の旅人', hostile:false, hp:20, speed:1.0, color:'#caa84a', size:11, drops:[], xp:0, friendly:true, npc:true },
 };
 
 // 防具スロット
@@ -320,6 +342,9 @@ Game.TUNE = {
   SANITY_MAX: 100,
   SANITY_DRAIN: 0.04,         // 影世界滞在で毎tick減る正気度（護符/光で緩和）
   DEEP_THRESHOLD: 120,        // 影世界でこのタイル距離超えると深層
+  BLOOD_MOON_EVERY: 4,        // 何日に一度 血の月（危険な夜）
+  BLEED_DPS: 1, POISON_DPS: 1, INFECTION_DPS: 1, COLD_DPS: 1, // 状態異常の毎秒ダメージ目安
+  SPOIL_CHANCE: 0.06,         // 一定間隔で生肉が腐る確率
   NG_HP_PER: 0.25,            // NG+1ごとの敵HP/攻撃倍率増
   NG_SANITY_PER: 0.2,         // NG+1ごとの正気消費倍率増
 };

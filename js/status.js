@@ -1,0 +1,53 @@
+// status.js — 状態異常（出血/毒/感染/凍え/満腹）グロテスクなサバイバル
+window.Game = window.Game || {};
+
+Game.Status = (function () {
+  const TYPES = {
+    bleed:     { name: '出血', icon: '🩸', dps: 1, color: '#c0303a' },
+    poison:    { name: '毒', icon: '🤢', dps: 1, color: '#7ac03a' },
+    infection: { name: '感染', icon: '🦠', dps: 1, color: '#b06ad0' },
+    cold:      { name: '凍え', icon: '❄', dps: 1, color: '#7ac0e0' },
+    wellfed:   { name: '満腹', icon: '🍗', buff: true, color: '#e0b04a' },
+  };
+
+  function st() { const p = Game.state.player; if (!p.status) p.status = {}; return p.status; }
+  function apply(type, ticks) { const s = st(); s[type] = Math.max(s[type] || 0, ticks); flash(type); }
+  function add(type, ticks) { const s = st(); s[type] = (s[type] || 0) + ticks; flash(type); }
+  function has(type) { return (st()[type] || 0) > 0; }
+  function cure(type) { st()[type] = 0; }
+  function clearAll() { Game.state.player.status = {}; }
+  function flash(type) { if (!TYPES[type] || TYPES[type].buff) return; }
+
+  function isCold() {
+    const p = Game.state.player;
+    for (const k in p.armor) { const a = p.armor[k]; const def = a && Game.ITEMS[a.id || a]; if (def && def.warm) return false; }
+    if (Game.Survival.nearLight && Game.Survival.nearLight()) return false; // 火のそばは暖かい
+    const TS = Game.CFG.TILE_SIZE;
+    const g = Game.World.groundAt(Math.floor(p.x / TS), Math.floor(p.y / TS));
+    return g === Game.TILE.SNOW && (Game.DayNight.isNight() || Game.state.worldName === 'shadow');
+  }
+
+  function update() {
+    const p = Game.state.player; const s = st();
+    if (isCold()) apply('cold', 50);
+    let dmg = 0;
+    const persec = Game.state.tick % 30 === 0;
+    for (const k in TYPES) {
+      if (!s[k]) continue;
+      s[k]--;
+      if (!TYPES[k].buff && s[k] > 0 && persec) dmg += TYPES[k].dps;
+    }
+    // 感染は放置で悪化（出血を誘発）
+    if (s.infection > 600 && persec && Math.random() < 0.2) add('bleed', 60);
+    if (dmg > 0 && p.health > 0) Game.Survival.damage(dmg, 'status');
+    if (Game.state.tick % 15 === 0 && Game.UI.refreshStatus) Game.UI.refreshStatus();
+  }
+
+  function activeList() {
+    const s = st(); const out = [];
+    for (const k in TYPES) if (s[k] > 0) out.push({ key: k, name: TYPES[k].name, icon: TYPES[k].icon, color: TYPES[k].color, buff: !!TYPES[k].buff, t: s[k] });
+    return out;
+  }
+
+  return { TYPES, apply, add, has, cure, clearAll, update, activeList };
+})();

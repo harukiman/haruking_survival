@@ -169,6 +169,9 @@ Game.Player = (function () {
 
   // 対話/設置/使用
   function interact() {
+    // 友好NPC（謎の旅人）が近ければ対話優先
+    const npc = Game.Mobs.nearbyNPC(2.2 * TS);
+    if (npc) { Game.Mobs.interactNPC(npc); return; }
     const t = targetTile();
     if (!t || !t.inReach) return;
     const obj = Game.World.objAt(t.tx, t.ty);
@@ -274,7 +277,25 @@ Game.Player = (function () {
     const a = Game.state.player.armor;
     let s = 0;
     for (const k in a) if (a[k]) s += Game.Loot.stats(a[k]).armor;
-    return s;
+    return s + setBonus().armor;
+  }
+
+  // 装備セット効果（head+chestが同セット）
+  function setBonus() {
+    const a = Game.state.player.armor;
+    const out = { armor: 0, sanityResist: false, hungerSlow: 0, name: null };
+    const hid = a.head && a.head.id, cid = a.chest && a.chest.id;
+    if (!hid || !cid) return out;
+    for (const k in Game.SETS) {
+      const s = Game.SETS[k];
+      if (s.items.indexOf(hid) >= 0 && s.items.indexOf(cid) >= 0) {
+        if (s.armor) out.armor += s.armor;
+        if (s.sanityResist) out.sanityResist = true;
+        if (s.hungerSlow) out.hungerSlow = Math.max(out.hungerSlow, s.hungerSlow);
+        out.name = s.name;
+      }
+    }
+    return out;
   }
 
   // 装備由来の最大HP等を反映
@@ -349,6 +370,6 @@ Game.Player = (function () {
 
   return {
     makeDefault, spawnAt, update, targetTile, mining, playerTile, breakBlock,
-    interact, gainXP, totalArmor, sleep, equipSelectedArmor, equipFromInventory, applyEquipStats,
+    interact, gainXP, totalArmor, setBonus, sleep, equipSelectedArmor, equipFromInventory, applyEquipStats,
   };
 })();
