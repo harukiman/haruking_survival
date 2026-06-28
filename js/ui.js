@@ -77,6 +77,13 @@ Game.UI = (function () {
     // ステータス画面: レベルバッジをタップで開く
     const lb = document.getElementById('level-badge');
     if (lb) lb.addEventListener('click', openStats);
+    // デバッグ用チートコード（haruking でアイテム付与パネル解禁）
+    const cheatIn = document.getElementById('cheat-input');
+    if (cheatIn) cheatIn.addEventListener('input', function () {
+      const panel = document.getElementById('cheat-panel');
+      if (cheatIn.value.trim().toLowerCase() === 'haruking') { buildCheatPanel(panel); panel.classList.remove('hidden'); }
+      else panel.classList.add('hidden');
+    });
     const csb = document.getElementById('btn-close-stats');
     if (csb) csb.addEventListener('click', closeStats);
 
@@ -455,6 +462,11 @@ Game.UI = (function () {
     const def = Game.ITEMS[st.id];
     let h = '<div class="ench-name" style="color:' + (st.roll ? Game.Loot.rarityColor(st) : (def.color || '#fff')) + '">' + (st.roll ? Game.Loot.displayName(st) : def.name) + '</div>';
     if (Game.Loot.rollable(st.id)) h += '<div class="ench-stat">' + Game.Loot.statText(st) + '</div>';
+    if (def.attack != null) {
+      const eff = Game.Player.effAttack(Game.Loot.stats(st).atk);
+      h += '<div class="ench-stat">' + (def.aoe ? '🌀 範囲攻撃' : '🗡 単体攻撃') + '　実効攻撃力 <b style="color:#ffd86b">' + eff + '</b>（Lv/STR補正込）</div>';
+    }
+    if (def.armor != null) h += '<div class="ench-stat">🛡 防御 <b style="color:#9fd8ff">' + Game.Loot.stats(st).armor + '</b></div>';
     if (def.flavor) h += '<div class="tt-flavor" style="margin-bottom:6px">' + def.flavor + '</div>';
     const btns = [];
     if (def.armor && def.slot) btns.push('<button id="inv-act" class="big-btn">装備する</button>');
@@ -478,24 +490,74 @@ Game.UI = (function () {
     });
   }
 
+  // クラフトをカテゴリ分類（ユーザビリティ向上）
+  function craftCategory(out) {
+    if (!out) return 'material';
+    if (out.attack != null || out.fireDmg != null || out.tool === 'staff' || out.tool === 'warp') return 'weapon';
+    if (out.armor != null) return 'armor';
+    if (out.tool === 'pickaxe' || out.tool === 'axe' || out.tool === 'hoe' || out.tool === 'gun') return 'tool';
+    if (out.food != null || out.cures || out.heal != null) return 'life';
+    if (out.place != null || out.vehicle) return 'build';
+    return 'material';
+  }
+  const CRAFT_CATS = [['weapon', '⚔ 武器・魔法'], ['armor', '🛡 防具'], ['tool', '⛏ 道具'], ['build', '🏠 設置・建築・乗物'], ['life', '🍖 生活・回復'], ['material', '🧱 素材・その他']];
+  let craftCatFilter = 'all';
+
+  // チートパネル: 全アイテムをタップで付与
+  let cheatBuilt = false;
+  function buildCheatPanel(panel) {
+    if (!panel || cheatBuilt) return; cheatBuilt = true;
+    let h = '<p class="hint">タップで付与（装備はランダムaffix付き／素材は10個）。デバッグ用。</p><div class="grid" id="cheat-grid"></div>';
+    panel.innerHTML = h;
+    const grid = document.getElementById('cheat-grid');
+    for (const id in Game.ITEMS) {
+      const def = Game.ITEMS[id];
+      const cell = document.createElement('div'); cell.className = 'slot';
+      const g = Game.ITEM_GLYPH[id];
+      cell.innerHTML = g ? '<span class="icon glyph">' + g + '</span>' : '<span class="icon" style="background:' + (def.color || '#888') + '"></span>';
+      cell.title = def.name;
+      cell.addEventListener('click', function () {
+        if (Game.Loot.rollable(id)) { Game.Inventory.addInstance({ id: id, roll: Game.Loot.roll(id, 0.2) }); }
+        else { Game.Inventory.add(id, (def.stack && def.stack > 1) ? 10 : 1); }
+        toast('付与: ' + def.name); refreshInventory();
+      });
+      grid.appendChild(cell);
+    }
+  }
+
   function refreshCraft() {
     el.craftList.innerHTML = '';
     const list = Game.Crafting.availableList();
-    list.forEach(function (entry) {
-      const r = entry.recipe;
-      const out = Game.ITEMS[r.out.id];
-      const row = document.createElement('div');
-      row.className = 'craft-row' + (entry.can ? '' : ' disabled');
-      let ing = '';
-      for (const id in r.in) ing += (Game.ITEMS[id] ? Game.ITEMS[id].name : id) + '×' + r.in[id] + ' ';
-      const station = r.station ? ' <em>(' + (r.station === 'furnace' ? 'かまど' : '作業台') + ')</em>' : '';
-      row.innerHTML = '<span class="ci" style="background:' + (out.color || '#888') + '"></span>' +
-        '<span class="cn">' + out.name + (r.out.n > 1 ? '×' + r.out.n : '') + station + '</span>' +
-        '<span class="cin">' + ing + '</span>';
-      row.addEventListener('click', function () {
-        if (Game.Crafting.craft(r)) refreshInventory();
+    // タブ
+    const tabs = document.createElement('div'); tabs.className = 'craft-tabs';
+    const mkTab = function (key, label) {
+      const t = document.createElement('button'); t.className = 'craft-tab' + (craftCatFilter === key ? ' on' : ''); t.textContent = label;
+      t.addEventListener('click', function () { craftCatFilter = key; refreshCraft(); }); return t;
+    };
+    tabs.appendChild(mkTab('all', 'すべて'));
+    CRAFT_CATS.forEach(function (c) { tabs.appendChild(mkTab(c[0], c[1].replace(/ .*/, ''))); });
+    el.craftList.appendChild(tabs);
+    // カテゴリ別セクション
+    CRAFT_CATS.forEach(function (cat) {
+      if (craftCatFilter !== 'all' && craftCatFilter !== cat[0]) return;
+      const rows = list.filter(function (e) { return craftCategory(Game.ITEMS[e.recipe.out.id]) === cat[0]; });
+      if (!rows.length) return;
+      const head = document.createElement('div'); head.className = 'craft-cat-head'; head.textContent = cat[1] + '（' + rows.length + '）';
+      el.craftList.appendChild(head);
+      rows.forEach(function (entry) {
+        const r = entry.recipe, out = Game.ITEMS[r.out.id];
+        const row = document.createElement('div');
+        row.className = 'craft-row' + (entry.can ? '' : ' disabled');
+        let ing = '';
+        for (const id in r.in) ing += (Game.ITEMS[id] ? Game.ITEMS[id].name : id) + '×' + r.in[id] + ' ';
+        const station = r.station ? ' <em>(' + (r.station === 'furnace' ? 'かまど' : '作業台') + ')</em>' : '';
+        const glyph = Game.ITEM_GLYPH[r.out.id];
+        row.innerHTML = (glyph ? '<span class="ci" style="background:transparent;font-size:18px;text-align:center">' + glyph + '</span>' : '<span class="ci" style="background:' + (out.color || '#888') + '"></span>') +
+          '<span class="cn">' + out.name + (r.out.n > 1 ? '×' + r.out.n : '') + station + '</span>' +
+          '<span class="cin">' + ing + '</span>';
+        row.addEventListener('click', function () { if (Game.Crafting.craft(r)) refreshInventory(); });
+        el.craftList.appendChild(row);
       });
-      el.craftList.appendChild(row);
     });
   }
 

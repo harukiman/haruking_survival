@@ -303,7 +303,7 @@ Game.ITEMS = {
   // ===== P25: 武器 =====
   bone_club:     { name:'骨の棍棒', stack:1, color:'#dcdcd0', tool:'sword', tier:1, attack:4, flavor:'打ち倒した者の骨で。原始の暴力。' },
   gold_sword:    { name:'金の剣', stack:1, color:'#e8c54a', tool:'sword', tier:2, attack:6, flavor:'美しき黄金の刃。見栄えは一流、実用も悪くない。' },
-  war_hammer:    { name:'戦鎚', stack:1, color:'#b8bcc0', tool:'sword', tier:3, attack:10, flavor:'振り抜けば鎧ごと砕く重鎚。' },
+  war_hammer:    { name:'戦鎚', stack:1, color:'#b8bcc0', tool:'sword', tier:3, attack:10, aoe:true, flavor:'振り抜けば鎧ごと砕く重鎚。周囲を薙ぎ払う。' },
   crystal_blade: { name:'影晶の刃', stack:1, color:'#b86ad0', tool:'sword', tier:4, attack:13, voidBonus:true, flavor:'影晶を研ぎ澄ました刃。虚ろなものほどよく斬れる。' },
   chitin_spear:  { name:'甲殻の槍', stack:1, color:'#c08040', tool:'sword', tier:2, attack:7, flavor:'砂漠の蟲の殻を束ねた槍。間合いに優れる。' },
   // ===== P25: 防具・セット素材 =====
@@ -314,8 +314,8 @@ Game.ITEMS = {
   star_helmet:   { name:'星鋼の兜', stack:1, color:'#aee0ff', armor:4, slot:'head' },
   chitin_armor:  { name:'甲殻の鎧', stack:1, color:'#c08040', armor:3, slot:'chest' },
   // ===== P27 ボス固有レジェンダリ =====
-  sand_greatsword:{ name:'砂塵の大剣', stack:1, color:'#d8b048', tool:'sword', tier:4, attack:14, flavor:'墳墓の王の遺刃。振るうたび、千年の砂塵が舞う。' },
-  magma_hammer:  { name:'溶岩の戦槌', stack:1, color:'#c0502a', tool:'sword', tier:5, attack:17, flavor:'溶炉の巨人の鎚。打てば大地が灼ける。' },
+  sand_greatsword:{ name:'砂塵の大剣', stack:1, color:'#d8b048', tool:'sword', tier:4, attack:14, aoe:true, flavor:'墳墓の王の遺刃。振るうたび、千年の砂塵が舞う。' },
+  magma_hammer:  { name:'溶岩の戦槌', stack:1, color:'#c0502a', tool:'sword', tier:5, attack:17, aoe:true, flavor:'溶炉の巨人の鎚。打てば大地が灼ける。' },
   pharaoh_crown: { name:'王の冠', stack:1, color:'#e8c54a', armor:4, slot:'head', flavor:'墳墓に眠りし王の黄金の冠。威厳が身を護る。' },
   mind_tome:     { name:'記憶の書', stack:8, color:'#d0c0ff', respec:true, flavor:'稀少な記憶の書。読めばスキルを振り直せる。' },
 };

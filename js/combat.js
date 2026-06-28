@@ -33,8 +33,9 @@ Game.Combat = (function () {
     const st = Game.Loot.stats(slot);
     // 武器ダメージにレベル/STR補正（同じ装備でもレベルで±）
     const dmg = Game.Player.effAttack(st.atk > 0 ? st.atk : 1);
-    // スキル「旋風斬り」: 範囲内の敵すべてに当てる
-    const aoe = p.skills && p.skills.aoe;
+    // 範囲攻撃: スキル「旋風斬り」 or 範囲武器(大剣/戦鎚)は範囲内の敵すべてに当てる
+    const wdef = slot && Game.ITEMS[slot.id];
+    const aoe = (p.skills && p.skills.aoe) || (wdef && wdef.aoe);
     const targets = [];
     if (aoe) {
       for (let i = 0; i < mobs.length; i++) { const m = mobs[i]; if (m.def.friendly) continue; if (Math.hypot(m.x - p.x, m.y - p.y) <= rangePx + m.def.size * 0.5) targets.push(m); }
