@@ -129,8 +129,8 @@ Game.Inventory = (function () {
       Game.UI.toast(def.name + ' を砕いた — 経験 +' + def.xpGain);
       Game.UI.refreshAll(); return true;
     }
-    // 治療アイテム（包帯/解毒薬）
-    if (def && def.buff) {
+    // 治療アイテム（包帯/解毒薬・バフ薬）。food も持つ料理は食事側で処理
+    if (def && def.buff && !def.food) {
       Game.Status.apply(def.buff.type, def.buff.dur);
       if (Game.Achievements) Game.Achievements.unlock('potion_master');
       Game.Player.applyEquipStats();
@@ -148,9 +148,10 @@ Game.Inventory = (function () {
       Game.UI.refreshAll(); return true;
     }
     if (def && def.food) {
-      if (p.hunger >= p.maxHunger && !def.sick && !def.cures) { Game.UI.toast('お腹いっぱい'); return false; }
+      if (p.hunger >= p.maxHunger && !def.sick && !def.cures && !def.buff) { Game.UI.toast('お腹いっぱい'); return false; }
       Game.Survival.eat(def.food);
       if (def.cures) def.cures.forEach(function (c) { Game.Status.cure(c); }); // 料理が状態異常も治す（沼の煮込み等）
+      if (def.buff) { Game.Status.apply(def.buff.type, def.buff.dur); Game.Player.applyEquipStats(); } // 料理のバフ（キノコのスープ等）
       if (def.sick) { // 腐肉
         if (Math.random() < 0.75) Game.Status.add('poison', 300);
         if (Math.random() < 0.4) Game.Status.add('infection', 360);

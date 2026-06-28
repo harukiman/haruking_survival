@@ -43,6 +43,13 @@ Game.Tiles = (function () {
       x.globalAlpha = 1; x.fillStyle = '#ff8a3a';
       for (let i = 0; i < 4; i++) x.fillRect(3 + Math.floor(rnd() * (TS - 6)), 3 + Math.floor(rnd() * (TS - 6)), 2, 2);
     }
+    // キノコの森: 菌糸の筋＋発光胞子の光点
+    if (id === Game.TILE.MUSHROOM) {
+      x.strokeStyle = '#5a4a72'; x.lineWidth = 1; x.globalAlpha = 0.6;
+      for (let i = 0; i < 3; i++) { const yy = 4 + Math.floor(rnd() * (TS - 8)); x.beginPath(); x.moveTo(2, yy); x.lineTo(TS - 2, yy + (rnd() < 0.5 ? -2 : 2)); x.stroke(); }
+      x.globalAlpha = 1; x.fillStyle = '#9fb0ff';
+      for (let i = 0; i < 4; i++) circle(x, 3 + Math.floor(rnd() * (TS - 6)), 3 + Math.floor(rnd() * (TS - 6)), 1.2);
+    }
     // 沼地は淀んだ水たまり＋気泡
     if (id === Game.TILE.SWAMP) {
       x.fillStyle = shade(base, -22);
@@ -73,6 +80,15 @@ Game.Tiles = (function () {
       x.fillStyle = '#6a5a2a'; x.beginPath(); x.arc(TS / 2, TS - 6, 7, Math.PI, 0); x.fill();
       x.fillStyle = '#e0d24a'; for (let i = 0; i < 5; i++) { const a = i * 1.2; circle(x, TS / 2 + Math.cos(a) * 5, TS / 2 + 2 + Math.sin(a) * 4, 2); }
       x.fillStyle = 'rgba(230,210,120,0.35)'; circle(x, TS / 2, TS / 2 - 4, 4);
+    } else if (r === 'giantshroom') {
+      x.fillStyle = '#d8d0e8'; x.fillRect(TS / 2 - 3, TS / 2, 6, TS / 2 - 3); // 柄
+      x.fillStyle = '#7a5ad0'; x.beginPath(); x.ellipse(TS / 2, TS / 2 - 2, 11, 7, 0, Math.PI, 0); x.fill();
+      x.fillStyle = '#b89aff'; for (let i = 0; i < 4; i++) circle(x, TS / 2 - 6 + i * 4, TS / 2 - 5, 1.6);
+      x.fillStyle = 'rgba(180,160,255,0.4)'; circle(x, TS / 2, TS / 2 - 4, 6);
+    } else if (r === 'glowshroom') {
+      x.fillStyle = '#cfc7e8'; x.fillRect(TS / 2 - 1.5, TS / 2 + 2, 3, TS / 2 - 6);
+      x.fillStyle = '#6aa0e0'; x.beginPath(); x.ellipse(TS / 2, TS / 2 + 1, 6, 4, 0, Math.PI, 0); x.fill();
+      x.fillStyle = 'rgba(150,180,255,0.5)'; circle(x, TS / 2, TS / 2, 4);
     } else if (r === 'pmushroom') {
       x.fillStyle = '#cfc7a8'; x.fillRect(TS / 2 - 2, TS / 2, 4, TS / 2 - 4);
       x.fillStyle = '#7a3a8a'; x.beginPath(); x.ellipse(TS / 2, TS / 2, 8, 5, 0, 0, Math.PI * 2); x.fill();

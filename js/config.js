@@ -33,7 +33,7 @@ Game.CFG = {
 };
 
 // 地面レイヤー
-Game.TILE = { DEEP_WATER:0, WATER:1, SAND:2, GRASS:3, FOREST:4, DIRT:5, STONE:6, SNOW:7, DUNGEON_FLOOR:8, SWAMP:9, VOLCANIC:10 };
+Game.TILE = { DEEP_WATER:0, WATER:1, SAND:2, GRASS:3, FOREST:4, DIRT:5, STONE:6, SNOW:7, DUNGEON_FLOOR:8, SWAMP:9, VOLCANIC:10, MUSHROOM:11 };
 
 // オブジェクトレイヤー（0=なし、50番台=影世界固有、100番台=プレイヤー設置物）
 Game.OBJ = {
@@ -62,6 +62,7 @@ Game.OBJ = {
   DEAD_TREE:141, POISON_MUSHROOM:142,
   OBSIDIAN:143, SULFUR_VENT:144,
   BANNER:145, BRAZIER:146, BARREL:147, POTTED_PLANT:148,
+  GIANT_MUSHROOM:149, GLOW_SHROOM:150,
 };
 
 // 地面の色（手続き描画のベース）
@@ -77,6 +78,7 @@ Game.TILE_COLOR = {
   [Game.TILE.DUNGEON_FLOOR]: '#3a3540',
   [Game.TILE.SWAMP]:      '#3d4a2c',
   [Game.TILE.VOLCANIC]:   '#2a1812',
+  [Game.TILE.MUSHROOM]:   '#3a2c4a',
 };
 
 // 影世界の地面パレット（同じTILE idを別色で描画）
@@ -92,6 +94,7 @@ Game.SHADOW_TILE_COLOR = {
   [Game.TILE.DUNGEON_FLOOR]: '#2a2438',
   [Game.TILE.SWAMP]:      '#26233a',
   [Game.TILE.VOLCANIC]:   '#1a1020',
+  [Game.TILE.MUSHROOM]:   '#241a36',
 };
 
 // 宇宙の地面パレット（虚空＝ほぼ黒、小惑星＝灰）
@@ -107,6 +110,7 @@ Game.SPACE_TILE_COLOR = {
   [Game.TILE.DUNGEON_FLOOR]: '#3a3a48',
   [Game.TILE.SWAMP]:      '#44443a',
   [Game.TILE.VOLCANIC]:   '#3a342e',
+  [Game.TILE.MUSHROOM]:   '#3e3a48',
 };
 
 Game.SOLID_TILE = {
@@ -134,6 +138,8 @@ Game.LIGHT_LEVEL = {
   [Game.OBJ.HEALING_TOTEM]: 7,
   [Game.OBJ.STREET_LAMP]: 11,
   [Game.OBJ.BRAZIER]: 9,
+  [Game.OBJ.GIANT_MUSHROOM]: 6,
+  [Game.OBJ.GLOW_SHROOM]: 4,
 };
 
 // オブジェクトのメタ情報。solid=移動阻害, drops=破壊時ドロップ
@@ -158,6 +164,8 @@ Game.OBJ_META = {
   [Game.OBJ.POISON_MUSHROOM]:{ name:'毒キノコ', solid:false, mineable:true, tool:null, tier:0, hp:1, drops:[{item:'glow_spore', n:[1,2]}], render:'pmushroom' },
   [Game.OBJ.OBSIDIAN]:   { name:'黒曜石', solid:true, mineable:true, tool:'pickaxe', tier:2, hp:16, drops:[{item:'obsidian', n:[1,2]}], render:'obsidian' },
   [Game.OBJ.SULFUR_VENT]:{ name:'硫黄噴気孔', solid:false, mineable:true, tool:null, tier:0, hp:2, light:4, drops:[{item:'sulfur', n:[1,2]}], render:'sulfur' },
+  [Game.OBJ.GIANT_MUSHROOM]:{ name:'巨大キノコ', solid:true, mineable:true, tool:'axe', tier:0, hp:5, light:6, drops:[{item:'luminous_cap', n:[1,3]},{item:'wood', n:[0,1]}], render:'giantshroom' },
+  [Game.OBJ.GLOW_SHROOM]:{ name:'発光キノコ', solid:false, mineable:true, tool:null, tier:0, hp:1, light:4, drops:[{item:'luminous_cap', n:[1,1]}], render:'glowshroom' },
   [Game.OBJ.FARMLAND]:  { name:'畑', solid:false, mineable:true, tool:null, tier:0, hp:1, drops:[], render:'farmland' },
   [Game.OBJ.WHEAT]:     { name:'小麦', solid:false, mineable:true, tool:null, tier:0, hp:1, drops:[], render:'wheat', crop:true },
   [Game.OBJ.CAMPFIRE]:  { name:'焚き火', solid:false, mineable:true, tool:null, tier:0, hp:3, light:9, drops:[{item:'campfire', n:[1,1]}], render:'campfire', cook:true },
@@ -232,6 +240,7 @@ Game.ITEMS = {
   glow_spore:  { name:'光胞子', stack:99, color:'#7fe0a0', flavor:'毒キノコから採れる仄かに光る胞子。沼の解毒薬の材料。' },
   obsidian:    { name:'黒曜石', stack:99, color:'#2a2440', flavor:'急冷した溶岩の黒い石。鋭く加工でき、頑丈な武具になる。' },
   sulfur:      { name:'硫黄', stack:99, color:'#d8c84a', flavor:'噴気孔に結晶する黄色い鉱物。火炎の材料。' },
+  luminous_cap:{ name:'光るキノコ', stack:32, color:'#9fb0ff', food:14, flavor:'柔らかな光を放つ傘。ほのかに甘く、滋養に富む。' },
   wood_pickaxe:{ name:'木のツルハシ', stack:1, color:'#9c6b3f', tool:'pickaxe', tier:1 },
   stone_pickaxe:{ name:'石のツルハシ', stack:1, color:'#888d91', tool:'pickaxe', tier:2 },
   iron_pickaxe:{ name:'鉄のツルハシ', stack:1, color:'#d8d8dc', tool:'pickaxe', tier:3 },
@@ -256,6 +265,7 @@ Game.ITEMS = {
   snake_meat:  { name:'蛇肉', stack:16, color:'#9a8a4a', food:8, cookTo:'cooked_snake', spoils:true },
   cooked_snake:{ name:'焼き蛇肉', stack:16, color:'#a07a4a', food:30 },
   swamp_stew:  { name:'沼の煮込み', stack:16, color:'#6a8a3a', food:42, cures:['poison','infection'], flavor:'光胞子と沼の幸を煮込んだ滋養食。毒を流し、腹を満たす。' },
+  mushroom_soup:{ name:'キノコのスープ', stack:16, color:'#9fb0ff', food:38, buff:{type:'regen_buff', dur:600}, flavor:'光るキノコの温かいスープ。満腹になり、しばし傷が癒える。' },
   guts:        { name:'臓物', stack:16, color:'#8a2a3a' },
   hide:        { name:'毛皮', stack:99, color:'#b08858' },
   leather:     { name:'なめし革', stack:99, color:'#8a5a30' },
@@ -476,6 +486,7 @@ Game.RECIPES = [
   { out:{id:'cooked_frog', n:1}, in:{frog_legs:1}, station:'campfire' },
   { out:{id:'cooked_snake', n:1}, in:{snake_meat:1}, station:'campfire' },
   { out:{id:'swamp_stew', n:1}, in:{glow_spore:2, frog_legs:1, carrot:1}, station:'campfire' },
+  { out:{id:'mushroom_soup', n:1}, in:{luminous_cap:3, carrot:1}, station:'campfire' },
   { out:{id:'bread', n:1}, in:{wheat:3}, station:'crafting_table' },
   // 種は野菜から増やせる（初回は旅商人から購入）
   { out:{id:'carrot_seeds', n:2}, in:{carrot:1}, station:null },
@@ -806,7 +817,7 @@ Game.ITEM_GLYPH = {
   apple:'🍎', berry:'🫐', cactus:'🌵', raw_meat:'🥩', cooked_meat:'🍖', rotten_meat:'🤢', guts:'🩸', wheat:'🌾', wheat_seeds:'🌱', bread:'🍞', moonleaf:'🍃', fish:'🐟',
   frog_legs:'🐸', cooked_frog:'🍗', snake_meat:'🐍', cooked_snake:'🍢', swamp_stew:'🍲',
   carrot:'🥕', carrot_seeds:'🌱', pumpkin:'🎃', pumpkin_seeds:'🌱', tomato:'🍅', tomato_seeds:'🌱', veg_salad:'🥗', pumpkin_pie:'🥧', veg_stew:'🍲', hearty_stew:'🍲',
-  hide:'🟤', leather:'🟫', bone:'🦴', string:'🧵', slime_ball:'🟢', flower:'🌸', sapling:'🌱', glow_spore:'🍄', obsidian:'⬛', sulfur:'🟡', obsidian_blade:'🗡️',
+  hide:'🟤', leather:'🟫', bone:'🦴', string:'🧵', slime_ball:'🟢', flower:'🌸', sapling:'🌱', glow_spore:'🍄', obsidian:'⬛', sulfur:'🟡', obsidian_blade:'🗡️', luminous_cap:'🍄', mushroom_soup:'🍲',
   wood_pickaxe:'⛏️', stone_pickaxe:'⛏️', iron_pickaxe:'⛏️', shadow_pickaxe:'⛏️', siege_pick:'⛏️',
   wood_axe:'🪓', stone_axe:'🪓', iron_axe:'🪓', shadow_axe:'🪓', wood_hoe:'🌾', stone_hoe:'🌾',
   wood_sword:'🗡️', stone_sword:'🗡️', iron_sword:'⚔️', shadow_blade:'⚔️',
