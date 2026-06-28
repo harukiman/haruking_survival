@@ -170,7 +170,9 @@ Game.UI = (function () {
     { id: 'iron_potion', n: 1, price: 2 }, { id: 'regen_potion', n: 1, price: 2 },
     { id: 'ammo_9mm', n: 16, price: 1 }, { id: 'ammo_762', n: 12, price: 2 },
     { id: 'energy_cell', n: 10, price: 2 }, { id: 'rocket_ammo', n: 2, price: 3 },
-    { id: 'bomb', n: 2, price: 2 }, { rand: true, price: 4, label: '謎の装備（ランダム）' },
+    { id: 'bomb', n: 2, price: 2 },
+    { id: 'carrot_seeds', n: 3, price: 1 }, { id: 'pumpkin_seeds', n: 2, price: 1 }, { id: 'tomato_seeds', n: 3, price: 1 },
+    { rand: true, price: 4, label: '謎の装備（ランダム）' },
   ];
   function openTrade() { const sc = document.getElementById('trade-screen'); if (!sc) return; sc.classList.remove('hidden'); Game.state.paused = true; refreshTrade(); }
   function closeTrade() { const sc = document.getElementById('trade-screen'); if (sc) sc.classList.add('hidden'); Game.state.paused = false; }

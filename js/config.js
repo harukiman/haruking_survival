@@ -212,8 +212,20 @@ Game.ITEMS = {
   string:      { name:'糸', stack:99, color:'#dadada' },
   slime_ball:  { name:'スライム玉', stack:99, color:'#5fc46b' },
   wheat:       { name:'小麦', stack:99, color:'#d9b84a' },
-  wheat_seeds: { name:'小麦の種', stack:99, color:'#9ab84a', plant:Game.OBJ.WHEAT },
+  wheat_seeds: { name:'小麦の種', stack:99, color:'#9ab84a', plant:Game.OBJ.WHEAT, crop:{harvest:'wheat', seeds:'wheat_seeds', color:'#d9b84a'} },
   bread:       { name:'パン', stack:16, color:'#c79a4a', food:35 },
+  // 新作物（種→成長→収穫。種は旅商人や収穫で入手）
+  carrot:      { name:'にんじん', stack:32, color:'#e0902a', food:16 },
+  carrot_seeds:{ name:'にんじんの種', stack:99, color:'#c0b04a', plant:Game.OBJ.WHEAT, crop:{harvest:'carrot', seeds:'carrot_seeds', color:'#e0902a'} },
+  pumpkin:     { name:'かぼちゃ', stack:16, color:'#e07a2a', food:22 },
+  pumpkin_seeds:{ name:'かぼちゃの種', stack:99, color:'#c8a850', plant:Game.OBJ.WHEAT, crop:{harvest:'pumpkin', seeds:'pumpkin_seeds', color:'#e07a2a'} },
+  tomato:      { name:'トマト', stack:32, color:'#d83a3a', food:14 },
+  tomato_seeds:{ name:'トマトの種', stack:99, color:'#b89a4a', plant:Game.OBJ.WHEAT, crop:{harvest:'tomato', seeds:'tomato_seeds', color:'#d83a3a'} },
+  // 料理（食材→調理で空腹/回復が段階的に向上）
+  veg_salad:   { name:'サラダ', stack:16, color:'#6fc46b', food:34 },
+  pumpkin_pie: { name:'かぼちゃパイ', stack:16, color:'#e0a04a', food:48 },
+  veg_stew:    { name:'野菜シチュー', stack:8, color:'#c87a3a', food:55, heal:10 },
+  hearty_stew: { name:'具だくさんシチュー', stack:8, color:'#b85a2a', food:70, heal:18 },
   sapling:     { name:'苗木', stack:99, color:'#4a8f3c', place:Game.OBJ.SAPLING },
   // 武器・道具
   wood_sword:  { name:'木の剣', stack:1, color:'#9c6b3f', tool:'sword', tier:1, attack:3 },
@@ -388,6 +400,15 @@ Game.RECIPES = [
   { out:{id:'cooked_meat', n:1}, in:{raw_meat:1, coal:1}, station:'furnace' },
   { out:{id:'cooked_meat', n:1}, in:{raw_meat:1}, station:'campfire' },
   { out:{id:'bread', n:1}, in:{wheat:3}, station:'crafting_table' },
+  // 種は野菜から増やせる（初回は旅商人から購入）
+  { out:{id:'carrot_seeds', n:2}, in:{carrot:1}, station:null },
+  { out:{id:'pumpkin_seeds', n:2}, in:{pumpkin:1}, station:null },
+  { out:{id:'tomato_seeds', n:2}, in:{tomato:1}, station:null },
+  // 調理
+  { out:{id:'veg_salad', n:1}, in:{carrot:1, tomato:1, moonleaf:1}, station:'crafting_table' },
+  { out:{id:'pumpkin_pie', n:1}, in:{pumpkin:2, wheat:2}, station:'furnace' },
+  { out:{id:'veg_stew', n:1}, in:{cooked_meat:1, carrot:1, pumpkin:1}, station:'furnace' },
+  { out:{id:'hearty_stew', n:1}, in:{cooked_meat:1, carrot:1, pumpkin:1, tomato:1}, station:'furnace' },
   { out:{id:'leather', n:1}, in:{hide:2}, station:'crafting_table' },
   // 防具
   { out:{id:'leather_helmet', n:1}, in:{leather:3}, station:'crafting_table' },
@@ -615,6 +636,7 @@ Game.STARTER_ITEMS = [
 Game.ITEM_GLYPH = {
   wood:'🪵', shadow_wood:'🪵', stone:'🪨', stone_block:'🧱', wood_block:'🟫', coal:'⚫', iron_ore:'🪨', iron:'🔩', gold_ore:'🟡', gold_bar:'🟨',
   apple:'🍎', berry:'🫐', cactus:'🌵', raw_meat:'🥩', cooked_meat:'🍖', rotten_meat:'🤢', guts:'🩸', wheat:'🌾', wheat_seeds:'🌱', bread:'🍞', moonleaf:'🍃', fish:'🐟',
+  carrot:'🥕', carrot_seeds:'🌱', pumpkin:'🎃', pumpkin_seeds:'🌱', tomato:'🍅', tomato_seeds:'🌱', veg_salad:'🥗', pumpkin_pie:'🥧', veg_stew:'🍲', hearty_stew:'🍲',
   hide:'🟤', leather:'🟫', bone:'🦴', string:'🧵', slime_ball:'🟢', flower:'🌸', sapling:'🌱',
   wood_pickaxe:'⛏️', stone_pickaxe:'⛏️', iron_pickaxe:'⛏️', shadow_pickaxe:'⛏️',
   wood_axe:'🪓', stone_axe:'🪓', iron_axe:'🪓', shadow_axe:'🪓', wood_hoe:'🌾', stone_hoe:'🌾',
