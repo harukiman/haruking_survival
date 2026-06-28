@@ -534,13 +534,13 @@ Game.MOBS = {
   // グロ: 蛭（出血+感染）
   leech:    { name:'蛭', hostile:true, hp:5, speed:2.3, color:'#5a2030', size:7, drops:[{item:'guts',n:[1,2]}], dmg:2, xp:2, inflict:{bleed:240, infection:300} },
   // 深層の徘徊ボス
-  hunger_beast:{ name:'飢餓の獣', hostile:true, hp:140, speed:1.7, color:'#7a1840', size:26, drops:[{item:'void_heart',n:[1,2]},{item:'shadow_core',n:[1,3]},{item:'shadow_crystal',n:[3,6]},{item:'guts',n:[2,4]},{item:'flame_staff',n:[0,1]}], dmg:9, xp:35, shadow:true, big:true, inflict:{bleed:300} },
+  hunger_beast:{ name:'飢餓の獣', hostile:true, hp:140, speed:1.7, color:'#7a1840', size:26, drops:[{item:'void_heart',n:[1,2]},{item:'shadow_core',n:[1,3]},{item:'shadow_crystal',n:[3,6]},{item:'guts',n:[2,4]},{item:'flame_staff',n:[0,1]}], dmg:9, xp:35, shadow:true, big:true, boss:true, summon:'leech', inflict:{bleed:300} },
   // ダンジョン系
   frost_wisp:{ name:'氷霊', hostile:true, hp:10, speed:1.6, color:'#9fd8ff', size:9, drops:[{item:'lumen',n:[0,1]},{item:'bone',n:[0,1]}], dmg:3, xp:3, inflict:{cold:240} },
   cursed_armor:{ name:'呪鎧', hostile:true, hp:30, speed:0.9, color:'#7a7a86', size:13, drops:[{item:'iron',n:[1,3]},{item:'iron_ore',n:[1,2]}], dmg:6, xp:5 },
   // 宇宙
   void_drone:{ name:'虚空ドローン', hostile:true, hp:18, speed:2.2, color:'#7fa0d0', size:10, drops:[{item:'star_metal',n:[0,2]},{item:'lumen',n:[0,1]}], dmg:5, xp:5, space:true, ghost:true },
-  star_guardian:{ name:'星の守護者', hostile:true, hp:320, speed:1.4, color:'#cfe0ff', size:30, drops:[{item:'star_core',n:[2,4]},{item:'star_metal',n:[6,12]},{item:'flying_carpet',n:[0,1]},{item:'frost_staff',n:[0,1]},{item:'gate_babylon',n:[0,1]}], dmg:11, xp:80, space:true, big:true },
+  star_guardian:{ name:'星の守護者', hostile:true, hp:320, speed:1.4, color:'#cfe0ff', size:30, drops:[{item:'star_core',n:[2,4]},{item:'star_metal',n:[6,12]},{item:'flying_carpet',n:[0,1]},{item:'frost_staff',n:[0,1]},{item:'gate_babylon',n:[0,1]}], dmg:11, xp:80, space:true, big:true, boss:true, summon:'void_drone' },
   // 友好NPC: 謎の旅人
   wanderer: { name:'謎の旅人', hostile:false, hp:20, speed:1.0, color:'#caa84a', size:11, drops:[], xp:0, friendly:true, npc:true },
   // ===== P25 コンテンツ拡張: 新モブ =====
