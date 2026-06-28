@@ -225,8 +225,40 @@ Game.UI = (function () {
     let h = '';
     h += '<div class="ench-stat">Lv.' + p.level + '（EXP ' + p.xp + '/' + p.xpNext + '）　スキルP: <span class="sp-badge">' + (p.skillPoints || 0) + '</span></div>';
     h += '<div class="ench-stat">攻撃力(手持ち) <b style="color:#ffd86b">' + eff + '</b>　防御力 <b style="color:#9fd8ff">' + Game.Player.totalArmor() + '</b>　最大HP <b style="color:#ff8a8a">' + p.maxHealth + '</b></div>';
-    { const acc = p.accessory; const ad = acc && Game.ITEMS[acc.id || acc];
-      h += '<div class="ench-stat">💠 遺物 <b style="color:#ffd86b">' + (ad ? ad.name : 'なし') + '</b>' + (ad && ad.flavor ? '<span style="color:#7a8494;font-size:.78rem">　' + ad.flavor + '</span>' : '') + '</div>'; }
+    // ===== 装備サマリー＆派生ステータス =====
+    function gearCell(label, slotObj, fallback) {
+      let icon = '', name = fallback || 'なし';
+      if (slotObj && slotObj.id) {
+        const def = Game.ITEMS[slotObj.id];
+        name = (slotObj.roll && Game.Loot.displayName) ? Game.Loot.displayName(slotObj) : (def ? def.name : slotObj.id);
+        try { icon = '<img class="gs-ic" src="' + Game.Icons.dataURL(slotObj.id, slotObj.roll || null) + '" alt="">'; } catch (e) { icon = ''; }
+      }
+      return '<div class="gs-cell"><span class="gs-lbl">' + label + '</span><span class="gs-it">' + (icon || '<span class="gs-none">—</span>') + '<span class="gs-nm">' + name + '</span></span></div>';
+    }
+    const heldSlot = slot && (Game.Loot.rollable(slot.id) || (Game.ITEMS[slot.id] && Game.ITEMS[slot.id].attack != null)) ? slot : null;
+    h += '<h2>装備</h2><div class="gear-summary">';
+    h += gearCell('武器', heldSlot, '素手');
+    h += gearCell('頭', p.armor && p.armor.head);
+    h += gearCell('胴', p.armor && p.armor.chest);
+    h += gearCell('遺物', p.accessory);
+    h += '</div>';
+    // 派生ステータス（%）
+    const sb = Game.Player.skillBonus();
+    const critPct = Math.round(((Game.TUNE.BASE_CRIT || 0.08) + (sb.crit || 0) + (wst.crit || 0)) * 100);
+    const lsPct = Math.round(((sb.lifesteal || 0) + (wst.lifesteal || 0)) * 100);
+    const spdPct = Math.round((sb.moveSpd || 0) * 100);
+    const xpPct = Math.round((sb.xpBoost || 0) * 100);
+    const regenV = (sb.regen || 0);
+    const derived = [
+      ['会心率', critPct + '%', '#ffd23a'],
+      ['吸血', lsPct + '%', '#ff7a8a'],
+      ['移動速度', '+' + spdPct + '%', '#7fe0a0'],
+      ['HP回復', '+' + (Math.round(regenV * 10) / 10), '#9fe0b0'],
+      ['経験', '+' + xpPct + '%', '#7fd0ff'],
+    ];
+    h += '<div class="derived-stats">';
+    derived.forEach(function (d) { h += '<span class="ds-chip">' + d[0] + ' <b style="color:' + d[2] + '">' + d[1] + '</b></span>'; });
+    h += '</div>';
     const stats = [['str', '力 STR', '攻撃 +1 / pt'], ['vit', '体 VIT', '最大HP +5 / pt'], ['dex', '技 DEX', '攻撃速度UP / pt']];
     stats.forEach(function (s) {
       h += '<div class="stat-row"><span class="sname">' + s[1] + ' <em>' + s[2] + '</em></span><span class="sval">' + (p[s[0]] || 0) + '</span><button class="stat-plus" data-stat="' + s[0] + '"' + ((p.skillPoints || 0) <= 0 ? ' disabled' : '') + '>＋</button></div>';
