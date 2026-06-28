@@ -4,7 +4,9 @@ window.Game = window.Game || {};
 Game.Net = (function () {
   let room = null;
   let sendPos = null, sendEdit = null, sendHello = null, sendWorld = null, sendChat = null;
-  let isHost = false, connected = false;
+  let sendMobsA = null, sendHitA = null;
+  let pendingDeaths = [];
+  let isHost = false, connected = false, mobInterval = null;
   let myName = '旅人' + Math.floor(Math.random() * 9000 + 1000);
   const peers = {}; // id -> {x,y,dir,world,name}
 
@@ -28,12 +30,20 @@ Game.Net = (function () {
     const a3 = room.makeAction('hello'); sendHello = a3[0];
     const a4 = room.makeAction('world'); sendWorld = a4[0];
     const a5 = room.makeAction('chat');  sendChat = a5[0];
+    const a6 = room.makeAction('mobs');  sendMobsA = a6[0];
+    const a7 = room.makeAction('hit');   sendHitA = a7[0];
 
     a1[1](function (d, id) { const p = peers[id] || (peers[id] = {}); p.x = d.x; p.y = d.y; p.dir = d.dir; p.world = d.world; });
     a3[1](function (d, id) { const p = peers[id] || (peers[id] = {}); p.name = d.name; });
     a4[1](function (d) { if (!isHost) adoptWorld(d); });
     a2[1](function (d) { applyRemoteEdit(d.tx, d.ty, d.o, d.w); });
     a5[1](function (d, id) { Game.UI.toast((peers[id] && peers[id].name || '旅人') + ': ' + d.t); });
+    a6[1](function (d) { // client: 敵スナップショット＋死亡ドロップ
+      if (isHost) return;
+      Game.Mobs.applyMobSnapshot(d.m);
+      if (d.d) for (let i = 0; i < d.d.length; i++) Game.Mobs.spawnNetDrops(d.d[i].x, d.d[i].y, d.d[i].items);
+    });
+    a7[1](function (d) { if (isHost) Game.Mobs.applyRemoteHit(d.id, d.dmg, d.x, d.y); }); // host: 被ダメ要求
 
     room.onPeerJoin(function (id) {
       sendHello({ name: myName }, id);
@@ -44,14 +54,24 @@ Game.Net = (function () {
     room.onPeerLeave(function (id) { delete peers[id]; Game.UI.toast('プレイヤーが退出'); Game.UI.refreshNet && Game.UI.refreshNet(); });
 
     connected = true;
+    // ホストは敵スナップショットを定期配信（rAF非依存で堅牢）
+    if (isHost) {
+      mobInterval = setInterval(function () {
+        if (connected && isHost && Game.state && Game.Mobs) {
+          if (sendMobsA) sendMobsA({ m: Game.Mobs.buildSnapshot(), d: pendingDeaths.length ? pendingDeaths : undefined });
+          pendingDeaths = [];
+        }
+      }, 150);
+    }
     Game.UI.toast(host ? ('ホスト開始 / ルーム: ' + code) : ('ルームに参加: ' + code));
     Game.UI.refreshNet && Game.UI.refreshNet();
     return true;
   }
 
   function leave() {
+    if (mobInterval) { clearInterval(mobInterval); mobInterval = null; }
     if (room) { try { room.leave(); } catch (e) {} }
-    room = null; connected = false;
+    room = null; connected = false; pendingDeaths = [];
     for (const k in peers) delete peers[k];
     Game.UI.refreshNet && Game.UI.refreshNet();
   }
@@ -89,5 +109,10 @@ Game.Net = (function () {
 
   function chat(text) { if (connected && sendChat && text) { sendChat({ t: text.slice(0, 80) }); Game.UI.toast('あなた: ' + text); } }
 
-  return { available, start, leave, tick, broadcastEdit, getPeers, peerCount, isConnected, setName, chat, get host() { return isHost; } };
+  // 敵同期（ホスト権威）
+  function sendMobsSnapshot(arr) { if (connected && isHost && sendMobsA) sendMobsA({ m: arr }); }
+  function sendHit(id, dmg, x, y) { if (connected && !isHost && sendHitA) sendHitA({ id: id, dmg: dmg, x: x, y: y }); }
+  function sendMobDeath(x, y, items) { if (connected && isHost && items && items.length) pendingDeaths.push({ x: x, y: y, items: items }); }
+
+  return { available, start, leave, tick, broadcastEdit, getPeers, peerCount, isConnected, setName, chat, sendMobsSnapshot, sendHit, sendMobDeath, get host() { return isHost; } };
 })();

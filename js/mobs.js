@@ -14,8 +14,9 @@ Game.Mobs = (function () {
     const mult = 1 + (Game.state.ngLevel || 0) * Game.TUNE.NG_HP_PER;
     const hp = Math.round(def.hp * mult);
     const dmgMult = mult * (diff.dmgMult != null ? diff.dmgMult : 1);
+    Game.state._mobId = (Game.state._mobId || 0) + 1;
     Game.state.mobs.push({
-      type: type, def: def,
+      id: Game.state._mobId, type: type, def: def,
       x: wx, y: wy, prevX: wx, prevY: wy,
       hp: hp, maxHp: hp, dmg: Math.round(def.dmg * dmgMult),
       vx: 0, vy: 0, dir: 'down',
@@ -89,6 +90,9 @@ Game.Mobs = (function () {
   }
 
   function update() {
+    // マルチ: クライアントは敵を simulate せずホストの配信を描画＋自分への接触判定
+    if (Game.Net.isConnected() && !Game.Net.host) { clientUpdate(); return; }
+
     const mobs = Game.state.mobs;
     const p = Game.state.player;
 
@@ -147,6 +151,63 @@ Game.Mobs = (function () {
       }
       m.hopPhase += 0.2;
     }
+  }
+
+  function buildSnapshot() {
+    const mobs = Game.state.mobs, out = [];
+    for (let i = 0; i < mobs.length; i++) {
+      const m = mobs[i];
+      out.push({ i: m.id, t: m.type, x: Math.round(m.x), y: Math.round(m.y), h: Math.round(m.hp), d: m.dir, w: m.def.boss ? 1 : 0 });
+    }
+    return out;
+  }
+
+  // クライアント: ホストの敵を反映＋自分への接触ダメージ
+  function applyMobSnapshot(arr) {
+    const cur = {}; const mobs = Game.state.mobs;
+    for (let i = 0; i < mobs.length; i++) cur[mobs[i].id] = mobs[i];
+    const next = [];
+    for (let i = 0; i < arr.length; i++) {
+      const s = arr[i]; let m = cur[s.i];
+      if (!m) { const def = Game.MOBS[s.t]; if (!def) continue; m = { id: s.i, type: s.t, def: def, x: s.x, y: s.y, prevX: s.x, prevY: s.y, hp: s.h, maxHp: def.hp, dir: s.d, hurt: 0, hopPhase: Math.random() * 6, attackCd: 0 }; }
+      else { m.prevX = m.x; m.prevY = m.y; m.tx = s.x; m.ty = s.y; m.hp = s.h; m.dir = s.d; }
+      m.tx = s.x; m.ty = s.y;
+      next.push(m);
+    }
+    Game.state.mobs = next;
+  }
+
+  function clientUpdate() {
+    const mobs = Game.state.mobs, p = Game.state.player;
+    for (let i = 0; i < mobs.length; i++) {
+      const m = mobs[i];
+      if (m.attackCd > 0) m.attackCd--;
+      if (m.hurt > 0) m.hurt--;
+      // 補間移動
+      if (m.tx != null) { m.prevX = m.x; m.prevY = m.y; m.x += (m.tx - m.x) * 0.4; m.y += (m.ty - m.y) * 0.4; }
+      m.hopPhase = (m.hopPhase || 0) + 0.2;
+      // 自分への接触ダメージ（敵対のみ）
+      if (m.def.hostile && m.attackCd <= 0) {
+        const d = Math.hypot(p.x - m.x, p.y - m.y);
+        if (d < m.def.size * 0.5 + 12) {
+          Game.Survival.damage(m.def.dmg, 'mob');
+          if (m.def.inflict) for (const k in m.def.inflict) Game.Status.add(k, m.def.inflict[k]);
+          m.attackCd = 42;
+        }
+      }
+    }
+  }
+
+  // ホスト: クライアントからの被ダメ要求
+  function applyRemoteHit(id, dmg, x, y) {
+    const mobs = Game.state.mobs;
+    for (let i = 0; i < mobs.length; i++) if (mobs[i].id === id) { damageMob(mobs[i], dmg, x != null ? x : mobs[i].x - 10, y != null ? y : mobs[i].y); return; }
+  }
+
+  // クライアント: ホストから来た敵死亡ドロップを地面に生成
+  function spawnNetDrops(x, y, items) {
+    if (!items) return;
+    for (let i = 0; i < items.length; i++) Game.state.drops.push({ id: items[i].id, count: items[i].count, roll: items[i].roll || null, x: x + (Math.random() - 0.5) * 14, y: y + (Math.random() - 0.5) * 14 });
   }
 
   // 友好NPC（謎の旅人）との対話
@@ -223,18 +284,21 @@ Game.Mobs = (function () {
   function killMob(m) {
     const idx = Game.state.mobs.indexOf(m);
     if (idx >= 0) Game.state.mobs.splice(idx, 1);
-    // ドロップ
+    // ドロップを集約（ローカル生成＋マルチ配信用）
+    const items = [];
     if (m.def.drops) {
       m.def.drops.forEach(function (d) {
         const n = Game.Utils.randInt(Math.random, d.n[0], d.n[1]);
-        for (let k = 0; k < n; k++) {
-          Game.state.drops.push({ id: d.item, count: 1, x: m.x + (Math.random() - 0.5) * 14, y: m.y + (Math.random() - 0.5) * 14 });
-        }
+        for (let k = 0; k < n; k++) items.push({ id: d.item, count: 1 });
       });
     }
-    // ハクスラ: rolled装備ドロップ
     const gear = Game.Loot.rollMobDrop(m.def, m.x, m.y);
-    for (let g = 0; g < gear.length; g++) Game.state.drops.push(gear[g]);
+    for (let g = 0; g < gear.length; g++) items.push({ id: gear[g].id, count: gear[g].count, roll: gear[g].roll });
+    for (let g = 0; g < items.length; g++) {
+      Game.state.drops.push({ id: items[g].id, count: items[g].count, roll: items[g].roll || null, x: m.x + (Math.random() - 0.5) * 14, y: m.y + (Math.random() - 0.5) * 14 });
+    }
+    // マルチ: ホストは全員にドロップを配信
+    if (Game.Net.isConnected() && Game.Net.host) Game.Net.sendMobDeath(m.x, m.y, items);
     Game.Render.spawnParticles(m.x, m.y, m.def.color, m.def.boss ? 40 : 10);
     Game.Render.spawnBlood(m.x, m.y, m.def.boss ? 24 : 8);
     Game.Player.gainXP(m.def.xp || 1);
@@ -307,5 +371,5 @@ Game.Mobs = (function () {
     ctx.closePath();
   }
 
-  return { list, update, draw, spawnMob, damageMob, killMob, summonBoss, nearbyNPC, interactNPC };
+  return { list, update, draw, spawnMob, damageMob, killMob, summonBoss, nearbyNPC, interactNPC, applyMobSnapshot, applyRemoteHit, spawnNetDrops, buildSnapshot };
 })();

@@ -32,7 +32,12 @@ Game.Combat = (function () {
     const slot = Game.Inventory.selectedSlot();
     const st = Game.Loot.stats(slot);
     const dmg = st.atk > 0 ? st.atk : 1; // 素手=1
-    Game.Mobs.damageMob(best, dmg, p.x, p.y);
+    if (Game.Net.isConnected() && !Game.Net.host) {
+      Game.Net.sendHit(best.id, dmg, p.x, p.y); // クライアントはホストに被ダメ要求
+      Game.Render.spawnBlood(best.x, best.y, 4); // 手応えの演出
+    } else {
+      Game.Mobs.damageMob(best, dmg, p.x, p.y);
+    }
     // 吸血
     if (st.lifesteal > 0 && p.health < p.maxHealth) {
       p.health = Math.min(p.maxHealth, p.health + Math.max(1, Math.round(dmg * st.lifesteal)));
