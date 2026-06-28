@@ -84,6 +84,7 @@ Game.Render = (function () {
     Game.Lighting.drawOverlay(ctx);
     drawWeather(ctx);
     drawAmbient(ctx);
+    drawBossVignette(ctx);
     drawCursor(ctx);
     drawDanger(ctx);
     drawFlash(ctx);
@@ -144,6 +145,25 @@ Game.Render = (function () {
     const g = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.30, w / 2, h / 2, Math.max(w, h) * 0.62);
     g.addColorStop(0, 'rgba(170,20,30,0)'); g.addColorStop(1, 'rgba(180,20,32,' + Math.min(0.78, intensity) + ')');
     ctx.fillStyle = g; ctx.fillRect(0, 0, w, h); ctx.restore();
+  }
+
+  // ボス戦の臨場感: ボス存在中、画面端にテーマ色の脈動ヴィネット
+  function drawBossVignette(ctx) {
+    const s = Game.state; if (!s || s.paused) return;
+    if (Game.Settings && Game.Settings.get('ambient') === false) return;
+    const mobs = s.mobs; let boss = null;
+    for (let i = 0; i < mobs.length; i++) { const m = mobs[i]; if (m.def && m.def.boss) { if (!boss || m.maxHp > boss.maxHp) boss = m; } }
+    if (!boss) return;
+    const col = boss.def.color || '#c83040';
+    const r = parseInt(col.substr(1, 2), 16) || 200, gc = parseInt(col.substr(3, 2), 16) || 48, bc = parseInt(col.substr(5, 2), 16) || 64;
+    const pulse = 0.5 + Math.sin(s.tick * 0.08) * 0.5;
+    const a = 0.1 + pulse * 0.12;
+    const v = Game.view, w = v.w, hh = v.h;
+    ctx.save();
+    const grd = ctx.createRadialGradient(w / 2, hh / 2, Math.min(w, hh) * 0.42, w / 2, hh / 2, Math.max(w, hh) * 0.66);
+    grd.addColorStop(0, 'rgba(' + r + ',' + gc + ',' + bc + ',0)');
+    grd.addColorStop(1, 'rgba(' + r + ',' + gc + ',' + bc + ',' + a.toFixed(3) + ')');
+    ctx.fillStyle = grd; ctx.fillRect(0, 0, w, hh); ctx.restore();
   }
 
   // ゲームパッド選択カーソル
