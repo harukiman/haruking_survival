@@ -313,6 +313,10 @@ Game.ITEMS = {
   crystal_chest: { name:'影晶の鎧', stack:1, color:'#b86ad0', armor:5, slot:'chest' },
   star_helmet:   { name:'星鋼の兜', stack:1, color:'#aee0ff', armor:4, slot:'head' },
   chitin_armor:  { name:'甲殻の鎧', stack:1, color:'#c08040', armor:3, slot:'chest' },
+  // ===== P27 ボス固有レジェンダリ =====
+  sand_greatsword:{ name:'砂塵の大剣', stack:1, color:'#d8b048', tool:'sword', tier:4, attack:14, flavor:'墳墓の王の遺刃。振るうたび、千年の砂塵が舞う。' },
+  magma_hammer:  { name:'溶岩の戦槌', stack:1, color:'#c0502a', tool:'sword', tier:5, attack:17, flavor:'溶炉の巨人の鎚。打てば大地が灼ける。' },
+  pharaoh_crown: { name:'王の冠', stack:1, color:'#e8c54a', armor:4, slot:'head', flavor:'墳墓に眠りし王の黄金の冠。威厳が身を護る。' },
 };
 
 // クラフトレシピ。station=null は手作り、それ以外は近接が必要
@@ -469,6 +473,9 @@ Game.MOBS = {
   scorpion: { name:'サソリ', hostile:true, hp:14, speed:1.9, color:'#b07030', size:9, drops:[{item:'chitin',n:[1,2]}], dmg:4, xp:4, inflict:{poison:240} },
   ice_bear: { name:'白熊', hostile:true, hp:40, speed:1.4, color:'#e8eef2', size:16, drops:[{item:'raw_meat',n:[2,4]},{item:'hide',n:[2,3]}], dmg:7, xp:8, inflict:{cold:240}, big:true },
   astral_serpent:{ name:'宇宙の大蛇', hostile:true, hp:60, speed:2.0, color:'#b0a0ff', size:16, drops:[{item:'star_metal',n:[1,3]},{item:'star_core',n:[0,1]}], dmg:8, xp:14, space:true, ghost:true, big:true },
+  // ===== P27 ダンジョンボス（大型ダンジョンの巣から稀に出現）=====
+  tomb_king:  { name:'墳墓の王', hostile:true, hp:200, speed:1.3, color:'#d8b048', size:26, drops:[{item:'sand_greatsword',n:[1,1]},{item:'pharaoh_crown',n:[0,1]},{item:'gold_bar',n:[3,6]},{item:'chitin',n:[2,4]}], dmg:9, xp:45, boss:true, big:true, summon:'scorpion', inflict:{poison:240} },
+  forge_titan:{ name:'溶炉の巨人', hostile:true, hp:280, speed:1.1, color:'#c0502a', size:30, drops:[{item:'magma_hammer',n:[1,1]},{item:'iron',n:[4,8]},{item:'gold_bar',n:[2,5]}], dmg:12, xp:60, boss:true, big:true, summon:'golem' },
 };
 
 // 防具スロット
@@ -518,6 +525,7 @@ Game.ITEM_GLYPH = {
   healing_totem:'⛲', street_lamp:'🪔', table:'🪑', chair:'🪑', bookshelf:'📚', glass:'🪟', rug:'🟥',
   chitin:'🦂', bone_club:'🦴', gold_sword:'⚔️', war_hammer:'🔨', crystal_blade:'⚔️', chitin_spear:'🔱',
   gold_helmet:'⛑️', gold_chest:'🛡️', crystal_helmet:'🪖', crystal_chest:'🛡️', star_helmet:'⛑️', chitin_armor:'🦺',
+  sand_greatsword:'⚔️', magma_hammer:'🔨', pharaoh_crown:'👑',
 };
 
 Game.INV_SIZE = 36;       // 先頭9 = ホットバー

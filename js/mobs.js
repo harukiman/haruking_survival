@@ -95,7 +95,13 @@ Game.Mobs = (function () {
         else if (g === Game.TILE.SNOW) pool = ['frost_wisp', 'frost_wisp', 'cursed_armor', 'ice_bear'];
         else if (g === Game.TILE.SAND) pool = ['scorpion', 'scorpion', 'cursed_armor', 'golem'];
         else pool = ['zombie', 'skeleton', 'spider', 'cursed_armor', 'golem'];
-        const type = pool[Math.floor(Math.random() * pool.length)];
+        // テーマ別ダンジョンボス（稀・1体まで）
+        let type = null;
+        if (Game.state.worldName === 'light') {
+          if (g === Game.TILE.SAND && Math.random() < 0.03 && countType('tomb_king') === 0) type = 'tomb_king';
+          else if (g === Game.TILE.STONE && Math.random() < 0.03 && countType('forge_titan') === 0) type = 'forge_titan';
+        }
+        if (!type) type = pool[Math.floor(Math.random() * pool.length)];
         // 近傍の歩ける床へ
         for (let a = 0; a < 6; a++) {
           const ox = stx + (Math.floor(Math.random() * 3) - 1), oy = sty + (Math.floor(Math.random() * 3) - 1);
@@ -160,9 +166,9 @@ Game.Mobs = (function () {
       if (m.def.hostile) {
         const aggro = (m.def.boss ? 22 : 13) * TS;
         // ボスは手下を召喚
-        if (m.def.boss && m.attackCd <= 0 && Game.state.tick % 200 === 0 && countType('shadow_spawn') < 8) {
-          for (let k = 0; k < 3; k++) spawnMob('shadow_spawn', m.x + (Math.random() - 0.5) * 60, m.y + (Math.random() - 0.5) * 60);
-          Game.Audio.play('shift');
+        if (m.def.boss && m.attackCd <= 0 && Game.state.tick % 200 === 0) {
+          const minion = m.def.summon || 'shadow_spawn';
+          if (countType(minion) < 8) { for (let k = 0; k < 3; k++) spawnMob(minion, m.x + (Math.random() - 0.5) * 60, m.y + (Math.random() - 0.5) * 60); Game.Audio.play('shift'); }
         }
         // 敵対: プレイヤーを追跡
         if (distP < aggro) {
