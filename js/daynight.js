@@ -25,11 +25,14 @@ Game.DayNight = (function () {
         if (g === Game.TILE.SNOW) s.weather.type = Math.random() < 0.5 ? 'blizzard' : 'snow';
         else if (g === Game.TILE.SAND) s.weather.type = Math.random() < 0.6 ? 'sandstorm' : 'clear';
         else s.weather.type = 'rain';
+      } else if (r < 0.36) {
+        s.weather.type = 'fog'; // 霧（どの地形でも・控えめ）
       } else s.weather.type = 'clear';
       s.weather.timer = 1800 + Math.floor(Math.random() * 3600);
       if (s.weather.type !== prev) {
         if (s.weather.type === 'sandstorm') Game.UI.toast('🏜 砂嵐が来た… 視界が悪く、足が重い');
         else if (s.weather.type === 'blizzard') Game.UI.toast('❄ 吹雪だ… 凍えに気をつけろ。火か毛皮を');
+        else if (s.weather.type === 'fog') Game.UI.toast('🌫 霧が立ち込めてきた… 視界に気をつけろ');
       }
     }
   }

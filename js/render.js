@@ -219,6 +219,16 @@ Game.Render = (function () {
     const sand = type === 'sandstorm';
     const t = Game.state.tick;
     ctx.save();
+    // 霧: 薄い灰白のもや＋ゆっくり流れる層＋周辺の視界低下（控えめ）
+    if (type === 'fog') {
+      ctx.fillStyle = 'rgba(202,208,216,0.15)'; ctx.fillRect(0, 0, v.w, v.h);
+      ctx.fillStyle = 'rgba(212,216,224,0.09)';
+      for (let i = 0; i < 4; i++) { const y = ((i * v.h / 4 + t * 0.3) % (v.h + 80)) - 40; ctx.fillRect(0, y, v.w, 34); }
+      const grd = ctx.createRadialGradient(v.w / 2, v.h / 2, Math.min(v.w, v.h) * 0.3, v.w / 2, v.h / 2, Math.max(v.w, v.h) * 0.62);
+      grd.addColorStop(0, 'rgba(190,196,206,0)'); grd.addColorStop(1, 'rgba(190,196,206,0.28)');
+      ctx.fillStyle = grd; ctx.fillRect(0, 0, v.w, v.h);
+      ctx.restore(); return;
+    }
     // 砂嵐/吹雪は視界を覆うヴェール（砂嵐は砂地でも分かるよう濃いめのオレンジ褐色）
     if (sand) { ctx.fillStyle = 'rgba(188,128,52,0.34)'; ctx.fillRect(0, 0, v.w, v.h); }
     else if (type === 'blizzard') { ctx.fillStyle = 'rgba(235,242,250,0.22)'; ctx.fillRect(0, 0, v.w, v.h); }
