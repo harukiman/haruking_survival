@@ -306,6 +306,7 @@ Game.Cutscene = (function () {
     star_guardian:{ name: '星の守護者', col: '#bfe0ff', sil: 'orb', intro: ['星々が集い、守護者が顕現する', '「星の理を乱す者を、われは許さぬ」'], outro: ['守護者は星屑となって、宙に還った', '— 星核の輝き、掌中に —'] },
     crystal_queen:{ name: '水晶の女王', col: '#c884f0', sil: 'tall', intro: ['水晶洞の奥、凍てつく玉座に女王が在す', '「砕けて散るがいい——美しき結晶となって」'], outro: ['女王は無数の煌めきとなって砕け散った', '— プリズムの刃を継ぐ者よ —'] },
     abyss_dragon:{ name: '深淵の竜', col: '#8a2fb0', sil: 'beast', intro: ['影の最果て、深淵が裂け、古竜が翼を広げる', '「ここから先は、二度と光を見ぬ——」'], outro: ['古竜は咆哮を残し、闇の彼方へ崩れ落ちた', '— 竜牙の大剣、その手に —'] },
+    twilight_colossus:{ name: '黄昏の巨像', col: '#e0a050', sil: 'tall', intro: ['血の月の下、大地が震え、巨像が目覚める', '「滅びの刻だ——黄昏が、すべてを呑む」'], outro: ['巨像は轟音とともに崩れ、月光が鎮まった', '— 巨像の大剣、ここに —'] },
   };
   function drawBossSilhouette(d, cx, cy, sc, mode) {
     ctx.save(); ctx.translate(cx, cy); ctx.scale(sc, sc);

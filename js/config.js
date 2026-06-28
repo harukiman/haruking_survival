@@ -299,6 +299,7 @@ Game.ITEMS = {
   gate_babylon:{ name:'王の財宝', stack:1, color:'#e8c54a', tool:'sword', tier:5, attack:16, proj:{kind:'slash', dmg:11, count:5, spread:0.7, cd:34}, wsfx:'slash_air', flavor:'無数の宝具を雨と降らせる、王の蔵。' },
   prism_blade: { name:'プリズムの刃', stack:1, color:'#c884f0', tool:'sword', tier:5, attack:19, proj:{kind:'slash', dmg:16, count:3, spread:0.4, cd:30}, wsfx:'beam', flavor:'水晶の女王の刃。光を七色に砕き、三閃となって奔る。' },
   dragon_fang: { name:'竜牙の大剣', stack:1, color:'#8a2fb0', tool:'sword', tier:5, attack:24, proj:{kind:'slash', dmg:28, big:true, cd:36}, wsfx:'beam', flavor:'深淵の竜の牙より鍛えし大剣。振るえば闇を裂く咆哮が奔る。' },
+  colossus_blade:{ name:'巨像の大剣', stack:1, color:'#d08a4a', tool:'sword', tier:5, attack:23, proj:{kind:'slash', dmg:22, big:true, cd:38}, wsfx:'beam', flavor:'黄昏の巨像の核より鍛えし剛剣。一振りで大地を断つ。' },
   // 乗り物
   car:           { name:'車', stack:1, color:'#c0444a', vehicle:'car', flavor:'大地を駆ける鉄の馬。' },
   boat:          { name:'ボート', stack:1, color:'#9c6b3f', vehicle:'boat', flavor:'水を越えるための小舟。' },
@@ -565,6 +566,7 @@ Game.MOBS = {
   tomb_king:  { name:'墳墓の王', hostile:true, hp:200, speed:1.3, color:'#d8b048', size:26, drops:[{item:'sand_greatsword',n:[1,1]},{item:'pharaoh_crown',n:[0,1]},{item:'gold_bar',n:[3,6]},{item:'chitin',n:[2,4]},{item:'gae_bolg',n:[0,1]}], dmg:9, xp:45, boss:true, big:true, summon:'scorpion', inflict:{poison:240} },
   forge_titan:{ name:'溶炉の巨人', hostile:true, hp:280, speed:1.1, color:'#c0502a', size:30, drops:[{item:'magma_hammer',n:[1,1]},{item:'iron',n:[4,8]},{item:'gold_bar',n:[2,5]}], dmg:12, xp:60, boss:true, big:true, summon:'golem', shape:'tall' },
   crystal_queen:{ name:'水晶の女王', hostile:true, hp:300, speed:1.2, color:'#c884f0', size:28, drops:[{item:'prism_blade',n:[1,1]},{item:'shadow_crystal',n:[4,8]},{item:'lumen',n:[3,6]},{item:'star_core',n:[0,1]}], dmg:11, xp:70, boss:true, big:true, summon:'frost_wisp', shape:'tall', ranged:{dmg:8,range:7,cd:70,kind:'frost',status:{cold:200}} },
+  twilight_colossus:{ name:'黄昏の巨像', hostile:true, hp:340, speed:1.05, color:'#d08a4a', size:34, drops:[{item:'colossus_blade',n:[1,1]},{item:'gold_bar',n:[3,6]},{item:'iron',n:[4,8]},{item:'mind_tome',n:[0,1]}], dmg:13, xp:90, boss:true, big:true, shape:'tall', summon:'cursed_armor' },
   abyss_dragon:{ name:'深淵の竜', hostile:true, hp:380, speed:1.35, color:'#6a1f8a', size:34, drops:[{item:'dragon_fang',n:[1,1]},{item:'shadow_core',n:[3,6]},{item:'shadow_crystal',n:[6,12]},{item:'lumen',n:[4,8]},{item:'mind_tome',n:[0,1]}], dmg:14, xp:120, boss:true, big:true, shadow:true, shape:'tall', summon:'abyss_stalker', ranged:{dmg:10,range:8,cd:60,kind:'hex'} },
   // ===== P30 敵の多様化: 遠距離魔法・巨人・形状バリエーション =====
   hex_caster:{ name:'影の呪術師', hostile:true, hp:18, speed:1.0, color:'#a060e0', size:11, drops:[{item:'shadow_crystal',n:[0,1]},{item:'shadow_shard',n:[1,2]}], dmg:4, xp:5, shadow:true, ghost:true, shape:'wisp', ranged:{dmg:6,range:7,cd:80,kind:'hex'} },
@@ -625,7 +627,7 @@ Game.ITEM_GLYPH = {
   chitin:'🦂', bone_club:'🦴', gold_sword:'⚔️', war_hammer:'🔨', crystal_blade:'⚔️', chitin_spear:'🔱',
   gold_helmet:'⛑️', gold_chest:'🛡️', crystal_helmet:'🪖', crystal_chest:'🛡️', star_helmet:'⛑️', chitin_armor:'🦺',
   sand_greatsword:'⚔️', magma_hammer:'🔨', pharaoh_crown:'👑', mind_tome:'📖',
-  energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️', prism_blade:'⚔️', dragon_fang:'⚔️',
+  energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️', prism_blade:'⚔️', dragon_fang:'⚔️', colossus_blade:'⚔️',
 };
 
 Game.INV_SIZE = 36;       // 先頭9 = ホットバー

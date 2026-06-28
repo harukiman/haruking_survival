@@ -65,10 +65,15 @@ Game.Mobs = (function () {
         type = pool[Math.floor(Math.random() * pool.length)];
       } else if (night && diff.spawnHostiles) {
         // 夜は敵対モブ（のんびりは出ない）。血の月は強敵寄り
-        const pool = Game.state.bloodMoon
-          ? ['zombie', 'zombie', 'skeleton', 'spider', 'leech', 'bandit', 'bat', 'gazer', 'troll']
-          : ['zombie', 'skeleton', 'spider', 'slime', 'leech', 'bat', 'gazer'];
-        type = pool[Math.floor(Math.random() * pool.length)];
+        // 血の月の夜は地上ボス「黄昏の巨像」が稀出現(1体まで)
+        if (Game.state.bloodMoon && Game.state.worldName === 'light' && Math.random() < 0.02 && countType('twilight_colossus') === 0) {
+          type = 'twilight_colossus';
+        } else {
+          const pool = Game.state.bloodMoon
+            ? ['zombie', 'zombie', 'skeleton', 'spider', 'leech', 'bandit', 'bat', 'gazer', 'troll']
+            : ['zombie', 'skeleton', 'spider', 'slime', 'leech', 'bat', 'gazer'];
+          type = pool[Math.floor(Math.random() * pool.length)];
+        }
       } else {
         // 昼: 動物＋環境ごとの敵（砂漠=サソリ/呪術師, 雪原=白熊, 森=稀に猪/トロル/旅人）
         const diffH = diff.spawnHostiles;

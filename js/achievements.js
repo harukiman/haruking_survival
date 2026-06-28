@@ -29,6 +29,7 @@ Game.Achievements = (function () {
     slay_crystal_queen:{ name:'氷晶の終焉', desc:'水晶の女王を打ち倒した' },
     slay_hunger_beast: { name:'渇望を断つ', desc:'飢餓の獣を打ち倒した' },
     slay_abyss_dragon: { name:'屠竜', desc:'深淵の竜を打ち倒した' },
+    slay_twilight_colossus: { name:'黄昏を砕く', desc:'黄昏の巨像を打ち倒した' },
     // マイルストーン
     level20:       { name:'熟達者', desc:'レベル20に到達' },
     level50:       { name:'達人', desc:'レベル50に到達' },
@@ -36,7 +37,7 @@ Game.Achievements = (function () {
     potion_master: { name:'錬金の心得', desc:'バフ薬を使った' },
   };
   // ボス種別→実績ID
-  Game.BOSS_ACH = { tomb_king:'slay_tomb_king', forge_titan:'slay_forge_titan', star_guardian:'slay_star_guardian', crystal_queen:'slay_crystal_queen', hunger_beast:'slay_hunger_beast', abyss_dragon:'slay_abyss_dragon' };
+  Game.BOSS_ACH = { tomb_king:'slay_tomb_king', forge_titan:'slay_forge_titan', star_guardian:'slay_star_guardian', crystal_queen:'slay_crystal_queen', hunger_beast:'slay_hunger_beast', abyss_dragon:'slay_abyss_dragon', twilight_colossus:'slay_twilight_colossus' };
 
   // 種別判定用（手に入れた時の実績）
   Game.MAGIC_ITEMS = ['warp_staff', 'flame_staff', 'frost_staff', 'flying_carpet'];
