@@ -89,6 +89,17 @@ Game.WorldGen = (function () {
     // 影世界: 同じ地形形状(標高)・別オブジェクト
     const shadow = Game.state && Game.state.worldName === 'shadow';
 
+    // 打ち捨てられた宝箱（地上=光世界のみ・ダンジョン外の探索報酬。石ブロックの小廃墟＋宝箱）
+    if (walkableGround && !shadow && !(Game.state && Game.state.worldName === 'space')) {
+      const CG = 53;
+      const cax = Math.round(wx / CG) * CG, cay = Math.round(wy / CG) * CG;
+      if (U.hash3(cax, cay, seed + 44444) < 0.06) {
+        const cdx = wx - cax, cdy = wy - cay;
+        if (cdx === 0 && cdy === 0) return { ground: ground, obj: O.TREASURE_CHEST };
+        if (Math.abs(cdx) === 1 && Math.abs(cdy) === 1) return { ground: ground, obj: O.STONE_BLOCK };
+      }
+    }
+
     // 共鳴遺跡（両世界の同座標に対構造）
     if (ground !== T.DEEP_WATER && ground !== T.WATER) {
       const G = 96;
