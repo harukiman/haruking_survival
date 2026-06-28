@@ -305,6 +305,24 @@ Game.Tiles = (function () {
       x.fillStyle = '#b04a6a'; x.fillRect(2, 2, TS - 4, TS - 4);
       x.strokeStyle = '#e8c54a'; x.lineWidth = 2; x.strokeRect(5, 5, TS - 10, TS - 10);
       x.fillStyle = '#e8c54a'; circle(x, TS / 2, TS / 2, 2);
+    } else if (r === 'banner') {
+      x.fillStyle = '#5a4a30'; x.fillRect(7, 3, 2, TS - 5); // ポール
+      x.fillStyle = '#b03040'; x.beginPath(); x.moveTo(9, 4); x.lineTo(TS - 4, 4); x.lineTo(TS - 7, 11); x.lineTo(TS - 4, 18); x.lineTo(9, 18); x.closePath(); x.fill();
+      x.fillStyle = '#e8c54a'; circle(x, (9 + TS - 6) / 2, 11, 2);
+    } else if (r === 'brazier') {
+      x.fillStyle = '#4a3a2a'; x.fillRect(TS / 2 - 7, TS - 10, 14, 6); // 鉢
+      x.fillStyle = '#3a2a1a'; x.fillRect(TS / 2 - 2, TS - 16, 4, 8); // 脚
+      x.fillStyle = '#ff7a2a'; x.beginPath(); x.moveTo(TS / 2, TS - 22); x.quadraticCurveTo(TS / 2 + 7, TS - 12, TS / 2, TS - 9); x.quadraticCurveTo(TS / 2 - 7, TS - 12, TS / 2, TS - 22); x.fill();
+      x.fillStyle = '#ffd24a'; circle(x, TS / 2, TS - 12, 2.4);
+    } else if (r === 'barrel') {
+      x.fillStyle = '#7a5226'; x.fillRect(6, 5, TS - 12, TS - 8);
+      x.fillStyle = '#8a6030'; x.fillRect(7, 6, TS - 14, TS - 10);
+      x.strokeStyle = '#3a2814'; x.lineWidth = 2; for (let yy = 9; yy < TS - 4; yy += 7) { x.beginPath(); x.moveTo(6, yy); x.lineTo(TS - 6, yy); x.stroke(); }
+      x.fillStyle = '#9c6b3f'; x.fillRect(TS / 2 - 1, 5, 2, TS - 8);
+    } else if (r === 'potted') {
+      x.fillStyle = '#a0623a'; x.beginPath(); x.moveTo(TS / 2 - 7, TS - 5); x.lineTo(TS / 2 + 7, TS - 5); x.lineTo(TS / 2 + 5, TS - 13); x.lineTo(TS / 2 - 5, TS - 13); x.closePath(); x.fill();
+      x.fillStyle = '#3c8a2e'; circle(x, TS / 2, TS - 16, 6); x.fillStyle = '#4fae3a'; circle(x, TS / 2 - 3, TS - 18, 3);
+      x.fillStyle = '#e85ab0'; circle(x, TS / 2 + 3, TS - 19, 2);
     } else if (r === 'enchant') {
       x.fillStyle = '#2a1f44'; x.fillRect(4, 12, TS - 8, TS - 14);
       x.fillStyle = '#3a2a5a'; x.fillRect(6, 8, TS - 12, 8);

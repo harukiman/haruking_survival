@@ -61,6 +61,7 @@ Game.OBJ = {
   BANDIT_SPAWNER:140,
   DEAD_TREE:141, POISON_MUSHROOM:142,
   OBSIDIAN:143, SULFUR_VENT:144,
+  BANNER:145, BRAZIER:146, BARREL:147, POTTED_PLANT:148,
 };
 
 // 地面の色（手続き描画のベース）
@@ -132,6 +133,7 @@ Game.LIGHT_LEVEL = {
   [Game.OBJ.STAR_ORE]: 4,
   [Game.OBJ.HEALING_TOTEM]: 7,
   [Game.OBJ.STREET_LAMP]: 11,
+  [Game.OBJ.BRAZIER]: 9,
 };
 
 // オブジェクトのメタ情報。solid=移動阻害, drops=破壊時ドロップ
@@ -211,6 +213,10 @@ Game.OBJ_META = {
   [Game.OBJ.BOOKSHELF]:  { name:'本棚', solid:true, mineable:true, tool:null, tier:0, hp:4, drops:[{item:'bookshelf', n:[1,1]}], render:'bookshelf' },
   [Game.OBJ.GLASS]:      { name:'ガラス', solid:true, mineable:true, tool:null, tier:0, hp:2, drops:[{item:'glass', n:[1,1]}], render:'glass' },
   [Game.OBJ.RUG]:        { name:'絨毯', solid:false, mineable:true, tool:null, tier:0, hp:2, drops:[{item:'rug', n:[1,1]}], render:'rug' },
+  [Game.OBJ.BANNER]:     { name:'旗', solid:false, mineable:true, tool:null, tier:0, hp:2, drops:[{item:'banner', n:[1,1]}], render:'banner' },
+  [Game.OBJ.BRAZIER]:    { name:'かがり火', solid:false, mineable:true, tool:null, tier:0, hp:3, light:9, drops:[{item:'brazier', n:[1,1]}], render:'brazier', cook:true },
+  [Game.OBJ.BARREL]:     { name:'樽', solid:true, mineable:true, tool:null, tier:0, hp:3, drops:[{item:'barrel', n:[1,1]}], render:'barrel' },
+  [Game.OBJ.POTTED_PLANT]:{ name:'植木鉢', solid:false, mineable:true, tool:null, tier:0, hp:2, drops:[{item:'potted_plant', n:[1,1]}], render:'potted' },
 };
 
 // アイテム定義。place=設置するOBJ id, tool/tier=道具, food=空腹回復
@@ -387,6 +393,10 @@ Game.ITEMS = {
   bookshelf:     { name:'本棚', stack:16, color:'#7a5230', place:Game.OBJ.BOOKSHELF },
   glass:         { name:'ガラス', stack:99, color:'#a8d8e8', place:Game.OBJ.GLASS },
   rug:           { name:'絨毯', stack:99, color:'#b04a6a', place:Game.OBJ.RUG },
+  banner:        { name:'旗', stack:16, color:'#b03040', place:Game.OBJ.BANNER },
+  brazier:       { name:'かがり火', stack:16, color:'#ff8a3a', place:Game.OBJ.BRAZIER },
+  barrel:        { name:'樽', stack:16, color:'#8a5a30', place:Game.OBJ.BARREL },
+  potted_plant:  { name:'植木鉢', stack:16, color:'#7a9a4a', place:Game.OBJ.POTTED_PLANT },
   // 魔法武器（ボスドロップのレア）
   warp_staff:    { name:'ワープの杖', stack:1, color:'#b06ad0', tool:'warp', flavor:'空間を歪め、一瞬で間合いを詰める/離す。' },
   flame_staff:   { name:'炎の杖', stack:1, color:'#ff7a3c', tool:'staff', fireDmg:16, magic:'fire', flavor:'業火の弾を放つ。弾は要らぬ、己が魔力で。' },
@@ -519,6 +529,10 @@ Game.RECIPES = [
   { out:{id:'bookshelf', n:1}, in:{wood:6}, station:'crafting_table' },
   { out:{id:'glass', n:4}, in:{stone:2}, station:'furnace' },
   { out:{id:'rug', n:2}, in:{hide:2}, station:'crafting_table' },
+  { out:{id:'banner', n:1}, in:{string:2, wood:1}, station:'crafting_table' },
+  { out:{id:'brazier', n:1}, in:{stone:3, coal:1}, station:'crafting_table' },
+  { out:{id:'barrel', n:1}, in:{wood:4}, station:'crafting_table' },
+  { out:{id:'potted_plant', n:1}, in:{wood:1, flower:1}, station:'crafting_table' },
   { out:{id:'unity_core', n:1}, in:{shadow_core:3, lumen:10, shadow_crystal:10}, station:'crafting_table' }, // 世界統合
   // 建築・自由度
   { out:{id:'wood_floor', n:4}, in:{wood:1}, station:null },
@@ -805,7 +819,7 @@ Game.ITEM_GLYPH = {
   glock17:'🔫', mp5:'🔫', m4:'🔫', ak47:'🔫', m870:'🔫', barrett:'🎯', rpg7:'🚀',
   rocket:'🚀', star_metal:'🌟', star_core:'💫', cosmic_blade:'🌠', star_cannon:'🔫', gravity_boots:'👢',
   warp_staff:'🪄', flame_staff:'🔥', frost_staff:'❄️', flying_carpet:'🧞',
-  healing_totem:'⛲', street_lamp:'🪔', table:'🪑', chair:'🪑', bookshelf:'📚', glass:'🪟', rug:'🟥',
+  healing_totem:'⛲', street_lamp:'🪔', table:'🪑', chair:'🪑', bookshelf:'📚', glass:'🪟', rug:'🟥', banner:'🚩', brazier:'🔥', barrel:'🛢️', potted_plant:'🪴',
   chitin:'🦂', bone_club:'🦴', gold_sword:'⚔️', war_hammer:'🔨', crystal_blade:'⚔️', chitin_spear:'🔱',
   gold_helmet:'⛑️', gold_chest:'🛡️', crystal_helmet:'🪖', crystal_chest:'🛡️', star_helmet:'⛑️', chitin_armor:'🦺',
   sand_greatsword:'⚔️', magma_hammer:'🔨', pharaoh_crown:'👑', mind_tome:'📖', wisdom_tome:'📗', xp_orb:'🔮', expand_pouch:'🎒',
