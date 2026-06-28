@@ -50,7 +50,7 @@ Game.Combat = (function () {
     // 会心（クリティカル）: 基礎8% ＋ スキル ＋ 装備affix。クリ時 1.8x
     const critCh = (Game.TUNE.BASE_CRIT || 0.08) + Game.Player.skillBonus().crit + (st.crit || 0);
     const isCrit = Math.random() < critCh;
-    if (isCrit) { dmg = Math.round(dmg * (Game.TUNE.CRIT_MULT || 1.8)); Game.Render.shake(7); }
+    if (isCrit) { dmg = Math.round(dmg * (Game.TUNE.CRIT_MULT || 1.8)); Game.Render.shake(7); Game.Audio.play('crit'); }
     // 範囲攻撃: スキル「旋風斬り」 or 範囲武器(大剣/戦鎚)は範囲内の敵すべてに当てる
     const wdef = slot && Game.ITEMS[slot.id];
     const aoe = Game.Player.skillFlag('aoe') || (wdef && wdef.aoe);

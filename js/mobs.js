@@ -467,10 +467,12 @@ Game.Mobs = (function () {
         Game.Player.gainXP(Math.round((m.def.xp || 1) * 5)); // チャンピオンは追加経験値
         if (Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - m.def.size * 0.7, 'CHAMPION撃破!!', '#ff8ad8', true);
         Game.UI.toast('★ ' + (m.championName || 'チャンピオン') + ' を討伐！ 財宝を手にした');
+        Game.Audio.play('champion_die');
         Game.state.championKills = (Game.state.championKills || 0) + 1;
         if (Game.Achievements) Game.Achievements.unlock('champion_slayer');
       } else {
         if (Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - m.def.size * 0.6, '精鋭撃破!', '#ffd86b', true);
+        Game.Audio.play('elite_die');
         Game.UI.toast(prefix + m.def.name + 'を討伐！ 戦利品を得た');
       }
       // 分裂アフィックス: 弱体な分身を2体生成

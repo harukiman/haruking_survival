@@ -47,6 +47,19 @@ Game.Audio = (function () {
     osc.connect(g); g.connect(sfxGain);
     osc.start(t0); osc.stop(t0 + dur + 0.02);
   }
+  // 遅延付きビープ（簡易アルペジオ/ファンファーレ用・sfxGain 経由で sfxVol 尊重）
+  function sbeep(freq, dur, type, vol, delay) {
+    if (!enabled) return; ensure(); if (!ctx) return;
+    const t0 = ctx.currentTime + (delay || 0);
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = type || 'sine';
+    osc.frequency.setValueAtTime(freq, t0);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(vol || 0.08, t0 + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(g); g.connect(sfxGain);
+    osc.start(t0); osc.stop(t0 + dur + 0.02);
+  }
   function throttled(name, ms) {
     const now = (ctx && ctx.currentTime) || (performance.now() / 1000);
     if (lastPlay[name] && now - lastPlay[name] < ms) return false;
@@ -85,6 +98,18 @@ Game.Audio = (function () {
       case 'whirl':      if (throttled('wh', 0.1)) { beep(420, 0.16, 'triangle', 0.06); beep(620, 0.12, 'sine', 0.04); } break;
       case 'engine': if (throttled('engine', 0.3)) beep(110, 0.2, 'sawtooth', 0.05); break;
       case 'splash': if (throttled('splash', 0.12)) { beep(420 + Math.random() * 80, 0.08, 'sine', 0.04); beep(240, 0.1, 'sine', 0.03); } break;
+      // 会心ヒット: 鋭い高音(影世界は僅かに低め)
+      case 'crit': if (throttled('crit', 0.05)) { const sh = (Game.state && Game.state.worldName === 'shadow') ? 0.92 : 1; beep(1500 * sh, 0.05, 'square', 0.09); beep(2100 * sh, 0.045, 'triangle', 0.06); } break;
+      // 精鋭撃破: 重厚な破砕
+      case 'elite_die': beep(190, 0.16, 'sawtooth', 0.12); beep(110, 0.22, 'triangle', 0.1); if (ctx) noiseBurst(ctx.currentTime, 0.18, 0.12, 1400); break;
+      // チャンピオン撃破: 荘厳な下降＋余韻
+      case 'champion_die': sbeep(523, 0.12, 'triangle', 0.1, 0); sbeep(392, 0.14, 'triangle', 0.1, 0.07); sbeep(261, 0.2, 'triangle', 0.09, 0.15); if (ctx) noiseBurst(ctx.currentTime, 0.3, 0.14, 700); break;
+      // 賞金達成: ファンファーレ風 上昇アルペジオ
+      case 'bounty_done': sbeep(523, 0.1, 'triangle', 0.09, 0); sbeep(659, 0.1, 'triangle', 0.09, 0.09); sbeep(784, 0.12, 'triangle', 0.09, 0.18); sbeep(1046, 0.2, 'triangle', 0.1, 0.27); break;
+      // 遺物入手: きらめき
+      case 'relic_get': sbeep(880, 0.09, 'sine', 0.07, 0); sbeep(1175, 0.09, 'sine', 0.06, 0.06); sbeep(1568, 0.14, 'triangle', 0.06, 0.12); break;
+      // 低HP警告: 鈍い鼓動(長めスロットル)
+      case 'lowhp': if (throttled('lowhp', 1.1)) { beep(82, 0.12, 'sine', 0.11); sbeep(62, 0.16, 'sine', 0.09, 0.16); } break;
     }
   }
 

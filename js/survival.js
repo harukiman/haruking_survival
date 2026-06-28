@@ -5,6 +5,12 @@ Game.Survival = (function () {
   function update() {
     const p = Game.state.player;
 
+    // 低HP警告音（鼓動・設定 lowHpWarn 尊重・play内で1.1sスロットル）
+    if (p.health > 0 && p.health < p.maxHealth * 0.22 && Game.state.tick % 15 === 0 &&
+        !(Game.Settings && Game.Settings.get('lowHpWarn') === false)) {
+      Game.Audio.play('lowhp');
+    }
+
     // 空腹減少（移動/採掘でやや速く）
     p.hungerTimer++;
     const moving = Game.Input.intent.dx !== 0 || Game.Input.intent.dy !== 0 || Game.Player.mining.active;

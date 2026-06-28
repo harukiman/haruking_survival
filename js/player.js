@@ -400,7 +400,7 @@ Game.Player = (function () {
     p.accessory = { id: slot.id };
     Game.Inventory.slots()[idx] = prev ? { id: prev.id, count: 1 } : null;
     applyEquipStats();
-    Game.Audio.play('equip');
+    Game.Audio.play('relic_get');
     Game.UI.toast(def.name + ' を装備（遺物）');
     Game.UI.refreshAll();
   }

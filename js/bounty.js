@@ -82,7 +82,7 @@ Game.Bounty = (function () {
       Game.state.bountyDone = (Game.state.bountyDone || 0) + 1;
       if (Game.Achievements) Game.Achievements.unlock('bounty_king');
       Game.UI.toast('★ 賞金首の大物を討伐！ 金塊 x' + b.rewardGold + ' ＋ 財宝を得た');
-      Game.Audio.play('levelup');
+      Game.Audio.play('bounty_done');
       Game.state.bounty = generate(); // 次の依頼へ
       if (!Game.state.bounty.big) announce(Game.state.bounty);
       else Game.UI.toast('新たな大物の手配書が掲示板に貼り出された');
@@ -94,7 +94,7 @@ Game.Bounty = (function () {
     if (b.count >= b.need) {
       b.done = true;
       Game.UI.toast('賞金首討伐完了！ 掲示板で報酬を受け取れ');
-      Game.Audio.play('levelup');
+      Game.Audio.play('bounty_done');
     } else {
       Game.UI.toast(b.targetName + ' を討伐 (' + b.count + '/' + b.need + ')');
     }
@@ -115,7 +115,7 @@ Game.Bounty = (function () {
       Game.Inventory.add('gold_bar', b.rewardGold);
       if (b.rewardItem) Game.Inventory.add(b.rewardItem.id, b.rewardItem.count);
       Game.UI.toast('★ 賞金を受け取った — ' + rewardText(b));
-      Game.Audio.play('enchant');
+      Game.Audio.play('bounty_done');
       if (Game.Render.spawnFloat) { const p = Game.state.player; Game.Render.spawnFloat(p.x, p.y - 18, '賞金 +' + b.rewardGold, '#e8c54a', true); }
       Game.state.bountyDone = (Game.state.bountyDone || 0) + 1;
       Game.state.bounty = generate(); // 次の依頼を即発行
