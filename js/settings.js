@@ -6,7 +6,7 @@ Game.Settings = (function () {
   const DEF = {
     bgmVol: 60, sfxVol: 90, brightness: 100,
     btnSize: 100, btnOpacity: 92, joySens: 100,
-    leftHanded: false, dmgNumbers: true, showFps: false, screenShake: true, lowHpWarn: true,
+    leftHanded: false, dmgNumbers: true, showFps: false, screenShake: true, lowHpWarn: true, ambient: true,
   };
   let s = load();
   function load() {

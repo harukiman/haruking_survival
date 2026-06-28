@@ -75,9 +75,36 @@ Game.Render = (function () {
     drawFloaters(ctx);
     Game.Lighting.drawOverlay(ctx);
     drawWeather(ctx);
+    drawAmbient(ctx);
     drawCursor(ctx);
     drawDanger(ctx);
     drawFlash(ctx);
+  }
+
+  // 環境アンビエントパーティクル（蛍/葉/砂塵/影の粒子）。軽量・低透明度
+  function drawAmbient(ctx) {
+    if (Game.Settings && Game.Settings.get('ambient') === false) return;
+    const s = Game.state; if (!s || s.paused) return;
+    const v = Game.view, w = v.w, h = v.h, t = s.tick, world = s.worldName;
+    const TS = Game.CFG.TILE_SIZE, p = s.player;
+    const g = Game.World.groundAt(Math.floor(p.x / TS), Math.floor(p.y / TS));
+    const night = Game.DayNight.isNight();
+    ctx.save();
+    if (world === 'shadow') {
+      ctx.fillStyle = '#b478e6';
+      for (let i = 0; i < 12; i++) { const x = (i * 97 + t * 0.3) % w; const y = h - ((i * 53 + t * 0.5) % h); ctx.globalAlpha = 0.14 + (i % 3) * 0.06; ctx.fillRect(x, y, 2, 2); }
+    } else if (world !== 'space') {
+      if (g === Game.TILE.SAND) {
+        ctx.fillStyle = '#d2be8c';
+        for (let i = 0; i < 10; i++) { const x = (i * 131 + t * 1.3) % (w + 40) - 20; const y = (i * 71 + Math.sin(t * 0.02 + i) * 20) % h; ctx.globalAlpha = 0.1; ctx.fillRect(x, y, 4, 1.5); }
+      } else if (night && (g === Game.TILE.GRASS || g === Game.TILE.FOREST)) {
+        for (let i = 0; i < 9; i++) { const ph = t * 0.02 + i * 1.3; const x = ((i * 123) % w + Math.sin(ph) * 16 + w) % w; const y = ((i * 87) % h + Math.cos(ph * 0.8) * 14 + h) % h; const gl = 0.3 + Math.sin(t * 0.08 + i) * 0.3; ctx.globalAlpha = Math.max(0, gl) * 0.65; ctx.fillStyle = '#caff7a'; ctx.beginPath(); ctx.arc(x, y, 1.8, 0, Math.PI * 2); ctx.fill(); }
+      } else if (g === Game.TILE.FOREST) {
+        ctx.fillStyle = '#8ab450';
+        for (let i = 0; i < 8; i++) { const x = ((i * 149 + Math.sin(t * 0.02 + i) * 30) % w + w) % w; const y = (i * 61 + t * 0.8) % h; ctx.globalAlpha = 0.22; ctx.fillRect(x, y, 3, 3); }
+      }
+    }
+    ctx.globalAlpha = 1; ctx.restore();
   }
 
   // 低HP危険ヴィネット＋被弾フィードバック
