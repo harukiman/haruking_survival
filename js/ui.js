@@ -100,6 +100,7 @@ Game.UI = (function () {
     el.endingStats = document.getElementById('ending-stats');
 
     document.getElementById('btn-close-inv').addEventListener('click', toggleInventory);
+    { const sb = document.getElementById('btn-sort-inv'); if (sb) sb.addEventListener('click', function () { Game.Inventory.autoSort(); Game.Audio.play('select'); refreshInventory(); refreshHotbar(); }); }
     document.getElementById('btn-close-chest').addEventListener('click', closeChest);
     var ct = document.getElementById('btn-close-trade'); if (ct) ct.addEventListener('click', closeTrade);
     var cm = document.getElementById('chest-multi'); if (cm) cm.addEventListener('click', toggleChestMulti);
@@ -311,7 +312,6 @@ Game.UI = (function () {
   }
 
   // 発見済みランドマークのマーカー色
-  const LANDMARK_COL = { dungeon: '#e0644a', vault: '#e3c24a', stela: '#b6a6f0', treasure: '#ffd86b', cosmic: '#7fc8ff', boss: '#ff5a4a' };
   // 種別ごとの色・形・凡例ラベル
   const LANDMARKS = {
     dungeon:  { col: '#e0644a', shape: 'diamond', label: 'ダンジョン' },

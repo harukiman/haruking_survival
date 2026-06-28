@@ -145,5 +145,40 @@ Game.Inventory = (function () {
     return false;
   }
 
-  return { makeEmpty, slots, count, add, addInstance, remove, selectedSlot, selectedItemDef, setHotbar, useSelected };
+  // カテゴリ並び順（小さいほど先頭）
+  function catOrder(def) {
+    if (!def) return 99;
+    if (def.attack != null || def.tool === 'sword') return 0; // 武器
+    if (def.tool) return 1;                                   // ツール(銃/つるはし/斧/鍬/杖)
+    if (def.armor != null) return 2;                          // 防具
+    if (def.relic) return 3;                                  // 遺物
+    if (def.food != null || def.cures || def.buff || def.skillTome || def.xpGain) return 4; // 消費/食料
+    if (def.place != null) return 6;                          // 設置物
+    return 5;                                                 // 素材/その他
+  }
+
+  // インベントリ整理: スタック統合＋カテゴリ→名前順。rolled装備は個別保持
+  function autoSort() {
+    const s = slots();
+    const stackable = {}; const instances = [];
+    for (let i = 0; i < s.length; i++) {
+      const it = s[i]; if (!it) continue;
+      if (it.roll) instances.push(it);
+      else stackable[it.id] = (stackable[it.id] || 0) + it.count;
+    }
+    const list = [];
+    for (const id in stackable) {
+      const def = Game.ITEMS[id]; const max = (def && def.stack) || 99; let n = stackable[id];
+      while (n > 0) { const c = Math.min(max, n); list.push({ id: id, count: c, roll: null }); n -= c; }
+    }
+    for (let i = 0; i < instances.length; i++) list.push(instances[i]);
+    list.sort(function (a, b) {
+      const da = Game.ITEMS[a.id], db = Game.ITEMS[b.id];
+      const ca = catOrder(da), cb = catOrder(db); if (ca !== cb) return ca - cb;
+      const na = (da && da.name) || a.id, nb = (db && db.name) || b.id; return na < nb ? -1 : na > nb ? 1 : 0;
+    });
+    for (let i = 0; i < s.length; i++) s[i] = i < list.length ? list[i] : null;
+  }
+
+  return { makeEmpty, slots, count, add, addInstance, remove, selectedSlot, selectedItemDef, setHotbar, useSelected, autoSort };
 })();
