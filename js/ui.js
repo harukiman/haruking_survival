@@ -288,12 +288,21 @@ Game.UI = (function () {
       bmCtx.beginPath(); bmCtx.arc(mx, my, 5, 0, Math.PI * 2); bmCtx.fill();
       bmCtx.strokeStyle = 'rgba(0,0,0,0.6)'; bmCtx.lineWidth = 1.5; bmCtx.stroke();
     }
+    // 敵/ボスドット
+    const TS2 = Game.CFG.TILE_SIZE, mobs = Game.state.mobs;
+    for (let i = 0; i < mobs.length; i++) {
+      const m = mobs[i]; if (!m.def || m.def.friendly) continue;
+      const mx = (Math.floor(m.x / TS2) - (ptx - half)) * scale, my = (Math.floor(m.y / TS2) - (pty - half)) * scale;
+      if (mx < 0 || my < 0 || mx > size || my > size) continue;
+      if (m.def.boss) { bmCtx.fillStyle = '#ff3030'; bmCtx.fillRect(mx - 3, my - 3, 6, 6); }
+      else if (m.def.hostile) { bmCtx.fillStyle = '#e0404a'; bmCtx.fillRect(mx - 1.5, my - 1.5, 3, 3); }
+    }
     // 仲間（MP・同一世界）
     if (Game.Net && Game.Net.isConnected()) {
       const peers = Game.Net.getPeers();
       for (const id in peers) {
         const pe = peers[id]; if (!pe || pe.world !== Game.state.worldName || pe.tx == null) continue;
-        const mx = (pe.tx - (ptx - half)) * scale, my = (pe.ty - (pty - half)) * scale;
+        const mx = (Math.floor(pe.tx / TS2) - (ptx - half)) * scale, my = (Math.floor(pe.ty / TS2) - (pty - half)) * scale;
         if (mx < 0 || my < 0 || mx > size || my > size) continue;
         bmCtx.fillStyle = '#5fd0ff'; bmCtx.fillRect(mx - 3, my - 3, 6, 6);
       }
@@ -938,6 +947,20 @@ Game.UI = (function () {
         mmCtx.fillStyle = palette[t.ground] || '#333';
         mmCtx.fillRect(x * scale, y * scale, scale + 0.5, scale + 0.5);
       }
+    }
+    // 動的ドット（敵=赤/ボス=大赤/NPC=黄/仲間=水色）
+    const mobs = Game.state.mobs;
+    for (let i = 0; i < mobs.length; i++) {
+      const m = mobs[i]; if (!m.def) continue;
+      const mx = (Math.floor(m.x / TS) - (ptx - half)) * scale, my = (Math.floor(m.y / TS) - (pty - half)) * scale;
+      if (mx < 0 || my < 0 || mx > size || my > size) continue;
+      if (m.def.boss) { mmCtx.fillStyle = '#ff3030'; mmCtx.fillRect(mx - 2.5, my - 2.5, 5, 5); }
+      else if (m.def.npc || m.def.friendly) { mmCtx.fillStyle = '#ffe24a'; mmCtx.fillRect(mx - 1.5, my - 1.5, 3, 3); }
+      else if (m.def.hostile) { mmCtx.fillStyle = '#e0404a'; mmCtx.fillRect(mx - 1, my - 1, 2, 2); }
+    }
+    if (Game.Net && Game.Net.isConnected()) {
+      const peers = Game.Net.getPeers();
+      for (const id in peers) { const pe = peers[id]; if (!pe || pe.world !== Game.state.worldName || pe.tx == null) continue; const mx = (Math.floor(pe.tx / TS) - (ptx - half)) * scale, my = (Math.floor(pe.ty / TS) - (pty - half)) * scale; if (mx < 0 || my < 0 || mx > size || my > size) continue; mmCtx.fillStyle = '#5fd0ff'; mmCtx.fillRect(mx - 1.5, my - 1.5, 3, 3); }
     }
     // プレイヤー
     mmCtx.fillStyle = '#fff';
