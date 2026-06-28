@@ -187,6 +187,13 @@ body.shadow-mode #app::after {
 .inv-box h2:first-child { margin-top: 0; }
 .x-btn { background: #33455e; border: none; color: #fff; width: 30px; height: 30px; border-radius: 8px; cursor: pointer; font-size: 1rem; }
 .grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 5px; }
+.grid .slot { touch-action: none; }
+.inv-quest { background: rgba(80,66,30,0.4); border: 1px solid #6a5a2a; color: #ffe9a0; font-size: .82rem;
+  padding: 7px 10px; border-radius: 8px; margin-bottom: 10px; }
+.drag-ghost { position: fixed; z-index: 80; pointer-events: none; width: 46px; height: 46px;
+  transform: translate(-50%, -50%); opacity: 0.85; }
+.drag-ghost .icon { width: 30px; height: 30px; }
+.inv-discard { background: #7a2f3a !important; border-color: #c0505a !important; }
 .craft-list { display: flex; flex-direction: column; gap: 5px; }
 .craft-tabs { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 6px; }
 .craft-tab { padding: 6px 10px; border-radius: 8px; border: 1px solid #33455e; background: #16203200; background: rgba(20,28,42,0.6);

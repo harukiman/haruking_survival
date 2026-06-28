@@ -439,19 +439,59 @@ Game.UI = (function () {
     for (let i = 0; i < s.length; i++) {
       const d = document.createElement('div');
       d.className = 'slot';
+      d.dataset.index = i;
       d.innerHTML = slotHTML(s[i]);
       if (s[i]) {
         d.title = Game.ITEMS[s[i].id] ? Game.ITEMS[s[i].id].name : s[i].id;
-        d.addEventListener('click', (function (idx) {
-          return function () { invSelected = idx; refreshInventory(); };
-        })(i));
         if (i === invSelected) d.classList.add('selected');
       }
+      d.addEventListener('pointerdown', (function (idx) { return function (e) { invPointerDown(e, idx); }; })(i));
       el.invGrid.appendChild(d);
     }
     setupTooltip(el.invGrid);
+    renderInvQuest();
     renderInvDetail();
     refreshCraft();
+  }
+
+  // インベントリで現在の目標を表示
+  function renderInvQuest() {
+    const q = document.getElementById('inv-quest'); if (!q || !Game.Quests) return;
+    const cur = Game.Quests.current();
+    q.textContent = cur ? ('🎯 目標: ' + cur.name + ' — ' + cur.desc) : '🎯 すべての目標を達成した';
+  }
+
+  // ===== ドラッグ移動＋スワップ（タップ=選択 / スワイプ=移動）=====
+  let dragSrc = -1, dragging = false, dragGhost = null, dragStart = null;
+  function invPointerDown(e, idx) {
+    dragSrc = idx; dragging = false; dragStart = { x: e.clientX, y: e.clientY };
+    window.addEventListener('pointermove', invPointerMove);
+    window.addEventListener('pointerup', invPointerUp);
+  }
+  function invPointerMove(e) {
+    if (dragSrc < 0) return;
+    if (!dragging) {
+      if (Math.hypot(e.clientX - dragStart.x, e.clientY - dragStart.y) < 9) return;
+      const st = Game.Inventory.slots()[dragSrc]; if (!st) return; // 空スロットはドラッグ不可
+      dragging = true; dragGhost = document.createElement('div'); dragGhost.className = 'drag-ghost'; dragGhost.innerHTML = slotHTML(st); document.body.appendChild(dragGhost);
+    }
+    if (dragGhost) { dragGhost.style.left = e.clientX + 'px'; dragGhost.style.top = e.clientY + 'px'; }
+  }
+  function invPointerUp(e) {
+    window.removeEventListener('pointermove', invPointerMove);
+    window.removeEventListener('pointerup', invPointerUp);
+    if (dragGhost) { dragGhost.remove(); dragGhost = null; }
+    const src = dragSrc; dragSrc = -1;
+    if (!dragging) { invSelected = src; refreshInventory(); return; } // タップ=選択
+    dragging = false;
+    const tgt = document.elementFromPoint(e.clientX, e.clientY);
+    const slotEl = tgt && tgt.closest && tgt.closest('.slot');
+    const s = Game.Inventory.slots();
+    if (slotEl && slotEl.dataset.index != null && el.invGrid.contains(slotEl)) {
+      const dst = parseInt(slotEl.dataset.index, 10);
+      if (dst !== src) { const tmp = s[dst]; s[dst] = s[src]; s[src] = tmp; Game.Audio.play('select'); } // 占有先はスワップ
+    }
+    invSelected = -1; refreshInventory();
   }
 
   // 選択中アイテムの詳細＋操作（誤使用防止: 確認ボタン式）
@@ -472,7 +512,16 @@ Game.UI = (function () {
     if (def.armor && def.slot) btns.push('<button id="inv-act" class="big-btn">装備する</button>');
     else if (def.food || def.cures) btns.push('<button id="inv-act" class="big-btn">' + (def.cures ? '使う' : '食べる') + '</button>');
     else if (Game.Loot.rollable(st.id) || def.tool) btns.push('<button id="inv-hot" class="big-btn alt">ホットバーへ装備</button>');
+    btns.push('<button id="inv-drop" class="big-btn inv-discard">捨てる' + (st.count > 1 ? '（1個）' : '') + '</button>');
     el.invDetail.innerHTML = h + btns.join('');
+    const drop = document.getElementById('inv-drop');
+    if (drop) drop.addEventListener('click', function () {
+      const cur = Game.Inventory.slots()[invSelected]; if (!cur) return;
+      cur.count--; if (cur.count <= 0) Game.Inventory.slots()[invSelected] = null;
+      Game.Audio.play('select'); toast('捨てた: ' + (Game.ITEMS[cur.id] ? Game.ITEMS[cur.id].name : cur.id));
+      if (!Game.Inventory.slots()[invSelected]) invSelected = -1;
+      refreshInventory();
+    });
     const act = document.getElementById('inv-act');
     if (act) act.addEventListener('click', function () {
       const cur = Game.Inventory.slots()[invSelected]; if (!cur) return;
