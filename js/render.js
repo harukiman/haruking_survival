@@ -120,16 +120,25 @@ Game.Render = (function () {
     const w = Game.state.weather;
     if (!w || w.type === 'clear') return;
     const v = Game.view;
-    const snow = w.type === 'snow';
-    ctx.save();
-    ctx.strokeStyle = snow ? 'rgba(255,255,255,0.7)' : 'rgba(150,180,220,0.5)';
-    ctx.fillStyle = 'rgba(255,255,255,0.8)';
-    ctx.lineWidth = 1;
+    const type = w.type;
+    const snow = type === 'snow' || type === 'blizzard';
+    const sand = type === 'sandstorm';
     const t = Game.state.tick;
-    for (let i = 0; i < 90; i++) {
-      const x = (i * 137 + t * (snow ? 1.2 : 7)) % (v.w + 40) - 20;
-      const y = (i * 89 + t * (snow ? 3 : 13)) % (v.h + 40) - 20;
-      if (snow) { ctx.beginPath(); ctx.arc(x, y, 1.6, 0, Math.PI * 2); ctx.fill(); }
+    ctx.save();
+    // 砂嵐/吹雪は視界を覆うヴェール（砂嵐は砂地でも分かるよう濃いめのオレンジ褐色）
+    if (sand) { ctx.fillStyle = 'rgba(188,128,52,0.34)'; ctx.fillRect(0, 0, v.w, v.h); }
+    else if (type === 'blizzard') { ctx.fillStyle = 'rgba(235,242,250,0.22)'; ctx.fillRect(0, 0, v.w, v.h); }
+    const count = sand ? 210 : (type === 'blizzard') ? 170 : 90;
+    ctx.strokeStyle = sand ? 'rgba(120,82,34,0.7)' : snow ? 'rgba(255,255,255,0.8)' : 'rgba(150,180,220,0.5)';
+    ctx.fillStyle = sand ? 'rgba(150,104,46,0.75)' : 'rgba(255,255,255,0.85)';
+    ctx.lineWidth = sand ? 1.6 : 1;
+    const sx = sand ? 16 : type === 'blizzard' ? 5 : snow ? 1.2 : 7;
+    const sy = sand ? 4 : type === 'blizzard' ? 6 : snow ? 3 : 13;
+    for (let i = 0; i < count; i++) {
+      const x = (i * 137 + t * sx) % (v.w + 40) - 20;
+      const y = (i * 89 + t * sy) % (v.h + 40) - 20;
+      if (sand) { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - 20, y + 3); ctx.stroke(); }
+      else if (snow) { ctx.beginPath(); ctx.arc(x, y, type === 'blizzard' ? 2 : 1.6, 0, Math.PI * 2); ctx.fill(); }
       else { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - 2, y + 9); ctx.stroke(); }
     }
     ctx.restore();

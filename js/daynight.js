@@ -16,13 +16,21 @@ Game.DayNight = (function () {
     s.weather.timer--;
     if (s.weather.timer <= 0) {
       const r = Math.random();
-      // プレイヤー付近の地面で雪/雨を判定
+      // プレイヤー付近の地面で天候を判定（地域ハザード: 砂嵐/吹雪）
       const TS = Game.CFG.TILE_SIZE;
       const pt = { tx: Math.floor(s.player.x / TS), ty: Math.floor(s.player.y / TS) };
-      const cold = Game.World.groundAt(pt.tx, pt.ty) === Game.TILE.SNOW;
-      if (r < 0.25) s.weather.type = cold ? 'snow' : 'rain';
-      else s.weather.type = 'clear';
+      const g = Game.World.groundAt(pt.tx, pt.ty);
+      const prev = s.weather.type;
+      if (r < 0.28) {
+        if (g === Game.TILE.SNOW) s.weather.type = Math.random() < 0.5 ? 'blizzard' : 'snow';
+        else if (g === Game.TILE.SAND) s.weather.type = Math.random() < 0.6 ? 'sandstorm' : 'clear';
+        else s.weather.type = 'rain';
+      } else s.weather.type = 'clear';
       s.weather.timer = 1800 + Math.floor(Math.random() * 3600);
+      if (s.weather.type !== prev) {
+        if (s.weather.type === 'sandstorm') Game.UI.toast('🏜 砂嵐が来た… 視界が悪く、足が重い');
+        else if (s.weather.type === 'blizzard') Game.UI.toast('❄ 吹雪だ… 凍えに気をつけろ。火か毛皮を');
+      }
     }
   }
 

@@ -63,6 +63,9 @@ Game.Player = (function () {
     // 浅瀬は減速＋水音（乗り物なし・徒歩のみ）
     const onWater = !p.vehicle && Game.World.groundAt(Math.floor(p.x / TS), Math.floor(p.y / TS)) === Game.TILE.WATER;
     if (onWater) spd *= 0.5;
+    // 砂嵐/吹雪は足が重い（飛行中は影響なし）
+    const wt = Game.state.weather && Game.state.weather.type;
+    if ((wt === 'sandstorm' || wt === 'blizzard') && p.vehicle !== 'plane' && p.vehicle !== 'carpet') spd *= 0.7;
     if (moving) {
       dx /= len; dy /= len;
       p.dir = intent.dir || p.dir;

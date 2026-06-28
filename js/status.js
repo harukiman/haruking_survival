@@ -22,6 +22,8 @@ Game.Status = (function () {
     const p = Game.state.player;
     for (const k in p.armor) { const a = p.armor[k]; const def = a && Game.ITEMS[a.id || a]; if (def && def.warm) return false; }
     if (Game.Survival.nearLight && Game.Survival.nearLight()) return false; // 火のそばは暖かい
+    // 吹雪は地形・時間を問わず凍える（防寒/火で上の早期returnにより保護される）
+    if (Game.state.weather && Game.state.weather.type === 'blizzard') return true;
     const TS = Game.CFG.TILE_SIZE;
     const g = Game.World.groundAt(Math.floor(p.x / TS), Math.floor(p.y / TS));
     return g === Game.TILE.SNOW && (Game.DayNight.isNight() || Game.state.worldName === 'shadow');
