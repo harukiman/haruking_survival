@@ -151,5 +151,18 @@ Game.Loot = (function () {
     return drops;
   }
 
-  return { roll, rollAt, stats, rarityColor, rarityName, displayName, statText, rollable, lootBonus, rollMobDrop, reroll, upgrade, maxRarity, enchantCost, RARITY };
+  // 精鋭(elite)個体の確定ドロップ: 必ず高品質ギア1点(レアリティ加点)＋少量で書/宝珠
+  function rollEliteDrop(def) {
+    const drops = [];
+    const pool = gearPoolFor(def);
+    if (pool.length) {
+      const id = pool[Math.floor(Math.random() * pool.length)];
+      drops.push({ id: id, count: 1, roll: roll(id, lootBonus() + 0.4) }); // +0.4でレア以上が出やすい
+    }
+    if (Math.random() < 0.18) drops.push({ id: 'xp_orb', count: 1 });
+    if (Math.random() < 0.07) drops.push({ id: 'wisdom_tome', count: 1 });
+    return drops;
+  }
+
+  return { roll, rollAt, stats, rarityColor, rarityName, displayName, statText, rollable, lootBonus, rollMobDrop, rollEliteDrop, reroll, upgrade, maxRarity, enchantCost, RARITY };
 })();

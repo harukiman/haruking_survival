@@ -34,6 +34,7 @@ Game.Save = (function () {
       discovered: s.discovered || {},
       bossSeen: s.bossSeen || {},
       bestiary: s.bestiary || {},
+      eliteKills: s.eliteKills || 0,
       questIndex: s.questIndex || 0,
       questDone: s.questDone || {},
       reunified: !!s.reunified,

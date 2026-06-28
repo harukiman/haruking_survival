@@ -35,6 +35,7 @@ Game.Achievements = (function () {
     level50:       { name:'達人', desc:'レベル50に到達' },
     gun_user:      { name:'ガンスリンガー', desc:'銃を手に入れた' },
     potion_master: { name:'錬金の心得', desc:'バフ薬を使った' },
+    elite_hunter:  { name:'エリートハンター', desc:'精鋭個体を討伐した' },
   };
   // ボス種別→実績ID
   Game.BOSS_ACH = { tomb_king:'slay_tomb_king', forge_titan:'slay_forge_titan', star_guardian:'slay_star_guardian', crystal_queen:'slay_crystal_queen', hunger_beast:'slay_hunger_beast', abyss_dragon:'slay_abyss_dragon', twilight_colossus:'slay_twilight_colossus' };

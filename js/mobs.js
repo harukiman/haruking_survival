@@ -15,7 +15,7 @@ Game.Mobs = (function () {
     const hp = Math.round(def.hp * mult);
     const dmgMult = mult * (diff.dmgMult != null ? diff.dmgMult : 1);
     Game.state._mobId = (Game.state._mobId || 0) + 1;
-    Game.state.mobs.push({
+    const m = {
       id: Game.state._mobId, type: type, def: def,
       x: wx, y: wy, prevX: wx, prevY: wy,
       hp: hp, maxHp: hp, dmg: Math.round(def.dmg * dmgMult),
@@ -23,7 +23,15 @@ Game.Mobs = (function () {
       state: 'wander', stateTimer: 0, attackCd: 0,
       hurt: 0, fleeTimer: 0, hopPhase: Math.random() * 6,
       knockX: 0, knockY: 0,
-    });
+    };
+    // 精鋭(elite)抽選: 非ボスの敵対モブが低確率で精鋭化（HP/攻撃UP・発光オーラ・確定レアドロップ）
+    if (!def.boss && def.hostile && Math.random() < (TUNE.ELITE_CHANCE || 0.04)) {
+      m.elite = true;
+      m.maxHp = m.hp = Math.round(m.maxHp * (TUNE.ELITE_HP_MULT || 2.2));
+      m.dmg = Math.round(m.dmg * (TUNE.ELITE_DMG_MULT || 1.5));
+      m.auraPhase = Math.random() * 6;
+    }
+    Game.state.mobs.push(m);
     // ボス登場アニメムービー（種別ごと初回・ローカル再生）
     if (def.boss && Game.Cutscene && Game.Cutscene.playBossIntro && !(Game.Net.isConnected() && !Game.Net.host)) {
       if (!Game.state.bossSeen) Game.state.bossSeen = {};
@@ -361,6 +369,11 @@ Game.Mobs = (function () {
     }
     const gear = Game.Loot.rollMobDrop(m.def, m.x, m.y);
     for (let g = 0; g < gear.length; g++) items.push({ id: gear[g].id, count: gear[g].count, roll: gear[g].roll });
+    // 精鋭(elite): 確定レアドロップ
+    if (m.elite && Game.Loot.rollEliteDrop) {
+      const ed = Game.Loot.rollEliteDrop(m.def);
+      for (let g = 0; g < ed.length; g++) items.push({ id: ed[g].id, count: ed[g].count, roll: ed[g].roll || null });
+    }
     for (let g = 0; g < items.length; g++) {
       Game.state.drops.push({ id: items[g].id, count: items[g].count, roll: items[g].roll || null, x: m.x + (Math.random() - 0.5) * 14, y: m.y + (Math.random() - 0.5) * 14 });
     }
@@ -368,8 +381,17 @@ Game.Mobs = (function () {
     if (Game.Net.isConnected() && Game.Net.host) Game.Net.sendMobDeath(m.x, m.y, items);
     Game.Render.spawnParticles(m.x, m.y, m.def.color, m.def.boss ? 40 : 10);
     Game.Render.spawnBlood(m.x, m.y, m.def.boss ? 24 : 8);
-    Game.Player.gainXP(Math.round((m.def.xp || 1) * (1 + (Game.state.ngLevel || 0) * 0.2))); // 強い敵(NG)ほど経験値増
+    Game.Player.gainXP(Math.round((m.def.xp || 1) * (1 + (Game.state.ngLevel || 0) * 0.2)) * (m.elite ? 3 : 1)); // 強い敵(NG)・精鋭ほど経験値増
     if (Game.Achievements && m.def.hostile) Game.Achievements.unlock('first_night');
+    // 精鋭撃破演出＆実績
+    if (m.elite) {
+      Game.Render.flash('#ffd86b');
+      Game.Render.spawnParticles(m.x, m.y, '#ffe27a', 22);
+      if (Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - m.def.size * 0.6, '精鋭撃破!', '#ffd86b', true);
+      Game.UI.toast('精鋭の' + m.def.name + 'を討伐！ 戦利品を得た');
+      Game.state.eliteKills = (Game.state.eliteKills || 0) + 1;
+      if (Game.Achievements) Game.Achievements.unlock('elite_hunter');
+    }
     if (m.def.boss) {
       if (m.type === 'sovereign') {
         Game.Render.flash('#c060ff');
@@ -399,9 +421,21 @@ Game.Mobs = (function () {
       const s = Game.Camera.worldToScreen(x, y);
       // 画面外スキップ
       if (s.x < -40 || s.y < -40 || s.x > Game.view.w + 40 || s.y > Game.view.h + 40) continue;
-      const r = m.def.size * 0.5;
+      const r = m.def.size * 0.5 * (m.elite ? 1.3 : 1);
       const hop = m.def.hop ? Math.abs(Math.sin(m.hopPhase)) * 5 : 0;
       ctx.save();
+      // 精鋭オーラ: 脈動する金色の発光リング
+      if (m.elite) {
+        m.auraPhase = (m.auraPhase || 0) + 0.08;
+        const pulse = 0.5 + Math.sin(m.auraPhase) * 0.5;
+        const ar = r * (1.7 + pulse * 0.25);
+        const grd = ctx.createRadialGradient(s.x, s.y - hop, r * 0.6, s.x, s.y - hop, ar);
+        grd.addColorStop(0, 'rgba(255,216,107,0)');
+        grd.addColorStop(0.7, 'rgba(255,216,107,' + (0.18 + pulse * 0.14) + ')');
+        grd.addColorStop(1, 'rgba(255,170,60,0)');
+        ctx.fillStyle = grd;
+        ctx.beginPath(); ctx.arc(s.x, s.y - hop, ar, 0, Math.PI * 2); ctx.fill();
+      }
       if (m.def.ghost) ctx.globalAlpha = 0.7 + Math.sin(m.hopPhase * 0.5) * 0.15;
       ctx.translate(s.x, s.y - hop);
       // 影

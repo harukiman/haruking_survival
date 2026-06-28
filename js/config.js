@@ -628,6 +628,9 @@ Game.TUNE = {
   ATTACK_COOLDOWN: 14,        // tick
   ATTACK_RANGE: 1.6,          // tile
   MOB_CAP: 16,
+  ELITE_CHANCE: 0.04,         // 非ボス敵対モブが精鋭(elite)化する確率
+  ELITE_HP_MULT: 2.2,         // 精鋭のHP倍率(インフレ防止: 控えめ)
+  ELITE_DMG_MULT: 1.5,        // 精鋭の攻撃倍率
   SPAWN_INTERVAL: 100,        // tick ごとにスポーン試行（密度を抑えめに）
   DESPAWN_TILES: 28,          // この距離超で消滅
   CROP_GROW_TICKS: 1400,      // 1段階の成長 tick
