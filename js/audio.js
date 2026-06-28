@@ -16,8 +16,12 @@ Game.Audio = (function () {
     animepop: { root: 293.66, scale: [0, 2, 4, 7, 9],        bpm: 120, wave: 'triangle', cut: 2600, kick: true, bassEvery: 4, arp: [0, 4, 7, 9, 7, 4], arpEvery: 1, noteVol: 0.045, bassVol: 0.04, kickVol: 0.10 },
     city:     { root: 261.63, scale: [0, 3, 5, 7, 10],       bpm: 92,  wave: 'sine', cut: 1400, kick: true, bassEvery: 4, arp: [0, 3, 7, 10], arpEvery: 2, noteVol: 0.038, bassVol: 0.05, kickVol: 0.07 },
     edm:      { root: 220.00, scale: [0, 3, 5, 7, 10],       bpm: 128, wave: 'sawtooth', cut: 2200, kick: true, bassEvery: 2, arp: [0, 0, 7, 5, 3, 3, 7, 10], arpEvery: 1, noteVol: 0.038, bassVol: 0.05, kickVol: 0.12 },
+    // エリア別（協和・低音量・耳に優しく）
+    space:    { root: 246.94, scale: [0, 2, 4, 6, 7, 9, 11],  bpm: 60,  wave: 'sine', cut: 1300, kick: false, bassEvery: 8, arp: [0, 4, 7, 11, 9, 7], arpEvery: 2, noteVol: 0.042, bassVol: 0.04, kickVol: 0 },     // 宇宙=幻想的(リディアン)
+    desert:   { root: 277.18, scale: [0, 1, 4, 5, 7, 8, 11],  bpm: 100, wave: 'triangle', cut: 1900, kick: true, bassEvery: 4, arp: [0, 4, 5, 8, 7, 4], arpEvery: 2, noteVol: 0.04, bassVol: 0.045, kickVol: 0.06 }, // 砂漠=エキゾチック(ダブルハーモニック)
+    snow:     { root: 261.63, scale: [0, 2, 4, 7, 9],         bpm: 66,  wave: 'sine', cut: 1200, kick: false, bassEvery: 8, arp: [0, 7, 9, 4, 7, 2], arpEvery: 2, noteVol: 0.04, bassVol: 0.038, kickVol: 0 },        // 雪原=静謐(ペンタ)
   };
-  const MOOD_GENRE = { day: 'animepop', night: 'city', shadow: 'classic', boss: 'edm' };
+  const MOOD_GENRE = { day: 'animepop', night: 'city', shadow: 'classic', boss: 'edm', space: 'space', desert: 'desert', snow: 'snow' };
 
   function ensure() {
     if (!ctx) {
@@ -151,8 +155,17 @@ Game.Audio = (function () {
     let boss = false;
     for (let i = 0; i < mobs.length; i++) if (mobs[i].def.boss) { boss = true; break; }
     if (boss) mood = 'boss';
+    else if (Game.state.worldName === 'space') mood = 'space';
     else if (Game.state.worldName === 'shadow') mood = 'shadow';
-    else if (Game.DayNight.isNight()) mood = 'night';
+    else {
+      // 光世界: バイオームで雪原/砂漠を優先、それ以外は昼夜
+      const TS = Game.CFG.TILE_SIZE, p = Game.state.player;
+      const g = Game.World.groundAt(Math.floor(p.x / TS), Math.floor(p.y / TS));
+      if (g === Game.TILE.SNOW) mood = 'snow';
+      else if (g === Game.TILE.SAND && !Game.DayNight.isNight()) mood = 'desert';
+      else if (Game.DayNight.isNight()) mood = 'night';
+      else mood = 'day';
+    }
     setMood(mood);
   }
 
