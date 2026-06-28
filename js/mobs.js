@@ -38,6 +38,20 @@ Game.Mobs = (function () {
         if (af.speed) m.eliteSpeedMult = af.speed;
         m.auraRGB = hexToRgb(af.aura);
       }
+      // チャンピオン: 精鋭の上位レア。2つ目のアフィックス＋固有名＋追加強化＋専用カラー
+      if (ak.length && Math.random() < (TUNE.CHAMPION_CHANCE || 0.08)) {
+        m.champion = true;
+        m.maxHp = m.hp = Math.round(m.maxHp * (TUNE.CHAMPION_HP_MULT || 1.6));
+        m.dmg = Math.round(m.dmg * (TUNE.CHAMPION_DMG_MULT || 1.2));
+        const others = ak.filter(function (k) { return k !== m.eliteAffix; });
+        if (others.length) {
+          m.eliteAffix2 = others[Math.floor(Math.random() * others.length)];
+          const af2 = Game.ELITE_AFFIXES[m.eliteAffix2];
+          if (af2.speed && !m.eliteSpeedMult) m.eliteSpeedMult = af2.speed;
+        }
+        m.championName = makeChampionName();
+        m.auraRGB = [255, 90, 200]; // チャンピオン専用カラー
+      }
     }
     Game.state.mobs.push(m);
     // ボス登場アニメムービー（種別ごと初回・ローカル再生）
@@ -150,6 +164,13 @@ Game.Mobs = (function () {
     return [parseInt(h.substr(0, 2), 16), parseInt(h.substr(2, 2), 16), parseInt(h.substr(4, 2), 16)];
   }
 
+  function hasAffix(m, key) { return m.eliteAffix === key || m.eliteAffix2 === key; }
+
+  function makeChampionName() {
+    const N = Game.CHAMPION_NAMES || { title: ['名もなき'], name: ['強者'] };
+    return N.title[Math.floor(Math.random() * N.title.length)] + N.name[Math.floor(Math.random() * N.name.length)];
+  }
+
   function moveMob(m, dx, dy, speed) {
     const len = Math.hypot(dx, dy);
     if (len < 0.001) return;
@@ -205,7 +226,7 @@ Game.Mobs = (function () {
       if (distP > TUNE.DESPAWN_TILES * TS) { mobs.splice(i, 1); continue; }
 
       // 精鋭アフィックス: 再生(不死) — 毎秒 最大HPの一定割合を回復
-      if (m.eliteAffix === 'regened' && m.hp < m.maxHp && Game.state.tick % 30 === 0) {
+      if (hasAffix(m, 'regened') && m.hp < m.maxHp && Game.state.tick % 30 === 0) {
         const af = Game.ELITE_AFFIXES.regened;
         m.hp = Math.min(m.maxHp, m.hp + Math.max(1, Math.round(m.maxHp * af.regenPct)));
       }
@@ -231,7 +252,7 @@ Game.Mobs = (function () {
           if (distP < (m.def.size * 0.5 + 12) && m.attackCd <= 0) {
             Game.Survival.damage(m.dmg || m.def.dmg, 'mob');
             if (m.def.inflict) for (const k in m.def.inflict) Game.Status.add(k, m.def.inflict[k]);
-            if (m.eliteAffix === 'blazing') Game.Status.add('burn', Game.ELITE_AFFIXES.blazing.burn); // 業火: 接触で炎上
+            if (hasAffix(m, 'blazing')) Game.Status.add('burn', Game.ELITE_AFFIXES.blazing.burn); // 業火: 接触で炎上
             m.attackCd = m.def.boss ? 30 : 42;
             const kl = distP || 1;
             p.x += (dxp / kl) * (m.def.boss ? 12 : 6); p.y += (dyp / kl) * (m.def.boss ? 12 : 6);
@@ -367,7 +388,7 @@ Game.Mobs = (function () {
     m.hp -= dmg;
     m.hurt = 8;
     // 棘鎧アフィックス: 被ダメの一定割合を反射
-    if (m.eliteAffix === 'thorns' && m.hp > 0) {
+    if (hasAffix(m, 'thorns') && m.hp > 0) {
       const refl = Math.max(1, Math.round(dmg * Game.ELITE_AFFIXES.thorns.thorns));
       Game.Survival.damage(refl, 'thorns');
     }
@@ -413,21 +434,35 @@ Game.Mobs = (function () {
     if (m.elite) {
       const af = m.eliteAffix && Game.ELITE_AFFIXES[m.eliteAffix];
       const prefix = af ? af.name : '精鋭の';
-      const auraC = af ? af.aura : '#ffd86b';
+      const auraC = m.champion ? '#ff5ac8' : (af ? af.aura : '#ffd86b');
       Game.Render.flash(auraC);
-      Game.Render.spawnParticles(m.x, m.y, auraC, 22);
-      if (Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - m.def.size * 0.6, '精鋭撃破!', '#ffd86b', true);
-      Game.UI.toast(prefix + m.def.name + 'を討伐！ 戦利品を得た');
+      Game.Render.spawnParticles(m.x, m.y, auraC, m.champion ? 44 : 22);
       Game.state.eliteKills = (Game.state.eliteKills || 0) + 1;
       if (Game.Achievements) Game.Achievements.unlock('elite_hunter');
+      if (m.champion) {
+        // チャンピオン: 確定で複数レア戦利品(高品質ギア2点＋宝珠＋低確率で書)を地面に生成
+        const champDrops = [];
+        if (Game.Loot.rollEliteDrop) { champDrops.push.apply(champDrops, Game.Loot.rollEliteDrop(m.def)); champDrops.push.apply(champDrops, Game.Loot.rollEliteDrop(m.def)); }
+        champDrops.push({ id: 'xp_orb', count: 1 });
+        if (Math.random() < 0.25) champDrops.push({ id: 'wisdom_tome', count: 1 });
+        for (let g = 0; g < champDrops.length; g++) Game.state.drops.push({ id: champDrops[g].id, count: champDrops[g].count, roll: champDrops[g].roll || null, x: m.x + (Math.random() - 0.5) * 22, y: m.y + (Math.random() - 0.5) * 22 });
+        Game.Player.gainXP(Math.round((m.def.xp || 1) * 5)); // チャンピオンは追加経験値
+        if (Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - m.def.size * 0.7, 'CHAMPION撃破!!', '#ff8ad8', true);
+        Game.UI.toast('★ ' + (m.championName || 'チャンピオン') + ' を討伐！ 財宝を手にした');
+        Game.state.championKills = (Game.state.championKills || 0) + 1;
+        if (Game.Achievements) Game.Achievements.unlock('champion_slayer');
+      } else {
+        if (Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - m.def.size * 0.6, '精鋭撃破!', '#ffd86b', true);
+        Game.UI.toast(prefix + m.def.name + 'を討伐！ 戦利品を得た');
+      }
       // 分裂アフィックス: 弱体な分身を2体生成
-      if (m.eliteAffix === 'splitting' && !m.isSplit) {
+      if (hasAffix(m, 'splitting') && !m.isSplit) {
         const n = Game.ELITE_AFFIXES.splitting.split || 2;
         for (let k = 0; k < n; k++) {
           spawnMob(m.type, m.x + (Math.random() - 0.5) * 36, m.y + (Math.random() - 0.5) * 36);
           const c = Game.state.mobs[Game.state.mobs.length - 1];
           if (c && c.type === m.type) {
-            c.elite = false; c.eliteAffix = null; c.eliteSpeedMult = 0; c.isSplit = true;
+            c.elite = false; c.champion = false; c.eliteAffix = null; c.eliteAffix2 = null; c.eliteSpeedMult = 0; c.isSplit = true;
             c.maxHp = c.hp = Math.max(1, Math.round((m.def.hp || 4) * 0.4));
             c.dmg = Math.max(1, Math.round((m.def.dmg || 2) * 0.6));
           }
@@ -463,7 +498,7 @@ Game.Mobs = (function () {
       const s = Game.Camera.worldToScreen(x, y);
       // 画面外スキップ
       if (s.x < -40 || s.y < -40 || s.x > Game.view.w + 40 || s.y > Game.view.h + 40) continue;
-      const r = m.def.size * 0.5 * (m.elite ? 1.3 : 1);
+      const r = m.def.size * 0.5 * (m.champion ? 1.55 : m.elite ? 1.3 : 1);
       const hop = m.def.hop ? Math.abs(Math.sin(m.hopPhase)) * 5 : 0;
       ctx.save();
       // 精鋭オーラ: 脈動する金色の発光リング

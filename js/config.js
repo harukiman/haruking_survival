@@ -1,6 +1,12 @@
 // config.js — 全定数とゲームデータ（ロジック無し）
 window.Game = window.Game || {};
 
+// チャンピオン(named champion): 精鋭の上位レア個体。固有名の構成パーツ。
+Game.CHAMPION_NAMES = {
+  title: ['灰燼の', '深淵の', '業火の', '永久の', '血塗れの', '嵐呼びの', '骸の', '虚無の', '黄昏の', '星喰いの'],
+  name:  ['グラル', 'ヴォルグ', 'ザイン', 'モルガ', 'ドレク', 'ネブロス', 'カイン', 'ルゴス', 'ヴェイン', 'オルガ'],
+};
+
 // 精鋭(elite)個体の特殊変異アフィックス。spawn時に1つ抽選 → 名前接頭辞/オーラ色/固有効果。
 Game.ELITE_AFFIXES = {
   swift:     { name:'俊足の',   aura:'#5fffd0', speed:1.45 },                  // 移動速度UP
@@ -640,6 +646,9 @@ Game.TUNE = {
   ELITE_CHANCE: 0.04,         // 非ボス敵対モブが精鋭(elite)化する確率
   ELITE_HP_MULT: 2.2,         // 精鋭のHP倍率(インフレ防止: 控えめ)
   ELITE_DMG_MULT: 1.5,        // 精鋭の攻撃倍率
+  CHAMPION_CHANCE: 0.08,      // 精鋭がさらにチャンピオン(named champion)化する確率
+  CHAMPION_HP_MULT: 1.6,      // チャンピオン追加HP倍率
+  CHAMPION_DMG_MULT: 1.2,     // チャンピオン追加攻撃倍率
   SPAWN_INTERVAL: 100,        // tick ごとにスポーン試行（密度を抑えめに）
   DESPAWN_TILES: 28,          // この距離超で消滅
   CROP_GROW_TICKS: 1400,      // 1段階の成長 tick

@@ -56,6 +56,7 @@ window.Game = window.Game || {};
       bossSeen: {},
       bestiary: {},
       eliteKills: 0,
+      championKills: 0,
       questIndex: 0,
       questDone: {},
       reunified: false,
@@ -149,6 +150,7 @@ window.Game = window.Game || {};
     Game.state.bossSeen = data.bossSeen || {};
     Game.state.bestiary = data.bestiary || {};
     Game.state.eliteKills = data.eliteKills || 0;
+    Game.state.championKills = data.championKills || 0;
     Game.state.questIndex = data.questIndex || 0;
     Game.state.questDone = data.questDone || {};
     Game.state.reunified = !!data.reunified;

@@ -157,9 +157,14 @@ Game.UI = (function () {
     if (!bbEl || !Game.state) return;
     const mobs = Game.state.mobs; let boss = null;
     for (let i = 0; i < mobs.length; i++) { const m = mobs[i]; if (m.def && m.def.boss) { if (!boss || m.maxHp > boss.maxHp) boss = m; } }
-    if (!boss) { if (!bbEl.classList.contains('hidden')) bbEl.classList.add('hidden'); return; }
+    // ボスが居なければチャンピオン(ネームド精鋭)をバー表示
+    if (!boss) { for (let i = 0; i < mobs.length; i++) { const m = mobs[i]; if (m.champion) { if (!boss || m.maxHp > boss.maxHp) boss = m; } } }
+    if (!boss) { if (!bbEl.classList.contains('hidden')) bbEl.classList.add('hidden'); bbEl.classList.remove('champion'); return; }
     bbEl.classList.remove('hidden');
-    if (bbName.textContent !== boss.def.name) bbName.textContent = boss.def.name;
+    const isChamp = !boss.def.boss;
+    bbEl.classList.toggle('champion', isChamp);
+    const nm = isChamp ? (boss.championName || 'チャンピオン') : boss.def.name;
+    if (bbName.textContent !== nm) bbName.textContent = nm;
     bbFill.style.width = Math.max(0, boss.hp / boss.maxHp * 100) + '%';
   }
 
@@ -256,7 +261,7 @@ Game.UI = (function () {
       const types = Object.keys(Game.MOBS).filter(function (id) { return !Game.MOBS[id].npc; });
       const found = types.filter(function (id) { return best[id]; }).length;
       h += '<h2>魔物図鑑 <span style="color:#ffe27a;font-size:.9rem">' + found + ' / ' + types.length + '</span></h2>';
-      h += '<div class="ach-d" style="margin:2px 0 6px">✦ 精鋭個体 討伐数: <b style="color:#ffd86b">' + (Game.state.eliteKills || 0) + '</b></div>';
+      h += '<div class="ach-d" style="margin:2px 0 6px">✦ 精鋭個体 討伐数: <b style="color:#ffd86b">' + (Game.state.eliteKills || 0) + '</b>　★ チャンピオン: <b style="color:#ff8ad8">' + (Game.state.championKills || 0) + '</b></div>';
       h += '<div class="ach-list">';
       types.forEach(function (id) {
         const m = Game.MOBS[id], got = best[id];

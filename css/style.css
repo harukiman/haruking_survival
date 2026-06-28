@@ -170,6 +170,11 @@ body.left-handed #action-btns { right: auto; left: calc(12px + env(safe-area-ins
 #boss-bar-name { color: #ffe0e0; font-size: .9rem; font-weight: 800; letter-spacing: 1px; text-shadow: 0 2px 4px #000, 0 0 8px rgba(200,60,90,0.6); margin-bottom: 3px; }
 #boss-bar-track { height: 13px; background: rgba(8,10,16,0.7); border: 1px solid #6a2030; border-radius: 7px; overflow: hidden; box-shadow: 0 0 10px rgba(200,40,70,0.4); }
 #boss-bar-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #7a1024, #e0304a 60%, #ff6a7a); transition: width .18s; }
+/* チャンピオン(ネームド精鋭)バー: マゼンタ/金の専用配色 */
+#boss-bar.champion #boss-bar-name { color: #ffdcff; text-shadow: 0 2px 4px #000, 0 0 8px rgba(255,120,220,0.7); }
+#boss-bar.champion #boss-bar-name::before { content: '★ '; color: #ffd86b; }
+#boss-bar.champion #boss-bar-track { border-color: #a040a0; box-shadow: 0 0 10px rgba(255,90,200,0.45); }
+#boss-bar.champion #boss-bar-fill { background: linear-gradient(90deg, #6a1060, #c040b0 55%, #ffb0e8); }
 #quest-tracker { position: absolute; bottom: 66px; left: 50%; transform: translateX(-50%); z-index: 18;
   background: rgba(8,12,20,0.7); border: 1px solid #3a4a64; color: #ffe9a0; font-size: .8rem;
   padding: 5px 14px; border-radius: 20px; max-width: 64vw; white-space: nowrap; overflow: hidden;
