@@ -38,6 +38,7 @@ Game.OBJ = {
   ROCKET:127, STAR_ORE:128,
   // 家具・家作り
   HEALING_TOTEM:129, STREET_LAMP:130, TABLE:131, CHAIR:132, BOOKSHELF:133, GLASS:134, RUG:135,
+  TOMB_WALL:136, FORGE_WALL:137,
 };
 
 // 地面の色（手続き描画のベース）
@@ -160,6 +161,8 @@ Game.OBJ_META = {
   // ダンジョン
   [Game.OBJ.DUNGEON_WALL]:{ name:'遺跡の壁', solid:true, mineable:true, tool:'pickaxe', tier:2, hp:20, drops:[{item:'stone', n:[1,2]}], render:'dwall' },
   [Game.OBJ.ICE_WALL]:   { name:'氷壁', solid:true, mineable:true, tool:'pickaxe', tier:1, hp:14, drops:[{item:'stone', n:[0,1]}], render:'icewall' },
+  [Game.OBJ.TOMB_WALL]:  { name:'砂岩の壁', solid:true, mineable:true, tool:'pickaxe', tier:2, hp:18, drops:[{item:'stone', n:[1,2]},{item:'gold_ore', n:[0,1]}], render:'twall' },
+  [Game.OBJ.FORGE_WALL]: { name:'溶岩岩の壁', solid:true, mineable:true, tool:'pickaxe', tier:3, hp:24, drops:[{item:'stone', n:[1,2]},{item:'iron_ore', n:[0,1]}], render:'fwall' },
   [Game.OBJ.SPAWNER]:    { name:'魔物の巣', solid:true, mineable:true, tool:'pickaxe', tier:2, hp:16, light:3, drops:[{item:'bone', n:[1,3]},{item:'shadow_shard', n:[0,1]}], render:'spawner', spawner:true },
   // ロケット/宇宙
   [Game.OBJ.ROCKET]:     { name:'ロケット', solid:true, mineable:true, tool:'pickaxe', tier:1, hp:30, light:6, drops:[{item:'rocket', n:[1,1]}], render:'rocket_obj', rocket:true },

@@ -51,20 +51,35 @@ Game.WorldGen = (function () {
       return { ground: ground, obj: O.STELA };
     }
 
-    // ダンジョン（両世界・複数種: 遺跡/氷窟/影の神殿）
+    // ダンジョン（両世界・テーマ＆サイズ複数種: 遺跡/氷窟/砂の墳墓/溶岩工房）
     if (ground !== T.DEEP_WATER && ground !== T.WATER) {
       const DG = 74;
       const ax = Math.round(wx / DG) * DG, ay = Math.round(wy / DG) * DG;
       if (U.hash3(ax, ay, seed + 8888) < 0.085) {
-        const dx = wx - ax, dy = wy - ay, hw = 5, hh = 4;
+        // サイズ: 約1/3 を大型(8x6)に。大型は巣2・宝箱複数・柱あり
+        const big = U.hash3(ax, ay, seed + 1212) < 0.34;
+        const hw = big ? 8 : 5, hh = big ? 6 : 4;
+        const dx = wx - ax, dy = wy - ay;
         if (Math.abs(dx) <= hw && Math.abs(dy) <= hh) {
-          const ice = ground === T.SNOW;
-          const wall = ice ? O.ICE_WALL : O.DUNGEON_WALL;
+          // テーマを地形で決定
+          let wall;
+          if (ground === T.SNOW) wall = O.ICE_WALL;
+          else if (ground === T.SAND) wall = O.TOMB_WALL;
+          else if (ground === T.STONE) wall = O.FORGE_WALL;
+          else wall = O.DUNGEON_WALL;
           const edge = Math.abs(dx) === hw || Math.abs(dy) === hh;
           const entrance = dy === hh && Math.abs(dx) <= 1; // 下側に入口
           if (edge && !entrance) return { ground: T.DUNGEON_FLOOR, obj: wall };
+          // 中央: 宝箱
           if (dx === 0 && dy === 0) return { ground: T.DUNGEON_FLOOR, obj: O.TREASURE_CHEST };
-          if (dy === 0 && Math.abs(dx) === 3) return { ground: T.DUNGEON_FLOOR, obj: O.SPAWNER };
+          // 巣: 標準は左右、大型は四隅寄り＋追加宝箱
+          if (!big && dy === 0 && Math.abs(dx) === 3) return { ground: T.DUNGEON_FLOOR, obj: O.SPAWNER };
+          if (big) {
+            if (Math.abs(dx) === 5 && Math.abs(dy) === 3) return { ground: T.DUNGEON_FLOOR, obj: O.SPAWNER };
+            if (Math.abs(dx) === 6 && dy === 0) return { ground: T.DUNGEON_FLOOR, obj: O.TREASURE_CHEST };
+            // 柱
+            if (Math.abs(dx) === 3 && Math.abs(dy) === 3) return { ground: T.DUNGEON_FLOOR, obj: wall };
+          }
           const rh = U.hash3(wx, wy, seed + 99);
           return { ground: T.DUNGEON_FLOOR, obj: rh < 0.05 ? O.ROCK : O.NONE };
         }
