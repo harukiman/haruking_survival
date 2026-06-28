@@ -124,11 +124,18 @@ Game.Loot = (function () {
 
   // モブの強さに応じた装備ベース
   function gearPoolFor(def) {
-    const xp = def.xp || 1;
+    // プロシージャル生成装備から、敵の強さに応じたティア帯を抽選
+    const G = Game.GEN_BY_TIER;
+    if (G) {
+      const xp = def.xp || 1;
+      const maxT = def.boss ? 5 : xp <= 2 ? 2 : xp <= 4 ? 3 : xp <= 8 ? 4 : 5;
+      const pool = [];
+      for (let t = 1; t <= maxT; t++) if (G[t]) for (let i = 0; i < G[t].length; i++) pool.push(G[t][i]);
+      if (pool.length) return pool;
+    }
     if (def.boss) return ['shadow_blade', 'shadow_chest', 'shadow_helmet', 'iron_sword'];
-    if (xp <= 2) return ['wood_sword', 'leather_helmet', 'leather_chest'];
-    if (xp <= 4) return ['stone_sword', 'iron_helmet', 'leather_chest', 'wood_sword'];
-    return ['iron_sword', 'iron_chest', 'iron_helmet', 'shadow_blade', 'shadow_helmet', 'shadow_chest'];
+    if ((def.xp || 1) <= 2) return ['wood_sword', 'leather_helmet', 'leather_chest'];
+    return ['iron_sword', 'iron_chest', 'iron_helmet'];
   }
 
   // モブ撃破時の装備ドロップ（ground drop配列にpush）

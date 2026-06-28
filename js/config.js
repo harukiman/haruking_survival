@@ -617,3 +617,45 @@ Game.ITEM_GLYPH = {
 Game.INV_SIZE = 36;       // 先頭9 = ホットバー
 Game.HOTBAR_SIZE = 9;
 Game.DAY_LENGTH = 24000;  // 1日のtick数（昼夜は次波で本格化）
+
+// ===== P34 プロシージャル装備生成（ベース×素材ティア×接頭辞で500種超／ドロップ専用）=====
+(function generateGear() {
+  const WBASES = [
+    { k: 'sword', jp: '剣', atk: 4 }, { k: 'axe', jp: '斧', atk: 5 }, { k: 'hammer', jp: '槌', atk: 6 },
+    { k: 'spear', jp: '槍', atk: 4 }, { k: 'dagger', jp: '短剣', atk: 3 },
+  ];
+  const ABASES = [{ k: 'helmet', jp: '兜', slot: 'head', armor: 1 }, { k: 'chest', jp: '鎧', slot: 'chest', armor: 2 }];
+  const TIERS = [
+    { k: 'wood', jp: '木', m: 0.8, c: '#9c6b3f', t: 1 }, { k: 'stone', jp: '石', m: 1.0, c: '#888d91', t: 1 },
+    { k: 'iron', jp: '鉄', m: 1.4, c: '#d8d8dc', t: 2 }, { k: 'steel', jp: '鋼', m: 1.8, c: '#b8bcc0', t: 3 },
+    { k: 'gold', jp: '金', m: 2.0, c: '#e8c54a', t: 3 }, { k: 'shadowsteel', jp: '影鋼', m: 2.4, c: '#6a5a8a', t: 4 },
+    { k: 'crystal', jp: '影晶', m: 2.9, c: '#b86ad0', t: 4 }, { k: 'star', jp: '星鋼', m: 3.4, c: '#aee0ff', t: 5 },
+    { k: 'void', jp: '虚空', m: 4.0, c: '#5a3a8a', t: 5 },
+  ];
+  const AFFIX = [
+    { k: '', jp: '', atk: 0, armor: 0 }, { k: 'flame', jp: '業火の', atk: 2, c: '#ff7a3c' },
+    { k: 'frost', jp: '氷結の', atk: 1, c: '#9fd8ff' }, { k: 'gale', jp: '疾風の', atk: 1, c: '#bfe8d8' },
+    { k: 'king', jp: '王の', atk: 3, armor: 1, c: '#e8c54a' }, { k: 'eternal', jp: '不滅の', armor: 2, c: '#cfd6e0' },
+    { k: 'moon', jp: '月光の', atk: 1, armor: 1, c: '#cdd8ff' }, { k: 'abyss', jp: '深淵の', atk: 2, armor: 1, c: '#7a4fb0' },
+  ];
+  Game.GEN_ITEMS = []; Game.GEN_BY_TIER = { 1: [], 2: [], 3: [], 4: [], 5: [] };
+  function reg(id, def, t) { if (Game.ITEMS[id]) return; def.gen = true; def.dropOnly = true; def.craftable = false; Game.ITEMS[id] = def; Game.GEN_ITEMS.push(id); Game.GEN_BY_TIER[t].push(id); }
+  WBASES.forEach(function (B) {
+    TIERS.forEach(function (T) {
+      AFFIX.forEach(function (A) {
+        const id = 'gen_' + B.k + '_' + T.k + (A.k ? '_' + A.k : '');
+        const atk = Math.max(1, Math.round(B.atk * T.m) + (A.atk || 0) + T.t);
+        reg(id, { name: (A.jp || '') + T.jp + 'の' + B.jp, stack: 1, color: A.c || T.c, tool: 'sword', tier: Math.min(5, T.t), attack: atk }, T.t);
+      });
+    });
+  });
+  ABASES.forEach(function (B) {
+    TIERS.forEach(function (T) {
+      AFFIX.forEach(function (A) {
+        const id = 'gen_' + B.k + '_' + T.k + (A.k ? '_' + A.k : '');
+        const arm = Math.max(1, Math.round(B.armor * T.m) + (A.armor || 0));
+        reg(id, { name: (A.jp || '') + T.jp + 'の' + B.jp, stack: 1, color: A.c || T.c, armor: arm, slot: B.slot, tier: Math.min(5, T.t) }, T.t);
+      });
+    });
+  });
+})();

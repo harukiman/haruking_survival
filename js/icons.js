@@ -24,7 +24,8 @@ Game.Icons = (function () {
       if (/hammer|戦鎚|magma_hammer|war_hammer/.test(id)) return 'hammer';
       if (/spear|槍|chitin_spear|gae_bolg/.test(id)) return 'spear';
       if (/club|bone_club|棍/.test(id)) return 'club';
-      if (/boomerang|_axe$/.test(id)) return 'axe';
+      if (/axe|boomerang|斧/.test(id)) return 'axe';
+      if (/dagger|短剣/.test(id)) return 'sword';
       return 'sword';
     }
     if (def.armor != null) return def.slot === 'head' ? 'helmet' : 'chest';
