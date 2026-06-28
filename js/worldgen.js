@@ -52,18 +52,20 @@ Game.WorldGen = (function () {
     }
 
     if (shadow) {
+      // 深層は鉱脈が濃くなる
+      const deep = Math.max(Math.abs(wx), Math.abs(wy)) >= Game.TUNE.DEEP_THRESHOLD;
       if (ground === T.FOREST || ground === T.GRASS) {
         if (h < 0.16) obj = O.SHADOW_TREE;
-        else if (h < 0.22) obj = O.SHADOW_CRYSTAL;
-        else if (h < 0.27) obj = O.SOUL_FLOWER;
+        else if (h < (deep ? 0.30 : 0.22)) obj = O.SHADOW_CRYSTAL;
+        else if (h < 0.35) obj = O.SOUL_FLOWER;
       } else if (ground === T.STONE || ground === T.SNOW) {
         if (h < 0.14) obj = O.VOID_ROCK;
-        else if (h < 0.22) obj = O.SHADOW_CRYSTAL;
-        else if (h < 0.25) obj = O.LUMEN_ORE;
-        else if (h < 0.275) obj = O.PHANTOM_ORE;
+        else if (h < (deep ? 0.34 : 0.22)) obj = O.SHADOW_CRYSTAL;
+        else if (h < (deep ? 0.42 : 0.25)) obj = O.LUMEN_ORE;
+        else if (h < (deep ? 0.47 : 0.275)) obj = O.PHANTOM_ORE;
       } else if (ground === T.SAND) {
         if (h < 0.05) obj = O.VOID_ROCK;
-        else if (h < 0.07) obj = O.SHADOW_CRYSTAL;
+        else if (h < (deep ? 0.12 : 0.07)) obj = O.SHADOW_CRYSTAL;
       }
       return { ground: ground, obj: obj };
     }

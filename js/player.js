@@ -17,7 +17,8 @@ Game.Player = (function () {
       invuln: 0, hotbarIndex: 0,
       attackCd: 0,
       xp: 0, level: 1, xpNext: 5,
-      armor: { head: null, chest: null },
+      baseMaxHealth: 100,
+      armor: { head: null, chest: null }, // {id, roll} インスタンス
     };
   }
 
@@ -190,7 +191,7 @@ Game.Player = (function () {
     if (def.ending) { Game.Quests.reunify(); return; }
     if (def.shift) { Game.World.shift(); return; }
     if (def.food) { Game.Inventory.useSelected(); return; }
-    if (def.armor) { equipArmor(sel.id); return; }
+    if (def.armor) { equipSelectedArmor(); return; }
     if (def.tool === 'hoe' && obj === Game.OBJ.NONE) {
       const g = Game.World.groundAt(t.tx, t.ty);
       if (g === Game.TILE.GRASS || g === Game.TILE.DIRT || g === Game.TILE.FOREST) { Game.Farming.till(t.tx, t.ty); return; }
@@ -226,26 +227,60 @@ Game.Player = (function () {
       const it = pool[Math.floor(Math.random() * pool.length)];
       arr[i] = { id: it[0], count: it[1] + Math.floor(Math.random() * (it[2] - it[1] + 1)) };
     }
+    // 宝箱には rolled装備を1つ（やや良質）
+    const gearPool = ['iron_sword', 'iron_chest', 'iron_helmet', 'shadow_blade', 'shadow_helmet'];
+    const gid = gearPool[Math.floor(Math.random() * gearPool.length)];
+    arr[n] = { id: gid, count: 1, roll: Game.Loot.roll(gid, 0.3 + Game.Loot.lootBonus()) };
     return arr;
   }
 
-  function equipArmor(id) {
-    const def = Game.ITEMS[id];
-    const slot = def.slot;
-    const prev = Game.state.player.armor[slot];
-    Game.Inventory.remove(id, 1);
-    Game.state.player.armor[slot] = id;
-    if (prev) Game.Inventory.add(prev, 1);
+  // 選択中(ホットバー)の防具を装備。前装備はインベントリへ戻す
+  function equipSelectedArmor() {
+    const p = Game.state.player;
+    const idx = p.hotbarIndex;
+    const slot = Game.Inventory.slots()[idx];
+    if (!slot) return;
+    const def = Game.ITEMS[slot.id];
+    if (!def || !def.armor || !def.slot) return;
+    const prev = p.armor[def.slot];
+    p.armor[def.slot] = { id: slot.id, roll: slot.roll || null };
+    Game.Inventory.slots()[idx] = prev ? { id: prev.id, count: 1, roll: prev.roll || null } : null;
+    applyEquipStats();
     Game.Audio.play('equip');
-    Game.UI.toast(def.name + ' を装備');
+    Game.UI.toast(Game.Loot.displayName(p.armor[def.slot]) + ' を装備');
+    Game.UI.refreshAll();
+  }
+
+  function equipFromInventory(idx) {
+    const slot = Game.Inventory.slots()[idx];
+    if (!slot) return;
+    const def = Game.ITEMS[slot.id];
+    if (!def || !def.armor || !def.slot) return;
+    const p = Game.state.player;
+    const prev = p.armor[def.slot];
+    p.armor[def.slot] = { id: slot.id, roll: slot.roll || null };
+    Game.Inventory.slots()[idx] = prev ? { id: prev.id, count: 1, roll: prev.roll || null } : null;
+    applyEquipStats();
+    Game.Audio.play('equip');
+    Game.UI.toast(Game.Loot.displayName(p.armor[def.slot]) + ' を装備');
     Game.UI.refreshAll();
   }
 
   function totalArmor() {
     const a = Game.state.player.armor;
     let s = 0;
-    for (const k in a) if (a[k] && Game.ITEMS[a[k]]) s += Game.ITEMS[a[k]].armor;
+    for (const k in a) if (a[k]) s += Game.Loot.stats(a[k]).armor;
     return s;
+  }
+
+  // 装備由来の最大HP等を反映
+  function applyEquipStats() {
+    const p = Game.state.player;
+    let hpBonus = 0;
+    for (const k in p.armor) if (p.armor[k]) hpBonus += Game.Loot.stats(p.armor[k]).hp;
+    const base = p.baseMaxHealth || 100;
+    p.maxHealth = base + hpBonus;
+    if (p.health > p.maxHealth) p.health = p.maxHealth;
   }
 
   function sleep() {
@@ -265,7 +300,9 @@ Game.Player = (function () {
     p.xp += n;
     while (p.xp >= p.xpNext) {
       p.xp -= p.xpNext; p.level++; p.xpNext = 5 + p.level * 3;
-      p.maxHealth += 2; p.health = p.maxHealth;
+      p.baseMaxHealth = (p.baseMaxHealth || 100) + 2;
+      applyEquipStats();
+      p.health = p.maxHealth;
       Game.Audio.play('levelup');
       Game.UI.toast('レベルアップ！ Lv.' + p.level);
       if (Game.Achievements && p.level >= 5) Game.Achievements.unlock('level5');
@@ -292,15 +329,22 @@ Game.Player = (function () {
       const dist = Math.hypot(dx, dy);
       if (dist < PR * 2.2) { d.x += dx * 0.18; d.y += dy * 0.18; }
       if (dist < 16) {
-        const overflow = Game.Inventory.add(d.id, d.count);
-        if (overflow === 0) { drops.splice(i, 1); Game.Audio.play('pickup'); Game.UI.refreshHotbar(); }
-        else d.count = overflow;
+        if (d.roll) {
+          if (Game.Inventory.addInstance(d)) {
+            drops.splice(i, 1); Game.Audio.play('pickup'); Game.UI.refreshHotbar();
+            Game.UI.toast('入手: ' + Game.Loot.displayName(d) + '（' + Game.Loot.rarityName(d) + '）');
+          }
+        } else {
+          const overflow = Game.Inventory.add(d.id, d.count);
+          if (overflow === 0) { drops.splice(i, 1); Game.Audio.play('pickup'); Game.UI.refreshHotbar(); }
+          else d.count = overflow;
+        }
       }
     }
   }
 
   return {
     makeDefault, spawnAt, update, targetTile, mining, playerTile, breakBlock,
-    interact, gainXP, totalArmor, sleep, equipArmor,
+    interact, gainXP, totalArmor, sleep, equipSelectedArmor, equipFromInventory, applyEquipStats,
   };
 })();

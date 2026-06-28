@@ -28,9 +28,15 @@ Game.Combat = (function () {
     }
     if (!best) return false;
 
-    const sel = Game.Inventory.selectedItemDef();
-    const dmg = (sel && sel.attack) ? sel.attack : 1; // 素手=1
+    const slot = Game.Inventory.selectedSlot();
+    const st = Game.Loot.stats(slot);
+    const dmg = st.atk > 0 ? st.atk : 1; // 素手=1
     Game.Mobs.damageMob(best, dmg, p.x, p.y);
+    // 吸血
+    if (st.lifesteal > 0 && p.health < p.maxHealth) {
+      p.health = Math.min(p.maxHealth, p.health + Math.max(1, Math.round(dmg * st.lifesteal)));
+      Game.UI.refreshStats();
+    }
     p.attackCd = Game.TUNE.ATTACK_COOLDOWN;
     Game.Audio.play('swing');
     return true;

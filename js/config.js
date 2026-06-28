@@ -269,6 +269,8 @@ Game.MOBS = {
   // ボスと手下
   sovereign:{ name:'影の主', hostile:true, hp:260, speed:1.4, color:'#7a30c0', size:30, drops:[{item:'shadow_core',n:[2,4]},{item:'shadow_steel',n:[4,8]},{item:'shadow_crystal',n:[5,10]}], dmg:10, xp:60, shadow:true, boss:true },
   shadow_spawn:{ name:'影の落とし子', hostile:true, hp:6, speed:2.4, color:'#5a3a8a', size:8, drops:[{item:'shadow_shard',n:[0,1]}], dmg:3, xp:1, shadow:true, ghost:true },
+  // 深層の徘徊者（影の深層でのみ出現）
+  abyss_stalker:{ name:'深淵の徘徊者', hostile:true, hp:34, speed:2.0, color:'#48206a', size:15, drops:[{item:'shadow_crystal',n:[1,3]},{item:'lumen',n:[0,2]},{item:'shadow_core',n:[0,1]}], dmg:8, xp:8, shadow:true },
 };
 
 // 防具スロット
@@ -287,6 +289,9 @@ Game.TUNE = {
   SHADOW_AMBIENT: 0.55,       // 影世界の常時暗さ（光源で打ち消す）
   SANITY_MAX: 100,
   SANITY_DRAIN: 0.04,         // 影世界滞在で毎tick減る正気度（護符/光で緩和）
+  DEEP_THRESHOLD: 120,        // 影世界でこのタイル距離超えると深層
+  NG_HP_PER: 0.25,            // NG+1ごとの敵HP/攻撃倍率増
+  NG_SANITY_PER: 0.2,         // NG+1ごとの正気消費倍率増
 };
 
 // 起動時に付与する初期アイテム（チュートリアル簡略化のため最低限）

@@ -49,6 +49,9 @@ Game.UI = (function () {
     document.getElementById('btn-ending-continue').addEventListener('click', function () {
       el.endingScreen.classList.add('hidden'); Game.state.paused = false;
     });
+    document.getElementById('btn-ending-ngplus').addEventListener('click', function () {
+      el.endingScreen.classList.add('hidden'); Game.startNGPlus();
+    });
     buildHotbar();
     // モバイル端末ならタッチUI表示
     if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
@@ -80,7 +83,11 @@ Game.UI = (function () {
     const def = Game.ITEMS[stack.id];
     const col = (def && def.color) || '#888';
     const cnt = stack.count > 1 ? '<span class="cnt">' + stack.count + '</span>' : '';
-    return '<span class="icon" style="background:' + col + '" title="' + (def ? def.name : stack.id) + '"></span>' + cnt;
+    // rolled装備はレアリティ色のリング
+    let ring = '';
+    if (stack.roll) ring = ';box-shadow:0 0 0 2px ' + Game.Loot.rarityColor(stack) + ',0 0 6px ' + Game.Loot.rarityColor(stack);
+    const title = stack.roll ? Game.Loot.displayName(stack) : (def ? def.name : stack.id);
+    return '<span class="icon" style="background:' + col + ring + '" title="' + title + '"></span>' + cnt;
   }
 
   function refreshHotbar() {
@@ -114,7 +121,10 @@ Game.UI = (function () {
   function refreshWorld() {
     if (!el.world) return;
     const shadow = Game.state.worldName === 'shadow';
-    el.world.textContent = shadow ? '影の世界' : '光の世界';
+    let label = shadow ? '影の世界' : '光の世界';
+    if (shadow && Game.World.inDepths()) label = '影の深層';
+    if (Game.state.ngLevel > 0) label += ' NG+' + Game.state.ngLevel;
+    el.world.textContent = label;
     el.world.className = shadow ? 'world-shadow' : 'world-light';
     document.body.classList.toggle('shadow-mode', shadow);
     refreshStats();
@@ -135,14 +145,14 @@ Game.UI = (function () {
             const st = Game.Inventory.slots()[idx];
             if (!st) return;
             const def = Game.ITEMS[st.id];
-            if (def && def.food) {
-              // 食べる
-              const tmp = Game.state.player.hotbarIndex;
-              Game.state.player.hotbarIndex = -1;
+            if (def && def.armor && def.slot) {
+              Game.Player.equipFromInventory(idx); // 防具はタップで装備
+            } else if (def && (def.attack != null)) {
+              toast(Game.Loot.displayName(st) + ' — ' + Game.Loot.statText(st)); // 武器はステ表示
+            } else if (def && def.food) {
               if (st.count > 0 && Game.state.player.hunger < Game.state.player.maxHunger) {
                 Game.Survival.eat(def.food); Game.Inventory.remove(st.id, 1); Game.Audio.play('eat'); refreshAll();
               }
-              Game.state.player.hotbarIndex = tmp;
             }
           };
         })(i));

@@ -45,6 +45,15 @@ Game.Inventory = (function () {
     return n;
   }
 
+  // rolled装備など個別インスタンスを空きスロットへ（スタックしない）。成功でtrue
+  function addInstance(slot) {
+    const s = slots();
+    for (let i = 0; i < s.length; i++) {
+      if (!s[i]) { s[i] = { id: slot.id, count: 1, roll: slot.roll || null }; return true; }
+    }
+    return false;
+  }
+
   // 数量を消費。成功でtrue
   function remove(id, n) {
     if (count(id) < n) return false;
@@ -89,5 +98,5 @@ Game.Inventory = (function () {
     return false;
   }
 
-  return { makeEmpty, slots, count, add, remove, selectedSlot, selectedItemDef, setHotbar, useSelected };
+  return { makeEmpty, slots, count, add, addInstance, remove, selectedSlot, selectedItemDef, setHotbar, useSelected };
 })();

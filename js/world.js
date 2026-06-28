@@ -171,6 +171,15 @@ Game.World = (function () {
     if (val === Game.OBJ.NONE) { Game.state.worlds.light.tileData.delete(U.tileKey(tx, ty)); Game.state.worlds.shadow.tileData.delete(U.tileKey(tx, ty)); }
   }
 
+  // 影の深層: 原点からの距離（タイル）
+  function depthOf() {
+    const TS = Game.CFG.TILE_SIZE, p = Game.state.player;
+    return Math.max(Math.abs(p.x / TS), Math.abs(p.y / TS));
+  }
+  function inDepths() {
+    return Game.state.worldName === 'shadow' && depthOf() >= Game.TUNE.DEEP_THRESHOLD;
+  }
+
   // 共鳴: 影で核を壊すと両世界の該当遺跡を再生成（光の封印が解け宝が出現）
   function resonate(tx, ty) {
     const key = tx + ',' + ty;
@@ -190,6 +199,6 @@ Game.World = (function () {
     Chunk, getChunk, groundAt, objAt, setObj, setGround,
     getTileData, setTileData, clearTileData,
     isWalkable, updateChunks, toChunkCoord,
-    setActiveWorld, shift, setObjBothWorlds, resonate,
+    setActiveWorld, shift, setObjBothWorlds, resonate, depthOf, inDepths,
   };
 })();

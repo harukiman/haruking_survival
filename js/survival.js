@@ -29,11 +29,28 @@ Game.Survival = (function () {
     // 正気度（影世界で減少・光の護符/光源で緩和、光世界で回復）
     const T = Game.TUNE;
     if (Game.state.worldName === 'shadow') {
-      let drain = T.SANITY_DRAIN;
+      let drain = T.SANITY_DRAIN * (1 + (Game.state.ngLevel || 0) * T.NG_SANITY_PER);
+      if (Game.World.inDepths()) drain *= 2;     // 深層は正気消費2倍
       let immune = false;
-      for (const k in p.armor) { const id = p.armor[k]; if (id && Game.ITEMS[id]) { if (Game.ITEMS[id].immuneSanity) immune = true; else if (Game.ITEMS[id].lumen) drain *= 0.4; } }
+      let sanityResist = false;
+      for (const k in p.armor) {
+        const a = p.armor[k]; if (!a) continue;
+        const def = Game.ITEMS[a.id || a];
+        if (!def) continue;
+        if (def.immuneSanity) immune = true;
+        else if (def.lumen) drain *= 0.4;
+        if (a.roll && Game.Loot && Game.Loot.stats(a).sanityResist) sanityResist = true;
+      }
+      if (sanityResist) drain *= 0.5;
       if (immune) drain = 0;
       if (nearLight()) drain *= 0.3;
+      // 深層突入のフィードバック
+      const deep = Game.World.inDepths();
+      if (deep !== Game.state.wasDeep) {
+        if (deep) Game.UI.toast('影の深層へ踏み込んだ… 危険だが、闇は深いほど豊かだ');
+        Game.state.wasDeep = deep;
+        Game.UI.refreshWorld();
+      }
       Game.state.sanity = Math.max(0, Game.state.sanity - drain);
       if (Game.state.sanity < 10 && Game.Achievements) Game.Achievements.unlock('deep_sanity');
       if (Game.state.sanity <= 0 && p.health > 0 && Game.state.tick % 50 === 0) damage(2, 'sanity');

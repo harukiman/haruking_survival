@@ -11,7 +11,7 @@ Game.Save = (function () {
     return {
       deltas: deltas,
       tileData: tileData,
-      drops: w.drops.map(function (d) { return { id: d.id, count: d.count, x: d.x, y: d.y }; }),
+      drops: w.drops.map(function (d) { return { id: d.id, count: d.count, x: d.x, y: d.y, roll: d.roll || null }; }),
     };
   }
 
@@ -41,8 +41,10 @@ Game.Save = (function () {
         hunger: p.hunger, maxHunger: p.maxHunger,
         hotbarIndex: p.hotbarIndex,
         xp: p.xp, level: p.level, xpNext: p.xpNext, armor: p.armor,
+        baseMaxHealth: p.baseMaxHealth,
       },
-      inventory: s.inventory.map(function (sl) { return sl ? { id: sl.id, count: sl.count } : null; }),
+      ngLevel: s.ngLevel || 0,
+      inventory: s.inventory.map(function (sl) { return sl ? { id: sl.id, count: sl.count, roll: sl.roll || null } : null; }),
     };
   }
 

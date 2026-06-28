@@ -10,10 +10,12 @@ Game.Mobs = (function () {
   function spawnMob(type, wx, wy) {
     const def = Game.MOBS[type];
     if (!def) return;
+    const mult = 1 + (Game.state.ngLevel || 0) * Game.TUNE.NG_HP_PER;
+    const hp = Math.round(def.hp * mult);
     Game.state.mobs.push({
       type: type, def: def,
       x: wx, y: wy, prevX: wx, prevY: wy,
-      hp: def.hp, maxHp: def.hp,
+      hp: hp, maxHp: hp, dmg: Math.round(def.dmg * mult) || def.dmg,
       vx: 0, vy: 0, dir: 'down',
       state: 'wander', stateTimer: 0, attackCd: 0,
       hurt: 0, fleeTimer: 0, hopPhase: Math.random() * 6,
@@ -37,8 +39,10 @@ Game.Mobs = (function () {
       const g = Game.World.groundAt(tx, ty);
       let type = null;
       if (shadowWorld) {
-        // 影世界は固有の敵が常時出現
-        const pool = ['wraith', 'wraith', 'watcher', 'spider'];
+        // 影世界は固有の敵が常時出現。深層では徘徊者も
+        const pool = Game.World.inDepths()
+          ? ['wraith', 'watcher', 'abyss_stalker', 'abyss_stalker', 'spider']
+          : ['wraith', 'wraith', 'watcher', 'spider'];
         type = pool[Math.floor(Math.random() * pool.length)];
       } else if (night) {
         // 夜は敵対モブ
@@ -116,7 +120,7 @@ Game.Mobs = (function () {
           moveMob(m, dxp, dyp, m.def.speed);
           // 接触攻撃
           if (distP < (m.def.size * 0.5 + 12) && m.attackCd <= 0) {
-            Game.Survival.damage(m.def.dmg, 'mob');
+            Game.Survival.damage(m.dmg || m.def.dmg, 'mob');
             m.attackCd = m.def.boss ? 30 : 42;
             const kl = distP || 1;
             p.x += (dxp / kl) * (m.def.boss ? 12 : 6); p.y += (dyp / kl) * (m.def.boss ? 12 : 6);
@@ -191,6 +195,9 @@ Game.Mobs = (function () {
         }
       });
     }
+    // ハクスラ: rolled装備ドロップ
+    const gear = Game.Loot.rollMobDrop(m.def, m.x, m.y);
+    for (let g = 0; g < gear.length; g++) Game.state.drops.push(gear[g]);
     Game.Render.spawnParticles(m.x, m.y, m.def.color, m.def.boss ? 40 : 10);
     Game.Player.gainXP(m.def.xp || 1);
     if (Game.Achievements && m.def.hostile) Game.Achievements.unlock('first_night');

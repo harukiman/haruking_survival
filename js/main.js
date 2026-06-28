@@ -55,6 +55,8 @@ window.Game = window.Game || {};
       questIndex: 0,
       questDone: {},
       reunified: false,
+      ngLevel: 0,
+      wasDeep: false,
       // active 参照（worlds[worldName] を指す）
       chunks: worlds.light.chunks,
       modifiedTiles: worlds.light.modifiedTiles,
@@ -65,10 +67,15 @@ window.Game = window.Game || {};
     return st;
   }
 
-  function newGame(seedStr) {
+  function newGame(seedStr, opts) {
+    opts = opts || {};
     let seed = parseInt(seedStr, 10);
     if (!seedStr || isNaN(seed)) seed = (Math.floor(Math.random() * 1e9)) >>> 0;
+    const keepAch = opts.keepAchievements && Game.state ? Game.state.achievements : null;
+    const ngLevel = opts.ngLevel || 0;
     Game.state = freshState(seed);
+    Game.state.ngLevel = ngLevel;
+    if (keepAch) Game.state.achievements = keepAch;
     const sp = Game.WorldGen.findSpawn(Game.state.seed);
     Game.state.spawn = sp;
     Game.Player.spawnAt(sp.tx, sp.ty);
@@ -76,6 +83,15 @@ window.Game = window.Game || {};
     Game.STARTER_ITEMS.forEach(function (it) { Game.Inventory.add(it.id, it.count); });
     startWorld();
   }
+
+  // 周回（NG+）: 実績引継ぎ・難度上昇・新シード
+  function startNGPlus() {
+    const ng = (Game.state.ngLevel || 0) + 1;
+    Game.Save.clear();
+    newGame('', { keepAchievements: true, ngLevel: ng });
+    Game.UI.toast('周回 NG+' + ng + ' 開始 — 影はさらに濃く、戦利品はさらに豊かに');
+  }
+  Game.startNGPlus = startNGPlus;
 
   function continueGame() {
     const data = Game.Save.load();
@@ -99,7 +115,7 @@ window.Game = window.Game || {};
       const w = Game.state.worlds[name];
       if (wd.deltas) for (const k in wd.deltas) w.modifiedTiles.set(k, wd.deltas[k]);
       if (wd.tileData) for (const k in wd.tileData) w.tileData.set(k, wd.tileData[k]);
-      if (wd.drops) wd.drops.forEach(function (d) { w.drops.push({ id: d.id, count: d.count, x: d.x, y: d.y }); });
+      if (wd.drops) wd.drops.forEach(function (d) { w.drops.push({ id: d.id, count: d.count, x: d.x, y: d.y, roll: d.roll || null }); });
     };
     if (data.worlds) { restoreWorld('light', data.worlds.light); restoreWorld('shadow', data.worlds.shadow); }
     else if (data.deltas) { restoreWorld('light', { deltas: data.deltas, tileData: data.tileData, drops: data.drops }); } // v2互換
@@ -115,14 +131,17 @@ window.Game = window.Game || {};
     p.maxHunger = sp.maxHunger || 100;
     p.hotbarIndex = sp.hotbarIndex || 0;
     p.xp = sp.xp || 0; p.level = sp.level || 1; p.xpNext = sp.xpNext || 5;
+    p.baseMaxHealth = sp.baseMaxHealth || sp.maxHealth || 100;
     p.armor = sp.armor || { head: null, chest: null };
+    Game.state.ngLevel = data.ngLevel || 0;
     // インベントリ
     if (data.inventory) {
       for (let i = 0; i < data.inventory.length && i < Game.state.inventory.length; i++) {
         const sl = data.inventory[i];
-        Game.state.inventory[i] = sl ? { id: sl.id, count: sl.count } : null;
+        Game.state.inventory[i] = sl ? { id: sl.id, count: sl.count, roll: sl.roll || null } : null;
       }
     }
+    Game.Player.applyEquipStats();
     startWorld();
   }
 

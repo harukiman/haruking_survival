@@ -36,7 +36,12 @@ Game.Crafting = (function () {
       return false;
     }
     for (const id in recipe.in) Inv.remove(id, recipe.in[id]);
-    Inv.add(recipe.out.id, recipe.out.n);
+    // 武器/防具は rolled インスタンスとして生成（ハクスラ）
+    if (Game.Loot.rollable(recipe.out.id)) {
+      for (let i = 0; i < recipe.out.n; i++) Inv.addInstance({ id: recipe.out.id, roll: Game.Loot.roll(recipe.out.id, Game.Loot.lootBonus()) });
+    } else {
+      Inv.add(recipe.out.id, recipe.out.n);
+    }
     if (Game.Achievements) {
       Game.Achievements.unlock('first_craft');
       if (recipe.out.id === 'shadow_mirror') Game.Achievements.unlock('first_mirror');
