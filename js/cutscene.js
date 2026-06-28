@@ -305,6 +305,7 @@ Game.Cutscene = (function () {
     forge_titan: { name: '溶炉の巨人', col: '#ff6a2a', sil: 'tall', intro: ['溶岩がうねり、鋼の巨体が形を成す', '「鋼となりて、砕け散れ」'], outro: ['巨人は崩れ、溶岩が冷えて鎮まった', '— 溶岩の戦槌、ここに —'] },
     star_guardian:{ name: '星の守護者', col: '#bfe0ff', sil: 'orb', intro: ['星々が集い、守護者が顕現する', '「星の理を乱す者を、われは許さぬ」'], outro: ['守護者は星屑となって、宙に還った', '— 星核の輝き、掌中に —'] },
     crystal_queen:{ name: '水晶の女王', col: '#c884f0', sil: 'tall', intro: ['水晶洞の奥、凍てつく玉座に女王が在す', '「砕けて散るがいい——美しき結晶となって」'], outro: ['女王は無数の煌めきとなって砕け散った', '— プリズムの刃を継ぐ者よ —'] },
+    abyss_dragon:{ name: '深淵の竜', col: '#8a2fb0', sil: 'beast', intro: ['影の最果て、深淵が裂け、古竜が翼を広げる', '「ここから先は、二度と光を見ぬ——」'], outro: ['古竜は咆哮を残し、闇の彼方へ崩れ落ちた', '— 竜牙の大剣、その手に —'] },
   };
   function drawBossSilhouette(d, cx, cy, sc, mode) {
     ctx.save(); ctx.translate(cx, cy); ctx.scale(sc, sc);
