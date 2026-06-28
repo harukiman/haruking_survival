@@ -64,8 +64,14 @@ Game.Player = (function () {
     else if (p.vehicle === 'carpet') spd = p.speed * 2.4;
     else if (p.vehicle === 'boat') spd = p.speed * 1.5;
     // 浅瀬は減速＋水音（乗り物なし・徒歩のみ）
-    const onWater = !p.vehicle && Game.World.groundAt(Math.floor(p.x / TS), Math.floor(p.y / TS)) === Game.TILE.WATER;
+    const gUnder = Game.World.groundAt(Math.floor(p.x / TS), Math.floor(p.y / TS));
+    const onWater = !p.vehicle && gUnder === Game.TILE.WATER;
     if (onWater) spd *= 0.5;
+    // 毒の沼地: 足が重く、稀に毒を受ける（徒歩のみ）
+    if (!p.vehicle && gUnder === Game.TILE.SWAMP) {
+      spd *= 0.72;
+      if (Game.Status && Game.state.tick % 30 === 0 && Math.random() < 0.06) Game.Status.add('poison', 120);
+    }
     // 砂嵐/吹雪は足が重い（飛行中は影響なし）
     const wt = Game.state.weather && Game.state.weather.type;
     if ((wt === 'sandstorm' || wt === 'blizzard') && p.vehicle !== 'plane' && p.vehicle !== 'carpet') spd *= 0.7;

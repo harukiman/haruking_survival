@@ -119,6 +119,10 @@ Game.Mobs = (function () {
           type = Math.random() < 0.45 ? 'frost_wolf' : 'ice_bear';
         } else if (g === Game.TILE.STONE && Math.random() < 0.3) {
           type = 'slime';
+        } else if (g === Game.TILE.SWAMP && diffH && Math.random() < 0.5) {
+          // 毒の沼地: 沼特有の敵が出やすい
+          const sp = ['bog_horror', 'mud_crawler', 'mud_crawler', 'leech', 'leech'];
+          type = sp[Math.floor(Math.random() * sp.length)];
         }
       }
       if (type) { spawnMob(type, wx, wy); return; }

@@ -33,7 +33,7 @@ Game.CFG = {
 };
 
 // 地面レイヤー
-Game.TILE = { DEEP_WATER:0, WATER:1, SAND:2, GRASS:3, FOREST:4, DIRT:5, STONE:6, SNOW:7, DUNGEON_FLOOR:8 };
+Game.TILE = { DEEP_WATER:0, WATER:1, SAND:2, GRASS:3, FOREST:4, DIRT:5, STONE:6, SNOW:7, DUNGEON_FLOOR:8, SWAMP:9 };
 
 // オブジェクトレイヤー（0=なし、50番台=影世界固有、100番台=プレイヤー設置物）
 Game.OBJ = {
@@ -59,6 +59,7 @@ Game.OBJ = {
   TOMB_WALL:136, FORGE_WALL:137, CRYSTAL_WALL:138,
   BOUNTY_BOARD:139,
   BANDIT_SPAWNER:140,
+  DEAD_TREE:141, POISON_MUSHROOM:142,
 };
 
 // 地面の色（手続き描画のベース）
@@ -72,6 +73,7 @@ Game.TILE_COLOR = {
   [Game.TILE.STONE]:      '#7f8488',
   [Game.TILE.SNOW]:       '#e8eef2',
   [Game.TILE.DUNGEON_FLOOR]: '#3a3540',
+  [Game.TILE.SWAMP]:      '#3d4a2c',
 };
 
 // 影世界の地面パレット（同じTILE idを別色で描画）
@@ -85,6 +87,7 @@ Game.SHADOW_TILE_COLOR = {
   [Game.TILE.STONE]:      '#3b3550',
   [Game.TILE.SNOW]:       '#5a5575',
   [Game.TILE.DUNGEON_FLOOR]: '#2a2438',
+  [Game.TILE.SWAMP]:      '#26233a',
 };
 
 // 宇宙の地面パレット（虚空＝ほぼ黒、小惑星＝灰）
@@ -98,6 +101,7 @@ Game.SPACE_TILE_COLOR = {
   [Game.TILE.STONE]:      '#74747e',
   [Game.TILE.SNOW]:       '#b0b0c0',
   [Game.TILE.DUNGEON_FLOOR]: '#3a3a48',
+  [Game.TILE.SWAMP]:      '#44443a',
 };
 
 Game.SOLID_TILE = {
@@ -144,6 +148,8 @@ Game.OBJ_META = {
   [Game.OBJ.BERRY_BUSH]:{ name:'木の実', solid:false, mineable:true, tool:null, tier:0, hp:2, drops:[{item:'berry', n:[1,3]}], render:'berry' },
   [Game.OBJ.PINE_TREE]: { name:'松', solid:true, mineable:true, tool:'axe', tier:0, hp:7, drops:[{item:'wood', n:[2,4]}], render:'pine' },
   [Game.OBJ.CACTUS]:    { name:'サボテン', solid:true, mineable:true, tool:null, tier:0, hp:3, drops:[{item:'cactus', n:[1,2]}], render:'cactus', touchDamage:1 },
+  [Game.OBJ.DEAD_TREE]: { name:'枯れ木', solid:true, mineable:true, tool:'axe', tier:0, hp:5, drops:[{item:'wood', n:[1,3]}], render:'deadtree' },
+  [Game.OBJ.POISON_MUSHROOM]:{ name:'毒キノコ', solid:false, mineable:true, tool:null, tier:0, hp:1, drops:[{item:'glow_spore', n:[1,2]}], render:'pmushroom' },
   [Game.OBJ.FARMLAND]:  { name:'畑', solid:false, mineable:true, tool:null, tier:0, hp:1, drops:[], render:'farmland' },
   [Game.OBJ.WHEAT]:     { name:'小麦', solid:false, mineable:true, tool:null, tier:0, hp:1, drops:[], render:'wheat', crop:true },
   [Game.OBJ.CAMPFIRE]:  { name:'焚き火', solid:false, mineable:true, tool:null, tier:0, hp:3, light:9, drops:[{item:'campfire', n:[1,1]}], render:'campfire', cook:true },
@@ -211,6 +217,7 @@ Game.ITEMS = {
   iron:        { name:'鉄インゴット', stack:99, color:'#d8d8dc' },
   apple:       { name:'りんご', stack:16, color:'#d33', food:25 },
   flower:      { name:'花', stack:99, color:'#e85ab0' },
+  glow_spore:  { name:'光胞子', stack:99, color:'#7fe0a0', flavor:'毒キノコから採れる仄かに光る胞子。沼の解毒薬の材料。' },
   wood_pickaxe:{ name:'木のツルハシ', stack:1, color:'#9c6b3f', tool:'pickaxe', tier:1 },
   stone_pickaxe:{ name:'石のツルハシ', stack:1, color:'#888d91', tool:'pickaxe', tier:2 },
   iron_pickaxe:{ name:'鉄のツルハシ', stack:1, color:'#d8d8dc', tool:'pickaxe', tier:3 },
@@ -494,6 +501,7 @@ Game.RECIPES = [
   // 治療・防寒
   { out:{id:'bandage', n:2}, in:{string:2}, station:null },
   { out:{id:'antidote', n:1}, in:{moonleaf:2, flower:1}, station:null },
+  { out:{id:'antidote', n:2}, in:{glow_spore:3, bone:1}, station:null },
   { out:{id:'strength_potion', n:1}, in:{flower:2, bone:1}, station:'crafting_table' },
   { out:{id:'swift_potion', n:1}, in:{flower:1, moonleaf:1}, station:'crafting_table' },
   { out:{id:'iron_potion', n:1}, in:{iron:1, flower:1}, station:'crafting_table' },
@@ -697,7 +705,7 @@ Game.ITEM_GLYPH = {
   wood:'🪵', shadow_wood:'🪵', stone:'🪨', stone_block:'🧱', wood_block:'🟫', coal:'⚫', iron_ore:'🪨', iron:'🔩', gold_ore:'🟡', gold_bar:'🟨',
   apple:'🍎', berry:'🫐', cactus:'🌵', raw_meat:'🥩', cooked_meat:'🍖', rotten_meat:'🤢', guts:'🩸', wheat:'🌾', wheat_seeds:'🌱', bread:'🍞', moonleaf:'🍃', fish:'🐟',
   carrot:'🥕', carrot_seeds:'🌱', pumpkin:'🎃', pumpkin_seeds:'🌱', tomato:'🍅', tomato_seeds:'🌱', veg_salad:'🥗', pumpkin_pie:'🥧', veg_stew:'🍲', hearty_stew:'🍲',
-  hide:'🟤', leather:'🟫', bone:'🦴', string:'🧵', slime_ball:'🟢', flower:'🌸', sapling:'🌱',
+  hide:'🟤', leather:'🟫', bone:'🦴', string:'🧵', slime_ball:'🟢', flower:'🌸', sapling:'🌱', glow_spore:'🍄',
   wood_pickaxe:'⛏️', stone_pickaxe:'⛏️', iron_pickaxe:'⛏️', shadow_pickaxe:'⛏️',
   wood_axe:'🪓', stone_axe:'🪓', iron_axe:'🪓', shadow_axe:'🪓', wood_hoe:'🌾', stone_hoe:'🌾',
   wood_sword:'🗡️', stone_sword:'🗡️', iron_sword:'⚔️', shadow_blade:'⚔️',

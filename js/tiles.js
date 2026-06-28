@@ -36,6 +36,13 @@ Game.Tiles = (function () {
       const s = 2 + Math.floor(rnd() * 3);
       x.fillRect(px, py, s, s);
     }
+    // 沼地は淀んだ水たまり＋気泡
+    if (id === Game.TILE.SWAMP) {
+      x.fillStyle = shade(base, -22);
+      for (let i = 0; i < 3; i++) { const px = 4 + Math.floor(rnd() * (TS - 12)), py = 4 + Math.floor(rnd() * (TS - 12)); x.beginPath(); x.ellipse(px + 4, py + 3, 5, 3, 0, 0, Math.PI * 2); x.fill(); }
+      x.fillStyle = shade(base, 26);
+      for (let i = 0; i < 3; i++) circle(x, 5 + Math.floor(rnd() * (TS - 8)), 5 + Math.floor(rnd() * (TS - 8)), 1);
+    }
     store[id] = c;
   }
 
@@ -48,6 +55,13 @@ Game.Tiles = (function () {
       x.fillStyle = '#6b4424'; x.fillRect(TS / 2 - 3, TS - 12, 6, 12);
       x.fillStyle = '#2c6b22'; circle(x, TS / 2, TS / 2 - 2, 12);
       x.fillStyle = '#3c8a2e'; circle(x, TS / 2 - 3, TS / 2 - 5, 7);
+    } else if (r === 'deadtree') {
+      x.strokeStyle = '#5a4a38'; x.lineWidth = 3; x.beginPath(); x.moveTo(TS / 2, TS - 3); x.lineTo(TS / 2, 8); x.stroke();
+      x.lineWidth = 2; x.beginPath(); x.moveTo(TS / 2, 14); x.lineTo(TS / 2 - 7, 7); x.moveTo(TS / 2, 18); x.lineTo(TS / 2 + 7, 11); x.moveTo(TS / 2, 12); x.lineTo(TS / 2 + 5, 5); x.stroke();
+    } else if (r === 'pmushroom') {
+      x.fillStyle = '#cfc7a8'; x.fillRect(TS / 2 - 2, TS / 2, 4, TS / 2 - 4);
+      x.fillStyle = '#7a3a8a'; x.beginPath(); x.ellipse(TS / 2, TS / 2, 8, 5, 0, 0, Math.PI * 2); x.fill();
+      x.fillStyle = '#c060e0'; circle(x, TS / 2 - 3, TS / 2 - 1, 1.6); circle(x, TS / 2 + 3, TS / 2, 1.4); circle(x, TS / 2, TS / 2 - 2, 1.2);
     } else if (r === 'rock') {
       x.fillStyle = '#6f7478'; roundBlob(x);
       x.fillStyle = '#878c90'; circle(x, TS / 2 - 3, TS / 2 - 3, 5);

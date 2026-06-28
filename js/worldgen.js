@@ -36,6 +36,7 @@ Game.WorldGen = (function () {
     if (e < 0.30) ground = T.DEEP_WATER;
     else if (e < 0.355) ground = T.WATER;
     else if (e < 0.40) ground = T.SAND;
+    else if (m > 0.66 && e < 0.52) ground = T.SWAMP;   // 高湿・低地=毒の沼地
     else if (e > 0.82) ground = T.SNOW;
     else if (e > 0.70) ground = T.STONE;
     else if (m > 0.58) ground = T.FOREST;
@@ -178,6 +179,10 @@ Game.WorldGen = (function () {
     } else if (ground === T.SAND) {
       if (e > 0.40 && h < 0.03) obj = O.CACTUS;   // 砂漠のサボテン
       else if (h < 0.04) obj = O.ROCK;
+    } else if (ground === T.SWAMP) {
+      if (h < 0.07) obj = O.DEAD_TREE;
+      else if (h < 0.14) obj = O.POISON_MUSHROOM;
+      else if (h < 0.16) obj = O.BUSH;
     }
     return { ground, obj };
   }
