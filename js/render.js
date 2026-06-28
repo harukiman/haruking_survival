@@ -116,6 +116,12 @@ Game.Render = (function () {
         for (let i = 0; i < 7; i++) { const x = ((i * 113 + Math.sin(t * 0.015 + i) * 24) % w + w) % w; const y = h - ((i * 67 + t * 0.6) % (h + 30)); ctx.globalAlpha = 0.1; ctx.fillRect(x, y, 5, 5); }
         // 漂う光胞子（明滅）
         for (let i = 0; i < 6; i++) { const ph = t * 0.025 + i * 1.7; const x = ((i * 151) % w + Math.sin(ph) * 18 + w) % w; const y = h - ((i * 91 + t * 0.4) % (h + 20)); const gl = 0.4 + Math.sin(t * 0.1 + i) * 0.35; ctx.globalAlpha = Math.max(0, gl) * 0.5; ctx.fillStyle = '#aef07a'; ctx.beginPath(); ctx.arc(x, y, 1.6, 0, Math.PI * 2); ctx.fill(); }
+      } else if (g === Game.TILE.VOLCANIC) {
+        // うっすら熱気（赤みのもや・ゆらめき上昇）
+        ctx.fillStyle = '#8a2a14';
+        for (let i = 0; i < 6; i++) { const x = ((i * 119 + Math.sin(t * 0.02 + i) * 26) % w + w) % w; const y = h - ((i * 73 + t * 0.7) % (h + 30)); ctx.globalAlpha = 0.08; ctx.fillRect(x, y, 6, 6); }
+        // 舞い上がる火の粉（オレンジ〜赤・明滅）
+        for (let i = 0; i < 8; i++) { const ph = t * 0.03 + i * 1.3; const x = ((i * 137) % w + Math.sin(ph) * 14 + w) % w; const y = h - ((i * 83 + t * 0.9) % (h + 20)); const gl = 0.5 + Math.sin(t * 0.13 + i) * 0.4; ctx.globalAlpha = Math.max(0, gl) * 0.6; ctx.fillStyle = i % 3 === 0 ? '#ffd24a' : '#ff6a2a'; ctx.fillRect(x, y, 2, 2); }
       }
     }
     ctx.globalAlpha = 1; ctx.restore();
