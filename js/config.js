@@ -235,6 +235,11 @@ Game.ITEMS = {
   raw_meat:    { name:'生肉', stack:16, color:'#c85a5a', food:10, cookTo:'cooked_meat', spoils:true },
   cooked_meat: { name:'焼き肉', stack:16, color:'#9c5a2a', food:40 },
   rotten_meat: { name:'腐肉', stack:16, color:'#6b7a3a', food:6, sick:true },
+  frog_legs:   { name:'蛙肉', stack:16, color:'#7a9a4a', food:9, cookTo:'cooked_frog', spoils:true },
+  cooked_frog: { name:'焼き蛙肉', stack:16, color:'#9c6a3a', food:34 },
+  snake_meat:  { name:'蛇肉', stack:16, color:'#9a8a4a', food:8, cookTo:'cooked_snake', spoils:true },
+  cooked_snake:{ name:'焼き蛇肉', stack:16, color:'#a07a4a', food:30 },
+  swamp_stew:  { name:'沼の煮込み', stack:16, color:'#6a8a3a', food:42, cures:['poison','infection'], flavor:'光胞子と沼の幸を煮込んだ滋養食。毒を流し、腹を満たす。' },
   guts:        { name:'臓物', stack:16, color:'#8a2a3a' },
   hide:        { name:'毛皮', stack:99, color:'#b08858' },
   leather:     { name:'なめし革', stack:99, color:'#8a5a30' },
@@ -441,6 +446,9 @@ Game.RECIPES = [
   // 食料・素材加工
   { out:{id:'cooked_meat', n:1}, in:{raw_meat:1, coal:1}, station:'furnace' },
   { out:{id:'cooked_meat', n:1}, in:{raw_meat:1}, station:'campfire' },
+  { out:{id:'cooked_frog', n:1}, in:{frog_legs:1}, station:'campfire' },
+  { out:{id:'cooked_snake', n:1}, in:{snake_meat:1}, station:'campfire' },
+  { out:{id:'swamp_stew', n:1}, in:{glow_spore:2, frog_legs:1, carrot:1}, station:'campfire' },
   { out:{id:'bread', n:1}, in:{wheat:3}, station:'crafting_table' },
   // 種は野菜から増やせる（初回は旅商人から購入）
   { out:{id:'carrot_seeds', n:2}, in:{carrot:1}, station:null },
@@ -653,8 +661,8 @@ Game.MOBS = {
   swamp_lord:{ name:'沼の主', hostile:true, hp:300, speed:1.0, color:'#5a7a3a', size:30, drops:[{item:'mire_scythe',n:[1,1]},{item:'glow_spore',n:[4,8]},{item:'guts',n:[2,4]},{item:'gold_bar',n:[2,4]}], dmg:11, xp:78, boss:true, big:true, shape:'blob', summon:'leech', inflict:{poison:300, infection:300}, ranged:{dmg:8,range:7,cd:75,kind:'venom',status:{poison:240}} },
   // 沼地/夜の新モブ3種
   swamp_wisp:{ name:'沼の鬼火', hostile:true, hp:12, speed:1.4, color:'#8fe06a', size:10, drops:[{item:'glow_spore',n:[0,1]},{item:'shadow_shard',n:[0,1]}], dmg:4, xp:4, ghost:true, shape:'wisp', ranged:{dmg:5,range:6,cd:80,kind:'venom',status:{poison:200}} },
-  giant_toad:{ name:'大蛙', hostile:true, hp:22, speed:1.2, color:'#5a8a3a', size:13, drops:[{item:'raw_meat',n:[1,2]},{item:'guts',n:[0,1]}], dmg:5, xp:5, hop:true, shape:'blob', inflict:{poison:180} },
-  viper:{ name:'毒蛇', hostile:true, hp:11, speed:2.3, color:'#7a9a3a', size:9, drops:[{item:'guts',n:[0,1]},{item:'hide',n:[0,1]}], dmg:4, xp:4, shape:'spiky', inflict:{poison:240} },
+  giant_toad:{ name:'大蛙', hostile:true, hp:22, speed:1.2, color:'#5a8a3a', size:13, drops:[{item:'frog_legs',n:[1,2]},{item:'guts',n:[0,1]}], dmg:5, xp:5, hop:true, shape:'blob', inflict:{poison:180} },
+  viper:{ name:'毒蛇', hostile:true, hp:11, speed:2.3, color:'#7a9a3a', size:9, drops:[{item:'snake_meat',n:[1,1]},{item:'hide',n:[0,1]}], dmg:4, xp:4, shape:'spiky', inflict:{poison:240} },
   // ===== P30 敵の多様化: 遠距離魔法・巨人・形状バリエーション =====
   hex_caster:{ name:'影の呪術師', hostile:true, hp:18, speed:1.0, color:'#a060e0', size:11, drops:[{item:'shadow_crystal',n:[0,1]},{item:'shadow_shard',n:[1,2]}], dmg:4, xp:5, shadow:true, ghost:true, shape:'wisp', ranged:{dmg:6,range:7,cd:80,kind:'hex'} },
   gazer:    { name:'浮遊する眼', hostile:true, hp:14, speed:1.3, color:'#6a3a6a', size:11, drops:[{item:'shadow_shard',n:[1,2]}], dmg:4, xp:4, ghost:true, shape:'orb', ranged:{dmg:5,range:6,cd:70,kind:'hex'} },
@@ -711,6 +719,7 @@ Game.STARTER_ITEMS = [
 Game.ITEM_GLYPH = {
   wood:'🪵', shadow_wood:'🪵', stone:'🪨', stone_block:'🧱', wood_block:'🟫', coal:'⚫', iron_ore:'🪨', iron:'🔩', gold_ore:'🟡', gold_bar:'🟨',
   apple:'🍎', berry:'🫐', cactus:'🌵', raw_meat:'🥩', cooked_meat:'🍖', rotten_meat:'🤢', guts:'🩸', wheat:'🌾', wheat_seeds:'🌱', bread:'🍞', moonleaf:'🍃', fish:'🐟',
+  frog_legs:'🐸', cooked_frog:'🍗', snake_meat:'🐍', cooked_snake:'🍢', swamp_stew:'🍲',
   carrot:'🥕', carrot_seeds:'🌱', pumpkin:'🎃', pumpkin_seeds:'🌱', tomato:'🍅', tomato_seeds:'🌱', veg_salad:'🥗', pumpkin_pie:'🥧', veg_stew:'🍲', hearty_stew:'🍲',
   hide:'🟤', leather:'🟫', bone:'🦴', string:'🧵', slime_ball:'🟢', flower:'🌸', sapling:'🌱', glow_spore:'🍄',
   wood_pickaxe:'⛏️', stone_pickaxe:'⛏️', iron_pickaxe:'⛏️', shadow_pickaxe:'⛏️',

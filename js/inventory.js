@@ -117,7 +117,7 @@ Game.Inventory = (function () {
       Game.UI.toast(def.name + ' を飲んだ — ' + (Game.Status.TYPES[def.buff.type] ? Game.Status.TYPES[def.buff.type].name : '') + ' 効果');
       Game.UI.refreshAll(); return true;
     }
-    if (def && def.cures) {
+    if (def && def.cures && !def.food) {
       def.cures.forEach(function (c) { Game.Status.cure(c); });
       if (def.heal) p.health = Math.min(p.maxHealth, p.health + def.heal);
       Game.Render.spawnParticles(p.x, p.y, '#9fe0b0', 8);
@@ -126,8 +126,9 @@ Game.Inventory = (function () {
       Game.UI.refreshAll(); return true;
     }
     if (def && def.food) {
-      if (p.hunger >= p.maxHunger && !def.sick) { Game.UI.toast('お腹いっぱい'); return false; }
+      if (p.hunger >= p.maxHunger && !def.sick && !def.cures) { Game.UI.toast('お腹いっぱい'); return false; }
       Game.Survival.eat(def.food);
+      if (def.cures) def.cures.forEach(function (c) { Game.Status.cure(c); }); // 料理が状態異常も治す（沼の煮込み等）
       if (def.sick) { // 腐肉
         if (Math.random() < 0.75) Game.Status.add('poison', 300);
         if (Math.random() < 0.4) Game.Status.add('infection', 360);
