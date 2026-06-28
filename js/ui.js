@@ -146,7 +146,7 @@ Game.UI = (function () {
     bigMapOpen = !bigMapOpen;
     el.bigmapScreen.classList.toggle('hidden', !bigMapOpen);
     if (el.btnMap) el.btnMap.classList.toggle('active', bigMapOpen);
-    if (bigMapOpen) { applyBigMapOpacity(); updateBigMap(); }
+    if (bigMapOpen) { buildLegend(); applyBigMapOpacity(); updateBigMap(); }
   }
   function isBigMapOpen() { return bigMapOpen; }
 
@@ -280,6 +280,44 @@ Game.UI = (function () {
 
   // 発見済みランドマークのマーカー色
   const LANDMARK_COL = { dungeon: '#e0644a', vault: '#e3c24a', stela: '#b6a6f0', treasure: '#ffd86b', cosmic: '#7fc8ff', boss: '#ff5a4a' };
+  // 種別ごとの色・形・凡例ラベル
+  const LANDMARKS = {
+    dungeon:  { col: '#e0644a', shape: 'diamond', label: 'ダンジョン' },
+    treasure: { col: '#ffd86b', shape: 'square', label: '宝箱・野営地' },
+    cosmic:   { col: '#7fc8ff', shape: 'star', label: '星の宝' },
+    stela:    { col: '#b6a6f0', shape: 'pillar', label: '石碑' },
+    vault:    { col: '#e3c24a', shape: 'diamondHollow', label: '共鳴遺跡' },
+    boss:     { col: '#ff5a4a', shape: 'cross', label: 'ボス' },
+  };
+  function drawLandmark(ctx, x, y, kind) {
+    const d = LANDMARKS[kind]; const col = d ? d.col : '#fff'; const shape = d ? d.shape : 'circle';
+    ctx.save();
+    ctx.fillStyle = col; ctx.strokeStyle = 'rgba(0,0,0,0.7)'; ctx.lineWidth = 1.5;
+    const s = 5;
+    if (shape === 'diamond' || shape === 'diamondHollow') {
+      ctx.beginPath(); ctx.moveTo(x, y - s); ctx.lineTo(x + s, y); ctx.lineTo(x, y + s); ctx.lineTo(x - s, y); ctx.closePath();
+      if (shape === 'diamondHollow') { ctx.lineWidth = 2; ctx.strokeStyle = col; ctx.stroke(); } else { ctx.fill(); ctx.stroke(); }
+    } else if (shape === 'square') {
+      ctx.fillRect(x - s + 1, y - s + 1, s * 2 - 2, s * 2 - 2); ctx.strokeRect(x - s + 1, y - s + 1, s * 2 - 2, s * 2 - 2);
+    } else if (shape === 'star') {
+      ctx.beginPath();
+      for (let i = 0; i < 10; i++) { const r = i % 2 ? s * 0.45 : s; const a = -Math.PI / 2 + i * Math.PI / 5; ctx[i ? 'lineTo' : 'moveTo'](x + Math.cos(a) * r, y + Math.sin(a) * r); }
+      ctx.closePath(); ctx.fill(); ctx.stroke();
+    } else if (shape === 'pillar') {
+      ctx.fillRect(x - 2.5, y - s, 5, s * 2); ctx.strokeRect(x - 2.5, y - s, 5, s * 2);
+    } else if (shape === 'cross') {
+      ctx.lineWidth = 3; ctx.strokeStyle = col;
+      ctx.beginPath(); ctx.moveTo(x - s, y - s); ctx.lineTo(x + s, y + s); ctx.moveTo(x + s, y - s); ctx.lineTo(x - s, y + s); ctx.stroke();
+    } else { ctx.beginPath(); ctx.arc(x, y, s, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
+    ctx.restore();
+  }
+  let legendBuilt = false;
+  function buildLegend() {
+    const el2 = document.getElementById('bigmap-legend'); if (!el2 || legendBuilt) return;
+    let h = '';
+    for (const k in LANDMARKS) h += '<span class="lg-item"><i style="background:' + LANDMARKS[k].col + '"></i>' + LANDMARKS[k].label + '</span>';
+    el2.innerHTML = h; legendBuilt = true;
+  }
 
   function updateBigMap() {
     if (!bmCtx || !bigMapOpen || !Game.state) return;
@@ -308,9 +346,7 @@ Game.UI = (function () {
       const ltx = parseInt(rc[0], 10) * 40 + 20, lty = parseInt(rc[1], 10) * 40 + 20;
       const mx = (ltx - (ptx - half)) * scale, my = (lty - (pty - half)) * scale;
       if (mx < 0 || my < 0 || mx > size || my > size) continue;
-      bmCtx.fillStyle = LANDMARK_COL[kind] || '#fff';
-      bmCtx.beginPath(); bmCtx.arc(mx, my, 5, 0, Math.PI * 2); bmCtx.fill();
-      bmCtx.strokeStyle = 'rgba(0,0,0,0.6)'; bmCtx.lineWidth = 1.5; bmCtx.stroke();
+      drawLandmark(bmCtx, mx, my, kind);
     }
     // 敵/ボスドット
     const TS2 = Game.CFG.TILE_SIZE, mobs = Game.state.mobs;
@@ -991,6 +1027,18 @@ Game.UI = (function () {
         mmCtx.fillStyle = palette[t.ground] || '#333';
         mmCtx.fillRect(x * scale, y * scale, scale + 0.5, scale + 0.5);
       }
+    }
+    // 発見済ランドマーク（種別色の小ドット・視野内）
+    const disc = Game.state.discovered || {};
+    for (const key in disc) {
+      const parts = key.split(':'); if (parts[0] !== Game.state.worldName) continue;
+      const kind = parts[1]; if (kind === 'boss') continue; const rc = (parts[2] || '0,0').split(',');
+      const ltx = parseInt(rc[0], 10) * 40 + 20, lty = parseInt(rc[1], 10) * 40 + 20;
+      const mx = (ltx - (ptx - half)) * scale, my = (lty - (pty - half)) * scale;
+      if (mx < 0 || my < 0 || mx > size || my > size) continue;
+      mmCtx.fillStyle = (LANDMARKS[kind] && LANDMARKS[kind].col) || '#fff';
+      mmCtx.fillRect(mx - 2, my - 2, 4, 4);
+      mmCtx.strokeStyle = 'rgba(0,0,0,0.6)'; mmCtx.lineWidth = 1; mmCtx.strokeRect(mx - 2, my - 2, 4, 4);
     }
     // 動的ドット（敵=赤/ボス=大赤/NPC=黄/仲間=水色）
     const mobs = Game.state.mobs;

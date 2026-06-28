@@ -54,6 +54,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Segoe U
 #bigmap { display: block; width: min(78vmin, 560px); height: min(78vmin, 560px); image-rendering: pixelated;
   border-radius: 8px; opacity: 0.92; }
 #bigmap-cap { color: #cdd8ee; font-size: .72rem; text-align: center; margin-top: 6px; opacity: 0.85; }
+#bigmap-legend { display: flex; flex-wrap: wrap; gap: 6px 10px; justify-content: center; margin-top: 7px; }
+#bigmap-legend .lg-item { display: inline-flex; align-items: center; gap: 4px; color: #cdd8ee; font-size: .68rem; }
+#bigmap-legend .lg-item i { width: 9px; height: 9px; border-radius: 2px; display: inline-block; border: 1px solid rgba(0,0,0,0.5); }
 #bigmap-bar { display: flex; gap: 8px; justify-content: center; margin-top: 8px; pointer-events: auto; }
 .map-btn { pointer-events: auto; background: rgba(30,42,62,0.92); border: 1px solid #4a5e7e; color: #cfe0f0;
   font-size: .8rem; font-weight: 700; padding: 7px 14px; border-radius: 9px; cursor: pointer; }
