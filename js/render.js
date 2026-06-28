@@ -123,6 +123,17 @@ Game.Render = (function () {
         for (let i = 0; i < 6; i++) { const x = ((i * 119 + Math.sin(t * 0.02 + i) * 26) % w + w) % w; const y = h - ((i * 73 + t * 0.7) % (h + 30)); ctx.globalAlpha = 0.08; ctx.fillRect(x, y, 6, 6); }
         // 舞い上がる火の粉（オレンジ〜赤・明滅）
         for (let i = 0; i < 8; i++) { const ph = t * 0.03 + i * 1.3; const x = ((i * 137) % w + Math.sin(ph) * 14 + w) % w; const y = h - ((i * 83 + t * 0.9) % (h + 20)); const gl = 0.5 + Math.sin(t * 0.13 + i) * 0.4; ctx.globalAlpha = Math.max(0, gl) * 0.6; ctx.fillStyle = i % 3 === 0 ? '#ffd24a' : '#ff6a2a'; ctx.fillRect(x, y, 2, 2); }
+      } else if (g === Game.TILE.MUSHROOM) {
+        // ふわふわ漂う発光胞子（青紫〜水色・上下浮遊・明滅）
+        for (let i = 0; i < 9; i++) {
+          const ph = t * 0.02 + i * 0.9;
+          const x = ((i * 127) % w + Math.sin(ph) * 22 + w) % w;
+          const y = ((i * 97) % h + Math.cos(ph * 0.7) * 18 + h) % h;
+          const gl = 0.4 + Math.sin(t * 0.06 + i) * 0.4;
+          ctx.globalAlpha = Math.max(0, gl) * 0.55;
+          ctx.fillStyle = i % 2 === 0 ? '#9fb0ff' : '#a6f0e0';
+          ctx.beginPath(); ctx.arc(x, y, 1.8, 0, Math.PI * 2); ctx.fill();
+        }
       }
     }
     ctx.globalAlpha = 1; ctx.restore();
