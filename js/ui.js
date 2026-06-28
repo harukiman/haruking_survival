@@ -858,6 +858,8 @@ Game.UI = (function () {
   }
   const CRAFT_CATS = [['weapon', '⚔ 武器・魔法'], ['armor', '🛡 防具'], ['tool', '⛏ 道具'], ['build', '🏠 設置・建築・乗物'], ['life', '🍖 生活・回復'], ['material', '🧱 素材・その他']];
   let craftCatFilter = 'all';
+  let craftSearch = '';
+  let craftCanOnly = false;
 
   // チートパネル: 全アイテムをタップで付与
   let cheatBuilt = false;
@@ -882,7 +884,15 @@ Game.UI = (function () {
 
   function refreshCraft() {
     el.craftList.innerHTML = '';
-    const list = Game.Crafting.availableList();
+    let list = Game.Crafting.availableList();
+    // 検索＋「作成可能のみ」ツール
+    const tools = document.createElement('div'); tools.className = 'craft-tools';
+    const search = document.createElement('input'); search.type = 'text'; search.className = 'craft-search'; search.placeholder = '🔍 レシピ検索…'; search.value = craftSearch;
+    search.addEventListener('input', function () { craftSearch = search.value; refreshCraftRows(); });
+    const onlyBtn = document.createElement('button'); onlyBtn.className = 'craft-only' + (craftCanOnly ? ' on' : ''); onlyBtn.textContent = '作成可能のみ';
+    onlyBtn.addEventListener('click', function () { craftCanOnly = !craftCanOnly; refreshCraft(); });
+    tools.appendChild(search); tools.appendChild(onlyBtn);
+    el.craftList.appendChild(tools);
     // タブ
     const tabs = document.createElement('div'); tabs.className = 'craft-tabs';
     const mkTab = function (key, label) {
@@ -892,14 +902,28 @@ Game.UI = (function () {
     tabs.appendChild(mkTab('all', 'すべて'));
     CRAFT_CATS.forEach(function (c) { tabs.appendChild(mkTab(c[0], c[1].replace(/ .*/, ''))); });
     el.craftList.appendChild(tabs);
-    // カテゴリ別セクション
+    const rowsBox = document.createElement('div'); rowsBox.id = 'craft-rows'; el.craftList.appendChild(rowsBox);
+    refreshCraftRows();
+  }
+
+  // クラフト行のみ再描画(検索で入力フォーカスを保つ)
+  function refreshCraftRows() {
+    const box = document.getElementById('craft-rows'); if (!box) return;
+    box.innerHTML = '';
+    const q = craftSearch.trim();
+    let list = Game.Crafting.availableList();
+    if (craftCanOnly) list = list.filter(function (e) { return e.can; });
+    if (q) list = list.filter(function (e) { const o = Game.ITEMS[e.recipe.out.id]; return o && o.name.indexOf(q) >= 0; });
+    let shown = 0;
     CRAFT_CATS.forEach(function (cat) {
       if (craftCatFilter !== 'all' && craftCatFilter !== cat[0]) return;
       const rows = list.filter(function (e) { return craftCategory(Game.ITEMS[e.recipe.out.id]) === cat[0]; });
       if (!rows.length) return;
+      rows.sort(function (a, b) { return (b.can ? 1 : 0) - (a.can ? 1 : 0); }); // 作成可能を上に
       const head = document.createElement('div'); head.className = 'craft-cat-head'; head.textContent = cat[1] + '（' + rows.length + '）';
-      el.craftList.appendChild(head);
+      box.appendChild(head);
       rows.forEach(function (entry) {
+        shown++;
         const r = entry.recipe, out = Game.ITEMS[r.out.id];
         const row = document.createElement('div');
         row.className = 'craft-row' + (entry.can ? '' : ' disabled');
@@ -911,9 +935,10 @@ Game.UI = (function () {
           '<span class="cn">' + out.name + (r.out.n > 1 ? '×' + r.out.n : '') + station + '</span>' +
           '<span class="cin">' + ing + '</span>';
         row.addEventListener('click', function () { if (Game.Crafting.craft(r)) refreshInventory(); });
-        el.craftList.appendChild(row);
+        box.appendChild(row);
       });
     });
+    if (!shown) { const e = document.createElement('div'); e.className = 'craft-cat-head'; e.textContent = '該当するレシピが無い'; box.appendChild(e); }
   }
 
   function refreshAll() { refreshHotbar(); refreshStats(); refreshInventory(); refreshChest(); refreshWorld(); }
