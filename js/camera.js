@@ -17,19 +17,21 @@ Game.Camera = (function () {
     Game.state.camera.y = py;
   }
 
+  function zoom() { return Game.state.zoom || 1; }
+
   function worldToScreen(wx, wy) {
-    const v = viewSize();
+    const v = viewSize(), z = zoom();
     return {
-      x: wx - Game.state.camera.x + v.w / 2,
-      y: wy - Game.state.camera.y + v.h / 2,
+      x: (wx - Game.state.camera.x) * z + v.w / 2,
+      y: (wy - Game.state.camera.y) * z + v.h / 2,
     };
   }
 
   function screenToWorld(sx, sy) {
-    const v = viewSize();
+    const v = viewSize(), z = zoom();
     return {
-      x: sx + Game.state.camera.x - v.w / 2,
-      y: sy + Game.state.camera.y - v.h / 2,
+      x: (sx - v.w / 2) / z + Game.state.camera.x,
+      y: (sy - v.h / 2) / z + Game.state.camera.y,
     };
   }
 
@@ -40,14 +42,15 @@ Game.Camera = (function () {
 
   // 可視タイル範囲（+1余白）
   function visibleTileRange() {
-    const v = viewSize();
+    const v = viewSize(), z = zoom();
+    const hw = (v.w / 2) / z, hh = (v.h / 2) / z;
     const cx = Game.state.camera.x, cy = Game.state.camera.y;
-    const tx0 = Math.floor((cx - v.w / 2) / TS) - 1;
-    const ty0 = Math.floor((cy - v.h / 2) / TS) - 1;
-    const tx1 = Math.floor((cx + v.w / 2) / TS) + 1;
-    const ty1 = Math.floor((cy + v.h / 2) / TS) + 1;
+    const tx0 = Math.floor((cx - hw) / TS) - 1;
+    const ty0 = Math.floor((cy - hh) / TS) - 1;
+    const tx1 = Math.floor((cx + hw) / TS) + 1;
+    const ty1 = Math.floor((cy + hh) / TS) + 1;
     return { tx0, ty0, tx1, ty1 };
   }
 
-  return { follow, worldToScreen, screenToWorld, screenToTile, visibleTileRange };
+  return { follow, worldToScreen, screenToWorld, screenToTile, visibleTileRange, zoom };
 })();

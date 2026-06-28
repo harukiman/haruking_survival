@@ -52,7 +52,9 @@ Game.Render = (function () {
         const ch = Game.World.getChunk(cx, cy);
         if (ch.dirty || !ch.cache) buildChunkCache(ch);
         const s = Game.Camera.worldToScreen(cx * CHUNK_PX, cy * CHUNK_PX);
-        ctx.drawImage(ch.cache, Math.round(s.x), Math.round(s.y));
+        const z = Game.Camera.zoom();
+        if (z === 1) ctx.drawImage(ch.cache, Math.round(s.x), Math.round(s.y));
+        else ctx.drawImage(ch.cache, s.x, s.y, CHUNK_PX * z, CHUNK_PX * z);
       }
     }
 
@@ -115,8 +117,9 @@ Game.Render = (function () {
       for (let tx = range.tx0; tx <= range.tx1; tx++) {
         if (Game.World.objAt(tx, ty) !== Game.OBJ.PHANTOM_ORE) continue;
         const s = Game.Camera.worldToScreen(tx * TS, ty * TS);
+        const z = Game.Camera.zoom();
         ctx.globalAlpha = alpha * (0.6 + Math.sin(Game.state.tick * 0.1 + tx) * 0.25);
-        ctx.drawImage(atlas, Math.round(s.x), Math.round(s.y));
+        ctx.drawImage(atlas, s.x, s.y, TS * z, TS * z);
       }
     }
     ctx.restore();
@@ -126,9 +129,10 @@ Game.Render = (function () {
     const t = Game.Player.targetTile();
     if (!t) return;
     const s = Game.Camera.worldToScreen(t.tx * TS, t.ty * TS);
+    const z = Game.Camera.zoom();
     ctx.strokeStyle = t.valid ? 'rgba(255,255,255,0.7)' : 'rgba(255,80,80,0.7)';
     ctx.lineWidth = 2;
-    ctx.strokeRect(s.x + 1, s.y + 1, TS - 2, TS - 2);
+    ctx.strokeRect(s.x + 1, s.y + 1, TS * z - 2, TS * z - 2);
   }
 
   function drawMiningCrack(ctx) {

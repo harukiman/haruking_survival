@@ -45,9 +45,12 @@ Game.Mobs = (function () {
       if (shadowWorld) {
         if (!diff.spawnHostiles) continue; // のんびり: 影世界でも敵なし
         // 影世界は固有の敵が常時出現。深層では徘徊者も
-        const pool = Game.World.inDepths()
+        const deep = Game.World.inDepths();
+        if (deep && Math.random() < 0.04 && countType('hunger_beast') === 0) { type = 'hunger_beast'; }
+        const pool = deep
           ? ['wraith', 'watcher', 'abyss_stalker', 'abyss_stalker', 'spider']
           : ['wraith', 'wraith', 'watcher', 'spider'];
+        if (!type)
         type = pool[Math.floor(Math.random() * pool.length)];
       } else if (night && diff.spawnHostiles) {
         // 夜は敵対モブ（のんびりは出ない）。血の月は強敵寄り

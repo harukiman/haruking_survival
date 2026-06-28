@@ -191,6 +191,11 @@ Game.Tiles = (function () {
       x.fillStyle = '#5a3a1e'; x.fillRect(TS / 2 - 1, TS / 2, 2, TS / 2 - 2);
       x.fillStyle = '#b5803f'; x.fillRect(6, 6, TS - 12, 12);
       x.strokeStyle = '#5a3d1f'; x.lineWidth = 1; x.strokeRect(6, 6, TS - 12, 12);
+    } else if (r === 'enchant') {
+      x.fillStyle = '#2a1f44'; x.fillRect(4, 12, TS - 8, TS - 14);
+      x.fillStyle = '#3a2a5a'; x.fillRect(6, 8, TS - 12, 8);
+      x.fillStyle = '#caa0ff'; circle(x, TS / 2, 10, 3);
+      x.fillStyle = '#e8d0ff'; x.font = '9px sans-serif'; x.textAlign = 'center'; x.fillText('✦', TS / 2, 24); x.textAlign = 'left';
     } else if (r === 'altar') {
       x.fillStyle = '#1f1430'; x.fillRect(4, 10, TS - 8, TS - 14);
       x.fillStyle = '#3a2050'; x.fillRect(7, 7, TS - 14, 8);

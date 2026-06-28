@@ -22,6 +22,29 @@ Game.UI = (function () {
       el.sound.textContent = on ? '♪' : '🔇';
       el.sound.classList.toggle('off', !on);
     });
+    el.stamina = document.getElementById('stamina-bar');
+    el.netBadge = document.getElementById('net-badge');
+    if (el.netBadge) el.netBadge.addEventListener('click', function () {
+      if (!Game.Net.isConnected()) return;
+      const t = window.prompt('チャット送信:'); if (t) Game.Net.chat(t);
+    });
+    // オプション
+    el.optionsScreen = document.getElementById('options-screen');
+    const optBtn = document.getElementById('btn-options');
+    if (optBtn) optBtn.addEventListener('click', toggleOptions);
+    document.getElementById('btn-close-options').addEventListener('click', toggleOptions);
+    document.getElementById('opt-save').addEventListener('click', function () { Game.manualSave(); });
+    document.getElementById('opt-title').addEventListener('click', function () { if (confirm('保存してタイトルに戻りますか？')) Game.toTitle(); });
+    document.getElementById('opt-sound').addEventListener('click', function () { const on = Game.Audio.toggle(); this.textContent = 'サウンド: ' + (on ? 'ON' : 'OFF'); });
+    document.getElementById('opt-zoom').addEventListener('click', function () {
+      Game.state.zoom = Game.state.zoom > 0.85 ? 0.7 : 1;
+      this.textContent = 'マップ表示: ' + (Game.state.zoom < 1 ? '広い' : '標準');
+    });
+    // エンチャント
+    el.enchantScreen = document.getElementById('enchant-screen');
+    el.enchantGrid = document.getElementById('enchant-grid');
+    el.enchantDetail = document.getElementById('enchant-detail');
+    document.getElementById('btn-close-enchant').addEventListener('click', closeEnchant);
     el.touch = document.getElementById('touch-controls');
     el.minimap = document.getElementById('minimap');
     el.level = document.getElementById('level-text');
@@ -70,6 +93,7 @@ Game.UI = (function () {
     el.hud.classList.remove('hidden');
     el.hotbar.classList.remove('hidden');
     if (el.sound) el.sound.classList.remove('hidden');
+    const ob = document.getElementById('btn-options'); if (ob) ob.classList.remove('hidden');
   }
 
   function buildHotbar() {
@@ -124,6 +148,65 @@ Game.UI = (function () {
       // 正気度バーは影世界でのみ表示
       el.sanityWrap.style.display = Game.state.worldName === 'shadow' ? 'flex' : 'none';
     }
+    if (el.stamina) el.stamina.style.width = (p.stamina / p.maxStamina * 100) + '%';
+  }
+
+  function toggleOptions() {
+    if (!el.optionsScreen) return;
+    const opening = el.optionsScreen.classList.contains('hidden');
+    el.optionsScreen.classList.toggle('hidden');
+    Game.state.paused = opening;
+  }
+
+  // ===== エンチャント台 =====
+  let enchantSel = -1;
+  function openEnchant() {
+    enchantSel = -1;
+    el.enchantScreen.classList.remove('hidden');
+    Game.state.paused = true;
+    refreshEnchant();
+  }
+  function closeEnchant() { el.enchantScreen.classList.add('hidden'); Game.state.paused = false; }
+  function refreshEnchant() {
+    if (!el.enchantScreen || el.enchantScreen.classList.contains('hidden')) return;
+    const inv = Game.Inventory.slots();
+    el.enchantGrid.innerHTML = '';
+    inv.forEach(function (st, i) {
+      const cell = document.createElement('div');
+      cell.className = 'slot';
+      if (st && Game.Loot.rollable(st.id)) {
+        cell.innerHTML = slotHTML(st);
+        if (i === enchantSel) cell.classList.add('selected');
+        cell.addEventListener('click', function () { enchantSel = i; refreshEnchant(); });
+      } else { cell.style.opacity = '0.25'; }
+      el.enchantGrid.appendChild(cell);
+    });
+    const st = inv[enchantSel];
+    if (!st || !Game.Loot.rollable(st.id)) { el.enchantDetail.innerHTML = '<p class="hint">武器・防具を選択してください</p>'; return; }
+    const rerollC = Game.Loot.enchantCost(st, 'reroll');
+    const upC = Game.Loot.enchantCost(st, 'upgrade');
+    const fmt = function (c) { return Object.keys(c).filter(function (k) { return c[k]; }).map(function (k) { return Game.ITEMS[k].name + '×' + c[k]; }).join(' '); };
+    const can = function (c) { for (const k in c) if (c[k] && Game.Inventory.count(k) < c[k]) return false; return true; };
+    const maxed = Game.Loot.maxRarity(st);
+    el.enchantDetail.innerHTML =
+      '<div class="ench-name" style="color:' + Game.Loot.rarityColor(st) + '">' + Game.Loot.rarityName(st) + ' ' + Game.Loot.displayName(st) + '</div>' +
+      '<div class="ench-stat">' + Game.Loot.statText(st) + '</div>' +
+      '<button id="ench-reroll" class="big-btn alt' + (can(rerollC) ? '' : ' disabled') + '">振り直し（' + fmt(rerollC) + '）</button>' +
+      (maxed ? '<p class="hint">位階は最高（レジェンダリー）</p>'
+             : '<button id="ench-up" class="big-btn' + (can(upC) ? '' : ' disabled') + '">位階を上げる（' + fmt(upC) + '）</button>');
+    const rr = document.getElementById('ench-reroll');
+    if (rr) rr.addEventListener('click', function () { doEnchant(st, 'reroll', rerollC, can); });
+    const up = document.getElementById('ench-up');
+    if (up) up.addEventListener('click', function () { doEnchant(st, 'upgrade', upC, can); });
+  }
+  function doEnchant(st, kind, cost, can) {
+    if (!can(cost)) { toast('素材が足りない'); return; }
+    for (const k in cost) if (cost[k]) Game.Inventory.remove(k, cost[k]);
+    if (kind === 'reroll') Game.Loot.reroll(st); else Game.Loot.upgrade(st);
+    Game.Audio.play('enchant');
+    Game.Player.applyEquipStats();
+    toast(Game.Loot.rarityName(st) + ' ' + Game.Loot.displayName(st) + ' に！');
+    refreshEnchant(); refreshHotbar();
   }
 
   function refreshStatus() {
@@ -396,5 +479,6 @@ Game.UI = (function () {
     refreshCraft, refreshAll, toggleInventory, toast, updateMinimap,
     openChest, openSharedChest, closeChest, refreshChest, refreshWorld,
     showLore, closeLore, refreshQuest, openQuest, closeQuest, showEnding, showIntro, refreshNet, refreshStatus,
+    toggleOptions, openEnchant, closeEnchant,
   };
 })();

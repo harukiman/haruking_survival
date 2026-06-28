@@ -31,6 +31,7 @@ Game.OBJ = {
   RIFT_ANCHOR:114, LUMEN_LANTERN:115, SHADOW_ALTAR:116,
   // 建築・自由度
   WOOD_FLOOR:117, STONE_FLOOR:118, WALL:119, WINDOW:120, BRIDGE:121, SIGN:122,
+  ENCHANT_TABLE:123,
 };
 
 // 地面の色（手続き描画のベース）
@@ -74,6 +75,7 @@ Game.LIGHT_LEVEL = {
   [Game.OBJ.SHADOW_ALTAR]: 4,
   [Game.OBJ.RESONANCE_CORE]: 7,   // 影で目印として光る
   [Game.OBJ.TREASURE_CHEST]: 4,
+  [Game.OBJ.ENCHANT_TABLE]: 5,
 };
 
 // オブジェクトのメタ情報。solid=移動阻害, drops=破壊時ドロップ
@@ -128,6 +130,7 @@ Game.OBJ_META = {
   [Game.OBJ.WINDOW]:     { name:'窓', solid:true, mineable:true, tool:null, tier:0, hp:4, drops:[{item:'window', n:[1,1]}], render:'window' },
   [Game.OBJ.BRIDGE]:     { name:'橋', solid:false, bridge:true, mineable:true, tool:null, tier:0, hp:3, drops:[{item:'bridge', n:[1,1]}], render:'bridge' },
   [Game.OBJ.SIGN]:       { name:'立て札', solid:false, mineable:true, tool:null, tier:0, hp:2, drops:[{item:'sign', n:[1,1]}], render:'sign' },
+  [Game.OBJ.ENCHANT_TABLE]:{ name:'エンチャント台', solid:true, mineable:true, tool:'pickaxe', tier:1, hp:8, light:5, drops:[{item:'enchant_table', n:[1,1]}], render:'enchant', enchant:true },
 };
 
 // アイテム定義。place=設置するOBJ id, tool/tier=道具, food=空腹回復
@@ -214,6 +217,8 @@ Game.ITEMS = {
   window:        { name:'窓', stack:99, color:'#a8d8e8', place:Game.OBJ.WINDOW },
   bridge:        { name:'橋', stack:99, color:'#9c6b3f', place:Game.OBJ.BRIDGE },
   sign:          { name:'立て札', stack:16, color:'#a9762f', place:Game.OBJ.SIGN },
+  enchant_table: { name:'エンチャント台', stack:4, color:'#5a3a8a', place:Game.OBJ.ENCHANT_TABLE },
+  void_heart:    { name:'虚の心臓', stack:16, color:'#d040b0', flavor:'飢餓の獣の核。喰らうほどに飢える、終わりなき渇望の結晶。' },
   shadow_altar:  { name:'影の祭壇', stack:4, color:'#3a2050', place:Game.OBJ.SHADOW_ALTAR },
   // ボス報酬
   shadow_core:   { name:'影核', stack:16, color:'#c060ff', flavor:'影の主の心臓。世界を裂いた最初の祈りが、結晶となって残ったもの。' },
@@ -285,6 +290,7 @@ Game.RECIPES = [
   { out:{id:'bandage', n:2}, in:{string:2}, station:null },
   { out:{id:'antidote', n:1}, in:{moonleaf:2, flower:1}, station:null },
   { out:{id:'fur_coat', n:1}, in:{hide:5}, station:'crafting_table' },
+  { out:{id:'enchant_table', n:1}, in:{shadow_steel:2, lumen:3}, station:'crafting_table' },
   { out:{id:'leather', n:1}, in:{guts:2}, station:'crafting_table' },
 ];
 
@@ -321,6 +327,8 @@ Game.MOBS = {
   abyss_stalker:{ name:'深淵の徘徊者', hostile:true, hp:34, speed:2.0, color:'#48206a', size:15, drops:[{item:'shadow_crystal',n:[1,3]},{item:'lumen',n:[0,2]},{item:'shadow_core',n:[0,1]}], dmg:8, xp:8, shadow:true },
   // グロ: 蛭（出血+感染）
   leech:    { name:'蛭', hostile:true, hp:5, speed:2.3, color:'#5a2030', size:7, drops:[{item:'guts',n:[1,2]}], dmg:2, xp:2, inflict:{bleed:240, infection:300} },
+  // 深層の徘徊ボス
+  hunger_beast:{ name:'飢餓の獣', hostile:true, hp:140, speed:1.7, color:'#7a1840', size:26, drops:[{item:'void_heart',n:[1,2]},{item:'shadow_core',n:[1,3]},{item:'shadow_crystal',n:[3,6]},{item:'guts',n:[2,4]}], dmg:9, xp:35, shadow:true, big:true, inflict:{bleed:300} },
   // 友好NPC: 謎の旅人
   wanderer: { name:'謎の旅人', hostile:false, hp:20, speed:1.0, color:'#caa84a', size:11, drops:[], xp:0, friendly:true, npc:true },
 };

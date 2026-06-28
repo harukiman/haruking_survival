@@ -58,6 +58,7 @@ window.Game = window.Game || {};
       ngLevel: 0,
       wasDeep: false,
       difficulty: 'normal',
+      zoom: 1,
       // active 参照（worlds[worldName] を指す）
       chunks: worlds.light.chunks,
       modifiedTiles: worlds.light.modifiedTiles,
@@ -102,6 +103,17 @@ window.Game = window.Game || {};
   }
   Game.adoptNetWorld = adoptNetWorld;
 
+  // 保存してタイトルへ戻る（リロードで安全に初期化）
+  Game.toTitle = function () {
+    Game.Save.save();
+    if (Game.Net && Game.Net.isConnected()) Game.Net.leave();
+    location.reload();
+  };
+  Game.manualSave = function () {
+    const ok = Game.Save.save();
+    Game.UI.toast(ok ? '保存しました' : '保存に失敗しました');
+  };
+
   // 周回（NG+）: 実績引継ぎ・難度上昇・新シード
   function startNGPlus() {
     const ng = (Game.state.ngLevel || 0) + 1;
@@ -128,6 +140,7 @@ window.Game = window.Game || {};
     Game.state.questDone = data.questDone || {};
     Game.state.reunified = !!data.reunified;
     Game.state.difficulty = data.difficulty || 'normal';
+    Game.state.zoom = data.zoom || 1;
     if (data.weather) Game.state.weather = data.weather;
     // 両世界の差分/タイルデータ復元
     const restoreWorld = function (name, wd) {

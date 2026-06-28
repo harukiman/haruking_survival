@@ -4,11 +4,11 @@ window.Game = window.Game || {};
 Game.Input = (function () {
   const keys = {};
   const mouse = { x: 0, y: 0, down: false, inside: false, moved: false };
-  const touch = { up: false, down: false, left: false, right: false, mine: false };
+  const touch = { up: false, down: false, left: false, right: false, mine: false, dash: false };
   let placeQueued = false;   // 設置エッジ
   let lastDir = 'down';
 
-  const intent = { dx: 0, dy: 0, dir: 'down', mine: false, place: false, usePointer: false, mouseTile: null };
+  const intent = { dx: 0, dy: 0, dir: 'down', mine: false, place: false, dash: false, usePointer: false, mouseTile: null };
 
   function init() {
     const cv = Game.canvas;
@@ -25,6 +25,7 @@ Game.Input = (function () {
       if (k === 'e') { Game.UI.toggleInventory(); }
       if (k === 'f') { Game.World.shift(); }          // 世界シフト
       if (k === 'm') { const on = Game.Audio.toggle(); Game.UI.toast(on ? 'サウンド ON' : 'サウンド OFF'); }
+      if (k === 'escape' || k === 'p') { Game.UI.toggleOptions(); }
       if (k === 'k' || k === 'q') placeQueued = true; // facing設置
       if (k === ' ') e.preventDefault();
     });
@@ -81,6 +82,16 @@ Game.Input = (function () {
     document.getElementById('btn-inv').addEventListener('click', function () { Game.UI.toggleInventory(); });
     const shiftBtn = document.getElementById('btn-shift');
     if (shiftBtn) shiftBtn.addEventListener('click', function (e) { e.preventDefault(); Game.World.shift(); });
+    const dashBtn = document.getElementById('btn-dash');
+    if (dashBtn) {
+      const ds = function (v) { return function (e) { e.preventDefault(); touch.dash = v; }; };
+      dashBtn.addEventListener('touchstart', ds(true), { passive: false });
+      dashBtn.addEventListener('touchend', ds(false), { passive: false });
+      dashBtn.addEventListener('touchcancel', ds(false), { passive: false });
+      dashBtn.addEventListener('mousedown', ds(true));
+      dashBtn.addEventListener('mouseup', ds(false));
+      dashBtn.addEventListener('mouseleave', ds(false));
+    }
   }
 
   // ゲームパッド（PS4/DualShock4 標準配置）
@@ -109,10 +120,12 @@ Game.Input = (function () {
     // L1(4)/R1(5)=ホットバー切替(エッジ)
     if (edge(4)) { let n = Game.state.player.hotbarIndex - 1; if (n < 0) n = Game.HOTBAR_SIZE - 1; Game.Inventory.setHotbar(n); }
     if (edge(5)) { let n = Game.state.player.hotbarIndex + 1; if (n >= Game.HOTBAR_SIZE) n = 0; Game.Inventory.setHotbar(n); }
+    // L2(6)/R2(7)=ダッシュ
+    if (btn(6) || btn(7)) out.dash = true;
     // OPTIONS(9)=インベントリ(エッジ)
     if (edge(9)) Game.UI.toggleInventory();
     // 他ボタンのprev更新（エッジ漏れ防止）
-    [6, 7, 8, 10, 11, 16].forEach(function (i) { padPrev[i] = btn(i); });
+    [8, 10, 11, 16].forEach(function (i) { padPrev[i] = btn(i); });
   }
 
   function poll() {
@@ -122,7 +135,7 @@ Game.Input = (function () {
     if (keys['w'] || keys['arrowup'] || touch.up) dy -= 1;
     if (keys['s'] || keys['arrowdown'] || touch.down) dy += 1;
 
-    const tmp = { dx: dx, dy: dy, mine: false };
+    const tmp = { dx: dx, dy: dy, mine: false, dash: false };
     pollGamepad(tmp);
     dx = tmp.dx; dy = tmp.dy;
 
@@ -134,6 +147,7 @@ Game.Input = (function () {
     intent.dx = dx; intent.dy = dy; intent.dir = lastDir;
     intent.mine = mouse.down || touch.mine || !!keys[' '] || !!keys['j'] || tmp.mine;
     intent.place = placeQueued; placeQueued = false;
+    intent.dash = !!keys['shift'] || touch.dash || tmp.dash;
     intent.usePointer = usePointer;
     intent.mouseTile = usePointer ? Game.Camera.screenToTile(mouse.x, mouse.y) : null;
     return intent;

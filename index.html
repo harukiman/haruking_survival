@@ -12,7 +12,7 @@
 <meta property="og:type" content="website">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%234a8f3c'/%3E%3Crect x='10' y='6' width='12' height='8' fill='%23805333'/%3E%3Crect x='8' y='12' width='16' height='12' fill='%232f7d27'/%3E%3C/svg%3E">
 <title>Haruking Survival — 俯瞰サンドボックス</title>
-<link rel="stylesheet" href="css/style.css?v=13">
+<link rel="stylesheet" href="css/style.css?v=14">
 </head>
 <body>
 <div id="app">
@@ -21,8 +21,8 @@
   <!-- タイトル画面 -->
   <div id="title-screen" class="overlay">
     <div class="title-box">
-      <h1>HARUKING<br><span>SURVIVAL</span></h1>
-      <p class="tagline">俯瞰型サンドボックス・サバイバル</p>
+      <h1 class="game-title"><span class="t-haru">HARUKING</span><span class="t-surv">SURVIVAL</span></h1>
+      <p class="tagline"><span class="tg-1">光</span>と<span class="tg-2">影</span>、ふたつの世界をめぐる<br><span class="tg-em">俯瞰サンドボックス・サバイバル</span></p>
       <div class="seed-row">
         <label>シード <input id="seed-input" type="text" placeholder="空欄でランダム" inputmode="numeric"></label>
       </div>
@@ -51,6 +51,7 @@
       <div class="bar-wrap"><span class="bar-label">❤</span><div class="bar"><div id="health-bar" class="bar-fill health"></div></div></div>
       <div class="bar-wrap"><span class="bar-label">🍖</span><div class="bar"><div id="hunger-bar" class="bar-fill hunger"></div></div></div>
       <div class="bar-wrap" id="sanity-wrap"><span class="bar-label">🧠</span><div class="bar"><div id="sanity-bar" class="bar-fill sanity"></div></div></div>
+      <div class="bar-wrap"><span class="bar-label">⚡</span><div class="bar"><div id="stamina-bar" class="bar-fill stamina"></div></div></div>
       <div id="status-row"></div>
     </div>
     <div id="clock"><span id="clock-text">--</span></div>
@@ -121,6 +122,34 @@
     </div>
   </div>
 
+  <!-- エンチャント台 -->
+  <div id="enchant-screen" class="overlay hidden">
+    <div class="inv-box">
+      <div class="inv-header"><h2>エンチャント台 ✦</h2><button id="btn-close-enchant" class="x-btn">✕</button></div>
+      <p class="hint">武器・防具を選び、光素・影晶で 振り直し / 位階昇格</p>
+      <div id="enchant-grid" class="grid"></div>
+      <div id="enchant-detail"></div>
+    </div>
+  </div>
+
+  <!-- オプション -->
+  <div id="options-screen" class="overlay hidden">
+    <div class="inv-box" style="max-width:380px">
+      <div class="inv-header"><h2>オプション</h2><button id="btn-close-options" class="x-btn">✕</button></div>
+      <button id="opt-save" class="big-btn">この場で保存</button>
+      <button id="opt-zoom" class="big-btn alt">マップ表示: 標準</button>
+      <button id="opt-sound" class="big-btn alt">サウンド: ON</button>
+      <button id="opt-title" class="big-btn alt">保存してタイトルへ</button>
+      <h2 style="font-size:1rem;margin-top:14px">操作説明</h2>
+      <div class="ctrl-ref">
+        <p><b>PC</b>：WASD/矢印=移動 ／ Shift=ダッシュ ／ 左クリック=採掘・攻撃 ／ 右クリック=設置・対話・使用 ／ 1-9・ホイール=ホットバー ／ E=インベントリ ／ F=影渡り ／ M=音 ／ Esc=このメニュー</p>
+        <p><b>スマホ</b>：左下=移動 ／ 右下=採掘・設置・走る・影渡り・袋 ／ 上の⚙=オプション</p>
+        <p><b>PS4パッド</b>：左スティック/十字=移動 ／ ×=採掘・攻撃 ／ □○=設置・対話 ／ △=影渡り ／ L1/R1=ホットバー ／ L2/R2=ダッシュ ／ OPTIONS=インベントリ</p>
+      </div>
+      <p class="hint">自動保存も有効です（30秒ごと／離脱時）</p>
+    </div>
+  </div>
+
   <!-- 石碑（ロア） -->
   <div id="lore-screen" class="overlay hidden">
     <div class="lore-box">
@@ -141,11 +170,13 @@
     <div id="action-btns">
       <button id="btn-mine" class="abtn">採掘</button>
       <button id="btn-place" class="abtn">設置</button>
+      <button id="btn-dash" class="abtn small dash">走る</button>
       <button id="btn-shift" class="abtn small shift">影渡り</button>
       <button id="btn-inv" class="abtn small">袋</button>
     </div>
   </div>
 
+  <button id="btn-options" class="hidden" title="オプション">⚙</button>
   <button id="btn-sound" class="hidden" title="サウンド切替">♪</button>
   <div id="net-badge" class="hidden">🟢 <span id="net-count">0</span></div>
   <div id="toast"></div>
@@ -159,33 +190,33 @@
   } catch (e) { console.warn('Trystero load failed (multiplayer disabled):', e); }
 </script>
 
-<script src="js/config.js?v=13"></script>
-<script src="js/utils.js?v=13"></script>
-<script src="js/noise.js?v=13"></script>
-<script src="js/tiles.js?v=13"></script>
-<script src="js/worldgen.js?v=13"></script>
-<script src="js/world.js?v=13"></script>
-<script src="js/camera.js?v=13"></script>
-<script src="js/lighting.js?v=13"></script>
-<script src="js/render.js?v=13"></script>
-<script src="js/inventory.js?v=13"></script>
-<script src="js/loot.js?v=13"></script>
-<script src="js/crafting.js?v=13"></script>
-<script src="js/combat.js?v=13"></script>
-<script src="js/player.js?v=13"></script>
-<script src="js/survival.js?v=13"></script>
-<script src="js/status.js?v=13"></script>
-<script src="js/farming.js?v=13"></script>
-<script src="js/daynight.js?v=13"></script>
-<script src="js/mobs.js?v=13"></script>
-<script src="js/input.js?v=13"></script>
-<script src="js/audio.js?v=13"></script>
-<script src="js/ui.js?v=13"></script>
-<script src="js/net.js?v=13"></script>
-<script src="js/lore.js?v=13"></script>
-<script src="js/achievements.js?v=13"></script>
-<script src="js/quests.js?v=13"></script>
-<script src="js/save.js?v=13"></script>
-<script src="js/main.js?v=13"></script>
+<script src="js/config.js?v=14"></script>
+<script src="js/utils.js?v=14"></script>
+<script src="js/noise.js?v=14"></script>
+<script src="js/tiles.js?v=14"></script>
+<script src="js/worldgen.js?v=14"></script>
+<script src="js/world.js?v=14"></script>
+<script src="js/camera.js?v=14"></script>
+<script src="js/lighting.js?v=14"></script>
+<script src="js/render.js?v=14"></script>
+<script src="js/inventory.js?v=14"></script>
+<script src="js/loot.js?v=14"></script>
+<script src="js/crafting.js?v=14"></script>
+<script src="js/combat.js?v=14"></script>
+<script src="js/player.js?v=14"></script>
+<script src="js/survival.js?v=14"></script>
+<script src="js/status.js?v=14"></script>
+<script src="js/farming.js?v=14"></script>
+<script src="js/daynight.js?v=14"></script>
+<script src="js/mobs.js?v=14"></script>
+<script src="js/input.js?v=14"></script>
+<script src="js/audio.js?v=14"></script>
+<script src="js/ui.js?v=14"></script>
+<script src="js/net.js?v=14"></script>
+<script src="js/lore.js?v=14"></script>
+<script src="js/achievements.js?v=14"></script>
+<script src="js/quests.js?v=14"></script>
+<script src="js/save.js?v=14"></script>
+<script src="js/main.js?v=14"></script>
 </body>
 </html>

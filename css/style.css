@@ -16,7 +16,28 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Segoe U
   background: rgba(20, 28, 42, 0.9); border: 1px solid #2c3a52; border-radius: 16px; padding: 28px 22px; }
 .title-box h1 { font-size: 2.2rem; line-height: 1.05; letter-spacing: 2px; color: #6fc46b; text-shadow: 0 2px 0 #1d3a1b; }
 .title-box h1 span { color: #e8c54a; }
-.tagline { color: #9fb0c4; margin: 8px 0 18px; font-size: .95rem; }
+/* リファインしたタイトル */
+.game-title { display: flex; flex-direction: column; align-items: center; gap: 0; margin-bottom: 4px; line-height: 1; }
+.game-title .t-haru { font-size: 2.7rem; font-weight: 900; letter-spacing: 6px;
+  background: linear-gradient(180deg, #eafff0 0%, #7fe089 45%, #2f9d57 100%); -webkit-background-clip: text; background-clip: text; color: transparent;
+  text-shadow: 0 2px 10px rgba(60,200,110,0.35); filter: drop-shadow(0 1px 0 #14331c); }
+.game-title .t-surv { font-size: 1.55rem; font-weight: 800; letter-spacing: 12px; margin-top: 2px; margin-left: 12px;
+  background: linear-gradient(180deg, #fff3c8, #e8c54a 60%, #b88a1e); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.tagline { color: #aeb8c8; margin: 6px 0 16px; font-size: .92rem; line-height: 1.6; }
+.tagline .tg-1 { color: #ffe9a0; font-weight: 700; } .tagline .tg-2 { color: #c79aff; font-weight: 700; }
+.tagline .tg-em { color: #cdd8e6; font-size: .98rem; letter-spacing: .5px; }
+/* スタミナバー */
+.bar-fill.stamina { background: linear-gradient(90deg, #c9a23a, #ffe27a); }
+/* ダッシュ/オプションボタン */
+.abtn.dash { background: rgba(200,160,60,0.82); border-color: #ffe27a; }
+#btn-options { position: absolute; left: 8px; top: calc(44% - 46px); z-index: 22; width: 38px; height: 38px;
+  border-radius: 50%; background: rgba(8,12,20,0.6); border: 1px solid #3a4a64; color: #cfe0f0; font-size: 1.05rem; pointer-events: auto; cursor: pointer; }
+/* エンチャント詳細 */
+.ench-name { font-weight: 700; font-size: 1rem; margin: 8px 0 2px; }
+.ench-stat { color: #9fb0c4; font-size: .85rem; margin-bottom: 8px; }
+.ctrl-ref { font-size: .78rem; color: #aeb8c8; line-height: 1.7; }
+.ctrl-ref b { color: #cfe0f0; }
+.ctrl-ref p { margin: 4px 0; }
 .seed-row { margin: 12px 0; font-size: .9rem; color: #9fb0c4; }
 .seed-row input { width: 60%; padding: 7px 10px; border-radius: 8px; border: 1px solid #33455e;
   background: #10182a; color: #e8edf2; margin-left: 6px; }

@@ -18,6 +18,7 @@ Game.Player = (function () {
       attackCd: 0,
       xp: 0, level: 1, xpNext: 5,
       baseMaxHealth: 100,
+      stamina: 100, maxStamina: 100,
       armor: { head: null, chest: null }, // {id, roll} インスタンス
     };
   }
@@ -43,13 +44,20 @@ Game.Player = (function () {
 
     let dx = intent.dx, dy = intent.dy;
     const len = Math.hypot(dx, dy);
-    if (len > 0) {
+    // ダッシュ（スタミナ消費）
+    const moving = len > 0;
+    const dashing = intent.dash && moving && p.stamina > 0;
+    if (dashing) { p.stamina = Math.max(0, p.stamina - 1.1); }
+    else if (p.stamina < p.maxStamina) { p.stamina = Math.min(p.maxStamina, p.stamina + (moving ? 0.3 : 0.7)); }
+    const spd = p.speed * (dashing ? 1.85 : 1);
+    if (moving) {
       dx /= len; dy /= len;
       p.dir = intent.dir || p.dir;
-      const nx = p.x + dx * p.speed;
+      const nx = p.x + dx * spd;
       if (!blocked(nx, p.y)) p.x = nx;
-      const ny = p.y + dy * p.speed;
+      const ny = p.y + dy * spd;
       if (!blocked(p.x, ny)) p.y = ny;
+      if (dashing && Game.state.tick % 4 === 0) Game.Render.spawnParticles(p.x, p.y, '#cfe0ff', 1);
     }
 
     if (p.invuln > 0) p.invuln--;
@@ -185,6 +193,7 @@ Game.Player = (function () {
     if (obj === Game.OBJ.RIFT_ANCHOR) { Game.UI.openSharedChest(t.tx, t.ty); return; }
     if (obj === Game.OBJ.STELA) { Game.Lore.read(t.tx, t.ty); return; }
     if (obj === Game.OBJ.SHADOW_ALTAR) { Game.Mobs.summonBoss(t.tx, t.ty); return; }
+    if (obj === Game.OBJ.ENCHANT_TABLE) { Game.UI.openEnchant(); return; }
     if (obj === Game.OBJ.BED) { sleep(); return; }
     if (obj === Game.OBJ.WHEAT && Game.Farming.isGrown(t.tx, t.ty)) { Game.Farming.harvest(t.tx, t.ty); return; }
 

@@ -35,10 +35,15 @@ Game.Loot = (function () {
   }
 
   function roll(id, bonus) {
+    if (!rollable(id)) return null;
+    return rollAt(id, rollRarity(bonus));
+  }
+
+  // 指定レアリティで affix を生成
+  function rollAt(id, rarity) {
     const def = Game.ITEMS[id];
     if (!rollable(id)) return null;
     const pool = isWeapon(def) ? WEAPON_AFFIXES : ARMOR_AFFIXES;
-    const rarity = rollRarity(bonus);
     const affixes = [], keys = [];
     for (let i = 0; i < rarity; i++) {
       let pick = null, tries = 0;
@@ -96,6 +101,16 @@ Game.Loot = (function () {
     return parts.join(' / ');
   }
 
+  // ===== エンチャント =====
+  function reroll(slot) { if (slot && slot.roll) slot.roll = rollAt(slot.id, slot.roll.rarity); }
+  function upgrade(slot) { if (slot) { const r = slot.roll ? slot.roll.rarity : 0; slot.roll = rollAt(slot.id, Math.min(3, r + 1)); } }
+  function maxRarity(slot) { return slot && slot.roll ? slot.roll.rarity >= 3 : false; }
+  function enchantCost(slot, kind) {
+    const r = slot && slot.roll ? slot.roll.rarity : 0;
+    if (kind === 'reroll') return { lumen: 2 + r, shadow_crystal: 1 + r };
+    return { lumen: 4 + r * 3, shadow_crystal: 3 + r * 2, shadow_core: r >= 2 ? 1 : 0 }; // upgrade
+  }
+
   // 深層・NG+ で良質化
   function lootBonus() {
     let b = 0;
@@ -126,5 +141,5 @@ Game.Loot = (function () {
     return drops;
   }
 
-  return { roll, stats, rarityColor, rarityName, displayName, statText, rollable, lootBonus, rollMobDrop, RARITY };
+  return { roll, rollAt, stats, rarityColor, rarityName, displayName, statText, rollable, lootBonus, rollMobDrop, reroll, upgrade, maxRarity, enchantCost, RARITY };
 })();
