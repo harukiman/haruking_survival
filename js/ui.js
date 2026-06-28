@@ -18,9 +18,16 @@ Game.UI = (function () {
     el.toast = document.getElementById('toast');
     el.touch = document.getElementById('touch-controls');
     el.minimap = document.getElementById('minimap');
+    el.level = document.getElementById('level-text');
+    el.armor = document.getElementById('armor-text');
+    el.xp = document.getElementById('xp-bar');
+    el.chestScreen = document.getElementById('chest-screen');
+    el.chestGrid = document.getElementById('chest-grid');
+    el.chestInvGrid = document.getElementById('chest-inv-grid');
     mmCtx = el.minimap.getContext('2d');
 
     document.getElementById('btn-close-inv').addEventListener('click', toggleInventory);
+    document.getElementById('btn-close-chest').addEventListener('click', closeChest);
     buildHotbar();
     // モバイル端末ならタッチUI表示
     if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
@@ -71,6 +78,11 @@ Game.UI = (function () {
     el.health.style.width = (p.health / p.maxHealth * 100) + '%';
     el.hunger.style.width = (p.hunger / p.maxHunger * 100) + '%';
     el.clock.textContent = Game.DayNight.clockText();
+    if (el.level) {
+      el.level.textContent = p.level;
+      el.armor.textContent = Game.Player.totalArmor();
+      el.xp.style.width = (p.xp / p.xpNext * 100) + '%';
+    }
   }
 
   function refreshInventory() {
@@ -126,7 +138,73 @@ Game.UI = (function () {
     });
   }
 
-  function refreshAll() { refreshHotbar(); refreshStats(); refreshInventory(); }
+  function refreshAll() { refreshHotbar(); refreshStats(); refreshInventory(); refreshChest(); }
+
+  // ===== チェスト =====
+  function openChest(tx, ty) {
+    let d = Game.World.getTileData(tx, ty);
+    if (!d || !d.chest) { d = { chest: new Array(27).fill(null) }; Game.World.setTileData(tx, ty, d); }
+    Game.state.openChest = { tx: tx, ty: ty };
+    Game.state.paused = true;
+    el.chestScreen.classList.remove('hidden');
+    Game.Audio.play('select');
+    refreshChest();
+  }
+  function closeChest() {
+    Game.state.openChest = null;
+    Game.state.paused = false;
+    el.chestScreen.classList.add('hidden');
+  }
+  function chestData() {
+    const oc = Game.state.openChest;
+    if (!oc) return null;
+    const d = Game.World.getTileData(oc.tx, oc.ty);
+    return d && d.chest ? d.chest : null;
+  }
+  function refreshChest() {
+    if (!el.chestScreen || el.chestScreen.classList.contains('hidden')) return;
+    const chest = chestData();
+    if (!chest) return;
+    const inv = Game.Inventory.slots();
+    el.chestGrid.innerHTML = '';
+    chest.forEach(function (st, i) {
+      const cell = document.createElement('div');
+      cell.className = 'slot'; cell.innerHTML = slotHTML(st);
+      cell.addEventListener('click', function () { chestToInv(i); });
+      el.chestGrid.appendChild(cell);
+    });
+    el.chestInvGrid.innerHTML = '';
+    inv.forEach(function (st, i) {
+      const cell = document.createElement('div');
+      cell.className = 'slot'; cell.innerHTML = slotHTML(st);
+      cell.addEventListener('click', function () { invToChest(i); });
+      el.chestInvGrid.appendChild(cell);
+    });
+  }
+  function chestToInv(i) {
+    const chest = chestData(); if (!chest || !chest[i]) return;
+    const st = chest[i];
+    const overflow = Game.Inventory.add(st.id, st.count);
+    if (overflow === 0) chest[i] = null; else st.count = overflow;
+    Game.Audio.play('select'); refreshChest(); refreshHotbar();
+  }
+  function invToChest(i) {
+    const chest = chestData(); const inv = Game.Inventory.slots();
+    if (!chest || !inv[i]) return;
+    const st = inv[i];
+    // 既存スタックに詰める→空きへ
+    const max = (Game.ITEMS[st.id].stack) || 99;
+    for (let k = 0; k < chest.length && st.count > 0; k++) {
+      if (chest[k] && chest[k].id === st.id && chest[k].count < max) {
+        const put = Math.min(max - chest[k].count, st.count); chest[k].count += put; st.count -= put;
+      }
+    }
+    for (let k = 0; k < chest.length && st.count > 0; k++) {
+      if (!chest[k]) { const put = Math.min(max, st.count); chest[k] = { id: st.id, count: put }; st.count -= put; }
+    }
+    if (st.count <= 0) inv[i] = null;
+    Game.Audio.play('select'); refreshChest(); refreshHotbar();
+  }
 
   function toggleInventory() {
     el.invScreen.classList.toggle('hidden');
@@ -168,5 +246,6 @@ Game.UI = (function () {
   return {
     init, showGameUI, refreshHotbar, refreshStats, refreshInventory,
     refreshCraft, refreshAll, toggleInventory, toast, updateMinimap,
+    openChest, closeChest, refreshChest,
   };
 })();

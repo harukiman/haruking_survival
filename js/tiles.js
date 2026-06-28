@@ -80,6 +80,51 @@ Game.Tiles = (function () {
       x.fillStyle = '#8a5a2a'; x.fillRect(4, 8, TS - 8, TS - 14);
       x.fillStyle = '#a9762f'; x.fillRect(4, 8, TS - 8, 6);
       x.fillStyle = '#ffcf6b'; x.fillRect(TS / 2 - 2, 14, 4, 4);
+    } else if (r === 'berry') {
+      x.fillStyle = '#2f7a2a'; circle(x, TS / 2, TS / 2 + 2, 9);
+      x.fillStyle = '#c0307a';
+      [[10,12],[20,14],[14,20],[22,22]].forEach(function (p) { circle(x, p[0], p[1], 2.4); });
+    } else if (r === 'pine') {
+      x.fillStyle = '#5a3a1e'; x.fillRect(TS / 2 - 2, TS - 10, 4, 10);
+      x.fillStyle = '#1f5a2a';
+      x.beginPath(); x.moveTo(TS / 2, 3); x.lineTo(TS / 2 + 11, TS - 8); x.lineTo(TS / 2 - 11, TS - 8); x.closePath(); x.fill();
+      x.fillStyle = '#2c7a36';
+      x.beginPath(); x.moveTo(TS / 2, 7); x.lineTo(TS / 2 + 8, 20); x.lineTo(TS / 2 - 8, 20); x.closePath(); x.fill();
+    } else if (r === 'cactus') {
+      x.fillStyle = '#3b8a3b'; x.fillRect(TS / 2 - 4, 6, 8, TS - 10);
+      x.fillRect(TS / 2 - 10, 14, 6, 4); x.fillRect(TS / 2 + 4, 12, 6, 4);
+      x.fillStyle = '#2c6e2c'; x.fillRect(TS / 2 - 1, 8, 2, TS - 14);
+    } else if (r === 'farmland') {
+      x.fillStyle = '#6b4326'; x.fillRect(2, 2, TS - 4, TS - 4);
+      x.fillStyle = '#5a3720';
+      for (let yy = 6; yy < TS - 4; yy += 6) x.fillRect(4, yy, TS - 8, 2);
+    } else if (r === 'wheat') {
+      // 成長段階は render 側で上書き描画するためベースは farmland
+      x.fillStyle = '#6b4326'; x.fillRect(2, 2, TS - 4, TS - 4);
+    } else if (r === 'campfire') {
+      x.fillStyle = '#5a3a1e';
+      x.fillRect(6, 18, 20, 4); x.fillRect(10, 14, 12, 4);
+      x.fillStyle = '#ff8a3c'; x.beginPath(); x.moveTo(TS / 2, 6); x.lineTo(TS / 2 + 6, 18); x.lineTo(TS / 2 - 6, 18); x.closePath(); x.fill();
+      x.fillStyle = '#ffd84a'; circle(x, TS / 2, 14, 3);
+    } else if (r === 'lantern') {
+      x.fillStyle = '#3a3a3e'; x.fillRect(TS / 2 - 6, 6, 12, 18);
+      x.fillStyle = '#ffd86b'; x.fillRect(TS / 2 - 4, 9, 8, 12);
+      x.fillStyle = '#222'; x.fillRect(TS / 2 - 6, 6, 12, 2); x.fillRect(TS / 2 - 6, 22, 12, 2);
+    } else if (r === 'fence') {
+      x.fillStyle = '#8a5a30';
+      x.fillRect(TS / 2 - 9, 12, 18, 4);
+      x.fillRect(TS / 2 - 7, 8, 4, 16); x.fillRect(TS / 2 + 3, 8, 4, 16);
+    } else if (r === 'door') {
+      x.fillStyle = '#8a5a2a'; x.fillRect(6, 4, TS - 12, TS - 6);
+      x.strokeStyle = '#5a3a1e'; x.lineWidth = 2; x.strokeRect(7, 5, TS - 14, TS - 8);
+      x.fillStyle = '#ffcf6b'; circle(x, TS - 11, TS / 2, 1.8);
+    } else if (r === 'bed') {
+      x.fillStyle = '#b54040'; x.fillRect(4, 6, TS - 8, TS - 12);
+      x.fillStyle = '#eee'; x.fillRect(4, 6, TS - 8, 8);
+      x.fillStyle = '#8a3030'; x.strokeRect(4, 6, TS - 8, TS - 12);
+    } else if (r === 'sapling') {
+      x.fillStyle = '#5a3a1e'; x.fillRect(TS / 2 - 1, TS / 2 + 2, 2, 8);
+      x.fillStyle = '#4a9f3c'; circle(x, TS / 2, TS / 2, 5);
     }
     objAtlas[id] = c;
   }

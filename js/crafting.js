@@ -8,7 +8,8 @@ Game.Crafting = (function () {
   function hasStation(stationName) {
     if (!stationName) return true; // 手作り
     const objId = stationName === 'crafting_table' ? Game.OBJ.CRAFTING_TABLE
-      : stationName === 'furnace' ? Game.OBJ.FURNACE : null;
+      : stationName === 'furnace' ? Game.OBJ.FURNACE
+      : stationName === 'campfire' ? Game.OBJ.CAMPFIRE : null;
     if (objId === null) return false;
     const p = Game.state.player;
     const TS = Game.CFG.TILE_SIZE;
@@ -30,9 +31,8 @@ Game.Crafting = (function () {
 
   function craft(recipe) {
     if (!canCraft(recipe)) {
-      Game.UI.toast(recipe.station && !hasStation(recipe.station)
-        ? (recipe.station === 'furnace' ? 'かまどが近くに必要' : '作業台が近くに必要')
-        : '材料が足りない');
+      const stName = recipe.station === 'furnace' ? 'かまど' : recipe.station === 'campfire' ? '焚き火' : '作業台';
+      Game.UI.toast(recipe.station && !hasStation(recipe.station) ? stName + 'が近くに必要' : '材料が足りない');
       return false;
     }
     for (const id in recipe.in) Inv.remove(id, recipe.in[id]);

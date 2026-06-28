@@ -36,6 +36,11 @@ Game.Survival = (function () {
   function damage(amount, source) {
     const p = Game.state.player;
     if (p.invuln > 0 && source !== 'starve') return;
+    // 防具で軽減（飢餓は無視）
+    if (source !== 'starve') {
+      const armor = Game.Player.totalArmor();
+      amount = Math.max(1, amount - armor);
+    }
     p.health -= amount;
     if (source !== 'starve') { p.invuln = 30; Game.Audio.play('hurt'); }
     if (p.health <= 0) { p.health = 0; die(); }

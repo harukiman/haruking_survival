@@ -58,10 +58,17 @@ Game.World = (function () {
 
   function setObj(tx, ty, val) {
     const ch = getChunk(toChunkCoord(tx), toChunkCoord(ty));
+    const prev = ch.object[localIndex(tx, ty)];
     ch.object[localIndex(tx, ty)] = val;
     ch.dirty = true;
     recordDelta(tx, ty, undefined, val);
+    if (val === Game.OBJ.NONE && prev !== Game.OBJ.NONE) clearTileData(tx, ty);
   }
+
+  // 状態付きオブジェクト（チェスト中身・作物成長）のデータ
+  function getTileData(tx, ty) { return Game.state.tileData.get(U.tileKey(tx, ty)); }
+  function setTileData(tx, ty, data) { Game.state.tileData.set(U.tileKey(tx, ty), data); }
+  function clearTileData(tx, ty) { Game.state.tileData.delete(U.tileKey(tx, ty)); }
   function setGround(tx, ty, val) {
     const ch = getChunk(toChunkCoord(tx), toChunkCoord(ty));
     ch.ground[localIndex(tx, ty)] = val;
@@ -106,6 +113,7 @@ Game.World = (function () {
 
   return {
     Chunk, getChunk, groundAt, objAt, setObj, setGround,
+    getTileData, setTileData, clearTileData,
     isWalkable, updateChunks, toChunkCoord,
   };
 })();

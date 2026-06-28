@@ -28,17 +28,26 @@ Game.WorldGen = (function () {
     if (ground === T.FOREST) {
       if (h < 0.22) obj = O.TREE;
       else if (h < 0.27) obj = O.BUSH;
+      else if (h < 0.30) obj = O.BERRY_BUSH;
     } else if (ground === T.GRASS) {
       if (h < 0.06) obj = O.TREE;
-      else if (h < 0.10) obj = O.BUSH;
-      else if (h < 0.13) obj = O.FLOWER;
-    } else if (ground === T.STONE || ground === T.SNOW) {
+      else if (h < 0.09) obj = O.BUSH;
+      else if (h < 0.11) obj = O.BERRY_BUSH;
+      else if (h < 0.14) obj = O.FLOWER;
+    } else if (ground === T.SNOW) {
+      if (h < 0.07) obj = O.PINE_TREE;
+      else if (h < 0.11) obj = O.ROCK;
+      else if (h < 0.15) obj = O.COAL_ORE;
+      else if (h < 0.18) obj = O.IRON_ORE;
+      else if (h < 0.19) obj = O.GOLD_ORE;
+    } else if (ground === T.STONE) {
       if (h < 0.10) obj = O.ROCK;
       else if (h < 0.145) obj = O.COAL_ORE;
       else if (h < 0.175) obj = O.IRON_ORE;
       else if (h < 0.185) obj = O.GOLD_ORE;
     } else if (ground === T.SAND) {
-      if (h < 0.02) obj = O.ROCK;
+      if (e > 0.40 && h < 0.03) obj = O.CACTUS;   // 砂漠のサボテン
+      else if (h < 0.04) obj = O.ROCK;
     }
     return { ground, obj };
   }

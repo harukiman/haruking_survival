@@ -5,6 +5,19 @@ Game.DayNight = (function () {
   function update() {
     const s = Game.state;
     s.timeOfDay = (s.tick % Game.DAY_LENGTH) / Game.DAY_LENGTH; // 0..1
+    // 天候: 一定間隔でランダム遷移
+    if (!s.weather) s.weather = { type: 'clear', timer: 0 };
+    s.weather.timer--;
+    if (s.weather.timer <= 0) {
+      const r = Math.random();
+      // プレイヤー付近の地面で雪/雨を判定
+      const TS = Game.CFG.TILE_SIZE;
+      const pt = { tx: Math.floor(s.player.x / TS), ty: Math.floor(s.player.y / TS) };
+      const cold = Game.World.groundAt(pt.tx, pt.ty) === Game.TILE.SNOW;
+      if (r < 0.25) s.weather.type = cold ? 'snow' : 'rain';
+      else s.weather.type = 'clear';
+      s.weather.timer = 1800 + Math.floor(Math.random() * 3600);
+    }
   }
 
   function isNight() {
@@ -13,11 +26,12 @@ Game.DayNight = (function () {
   }
 
   function clockText() {
-    // 0=深夜, 0.5=正午 を 24h 表記に
-    const hours = (Game.state.timeOfDay * 24 + 6) % 24; // 0をAM6時起点に寄せる
+    // 0=深夜00:00, 0.5=正午12:00（暗さモデルと一致）
+    const hours = (Game.state.timeOfDay * 24) % 24;
     const h = Math.floor(hours);
     const m = Math.floor((hours - h) * 60);
-    return (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m;
+    const icon = isNight() ? '🌙 ' : '☀ ';
+    return icon + (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m;
   }
 
   return { update, isNight, clockText };

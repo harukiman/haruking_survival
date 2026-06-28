@@ -53,12 +53,34 @@ Game.Render = (function () {
       }
     }
 
+    Game.Farming.drawCrops(ctx);
     drawTargetHighlight(ctx);
     drawMiningCrack(ctx);
     drawDrops(ctx);
+    Game.Mobs.draw(ctx, alpha);
     drawPlayer(ctx, alpha);
     drawParticles(ctx);
     Game.Lighting.drawOverlay(ctx);
+    drawWeather(ctx);
+  }
+
+  function drawWeather(ctx) {
+    const w = Game.state.weather;
+    if (!w || w.type === 'clear') return;
+    const v = Game.view;
+    const snow = w.type === 'snow';
+    ctx.save();
+    ctx.strokeStyle = snow ? 'rgba(255,255,255,0.7)' : 'rgba(150,180,220,0.5)';
+    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    ctx.lineWidth = 1;
+    const t = Game.state.tick;
+    for (let i = 0; i < 90; i++) {
+      const x = (i * 137 + t * (snow ? 1.2 : 7)) % (v.w + 40) - 20;
+      const y = (i * 89 + t * (snow ? 3 : 13)) % (v.h + 40) - 20;
+      if (snow) { ctx.beginPath(); ctx.arc(x, y, 1.6, 0, Math.PI * 2); ctx.fill(); }
+      else { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - 2, y + 9); ctx.stroke(); }
+    }
+    ctx.restore();
   }
 
   function drawTargetHighlight(ctx) {

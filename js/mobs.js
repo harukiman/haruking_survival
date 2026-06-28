@@ -1,12 +1,223 @@
-// mobs.js — モブAI（MVPはスタブ。次波で実装）
+// mobs.js — モブAI・スポーン・描画・戦闘連携
 window.Game = window.Game || {};
 
 Game.Mobs = (function () {
+  const TS = Game.CFG.TILE_SIZE;
+  const TUNE = Game.TUNE;
+
+  function list() { return Game.state.mobs; }
+
+  function spawnMob(type, wx, wy) {
+    const def = Game.MOBS[type];
+    if (!def) return;
+    Game.state.mobs.push({
+      type: type, def: def,
+      x: wx, y: wy, prevX: wx, prevY: wy,
+      hp: def.hp, maxHp: def.hp,
+      vx: 0, vy: 0, dir: 'down',
+      state: 'wander', stateTimer: 0, attackCd: 0,
+      hurt: 0, fleeTimer: 0, hopPhase: Math.random() * 6,
+      knockX: 0, knockY: 0,
+    });
+  }
+
+  // 周辺の空き walkable タイルを探してスポーン
+  function trySpawn() {
+    if (Game.state.mobs.length >= TUNE.MOB_CAP) return;
+    const night = Game.Lighting.ambientDarkness() > 0.4;
+    const p = Game.state.player;
+    for (let attempt = 0; attempt < 8; attempt++) {
+      const ang = Math.random() * Math.PI * 2;
+      const dist = (14 + Math.random() * 8) * TS;
+      const wx = p.x + Math.cos(ang) * dist;
+      const wy = p.y + Math.sin(ang) * dist;
+      const tx = Math.floor(wx / TS), ty = Math.floor(wy / TS);
+      if (!Game.World.isWalkable(tx, ty)) continue;
+      const g = Game.World.groundAt(tx, ty);
+      let type = null;
+      if (night) {
+        // 夜は敵対モブ
+        const pool = ['zombie', 'skeleton', 'spider', 'slime'];
+        type = pool[Math.floor(Math.random() * pool.length)];
+      } else {
+        // 昼は動物（草地/森）
+        if (g === Game.TILE.GRASS || g === Game.TILE.FOREST) {
+          const pool = ['rabbit', 'deer', 'sheep'];
+          type = pool[Math.floor(Math.random() * pool.length)];
+        } else if (g === Game.TILE.STONE && Math.random() < 0.3) {
+          type = 'slime';
+        }
+      }
+      if (type) { spawnMob(type, wx, wy); return; }
+    }
+  }
+
+  function moveMob(m, dx, dy, speed) {
+    const len = Math.hypot(dx, dy);
+    if (len < 0.001) return;
+    dx /= len; dy /= len;
+    if (Math.abs(dx) > Math.abs(dy)) m.dir = dx < 0 ? 'left' : 'right';
+    else m.dir = dy < 0 ? 'up' : 'down';
+    const nx = m.x + dx * speed;
+    if (walkAt(nx, m.y, m)) m.x = nx;
+    const ny = m.y + dy * speed;
+    if (walkAt(m.x, ny, m)) m.y = ny;
+  }
+
+  function walkAt(wx, wy, m) {
+    const r = m.def.size * 0.5;
+    const pts = [[wx - r, wy - r], [wx + r, wy - r], [wx - r, wy + r], [wx + r, wy + r]];
+    for (let i = 0; i < pts.length; i++) {
+      if (!Game.World.isWalkable(Math.floor(pts[i][0] / TS), Math.floor(pts[i][1] / TS))) return false;
+    }
+    return true;
+  }
+
   function update() {
-    // 次波: スポーン規則・AI・戦闘・ドロップ
+    const mobs = Game.state.mobs;
+    const p = Game.state.player;
+
+    if (Game.state.tick % TUNE.SPAWN_INTERVAL === 0) trySpawn();
+
+    for (let i = mobs.length - 1; i >= 0; i--) {
+      const m = mobs[i];
+      m.prevX = m.x; m.prevY = m.y;
+      if (m.hurt > 0) m.hurt--;
+      if (m.attackCd > 0) m.attackCd--;
+      if (m.stateTimer > 0) m.stateTimer--;
+
+      // ノックバック
+      if (Math.abs(m.knockX) > 0.1 || Math.abs(m.knockY) > 0.1) {
+        if (walkAt(m.x + m.knockX, m.y, m)) m.x += m.knockX;
+        if (walkAt(m.x, m.y + m.knockY, m)) m.y += m.knockY;
+        m.knockX *= 0.8; m.knockY *= 0.8;
+      }
+
+      const dxp = p.x - m.x, dyp = p.y - m.y;
+      const distP = Math.hypot(dxp, dyp);
+
+      // 遠すぎたら消滅
+      if (distP > TUNE.DESPAWN_TILES * TS) { mobs.splice(i, 1); continue; }
+
+      if (m.def.hostile) {
+        // 敵対: プレイヤーを追跡
+        if (distP < 13 * TS) {
+          moveMob(m, dxp, dyp, m.def.speed);
+          // 接触攻撃
+          if (distP < (m.def.size * 0.5 + 12) && m.attackCd <= 0) {
+            Game.Survival.damage(m.def.dmg, 'mob');
+            m.attackCd = 42;
+            // プレイヤーを少し弾く
+            const kl = distP || 1;
+            p.x += (dxp / kl) * 6; p.y += (dyp / kl) * 6;
+          }
+        } else {
+          wander(m);
+        }
+      } else {
+        // 動物: 攻撃されたら逃走、それ以外は徘徊
+        if (m.fleeTimer > 0) {
+          m.fleeTimer--;
+          moveMob(m, -dxp, -dyp, m.def.speed * 1.3);
+        } else {
+          wander(m);
+        }
+      }
+      m.hopPhase += 0.2;
+    }
   }
-  function draw(ctx) {
-    // 次波: モブ描画
+
+  function wander(m) {
+    if (m.stateTimer <= 0) {
+      m.wx = (Math.random() - 0.5);
+      m.wy = (Math.random() - 0.5);
+      m.stateTimer = 40 + Math.floor(Math.random() * 90);
+      if (Math.random() < 0.4) { m.wx = 0; m.wy = 0; } // 休憩
+    }
+    if (m.wx || m.wy) moveMob(m, m.wx, m.wy, m.def.speed * 0.5);
   }
-  return { update, draw };
+
+  // combat.js から呼ばれる
+  function damageMob(m, dmg, fromX, fromY) {
+    m.hp -= dmg;
+    m.hurt = 8;
+    const dx = m.x - fromX, dy = m.y - fromY, l = Math.hypot(dx, dy) || 1;
+    m.knockX = (dx / l) * 7; m.knockY = (dy / l) * 7;
+    if (!m.def.hostile) m.fleeTimer = 180; // 動物は逃げる
+    Game.Audio.play('hit');
+    if (m.hp <= 0) killMob(m);
+  }
+
+  function killMob(m) {
+    const idx = Game.state.mobs.indexOf(m);
+    if (idx >= 0) Game.state.mobs.splice(idx, 1);
+    // ドロップ
+    if (m.def.drops) {
+      m.def.drops.forEach(function (d) {
+        const n = Game.Utils.randInt(Math.random, d.n[0], d.n[1]);
+        for (let k = 0; k < n; k++) {
+          Game.state.drops.push({ id: d.item, count: 1, x: m.x + (Math.random() - 0.5) * 14, y: m.y + (Math.random() - 0.5) * 14 });
+        }
+      });
+    }
+    Game.Render.spawnParticles(m.x, m.y, m.def.color, 10);
+    Game.Player.gainXP(m.def.xp || 1);
+    Game.Audio.play('mobdie');
+  }
+
+  function draw(ctx, alpha) {
+    const mobs = Game.state.mobs;
+    for (let i = 0; i < mobs.length; i++) {
+      const m = mobs[i];
+      const x = m.prevX + (m.x - m.prevX) * alpha;
+      let y = m.prevY + (m.y - m.prevY) * alpha;
+      const s = Game.Camera.worldToScreen(x, y);
+      // 画面外スキップ
+      if (s.x < -40 || s.y < -40 || s.x > Game.view.w + 40 || s.y > Game.view.h + 40) continue;
+      const r = m.def.size * 0.5;
+      const hop = m.def.hop ? Math.abs(Math.sin(m.hopPhase)) * 5 : 0;
+      ctx.save();
+      ctx.translate(s.x, s.y - hop);
+      // 影
+      ctx.fillStyle = 'rgba(0,0,0,0.25)';
+      ctx.beginPath(); ctx.ellipse(0, r + hop, r, r * 0.4, 0, 0, Math.PI * 2); ctx.fill();
+      // 本体
+      ctx.fillStyle = m.hurt > 0 ? '#fff' : m.def.color;
+      if (m.type === 'slime') {
+        roundRect(ctx, -r, -r * 0.7, r * 2, r * 1.5, 5); ctx.fill();
+      } else if (m.type === 'spider') {
+        ctx.strokeStyle = m.def.color; ctx.lineWidth = 2;
+        for (let a = 0; a < 4; a++) { const ang = a * 0.5 + 0.3; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(ang) * r * 1.6, Math.sin(ang) * r); ctx.moveTo(0, 0); ctx.lineTo(-Math.cos(ang) * r * 1.6, Math.sin(ang) * r); ctx.stroke(); }
+        ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+      } else {
+        ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+      }
+      // 目
+      if (m.type !== 'slime' || true) {
+        ctx.fillStyle = m.def.hostile ? '#e33' : '#222';
+        const ex = m.dir === 'left' ? -2 : m.dir === 'right' ? 2 : 0;
+        ctx.fillRect(-3 + ex, -r * 0.3, 2, 2); ctx.fillRect(2 + ex, -r * 0.3, 2, 2);
+      }
+      ctx.restore();
+      // HPバー
+      if (m.hp < m.maxHp) {
+        const bw = m.def.size + 6;
+        ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(s.x - bw / 2, s.y - r - hop - 9, bw, 4);
+        ctx.fillStyle = m.def.hostile ? '#e44' : '#6c6';
+        ctx.fillRect(s.x - bw / 2, s.y - r - hop - 9, bw * (m.hp / m.maxHp), 4);
+      }
+    }
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  return { list, update, draw, spawnMob, damageMob, killMob };
 })();

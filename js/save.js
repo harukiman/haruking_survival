@@ -9,20 +9,25 @@ Game.Save = (function () {
     const p = s.player;
     const deltas = {};
     s.modifiedTiles.forEach(function (v, k) { deltas[k] = v; });
+    const tileData = {};
+    s.tileData.forEach(function (v, k) { tileData[k] = v; });
     return {
-      v: 1,
+      v: 2,
       seed: s.seed,
       tick: s.tick,
       spawn: s.spawn,
+      weather: s.weather,
       player: {
         x: p.x, y: p.y, dir: p.dir,
         health: p.health, maxHealth: p.maxHealth,
         hunger: p.hunger, maxHunger: p.maxHunger,
         hotbarIndex: p.hotbarIndex,
+        xp: p.xp, level: p.level, xpNext: p.xpNext, armor: p.armor,
       },
       inventory: s.inventory.map(function (sl) { return sl ? { id: sl.id, count: sl.count } : null; }),
       drops: s.drops.map(function (d) { return { id: d.id, count: d.count, x: d.x, y: d.y }; }),
       deltas: deltas,
+      tileData: tileData,
     };
   }
 

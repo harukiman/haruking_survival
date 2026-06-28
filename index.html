@@ -12,7 +12,7 @@
 <meta property="og:type" content="website">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%234a8f3c'/%3E%3Crect x='10' y='6' width='12' height='8' fill='%23805333'/%3E%3Crect x='8' y='12' width='16' height='12' fill='%232f7d27'/%3E%3C/svg%3E">
 <title>Haruking Survival — 俯瞰サンドボックス</title>
-<link rel="stylesheet" href="css/style.css?v=1">
+<link rel="stylesheet" href="css/style.css?v=2">
 </head>
 <body>
 <div id="app">
@@ -28,7 +28,7 @@
       </div>
       <button id="btn-new" class="big-btn">はじめから</button>
       <button id="btn-continue" class="big-btn alt">つづきから</button>
-      <p class="hint">PC: WASD/矢印=移動, 左クリック=採掘, 右クリック=設置, 1-9=ホットバー, E=インベントリ<br>スマホ: 左下=移動, 右下=採掘/設置/メニュー</p>
+      <p class="hint">PC: WASD/矢印=移動, 左クリック=採掘/攻撃, 右クリック=設置/対話/使用, 1-9=ホットバー, E=インベントリ<br>スマホ: 左下=移動, 右下=採掘/攻撃・設置/対話・メニュー<br>夜は敵が出現。たいまつ/焚き火で灯りを、武器で戦い、畑で食料を育て、ベッドで朝まで眠ろう。</p>
     </div>
   </div>
 
@@ -38,7 +38,10 @@
       <div class="bar-wrap"><span class="bar-label">❤</span><div class="bar"><div id="health-bar" class="bar-fill health"></div></div></div>
       <div class="bar-wrap"><span class="bar-label">🍖</span><div class="bar"><div id="hunger-bar" class="bar-fill hunger"></div></div></div>
     </div>
-    <div id="clock">☀ <span id="clock-text">--</span></div>
+    <div id="clock"><span id="clock-text">--</span></div>
+    <div id="level-badge">Lv.<span id="level-text">1</span> <span id="armor-chip">🛡<span id="armor-text">0</span></span>
+      <div class="bar xp"><div id="xp-bar" class="bar-fill xpfill"></div></div>
+    </div>
     <div id="minimap-wrap"><canvas id="minimap" width="120" height="120"></canvas></div>
   </div>
 
@@ -52,6 +55,17 @@
       <div id="inv-grid" class="grid"></div>
       <h2>クラフト</h2>
       <div id="craft-list" class="craft-list"></div>
+    </div>
+  </div>
+
+  <!-- チェスト -->
+  <div id="chest-screen" class="overlay hidden">
+    <div class="inv-box">
+      <div class="inv-header"><h2>チェスト</h2><button id="btn-close-chest" class="x-btn">✕</button></div>
+      <div id="chest-grid" class="grid"></div>
+      <h2>インベントリ</h2>
+      <div id="chest-inv-grid" class="grid"></div>
+      <p class="hint">アイテムをタップで チェスト⇄インベントリ 移動</p>
     </div>
   </div>
 
@@ -73,25 +87,27 @@
   <div id="toast"></div>
 </div>
 
-<script src="js/config.js?v=1"></script>
-<script src="js/utils.js?v=1"></script>
-<script src="js/noise.js?v=1"></script>
-<script src="js/tiles.js?v=1"></script>
-<script src="js/worldgen.js?v=1"></script>
-<script src="js/world.js?v=1"></script>
-<script src="js/camera.js?v=1"></script>
-<script src="js/lighting.js?v=1"></script>
-<script src="js/render.js?v=1"></script>
-<script src="js/inventory.js?v=1"></script>
-<script src="js/crafting.js?v=1"></script>
-<script src="js/player.js?v=1"></script>
-<script src="js/survival.js?v=1"></script>
-<script src="js/daynight.js?v=1"></script>
-<script src="js/mobs.js?v=1"></script>
-<script src="js/input.js?v=1"></script>
-<script src="js/audio.js?v=1"></script>
-<script src="js/ui.js?v=1"></script>
-<script src="js/save.js?v=1"></script>
-<script src="js/main.js?v=1"></script>
+<script src="js/config.js?v=2"></script>
+<script src="js/utils.js?v=2"></script>
+<script src="js/noise.js?v=2"></script>
+<script src="js/tiles.js?v=2"></script>
+<script src="js/worldgen.js?v=2"></script>
+<script src="js/world.js?v=2"></script>
+<script src="js/camera.js?v=2"></script>
+<script src="js/lighting.js?v=2"></script>
+<script src="js/render.js?v=2"></script>
+<script src="js/inventory.js?v=2"></script>
+<script src="js/crafting.js?v=2"></script>
+<script src="js/combat.js?v=2"></script>
+<script src="js/player.js?v=2"></script>
+<script src="js/survival.js?v=2"></script>
+<script src="js/farming.js?v=2"></script>
+<script src="js/daynight.js?v=2"></script>
+<script src="js/mobs.js?v=2"></script>
+<script src="js/input.js?v=2"></script>
+<script src="js/audio.js?v=2"></script>
+<script src="js/ui.js?v=2"></script>
+<script src="js/save.js?v=2"></script>
+<script src="js/main.js?v=2"></script>
 </body>
 </html>

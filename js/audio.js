@@ -49,6 +49,11 @@ Game.Audio = (function () {
       case 'eat':    beep(280, 0.1, 'sine', 0.09); break;
       case 'hurt':   beep(150, 0.18, 'sawtooth', 0.12); break;
       case 'select': beep(440, 0.04, 'square', 0.05); break;
+      case 'swing':  if (throttled('swing', 0.12)) beep(300, 0.05, 'triangle', 0.06); break;
+      case 'hit':    beep(220, 0.07, 'square', 0.09); beep(160, 0.09, 'sawtooth', 0.06); break;
+      case 'mobdie': beep(200, 0.12, 'sawtooth', 0.1); beep(120, 0.16, 'triangle', 0.08); break;
+      case 'equip':  beep(400, 0.06, 'square', 0.07); beep(560, 0.06, 'square', 0.06); break;
+      case 'levelup': beep(523, 0.1, 'triangle', 0.1); beep(659, 0.1, 'triangle', 0.1); beep(784, 0.14, 'triangle', 0.1); break;
     }
   }
 

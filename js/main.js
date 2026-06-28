@@ -34,9 +34,13 @@ window.Game = window.Game || {};
       camera: { x: 0, y: 0 },
       chunks: new Map(),
       modifiedTiles: new Map(),
+      tileData: new Map(),
       drops: [],
+      mobs: [],
       inventory: Game.Inventory.makeEmpty(),
       spawn: { tx: 0, ty: 0 },
+      openChest: null,
+      weather: { type: 'clear', timer: 600 },
       paused: false,
     };
   }
@@ -61,6 +65,8 @@ window.Game = window.Game || {};
     Game.state.spawn = data.spawn || { tx: 0, ty: 0 };
     // 差分復元
     if (data.deltas) for (const k in data.deltas) Game.state.modifiedTiles.set(k, data.deltas[k]);
+    if (data.tileData) for (const k in data.tileData) Game.state.tileData.set(k, data.tileData[k]);
+    if (data.weather) Game.state.weather = data.weather;
     // プレイヤー
     const p = Game.state.player, sp = data.player || {};
     p.x = sp.x || 0; p.y = sp.y || 0; p.prevX = p.x; p.prevY = p.y;
@@ -70,6 +76,8 @@ window.Game = window.Game || {};
     p.hunger = sp.hunger != null ? sp.hunger : 100;
     p.maxHunger = sp.maxHunger || 100;
     p.hotbarIndex = sp.hotbarIndex || 0;
+    p.xp = sp.xp || 0; p.level = sp.level || 1; p.xpNext = sp.xpNext || 5;
+    p.armor = sp.armor || { head: null, chest: null };
     // インベントリ
     if (data.inventory) {
       for (let i = 0; i < data.inventory.length && i < Game.state.inventory.length; i++) {
@@ -99,6 +107,7 @@ window.Game = window.Game || {};
     Game.Survival.update();
     Game.DayNight.update();
     Game.Mobs.update();
+    if (Game.state.tick % 30 === 0) Game.Farming.update();
     const pt = Game.Player.playerTile();
     if (Game.state.tick % 10 === 0) Game.World.updateChunks(pt.tx, pt.ty);
     if (Game.state.tick % 20 === 0) Game.UI.updateMinimap();
