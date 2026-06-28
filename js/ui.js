@@ -198,6 +198,15 @@ Game.UI = (function () {
       h += '</div></div>';
     });
     h += '<p class="hint">前提スキルを習得すると次が解放。振り直しは「記憶の書」(レア)。レベル上限 ' + (Game.MAX_LEVEL || 9999) + '。</p>';
+    // 実績一覧
+    if (Game.ACHIEVEMENTS && Game.Achievements) {
+      h += '<h2>実績 <span style="color:#ffe27a;font-size:.9rem">' + Game.Achievements.count() + ' / ' + Game.Achievements.total() + '</span></h2><div class="ach-list">';
+      for (const id in Game.ACHIEVEMENTS) {
+        const a = Game.ACHIEVEMENTS[id], got = Game.Achievements.has(id);
+        h += '<div class="ach-row' + (got ? ' got' : '') + '"><span class="ach-mk">' + (got ? '🏆' : '🔒') + '</span><div><b>' + a.name + '</b><br><span class="ach-d">' + a.desc + '</span></div></div>';
+      }
+      h += '</div>';
+    }
     body.innerHTML = h;
     body.querySelectorAll('.stat-plus').forEach(function (b) { b.addEventListener('click', function () { Game.Player.spendStat(b.getAttribute('data-stat')); renderStats(); }); });
     body.querySelectorAll('.sk-node[data-skill]').forEach(function (b) { b.addEventListener('click', function () { const id = b.getAttribute('data-skill'); if (Game.Player.unlockSkill(id)) renderStats(); }); });

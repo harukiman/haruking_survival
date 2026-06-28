@@ -84,6 +84,13 @@ body.left-handed #action-btns { right: auto; left: calc(12px + env(safe-area-ins
 .skill-row .sk-buy { margin-left: auto; padding: 8px 14px; border-radius: 8px; background: #3a7a4a; border: 1px solid #6fc46b; color: #fff; font-weight: 700; cursor: pointer; white-space: nowrap; }
 .skill-row.owned { opacity: .7; } .skill-row.owned .sk-buy { background: #444; border-color: #666; cursor: default; }
 .sp-badge { color: #ffe27a; font-weight: 700; }
+/* 実績一覧 */
+.ach-list { display: flex; flex-direction: column; gap: 5px; }
+.ach-row { display: flex; align-items: center; gap: 9px; padding: 7px 9px; border: 1px solid #2c3a52; border-radius: 8px; background: rgba(20,28,42,0.5); opacity: .5; }
+.ach-row.got { opacity: 1; background: rgba(50,66,40,0.5); border-color: #5a7a3a; }
+.ach-row .ach-mk { font-size: 1.1rem; }
+.ach-row b { font-size: .86rem; color: #e8edf2; }
+.ach-row .ach-d { font-size: .74rem; color: #9fb0c4; }
 /* スキルツリー */
 .sk-branch { margin: 8px 0; }
 .sk-branch-name { font-weight: 700; color: #cfe0f0; font-size: .9rem; margin-bottom: 4px; }
