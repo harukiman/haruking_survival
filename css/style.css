@@ -47,6 +47,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Segoe U
 #world-label.world-light { background: rgba(120,170,90,0.25); color: #cfe6b0; }
 #world-label.world-shadow { background: rgba(122,79,176,0.3); color: #d8b0ff; }
 .abtn.shift { background: rgba(122,79,176,0.85); border-color: #b884e8; }
+/* 石碑（ロア）モーダル */
+.lore-box { background: linear-gradient(160deg, #1a1430, #251a3a); border: 1px solid #4a3a6a;
+  border-radius: 14px; padding: 22px; max-width: 460px; width: 100%; box-shadow: 0 0 40px rgba(122,79,176,0.3); }
+.lore-box h2 { color: #d8b0ff; font-size: 1.1rem; }
+#lore-body { color: #e8dcff; line-height: 2; font-size: 1rem; margin: 14px 0; letter-spacing: .03em; }
+#lore-count { color: #9a7fd0; text-align: right; }
 /* 影世界モードの全体トーン */
 body.shadow-mode #hotbar, body.shadow-mode #hud > div { filter: hue-rotate(8deg); }
 body.shadow-mode #app::after {

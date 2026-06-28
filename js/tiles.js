@@ -156,6 +156,22 @@ Game.Tiles = (function () {
       x.fillStyle = '#caa84a'; x.fillRect(TS/2 - 6, 6, 12, 18);
       x.fillStyle = '#fff3c0'; x.fillRect(TS/2 - 4, 9, 8, 12);
       x.fillStyle = '#fffbe0'; circle(x, TS/2, 15, 3);
+    } else if (r === 'phantom') {
+      x.fillStyle = '#b0d8ff';
+      x.beginPath(); x.moveTo(TS/2, 5); x.lineTo(TS/2+7, TS/2); x.lineTo(TS/2, TS-6); x.lineTo(TS/2-7, TS/2); x.closePath(); x.fill();
+      x.fillStyle = '#eaf6ff'; circle(x, TS/2, TS/2, 2.4);
+      x.strokeStyle = 'rgba(180,220,255,0.6)'; x.lineWidth = 1; x.strokeRect(4, 4, TS-8, TS-8);
+    } else if (r === 'stela') {
+      x.fillStyle = '#2a2438'; x.fillRect(TS/2 - 7, 4, 14, TS - 6);
+      x.fillStyle = '#3c3450'; x.fillRect(TS/2 - 5, 6, 10, TS - 10);
+      x.fillStyle = '#9a7fd0';
+      for (let yy = 10; yy < TS - 6; yy += 5) x.fillRect(TS/2 - 3, yy, 6, 2); // 刻文
+      x.fillStyle = '#d8b0ff'; circle(x, TS/2, 9, 1.8);
+    } else if (r === 'altar') {
+      x.fillStyle = '#1f1430'; x.fillRect(4, 10, TS - 8, TS - 14);
+      x.fillStyle = '#3a2050'; x.fillRect(7, 7, TS - 14, 8);
+      x.fillStyle = '#c060ff'; circle(x, TS/2, 12, 3);
+      x.strokeStyle = '#7a30c0'; x.lineWidth = 2; x.strokeRect(5, 11, TS - 10, TS - 16);
     }
     objAtlas[id] = c;
   }

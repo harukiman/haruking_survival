@@ -19,7 +19,7 @@ Game.Save = (function () {
     const s = Game.state;
     const p = s.player;
     return {
-      v: 3,
+      v: 4,
       seed: s.seed,
       tick: s.tick,
       spawn: s.spawn,
@@ -28,6 +28,8 @@ Game.Save = (function () {
       sanity: s.sanity,
       hasShifted: s.hasShifted,
       achievements: s.achievements || {},
+      lore: s.lore || {},
+      riftBank: s.riftBank || null,
       worlds: { light: dumpWorld(s.worlds.light), shadow: dumpWorld(s.worlds.shadow) },
       player: {
         x: p.x, y: p.y, dir: p.dir,

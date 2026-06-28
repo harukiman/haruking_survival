@@ -25,6 +25,12 @@ Game.WorldGen = (function () {
     let obj = O.NONE;
     const h = U.hash3(wx, wy, seed + 777);  // 配置用 0..1
 
+    // 石碑（超低確率・両世界・陸地）
+    const walkableGround = ground === T.GRASS || ground === T.FOREST || ground === T.SAND || ground === T.STONE;
+    if (walkableGround && U.hash3(wx, wy, seed + 31337) < 0.0007) {
+      return { ground: ground, obj: O.STELA };
+    }
+
     // 影世界: 同じ地形形状(標高)・別オブジェクト
     const shadow = Game.state && Game.state.worldName === 'shadow';
     if (shadow) {
@@ -36,6 +42,7 @@ Game.WorldGen = (function () {
         if (h < 0.14) obj = O.VOID_ROCK;
         else if (h < 0.22) obj = O.SHADOW_CRYSTAL;
         else if (h < 0.25) obj = O.LUMEN_ORE;
+        else if (h < 0.275) obj = O.PHANTOM_ORE;
       } else if (ground === T.SAND) {
         if (h < 0.05) obj = O.VOID_ROCK;
         else if (h < 0.07) obj = O.SHADOW_CRYSTAL;
@@ -63,6 +70,7 @@ Game.WorldGen = (function () {
       else if (h < 0.145) obj = O.COAL_ORE;
       else if (h < 0.175) obj = O.IRON_ORE;
       else if (h < 0.185) obj = O.GOLD_ORE;
+      else if (h < 0.195) obj = O.PHANTOM_ORE;
     } else if (ground === T.SAND) {
       if (e > 0.40 && h < 0.03) obj = O.CACTUS;   // 砂漠のサボテン
       else if (h < 0.04) obj = O.ROCK;

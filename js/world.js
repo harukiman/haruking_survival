@@ -139,6 +139,7 @@ Game.World = (function () {
     Game.Audio.play('shift');
     Game.UI.toast(target === 'shadow' ? '影の世界へ…' : '光の世界へ戻った');
     Game.UI.refreshWorld();
+    Game.UI.updateMinimap();
     if (Game.Achievements) Game.Achievements.unlock(target === 'shadow' ? 'first_shift' : null);
     return true;
   }

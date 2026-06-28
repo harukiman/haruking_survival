@@ -105,16 +105,21 @@ Game.Mobs = (function () {
       if (distP > TUNE.DESPAWN_TILES * TS) { mobs.splice(i, 1); continue; }
 
       if (m.def.hostile) {
+        const aggro = (m.def.boss ? 22 : 13) * TS;
+        // ボスは手下を召喚
+        if (m.def.boss && m.attackCd <= 0 && Game.state.tick % 200 === 0 && countType('shadow_spawn') < 8) {
+          for (let k = 0; k < 3; k++) spawnMob('shadow_spawn', m.x + (Math.random() - 0.5) * 60, m.y + (Math.random() - 0.5) * 60);
+          Game.Audio.play('shift');
+        }
         // 敵対: プレイヤーを追跡
-        if (distP < 13 * TS) {
+        if (distP < aggro) {
           moveMob(m, dxp, dyp, m.def.speed);
           // 接触攻撃
           if (distP < (m.def.size * 0.5 + 12) && m.attackCd <= 0) {
             Game.Survival.damage(m.def.dmg, 'mob');
-            m.attackCd = 42;
-            // プレイヤーを少し弾く
+            m.attackCd = m.def.boss ? 30 : 42;
             const kl = distP || 1;
-            p.x += (dxp / kl) * 6; p.y += (dyp / kl) * 6;
+            p.x += (dxp / kl) * (m.def.boss ? 12 : 6); p.y += (dyp / kl) * (m.def.boss ? 12 : 6);
           }
         } else {
           wander(m);
@@ -130,6 +135,27 @@ Game.Mobs = (function () {
       }
       m.hopPhase += 0.2;
     }
+  }
+
+  function countType(type) {
+    let n = 0; const mobs = Game.state.mobs;
+    for (let i = 0; i < mobs.length; i++) if (mobs[i].type === type) n++;
+    return n;
+  }
+
+  // 影の祭壇からボス召喚
+  function summonBoss(tx, ty) {
+    if (Game.state.worldName !== 'shadow') { Game.UI.toast('影の世界でのみ顕現する'); return false; }
+    if (countType('sovereign') > 0) { Game.UI.toast('既に影の主が顕現している'); return false; }
+    if (Game.Inventory.count('shadow_crystal') < 3) { Game.UI.toast('影晶が3つ必要'); return false; }
+    Game.Inventory.remove('shadow_crystal', 3);
+    const TS = Game.CFG.TILE_SIZE;
+    spawnMob('sovereign', tx * TS + TS / 2 + 90, ty * TS + TS / 2);
+    Game.Render.flash('#7a30c0');
+    Game.Audio.play('shift');
+    Game.UI.toast('影の主が目を覚ます…！');
+    Game.UI.refreshAll();
+    return true;
   }
 
   function wander(m) {
@@ -165,9 +191,14 @@ Game.Mobs = (function () {
         }
       });
     }
-    Game.Render.spawnParticles(m.x, m.y, m.def.color, 10);
+    Game.Render.spawnParticles(m.x, m.y, m.def.color, m.def.boss ? 40 : 10);
     Game.Player.gainXP(m.def.xp || 1);
     if (Game.Achievements && m.def.hostile) Game.Achievements.unlock('first_night');
+    if (m.def.boss) {
+      Game.Render.flash('#c060ff');
+      Game.UI.toast('影の主を打ち倒した！ 影核を手にした');
+      if (Game.Achievements) Game.Achievements.unlock('boss_slain');
+    }
     Game.Audio.play('mobdie');
   }
 
@@ -226,5 +257,5 @@ Game.Mobs = (function () {
     ctx.closePath();
   }
 
-  return { list, update, draw, spawnMob, damageMob, killMob };
+  return { list, update, draw, spawnMob, damageMob, killMob, summonBoss };
 })();

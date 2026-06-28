@@ -30,7 +30,9 @@ Game.Survival = (function () {
     const T = Game.TUNE;
     if (Game.state.worldName === 'shadow') {
       let drain = T.SANITY_DRAIN;
-      for (const k in p.armor) { const id = p.armor[k]; if (id && Game.ITEMS[id] && Game.ITEMS[id].lumen) drain *= 0.4; }
+      let immune = false;
+      for (const k in p.armor) { const id = p.armor[k]; if (id && Game.ITEMS[id]) { if (Game.ITEMS[id].immuneSanity) immune = true; else if (Game.ITEMS[id].lumen) drain *= 0.4; } }
+      if (immune) drain = 0;
       if (nearLight()) drain *= 0.3;
       Game.state.sanity = Math.max(0, Game.state.sanity - drain);
       if (Game.state.sanity < 10 && Game.Achievements) Game.Achievements.unlock('deep_sanity');

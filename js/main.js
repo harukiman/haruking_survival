@@ -49,6 +49,8 @@ window.Game = window.Game || {};
       sanity: Game.TUNE.SANITY_MAX,
       hasShifted: false,
       achievements: {},
+      lore: {},
+      riftBank: null,
       // active 参照（worlds[worldName] を指す）
       chunks: worlds.light.chunks,
       modifiedTiles: worlds.light.modifiedTiles,
@@ -80,6 +82,8 @@ window.Game = window.Game || {};
     Game.state.sanity = data.sanity != null ? data.sanity : Game.TUNE.SANITY_MAX;
     Game.state.hasShifted = !!data.hasShifted;
     Game.state.achievements = data.achievements || {};
+    Game.state.lore = data.lore || {};
+    Game.state.riftBank = data.riftBank || null;
     if (data.weather) Game.state.weather = data.weather;
     // 両世界の差分/タイルデータ復元
     const restoreWorld = function (name, wd) {

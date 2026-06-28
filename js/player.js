@@ -112,6 +112,8 @@ Game.Player = (function () {
     const meta = Game.OBJ_META[obj];
     if (obj === Game.OBJ.NONE || !meta || !meta.mineable) { mining.active = false; return; }
 
+    // 幻影鉱脈は正気度が低いときだけ掘れる
+    if (meta.phantom && Game.state.sanity >= 40) { mining.active = false; return; }
     const tierUsed = toolTierFor(meta.tool);
     if (tierUsed < meta.tier) {
       mining.active = false; mining.progress = 0;
@@ -152,6 +154,7 @@ Game.Player = (function () {
     }
     const col = (Game.ITEMS[meta.drops && meta.drops[0] && meta.drops[0].item] || {}).color || '#999';
     Game.Render.spawnParticles(wx, wy, col, 8);
+    if (meta.phantom && Game.Achievements) Game.Achievements.unlock('madness_sight');
     Game.Audio.play('break');
   }
 
@@ -162,6 +165,9 @@ Game.Player = (function () {
     const obj = Game.World.objAt(t.tx, t.ty);
 
     if (obj === Game.OBJ.CHEST) { Game.UI.openChest(t.tx, t.ty); return; }
+    if (obj === Game.OBJ.RIFT_ANCHOR) { Game.UI.openSharedChest(t.tx, t.ty); return; }
+    if (obj === Game.OBJ.STELA) { Game.Lore.read(t.tx, t.ty); return; }
+    if (obj === Game.OBJ.SHADOW_ALTAR) { Game.Mobs.summonBoss(t.tx, t.ty); return; }
     if (obj === Game.OBJ.BED) { sleep(); return; }
     if (obj === Game.OBJ.WHEAT && Game.Farming.isGrown(t.tx, t.ty)) { Game.Farming.harvest(t.tx, t.ty); return; }
 

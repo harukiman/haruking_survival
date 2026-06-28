@@ -22,6 +22,8 @@ Game.Render = (function () {
         if (ga) x.drawImage(ga, lx * TS, ly * TS);
         const o = ch.object[i];
         if (o !== Game.OBJ.NONE) {
+          const meta = Game.OBJ_META[o];
+          if (meta && meta.phantom) continue; // 幻影は動的描画（正気度依存）
           const oa = Game.Tiles.obj[o];
           if (oa) x.drawImage(oa, lx * TS, ly * TS);
         }
@@ -55,6 +57,7 @@ Game.Render = (function () {
     }
 
     Game.Farming.drawCrops(ctx);
+    drawPhantoms(ctx);
     drawTargetHighlight(ctx);
     drawMiningCrack(ctx);
     drawDrops(ctx);
@@ -94,6 +97,26 @@ Game.Render = (function () {
       const y = (i * 89 + t * (snow ? 3 : 13)) % (v.h + 40) - 20;
       if (snow) { ctx.beginPath(); ctx.arc(x, y, 1.6, 0, Math.PI * 2); ctx.fill(); }
       else { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - 2, y + 9); ctx.stroke(); }
+    }
+    ctx.restore();
+  }
+
+  // 幻影鉱脈: 正気度が低いほどはっきり見える（狂気の視界）
+  function drawPhantoms(ctx) {
+    const sanity = Game.state.sanity;
+    if (sanity >= 40) return;
+    const alpha = (40 - sanity) / 40; // 0..1
+    const atlas = Game.Tiles.obj[Game.OBJ.PHANTOM_ORE];
+    if (!atlas) return;
+    const range = Game.Camera.visibleTileRange();
+    ctx.save();
+    for (let ty = range.ty0; ty <= range.ty1; ty++) {
+      for (let tx = range.tx0; tx <= range.tx1; tx++) {
+        if (Game.World.objAt(tx, ty) !== Game.OBJ.PHANTOM_ORE) continue;
+        const s = Game.Camera.worldToScreen(tx * TS, ty * TS);
+        ctx.globalAlpha = alpha * (0.6 + Math.sin(Game.state.tick * 0.1 + tx) * 0.25);
+        ctx.drawImage(atlas, Math.round(s.x), Math.round(s.y));
+      }
     }
     ctx.restore();
   }

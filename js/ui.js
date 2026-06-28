@@ -29,8 +29,14 @@ Game.UI = (function () {
     el.chestInvGrid = document.getElementById('chest-inv-grid');
     mmCtx = el.minimap.getContext('2d');
 
+    el.loreScreen = document.getElementById('lore-screen');
+    el.loreTitle = document.getElementById('lore-title');
+    el.loreBody = document.getElementById('lore-body');
+    el.loreCount = document.getElementById('lore-count');
+
     document.getElementById('btn-close-inv').addEventListener('click', toggleInventory);
     document.getElementById('btn-close-chest').addEventListener('click', closeChest);
+    document.getElementById('btn-close-lore').addEventListener('click', closeLore);
     buildHotbar();
     // モバイル端末ならタッチUI表示
     if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
@@ -167,14 +173,28 @@ Game.UI = (function () {
     Game.Audio.play('select');
     refreshChest();
   }
+  // 裂け目の楔: 両世界共通の保管庫（どの楔からでも同じ中身）
+  function openSharedChest(tx, ty) {
+    if (!Game.state.riftBank) Game.state.riftBank = new Array(27).fill(null);
+    Game.state.openChest = { shared: true };
+    Game.state.paused = true;
+    el.chestScreen.classList.remove('hidden');
+    const title = el.chestScreen.querySelector('h2');
+    if (title) title.textContent = '裂け目の保管庫（両世界共通）';
+    Game.Audio.play('shift');
+    refreshChest();
+  }
   function closeChest() {
     Game.state.openChest = null;
     Game.state.paused = false;
     el.chestScreen.classList.add('hidden');
+    const title = el.chestScreen.querySelector('h2');
+    if (title) title.textContent = 'チェスト';
   }
   function chestData() {
     const oc = Game.state.openChest;
     if (!oc) return null;
+    if (oc.shared) return Game.state.riftBank;
     const d = Game.World.getTileData(oc.tx, oc.ty);
     return d && d.chest ? d.chest : null;
   }
@@ -229,6 +249,19 @@ Game.UI = (function () {
     if (!el.invScreen.classList.contains('hidden')) refreshInventory();
   }
 
+  // ===== 石碑（ロア） =====
+  function showLore(title, body, n, total) {
+    el.loreTitle.textContent = title;
+    el.loreBody.textContent = body;
+    el.loreCount.textContent = '石碑 ' + n + ' / ' + total + ' を解読';
+    el.loreScreen.classList.remove('hidden');
+    Game.state.paused = true;
+  }
+  function closeLore() {
+    el.loreScreen.classList.add('hidden');
+    Game.state.paused = false;
+  }
+
   function toast(msg) {
     el.toast.textContent = msg;
     el.toast.classList.add('show');
@@ -264,6 +297,7 @@ Game.UI = (function () {
   return {
     init, showGameUI, refreshHotbar, refreshStats, refreshInventory,
     refreshCraft, refreshAll, toggleInventory, toast, updateMinimap,
-    openChest, closeChest, refreshChest, refreshWorld,
+    openChest, openSharedChest, closeChest, refreshChest, refreshWorld,
+    showLore, closeLore,
   };
 })();

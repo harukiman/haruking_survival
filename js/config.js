@@ -23,9 +23,10 @@ Game.OBJ = {
   BERRY_BUSH:8, PINE_TREE:9, CACTUS:10,
   // 影世界固有
   SHADOW_TREE:50, SHADOW_CRYSTAL:51, LUMEN_ORE:52, SOUL_FLOWER:53, VOID_ROCK:54,
+  PHANTOM_ORE:55, STELA:57,
   WOOD_BLOCK:100, STONE_BLOCK:101, CRAFTING_TABLE:102, FURNACE:103, TORCH:104, CHEST:105,
   FARMLAND:106, WHEAT:107, CAMPFIRE:108, LANTERN:109, FENCE:110, DOOR:111, BED:112, SAPLING:113,
-  RIFT_ANCHOR:114, LUMEN_LANTERN:115,
+  RIFT_ANCHOR:114, LUMEN_LANTERN:115, SHADOW_ALTAR:116,
 };
 
 // 地面の色（手続き描画のベース）
@@ -66,6 +67,7 @@ Game.LIGHT_LEVEL = {
   [Game.OBJ.LUMEN_LANTERN]: 14,   // 影世界用の強力な光
   [Game.OBJ.RIFT_ANCHOR]: 8,
   [Game.OBJ.LUMEN_ORE]: 6,        // 光鉱はほのかに光る
+  [Game.OBJ.SHADOW_ALTAR]: 4,
 };
 
 // オブジェクトのメタ情報。solid=移動阻害, drops=破壊時ドロップ
@@ -103,6 +105,12 @@ Game.OBJ_META = {
   // 設置物（両世界対応）
   [Game.OBJ.RIFT_ANCHOR]:  { name:'裂け目の楔', solid:false, mineable:true, tool:null, tier:0, hp:6, drops:[{item:'rift_anchor', n:[1,1]}], render:'rift', dualPlaced:true },
   [Game.OBJ.LUMEN_LANTERN]:{ name:'光のランタン', solid:false, mineable:true, tool:null, tier:0, hp:2, light:14, drops:[{item:'lumen_lantern', n:[1,1]}], render:'lumenlantern' },
+  // 狂気の視界でのみ見える幻影鉱脈（正気度が低いときだけ掘れる）
+  [Game.OBJ.PHANTOM_ORE]:{ name:'幻影鉱脈', solid:false, mineable:true, tool:'pickaxe', tier:1, hp:6, drops:[{item:'lumen', n:[1,2]},{item:'shadow_crystal', n:[0,1]}], render:'phantom', phantom:true },
+  // 石碑（破壊不可・対話で物語）
+  [Game.OBJ.STELA]:     { name:'石碑', solid:true, mineable:false, tool:null, tier:0, hp:999, drops:[], render:'stela', lore:true },
+  // 影の祭壇（ボス召喚）
+  [Game.OBJ.SHADOW_ALTAR]:{ name:'影の祭壇', solid:true, mineable:true, tool:'pickaxe', tier:2, hp:12, light:4, drops:[{item:'shadow_altar', n:[1,1]}], render:'altar', altar:true },
 };
 
 // アイテム定義。place=設置するOBJ id, tool/tier=道具, food=空腹回復
@@ -176,6 +184,10 @@ Game.ITEMS = {
   // 設置物
   rift_anchor:   { name:'裂け目の楔', stack:16, color:'#7a4fb0', place:Game.OBJ.RIFT_ANCHOR },
   lumen_lantern: { name:'光のランタン', stack:16, color:'#ffe9a0', place:Game.OBJ.LUMEN_LANTERN },
+  shadow_altar:  { name:'影の祭壇', stack:4, color:'#3a2050', place:Game.OBJ.SHADOW_ALTAR },
+  // ボス報酬
+  shadow_core:   { name:'影核', stack:16, color:'#c060ff' },
+  sanity_charm:  { name:'影核のお守り', stack:1, color:'#c060ff', armor:2, slot:'head', lumen:true, immuneSanity:true },
 };
 
 // クラフトレシピ。station=null は手作り、それ以外は近接が必要
@@ -227,6 +239,8 @@ Game.RECIPES = [
   { out:{id:'lumen_charm', n:1}, in:{lumen:3}, station:'crafting_table' },
   { out:{id:'lumen_lantern', n:2}, in:{lumen:2, iron:1}, station:'crafting_table' },
   { out:{id:'rift_anchor', n:1}, in:{shadow_crystal:2, iron:2}, station:'crafting_table' },
+  { out:{id:'shadow_altar', n:1}, in:{shadow_steel:3, shadow_crystal:5}, station:'crafting_table' },
+  { out:{id:'sanity_charm', n:1}, in:{shadow_core:1, lumen:5}, station:'crafting_table' },
 ];
 
 // モブ定義
@@ -241,6 +255,9 @@ Game.MOBS = {
   // 影世界固有モブ
   wraith:   { name:'影霊', hostile:true, hp:16, speed:2.0, color:'#6a4f9a', size:11, drops:[{item:'shadow_shard',n:[1,2]}], dmg:5, xp:4, shadow:true, ghost:true },
   watcher:  { name:'見張り目', hostile:true, hp:24, speed:0.8, color:'#241a3a', size:13, drops:[{item:'shadow_crystal',n:[0,2]},{item:'shadow_shard',n:[1,1]}], dmg:6, xp:5, shadow:true },
+  // ボスと手下
+  sovereign:{ name:'影の主', hostile:true, hp:260, speed:1.4, color:'#7a30c0', size:30, drops:[{item:'shadow_core',n:[2,4]},{item:'shadow_steel',n:[4,8]},{item:'shadow_crystal',n:[5,10]}], dmg:10, xp:60, shadow:true, boss:true },
+  shadow_spawn:{ name:'影の落とし子', hostile:true, hp:6, speed:2.4, color:'#5a3a8a', size:8, drops:[{item:'shadow_shard',n:[0,1]}], dmg:3, xp:1, shadow:true, ghost:true },
 };
 
 // 防具スロット
