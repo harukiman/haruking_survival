@@ -6,6 +6,7 @@ Game.Tiles = (function () {
   const U = Game.Utils;
   const groundAtlas = {};       // TILE id -> canvas（光世界）
   const groundAtlasShadow = {}; // TILE id -> canvas（影世界）
+  const groundAtlasSpace = {};  // TILE id -> canvas（宇宙）
   const objAtlas = {};          // OBJ id -> canvas
 
   function mk() {
@@ -205,6 +206,16 @@ Game.Tiles = (function () {
       x.strokeStyle = '#a04a6a'; x.lineWidth = 2; x.strokeRect(5, 5, TS - 10, TS - 10);
       x.fillStyle = '#e05a8a'; circle(x, TS / 2, TS / 2, 4);
       x.fillStyle = '#2a2030'; circle(x, TS / 2, TS / 2, 2);
+    } else if (r === 'rocket_obj') {
+      x.fillStyle = '#d8d8e0'; x.beginPath(); x.moveTo(TS / 2, 2); x.lineTo(TS / 2 + 7, TS - 8); x.lineTo(TS / 2 - 7, TS - 8); x.closePath(); x.fill();
+      x.fillStyle = '#c0444a'; x.beginPath(); x.moveTo(TS / 2 - 7, TS - 8); x.lineTo(TS / 2 - 12, TS - 2); x.lineTo(TS / 2 - 4, TS - 8); x.closePath(); x.fill();
+      x.beginPath(); x.moveTo(TS / 2 + 7, TS - 8); x.lineTo(TS / 2 + 12, TS - 2); x.lineTo(TS / 2 + 4, TS - 8); x.closePath(); x.fill();
+      x.fillStyle = '#7fc8ff'; circle(x, TS / 2, 11, 3);
+      x.fillStyle = '#ffb04a'; circle(x, TS / 2, TS - 5, 3);
+    } else if (r === 'starore') {
+      x.fillStyle = '#74747e'; roundBlob(x);
+      x.fillStyle = '#aee0ff'; for (let i = 0; i < 5; i++) { const a = i * 1.3; circle(x, TS / 2 + Math.cos(a) * 6, TS / 2 + Math.sin(a) * 6, 2.2); }
+      x.fillStyle = '#fff'; circle(x, TS / 2, TS / 2, 1.6);
     } else if (r === 'enchant') {
       x.fillStyle = '#2a1f44'; x.fillRect(4, 12, TS - 8, TS - 14);
       x.fillStyle = '#3a2a5a'; x.fillRect(6, 8, TS - 12, 8);
@@ -243,9 +254,10 @@ Game.Tiles = (function () {
     for (const k in Game.TILE) {
       buildGround(Game.TILE[k], Game.TILE_COLOR, groundAtlas, 0);
       buildGround(Game.TILE[k], Game.SHADOW_TILE_COLOR, groundAtlasShadow, 50000);
+      buildGround(Game.TILE[k], Game.SPACE_TILE_COLOR, groundAtlasSpace, 90000);
     }
     for (const k in Game.OBJ) { if (Game.OBJ[k] !== 0) buildObj(Game.OBJ[k]); }
   }
 
-  return { init, ground: groundAtlas, groundShadow: groundAtlasShadow, obj: objAtlas };
+  return { init, ground: groundAtlas, groundShadow: groundAtlasShadow, groundSpace: groundAtlasSpace, obj: objAtlas };
 })();

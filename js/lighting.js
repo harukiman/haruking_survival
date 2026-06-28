@@ -19,6 +19,7 @@ Game.Lighting = (function () {
     let d = darknessFor(Game.state.timeOfDay);
     // 影世界は常時薄暗
     if (Game.state.worldName === 'shadow') d = Math.max(d, Game.TUNE.SHADOW_AMBIENT);
+    if (Game.state.worldName === 'space') d = Math.max(d, 0.5); // 宇宙は暗い
     // 正気度が低いと視界が狭まる（恐怖演出）
     const sanity = Game.state.sanity;
     if (sanity != null && sanity < 40) d = Math.min(0.92, d + (40 - sanity) / 40 * 0.28);
@@ -28,6 +29,7 @@ Game.Lighting = (function () {
   // 空のティント色（影世界=紫, 夜=青, 夕焼け=橙）
   function skyTint() {
     if (Game.state.bloodMoon && Game.state.worldName === 'light') return [70, 8, 12]; // 血の月
+    if (Game.state.worldName === 'space') return [2, 3, 10]; // 宇宙の闇
     if (Game.state.worldName === 'shadow') return [26, 10, 44]; // 影の紫
     const t = Game.state.timeOfDay;
     if (t >= 0.68 && t < 0.80) return [70, 30, 20];   // 夕焼け

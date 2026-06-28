@@ -13,7 +13,8 @@ Game.Render = (function () {
     }
     const x = ch.cache.getContext('2d');
     x.clearRect(0, 0, CHUNK_PX, CHUNK_PX);
-    const groundSet = Game.state.worldName === 'shadow' ? Game.Tiles.groundShadow : Game.Tiles.ground;
+    const wn = Game.state.worldName;
+    const groundSet = wn === 'shadow' ? Game.Tiles.groundShadow : wn === 'space' ? Game.Tiles.groundSpace : Game.Tiles.ground;
     for (let ly = 0; ly < CS; ly++) {
       for (let lx = 0; lx < CS; lx++) {
         const i = ly * CS + lx;
@@ -36,8 +37,9 @@ Game.Render = (function () {
     const ctx = Game.ctx;
     const v = Game.view;
     ctx.clearRect(0, 0, v.w, v.h);
-    ctx.fillStyle = '#0c1320';
+    ctx.fillStyle = Game.state.worldName === 'space' ? '#03040a' : '#0c1320';
     ctx.fillRect(0, 0, v.w, v.h);
+    if (Game.state.worldName === 'space') drawStars(ctx);
 
     Game.Camera.follow(alpha);
 
@@ -98,6 +100,20 @@ Game.Render = (function () {
     ctx.fillRect(0, 0, Game.view.w, Game.view.h);
     ctx.restore();
     flashT--;
+  }
+
+  // 宇宙の星空（カメラに緩やかに連動）
+  function drawStars(ctx) {
+    const v = Game.view, cx = Game.state.camera.x, cy = Game.state.camera.y;
+    ctx.save();
+    for (let i = 0; i < 90; i++) {
+      const sx = ((i * 137.5 - cx * 0.2) % (v.w + 20) + v.w + 20) % (v.w + 20) - 10;
+      const sy = ((i * 91.3 - cy * 0.2) % (v.h + 20) + v.h + 20) % (v.h + 20) - 10;
+      const tw = 0.4 + Math.abs(Math.sin((Game.state.tick + i * 20) * 0.05)) * 0.6;
+      ctx.globalAlpha = tw; ctx.fillStyle = i % 7 === 0 ? '#aee0ff' : '#ffffff';
+      ctx.fillRect(sx, sy, i % 5 === 0 ? 2 : 1, i % 5 === 0 ? 2 : 1);
+    }
+    ctx.restore();
   }
 
   function drawWeather(ctx) {

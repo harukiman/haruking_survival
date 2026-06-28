@@ -210,6 +210,7 @@ Game.Player = (function () {
     if (obj === Game.OBJ.STELA) { Game.Lore.read(t.tx, t.ty); return; }
     if (obj === Game.OBJ.SHADOW_ALTAR) { Game.Mobs.summonBoss(t.tx, t.ty); return; }
     if (obj === Game.OBJ.ENCHANT_TABLE) { Game.UI.openEnchant(); return; }
+    if (obj === Game.OBJ.ROCKET) { Game.Rocket.board(); return; }
     if (obj === Game.OBJ.BED) { sleep(); return; }
     if (obj === Game.OBJ.WHEAT && Game.Farming.isGrown(t.tx, t.ty)) { Game.Farming.harvest(t.tx, t.ty); return; }
 
@@ -259,14 +260,19 @@ Game.Player = (function () {
 
   function makeTreasureLoot() {
     const arr = new Array(27).fill(null);
-    const pool = [['lumen', 2, 5], ['shadow_steel', 1, 3], ['shadow_crystal', 2, 5], ['gold_ore', 2, 6], ['shadow_core', 1, 2], ['iron', 2, 5]];
+    const space = Game.state.worldName === 'space';
+    const pool = space
+      ? [['star_metal', 2, 6], ['star_core', 1, 2], ['lumen', 3, 8], ['shadow_steel', 2, 5]]
+      : [['lumen', 2, 5], ['shadow_steel', 1, 3], ['shadow_crystal', 2, 5], ['gold_ore', 2, 6], ['shadow_core', 1, 2], ['iron', 2, 5]];
     const n = 4 + Math.floor(Math.random() * 3);
     for (let i = 0; i < n; i++) {
       const it = pool[Math.floor(Math.random() * pool.length)];
       arr[i] = { id: it[0], count: it[1] + Math.floor(Math.random() * (it[2] - it[1] + 1)) };
     }
     // 宝箱には rolled装備を1つ（やや良質）
-    const gearPool = ['iron_sword', 'iron_chest', 'iron_helmet', 'shadow_blade', 'shadow_helmet'];
+    const gearPool = space
+      ? ['cosmic_blade', 'star_cannon', 'gravity_boots', 'shadow_chest']
+      : ['iron_sword', 'iron_chest', 'iron_helmet', 'shadow_blade', 'shadow_helmet'];
     const gid = gearPool[Math.floor(Math.random() * gearPool.length)];
     arr[n] = { id: gid, count: 1, roll: Game.Loot.roll(gid, 0.3 + Game.Loot.lootBonus()) };
     return arr;

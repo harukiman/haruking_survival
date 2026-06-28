@@ -34,7 +34,7 @@ Game.Save = (function () {
       questIndex: s.questIndex || 0,
       questDone: s.questDone || {},
       reunified: !!s.reunified,
-      worlds: { light: dumpWorld(s.worlds.light), shadow: dumpWorld(s.worlds.shadow) },
+      worlds: { light: dumpWorld(s.worlds.light), shadow: dumpWorld(s.worlds.shadow), space: dumpWorld(s.worlds.space) },
       player: {
         x: p.x, y: p.y, dir: p.dir,
         health: p.health, maxHealth: p.maxHealth,

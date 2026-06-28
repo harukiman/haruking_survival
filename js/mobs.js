@@ -29,6 +29,7 @@ Game.Mobs = (function () {
   // 周辺の空き walkable タイルを探してスポーン
   function trySpawn() {
     if (Game.state.mobs.length >= TUNE.MOB_CAP) return;
+    if (Game.state.worldName === 'space') return; // 宇宙は巣からのみ
     const shadowWorld = Game.state.worldName === 'shadow';
     const night = Game.Lighting.ambientDarkness() > 0.4;
     const p = Game.state.player;
@@ -83,7 +84,8 @@ Game.Mobs = (function () {
         const stx = ptx + dx, sty = pty + dy;
         const g = Game.World.groundAt(stx, sty);
         let pool;
-        if (Game.state.worldName === 'shadow') pool = ['wraith', 'watcher'];
+        if (Game.state.worldName === 'space') { pool = (Math.random() < 0.04 && countType('star_guardian') === 0) ? ['star_guardian'] : ['void_drone', 'void_drone']; }
+        else if (Game.state.worldName === 'shadow') pool = ['wraith', 'watcher'];
         else if (g === Game.TILE.SNOW) pool = ['frost_wisp', 'frost_wisp', 'cursed_armor'];
         else pool = ['zombie', 'skeleton', 'spider', 'cursed_armor'];
         const type = pool[Math.floor(Math.random() * pool.length)];

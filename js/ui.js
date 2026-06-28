@@ -290,12 +290,13 @@ Game.UI = (function () {
 
   function refreshWorld() {
     if (!el.world) return;
-    const shadow = Game.state.worldName === 'shadow';
-    let label = shadow ? '影の世界' : '光の世界';
+    const wn = Game.state.worldName;
+    const shadow = wn === 'shadow';
+    let label = wn === 'space' ? '宇宙' : shadow ? '影の世界' : '光の世界';
     if (shadow && Game.World.inDepths()) label = '影の深層';
     if (Game.state.ngLevel > 0) label += ' NG+' + Game.state.ngLevel;
     el.world.textContent = label;
-    el.world.className = shadow ? 'world-shadow' : 'world-light';
+    el.world.className = wn === 'space' ? 'world-space' : shadow ? 'world-shadow' : 'world-light';
     document.body.classList.toggle('shadow-mode', shadow);
     refreshStats();
   }

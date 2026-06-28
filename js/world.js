@@ -172,6 +172,20 @@ Game.World = (function () {
     if (val === Game.OBJ.NONE) { Game.state.worlds.light.tileData.delete(U.tileKey(tx, ty)); Game.state.worlds.shadow.tileData.delete(U.tileKey(tx, ty)); }
   }
 
+  // 別世界へ移動（ロケット等）。spawnTileで着地位置指定可
+  function travelTo(name, spawnTile) {
+    setActiveWorld(name);
+    const TS = Game.CFG.TILE_SIZE, p = Game.state.player;
+    if (spawnTile) { p.x = spawnTile.tx * TS + TS / 2; p.y = spawnTile.ty * TS + TS / 2; }
+    if (name === 'space') { p.x = 0; p.y = 2 * TS; } // 宇宙の帰還ロケット脇
+    else if (name === 'light') { p.x = Game.state.spawn.tx * TS + TS / 2; p.y = Game.state.spawn.ty * TS + TS / 2; }
+    p.prevX = p.x; p.prevY = p.y;
+    if (!isWalkable(Math.floor(p.x / TS), Math.floor(p.y / TS))) nudgeToWalkable();
+    updateChunks(Math.floor(p.x / TS), Math.floor(p.y / TS));
+    Game.UI.refreshWorld();
+    Game.UI.updateMinimap();
+  }
+
   // 影の深層: 原点からの距離（タイル）
   function depthOf() {
     const TS = Game.CFG.TILE_SIZE, p = Game.state.player;
@@ -200,6 +214,6 @@ Game.World = (function () {
     Chunk, getChunk, groundAt, objAt, setObj, setGround,
     getTileData, setTileData, clearTileData,
     isWalkable, updateChunks, toChunkCoord,
-    setActiveWorld, shift, setObjBothWorlds, resonate, depthOf, inDepths,
+    setActiveWorld, shift, setObjBothWorlds, resonate, depthOf, inDepths, travelTo,
   };
 })();

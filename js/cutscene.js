@@ -176,5 +176,82 @@ Game.Cutscene = (function () {
     if (t > 0.78) { const r = (t - 0.78) / 0.22 * 80; ctx.strokeStyle = 'rgba(255,255,255,' + (1 - (t - 0.78) / 0.22) + ')'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(px, H * 0.55, r, 0, Math.PI * 2); ctx.stroke(); }
   }
 
-  return { play, isPlaying: function () { return playing; } };
+  // ===== ロケット発射ムービー =====
+  function playLaunch(toSpace, cb) {
+    const scenes = toSpace ? [
+      { d: 2600, draw: lcCountdown, text: '発射シーケンス…' },
+      { d: 3200, draw: lcLiftoff, text: '点火——大地を蹴って、空へ' },
+      { d: 3400, draw: lcStars, text: '大気を抜け、星の海へ' },
+    ] : [
+      { d: 2600, draw: lcReentry, text: '帰還——青き世界へ降りてゆく' },
+    ];
+    runScenes(scenes, cb);
+  }
+  function runScenes(scenes, cb) {
+    playing = true; onDone = cb;
+    cv = document.createElement('canvas'); cv.id = 'cutscene-canvas';
+    cv.style.cssText = 'position:absolute;inset:0;z-index:60;background:#03040a;touch-action:none';
+    document.getElementById('app').appendChild(cv); ctx = cv.getContext('2d'); resize();
+    window.addEventListener('resize', resize);
+    skipBtn = document.createElement('button'); skipBtn.id = 'cutscene-skip'; skipBtn.textContent = 'スキップ ▶';
+    skipBtn.addEventListener('click', function (e) { e.stopPropagation(); finish(); });
+    document.getElementById('app').appendChild(skipBtn);
+    cv.addEventListener('click', finish);
+    const total = scenes.reduce(function (a, s) { return a + s.d; }, 0);
+    t0 = performance.now();
+    (function loop(now) {
+      if (!playing) return;
+      const e = now - t0; if (e >= total) { finish(); return; }
+      let acc = 0, sc = scenes[0], local = 0;
+      for (let i = 0; i < scenes.length; i++) { if (e < acc + scenes[i].d) { sc = scenes[i]; local = (e - acc) / scenes[i].d; break; } acc += scenes[i].d; }
+      ctx.clearRect(0, 0, W, H); ctx.fillStyle = '#03040a'; ctx.fillRect(0, 0, W, H);
+      sc.draw(local, now); drawText(sc.text, local);
+      if (e < 500) { ctx.fillStyle = 'rgba(3,4,10,' + (1 - e / 500) + ')'; ctx.fillRect(0, 0, W, H); }
+      if (e > total - 600) { ctx.fillStyle = 'rgba(3,4,10,' + ((e - (total - 600)) / 600) + ')'; ctx.fillRect(0, 0, W, H); }
+      raf = requestAnimationFrame(loop);
+    })(t0);
+  }
+  function starsBg(now, n) {
+    for (let i = 0; i < n; i++) { const x = (i * 53) % W, y = (i * 97 + now * 0.05) % H; ctx.globalAlpha = 0.5 + (i % 3) * 0.2; ctx.fillStyle = '#fff'; ctx.fillRect(x, y, 1.5, 1.5); }
+    ctx.globalAlpha = 1;
+  }
+  function lcCountdown(t, now) {
+    ctx.fillStyle = '#0a1830'; ctx.fillRect(0, H * 0.7, W, H * 0.3);
+    drawRocket(W / 2, H * 0.62, 1.4, 0);
+    const n = 3 - Math.floor(t * 3);
+    ctx.fillStyle = '#ffe9a0'; ctx.font = 'bold 64px sans-serif'; ctx.textAlign = 'center';
+    ctx.globalAlpha = 1 - (t * 3 % 1); ctx.fillText(n > 0 ? n : 'GO', W / 2, H * 0.35); ctx.globalAlpha = 1; ctx.textAlign = 'left';
+  }
+  function lcLiftoff(t, now) {
+    ctx.fillStyle = '#0a1830'; ctx.fillRect(0, H * 0.7, W, H * 0.3);
+    const ry = H * 0.62 - t * H * 0.5;
+    // 噴煙
+    for (let i = 0; i < 24; i++) { ctx.globalAlpha = (1 - t) * 0.6; ctx.fillStyle = i % 2 ? '#ffb04a' : '#fff'; const px = W / 2 + (Math.sin(i * 9 + now * 0.01) * 30 * t); ctx.beginPath(); ctx.arc(px, ry + 40 + i * 5, 8 - i * 0.2, 0, 7); ctx.fill(); }
+    ctx.globalAlpha = 1;
+    drawRocket(W / 2, ry, 1.4 + t * 0.4, t);
+  }
+  function lcStars(t, now) {
+    starsBg(now, 120);
+    drawRocket(W / 2, H * (0.55 - t * 0.1), 1.2 - t * 0.4, 1);
+    // 地球が小さくなる
+    const er = 70 * (1 - t * 0.7); ctx.fillStyle = '#2f6fb0'; ctx.beginPath(); ctx.arc(W / 2, H + 120 - t * 80, er + 60, 0, 7); ctx.fill();
+    ctx.fillStyle = '#3c9647'; ctx.globalAlpha = 0.6; ctx.beginPath(); ctx.arc(W / 2 - 20, H + 110 - t * 80, er, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
+  }
+  function lcReentry(t, now) {
+    starsBg(now, 60);
+    const g = ctx.createRadialGradient(W / 2, H * 0.3, 10, W / 2, H * 0.3, 200); g.addColorStop(0, '#2f6fb0'); g.addColorStop(1, 'rgba(47,111,176,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(W / 2, H * 0.7 + t * 100, 220, 0, 7); ctx.fill();
+    drawRocket(W / 2, H * 0.3 + t * H * 0.3, 1.0, 0.6);
+  }
+  function drawRocket(x, y, sc, flame) {
+    ctx.save(); ctx.translate(x, y); ctx.scale(sc, sc);
+    ctx.fillStyle = '#e6e8f0'; ctx.beginPath(); ctx.moveTo(0, -34); ctx.lineTo(11, 14); ctx.lineTo(-11, 14); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#c0444a'; ctx.beginPath(); ctx.moveTo(-11, 14); ctx.lineTo(-20, 26); ctx.lineTo(-6, 14); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(11, 14); ctx.lineTo(20, 26); ctx.lineTo(6, 14); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#7fc8ff'; ctx.beginPath(); ctx.arc(0, -10, 5, 0, 7); ctx.fill();
+    if (flame > 0) { ctx.fillStyle = '#ffb04a'; ctx.beginPath(); ctx.moveTo(-7, 14); ctx.lineTo(0, 14 + 30 * flame * (0.7 + Math.random() * 0.6)); ctx.lineTo(7, 14); ctx.closePath(); ctx.fill(); }
+    ctx.restore();
+  }
+
+  return { play, playLaunch, isPlaying: function () { return playing; } };
 })();

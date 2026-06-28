@@ -88,6 +88,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Segoe U
 #world-label { font-size: .72rem; font-weight: 700; text-align: center; padding: 2px 0; border-radius: 5px; margin-top: 2px; }
 #world-label.world-light { background: rgba(120,170,90,0.25); color: #cfe6b0; }
 #world-label.world-shadow { background: rgba(122,79,176,0.3); color: #d8b0ff; }
+#world-label.world-space { background: rgba(40,60,120,0.4); color: #aee0ff; }
 .abtn.shift { background: rgba(122,79,176,0.85); border-color: #b884e8; }
 /* 石碑（ロア）モーダル */
 .lore-box { background: linear-gradient(160deg, #1a1430, #251a3a); border: 1px solid #4a3a6a;

@@ -34,6 +34,8 @@ Game.OBJ = {
   ENCHANT_TABLE:123,
   // ダンジョン
   DUNGEON_WALL:124, ICE_WALL:125, SPAWNER:126,
+  // ロケット/宇宙
+  ROCKET:127, STAR_ORE:128,
 };
 
 // 地面の色（手続き描画のベース）
@@ -62,6 +64,19 @@ Game.SHADOW_TILE_COLOR = {
   [Game.TILE.DUNGEON_FLOOR]: '#2a2438',
 };
 
+// 宇宙の地面パレット（虚空＝ほぼ黒、小惑星＝灰）
+Game.SPACE_TILE_COLOR = {
+  [Game.TILE.DEEP_WATER]: '#04050c',
+  [Game.TILE.WATER]:      '#080a16',
+  [Game.TILE.SAND]:       '#7a6f5a',
+  [Game.TILE.GRASS]:      '#5a5560',
+  [Game.TILE.FOREST]:     '#4a4652',
+  [Game.TILE.DIRT]:       '#5a5048',
+  [Game.TILE.STONE]:      '#74747e',
+  [Game.TILE.SNOW]:       '#b0b0c0',
+  [Game.TILE.DUNGEON_FLOOR]: '#3a3a48',
+};
+
 Game.SOLID_TILE = {
   [Game.TILE.DEEP_WATER]: true,  // 移動不可
   [Game.TILE.WATER]: false,      // 浅瀬は通れる（減速は今回省略）
@@ -81,6 +96,8 @@ Game.LIGHT_LEVEL = {
   [Game.OBJ.TREASURE_CHEST]: 4,
   [Game.OBJ.ENCHANT_TABLE]: 5,
   [Game.OBJ.SPAWNER]: 3,
+  [Game.OBJ.ROCKET]: 6,
+  [Game.OBJ.STAR_ORE]: 4,
 };
 
 // オブジェクトのメタ情報。solid=移動阻害, drops=破壊時ドロップ
@@ -140,6 +157,9 @@ Game.OBJ_META = {
   [Game.OBJ.DUNGEON_WALL]:{ name:'遺跡の壁', solid:true, mineable:true, tool:'pickaxe', tier:2, hp:20, drops:[{item:'stone', n:[1,2]}], render:'dwall' },
   [Game.OBJ.ICE_WALL]:   { name:'氷壁', solid:true, mineable:true, tool:'pickaxe', tier:1, hp:14, drops:[{item:'stone', n:[0,1]}], render:'icewall' },
   [Game.OBJ.SPAWNER]:    { name:'魔物の巣', solid:true, mineable:true, tool:'pickaxe', tier:2, hp:16, light:3, drops:[{item:'bone', n:[1,3]},{item:'shadow_shard', n:[0,1]}], render:'spawner', spawner:true },
+  // ロケット/宇宙
+  [Game.OBJ.ROCKET]:     { name:'ロケット', solid:true, mineable:true, tool:'pickaxe', tier:1, hp:30, light:6, drops:[{item:'rocket', n:[1,1]}], render:'rocket_obj', rocket:true },
+  [Game.OBJ.STAR_ORE]:   { name:'星鉱', solid:true, mineable:true, tool:'pickaxe', tier:3, hp:16, light:4, drops:[{item:'star_metal', n:[1,2]}], render:'starore' },
 };
 
 // アイテム定義。place=設置するOBJ id, tool/tier=道具, food=空腹回復
@@ -236,6 +256,13 @@ Game.ITEMS = {
   car:           { name:'車', stack:1, color:'#c0444a', vehicle:'car', flavor:'大地を駆ける鉄の馬。' },
   boat:          { name:'ボート', stack:1, color:'#9c6b3f', vehicle:'boat', flavor:'水を越えるための小舟。' },
   plane:         { name:'飛行機', stack:1, color:'#8a96c0', vehicle:'plane', flavor:'空を行く翼。すべての境界を越えて。' },
+  // ロケット/宇宙
+  rocket:        { name:'ロケット', stack:1, color:'#d8d8e0', place:Game.OBJ.ROCKET, flavor:'空の果て、星々の海へ。全ての貴き素材を束ねて。' },
+  star_metal:    { name:'星鋼', stack:99, color:'#aee0ff', flavor:'星の核から採れる金属。地上のどんな鋼より硬く、軽い。' },
+  star_core:     { name:'星核', stack:16, color:'#ffe9ff', flavor:'小さな星そのもの。無限の力が秘められている。' },
+  cosmic_blade:  { name:'コズミックブレード', stack:1, color:'#aee0ff', tool:'sword', tier:5, attack:18, flavor:'星鋼で鍛えし剣。一閃が闇を裂く。' },
+  star_cannon:   { name:'スターキャノン', stack:1, color:'#aee0ff', tool:'gun', ammo:'bullet', fireDmg:22, flavor:'星の力を撃ち放つ砲。' },
+  gravity_boots: { name:'重力ブーツ', stack:1, color:'#88a', armor:4, slot:'chest', flavor:'星の重力を御す靴。' },
   shadow_altar:  { name:'影の祭壇', stack:4, color:'#3a2050', place:Game.OBJ.SHADOW_ALTAR },
   // ボス報酬
   shadow_core:   { name:'影核', stack:16, color:'#c060ff', flavor:'影の主の心臓。世界を裂いた最初の祈りが、結晶となって残ったもの。' },
@@ -302,6 +329,11 @@ Game.RECIPES = [
   { out:{id:'boat', n:1}, in:{wood:8}, station:'crafting_table' },
   { out:{id:'car', n:1}, in:{iron:8, coal:4}, station:'crafting_table' },
   { out:{id:'plane', n:1}, in:{shadow_steel:6, iron:6, lumen:4}, station:'crafting_table' },
+  // ロケット(高コスト)・宇宙装備
+  { out:{id:'rocket', n:1}, in:{iron:20, shadow_steel:10, lumen:10, shadow_core:3}, station:'crafting_table' },
+  { out:{id:'cosmic_blade', n:1}, in:{star_metal:5, shadow_steel:3}, station:'crafting_table' },
+  { out:{id:'star_cannon', n:1}, in:{star_metal:4, lumen:5}, station:'crafting_table' },
+  { out:{id:'gravity_boots', n:1}, in:{star_metal:4}, station:'crafting_table' },
   { out:{id:'unity_core', n:1}, in:{shadow_core:3, lumen:10, shadow_crystal:10}, station:'crafting_table' }, // 世界統合
   // 建築・自由度
   { out:{id:'wood_floor', n:4}, in:{wood:1}, station:null },
@@ -356,6 +388,9 @@ Game.MOBS = {
   // ダンジョン系
   frost_wisp:{ name:'氷霊', hostile:true, hp:10, speed:1.6, color:'#9fd8ff', size:9, drops:[{item:'lumen',n:[0,1]},{item:'bone',n:[0,1]}], dmg:3, xp:3, inflict:{cold:240} },
   cursed_armor:{ name:'呪鎧', hostile:true, hp:30, speed:0.9, color:'#7a7a86', size:13, drops:[{item:'iron',n:[1,3]},{item:'iron_ore',n:[1,2]}], dmg:6, xp:5 },
+  // 宇宙
+  void_drone:{ name:'虚空ドローン', hostile:true, hp:18, speed:2.2, color:'#7fa0d0', size:10, drops:[{item:'star_metal',n:[0,2]},{item:'lumen',n:[0,1]}], dmg:5, xp:5, space:true, ghost:true },
+  star_guardian:{ name:'星の守護者', hostile:true, hp:320, speed:1.4, color:'#cfe0ff', size:30, drops:[{item:'star_core',n:[2,4]},{item:'star_metal',n:[6,12]}], dmg:11, xp:80, space:true, big:true },
   // 友好NPC: 謎の旅人
   wanderer: { name:'謎の旅人', hostile:false, hp:20, speed:1.0, color:'#caa84a', size:11, drops:[], xp:0, friendly:true, npc:true },
 };
@@ -402,6 +437,7 @@ Game.ITEM_GLYPH = {
   torch:'🔥', campfire:'🔥', lantern:'🏮', lumen_lantern:'💡', crafting_table:'🛠️', furnace:'🔥', chest:'📦', bed:'🛏️', fence:'🚧', door:'🚪', wall:'🧱', window:'🪟', bridge:'🌉', sign:'🪧', wood_floor:'🟫', stone_floor:'⬜',
   shadow_shard:'🌑', shadow_mirror:'🪞', shadow_crystal:'🔮', lumen:'✨', shadow_steel:'⬛', shadow_core:'💜', unity_core:'⭐', void_heart:'💗', rift_anchor:'🕳️', enchant_table:'✦',
   bullet:'🔸', pistol:'🔫', shadow_rifle:'🔫', car:'🚗', boat:'🛶', plane:'✈️',
+  rocket:'🚀', star_metal:'🌟', star_core:'💫', cosmic_blade:'🌠', star_cannon:'🔫', gravity_boots:'👢',
 };
 
 Game.INV_SIZE = 36;       // 先頭9 = ホットバー

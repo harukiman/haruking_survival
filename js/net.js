@@ -4,8 +4,8 @@ window.Game = window.Game || {};
 Game.Net = (function () {
   let room = null;
   let sendPos = null, sendEdit = null, sendHello = null, sendWorld = null, sendChat = null;
-  let sendMobsA = null, sendHitA = null;
-  let pendingDeaths = [];
+  let sendMobsA = null, sendHitA = null, sendReadyA = null;
+  let pendingDeaths = [], pendingLaunch = false;
   let isHost = false, connected = false, mobInterval = null;
   let myName = '旅人' + Math.floor(Math.random() * 9000 + 1000);
   const peers = {}; // id -> {x,y,dir,world,name}
@@ -32,6 +32,8 @@ Game.Net = (function () {
     const a5 = room.makeAction('chat');  sendChat = a5[0];
     const a6 = room.makeAction('mobs');  sendMobsA = a6[0];
     const a7 = room.makeAction('hit');   sendHitA = a7[0];
+    const a9 = room.makeAction('ready');  sendReadyA = a9[0];
+    a9[1](function (d, id) { if (isHost) Game.Rocket.peerReady(id); }); // client→host: 発射準備
 
     a1[1](function (d, id) { const p = peers[id] || (peers[id] = {}); if (p.x == null) { p.x = d.x; p.y = d.y; } p.tx = d.x; p.ty = d.y; p.dir = d.dir; p.world = d.world; });
     a3[1](function (d, id) { const p = peers[id] || (peers[id] = {}); p.name = d.name; });
@@ -42,6 +44,7 @@ Game.Net = (function () {
       if (isHost) return;
       Game.Mobs.applyMobSnapshot(d.m);
       if (d.d) for (let i = 0; i < d.d.length; i++) Game.Mobs.spawnNetDrops(d.d[i].x, d.d[i].y, d.d[i].items);
+      if (d.launch) Game.Rocket.onRemoteLaunch(); // ホストの発射に同期
     });
     a7[1](function (d) { if (isHost) Game.Mobs.applyRemoteHit(d.id, d.dmg, d.x, d.y); }); // host: 被ダメ要求
 
@@ -58,8 +61,8 @@ Game.Net = (function () {
     if (isHost) {
       mobInterval = setInterval(function () {
         if (connected && isHost && Game.state && Game.Mobs) {
-          if (sendMobsA) sendMobsA({ m: Game.Mobs.buildSnapshot(), d: pendingDeaths.length ? pendingDeaths : undefined });
-          pendingDeaths = [];
+          if (sendMobsA) sendMobsA({ m: Game.Mobs.buildSnapshot(), d: pendingDeaths.length ? pendingDeaths : undefined, launch: pendingLaunch ? 1 : undefined });
+          pendingDeaths = []; pendingLaunch = false;
         }
       }, 150);
     }
@@ -113,6 +116,8 @@ Game.Net = (function () {
   function sendMobsSnapshot(arr) { if (connected && isHost && sendMobsA) sendMobsA({ m: arr }); }
   function sendHit(id, dmg, x, y) { if (connected && !isHost && sendHitA) sendHitA({ id: id, dmg: dmg, x: x, y: y }); }
   function sendMobDeath(x, y, items) { if (connected && isHost && items && items.length) pendingDeaths.push({ x: x, y: y, items: items }); }
+  function sendLaunchReady() { if (connected && !isHost && sendReadyA) sendReadyA({}); }
+  function broadcastLaunch() { if (connected && isHost) pendingLaunch = true; }
 
-  return { available, start, leave, tick, broadcastEdit, getPeers, peerCount, isConnected, setName, chat, sendMobsSnapshot, sendHit, sendMobDeath, get host() { return isHost; } };
+  return { available, start, leave, tick, broadcastEdit, getPeers, peerCount, isConnected, setName, chat, sendMobsSnapshot, sendHit, sendMobDeath, sendLaunchReady, broadcastLaunch, get host() { return isHost; } };
 })();

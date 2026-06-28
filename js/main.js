@@ -30,7 +30,7 @@ window.Game = window.Game || {};
   }
 
   function freshState(seed) {
-    const worlds = { light: mkWorld(), shadow: mkWorld() };
+    const worlds = { light: mkWorld(), shadow: mkWorld(), space: mkWorld() };
     const st = {
       seed: seed >>> 0,
       tick: Math.floor(0.33 * Game.DAY_LENGTH), // 朝から開始（夜・敵から始めない）
@@ -155,7 +155,7 @@ window.Game = window.Game || {};
       if (wd.tileData) for (const k in wd.tileData) w.tileData.set(k, wd.tileData[k]);
       if (wd.drops) wd.drops.forEach(function (d) { w.drops.push({ id: d.id, count: d.count, x: d.x, y: d.y, roll: d.roll || null }); });
     };
-    if (data.worlds) { restoreWorld('light', data.worlds.light); restoreWorld('shadow', data.worlds.shadow); }
+    if (data.worlds) { restoreWorld('light', data.worlds.light); restoreWorld('shadow', data.worlds.shadow); restoreWorld('space', data.worlds.space); }
     else if (data.deltas) { restoreWorld('light', { deltas: data.deltas, tileData: data.tileData, drops: data.drops }); } // v2互換
     // アクティブ世界をセット
     Game.World.setActiveWorld(data.worldName || 'light');

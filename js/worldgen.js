@@ -8,7 +8,27 @@ Game.WorldGen = (function () {
   const O = Game.OBJ;
 
   // 1タイル分の生成（world tile 座標）。{ground, obj} を返す
+  // 宇宙: 小惑星(歩ける)＋虚空(不可)＋星鉱/宝箱/巣。(0,0)に帰還ロケット
+  function genSpace(wx, wy, seed) {
+    if (Math.abs(wx) <= 1 && Math.abs(wy) <= 1) {
+      return { ground: T.STONE, obj: (wx === 0 && wy === 0) ? O.ROCKET : O.NONE };
+    }
+    const ae = N.fbm(wx * 0.04, wy * 0.04, seed ^ 0x5a5a, 4);
+    if (ae < 0.46) return { ground: T.DEEP_WATER, obj: O.NONE }; // 虚空
+    const h = U.hash3(wx, wy, seed + 777);
+    let o = O.NONE;
+    if (h < 0.05) o = O.STAR_ORE;
+    else if (h < 0.09) o = O.LUMEN_ORE;
+    else if (h < 0.12) o = O.IRON_ORE;
+    else if (h < 0.135) o = O.SHADOW_CRYSTAL;
+    else if (h < 0.143) o = O.TREASURE_CHEST;
+    else if (h < 0.15) o = O.SPAWNER;
+    else if (h < 0.17) o = O.ROCK;
+    return { ground: T.STONE, obj: o };
+  }
+
   function genTile(wx, wy, seed) {
+    if (Game.state && Game.state.worldName === 'space') return genSpace(wx, wy, seed);
     const e = N.fbm(wx * 0.012, wy * 0.012, seed, 5);          // 標高
     const m = N.fbm(wx * 0.02 + 911, wy * 0.02 + 911, seed ^ 0x9e37, 4); // 湿度
 
