@@ -470,6 +470,7 @@ Game.Mobs = (function () {
         champDrops.push({ id: 'xp_orb', count: 1 });
         if (Math.random() < 0.25) champDrops.push({ id: 'wisdom_tome', count: 1 });
         if (Math.random() < 0.22 && Game.RELIC_IDS) champDrops.push({ id: Game.RELIC_IDS[Math.floor(Math.random() * Game.RELIC_IDS.length)], count: 1 }); // 遺物
+        if (Math.random() < 0.1) champDrops.push({ id: 'expand_pouch', count: 1 }); // 稀に拡張のポーチ
         for (let g = 0; g < champDrops.length; g++) Game.state.drops.push({ id: champDrops[g].id, count: champDrops[g].count, roll: champDrops[g].roll || null, x: m.x + (Math.random() - 0.5) * 22, y: m.y + (Math.random() - 0.5) * 22 });
         Game.Player.gainXP(Math.round((m.def.xp || 1) * 5)); // チャンピオンは追加経験値
         if (Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - m.def.size * 0.7, 'CHAMPION撃破!!', '#ff8ad8', true);

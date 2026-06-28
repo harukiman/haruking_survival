@@ -16,7 +16,7 @@ Game.Player = (function () {
       hungerTimer: 0, regenTimer: 0,
       invuln: 0, hotbarIndex: 0,
       attackCd: 0,
-      xp: 0, level: 1, xpNext: 5,
+      xp: 0, level: 1, xpNext: 22, invSlots: 36,
       baseMaxHealth: 100,
       stamina: 100, maxStamina: 100,
       vehicle: null, // null|'car'|'boat'|'plane'
@@ -168,6 +168,12 @@ Game.Player = (function () {
     }
     if (obj === Game.OBJ.NONE || !meta || !meta.mineable) { mining.active = false; return; }
 
+    // 設置物(OBJ番号100以上=プレイヤー設置/建材)は、近くに敵がいる間は採掘しない（戦闘中の誤破壊防止）
+    if (obj >= 100) {
+      const mobs = Game.state.mobs, px = Game.state.player.x, py = Game.state.player.y;
+      for (let i = 0; i < mobs.length; i++) { const m = mobs[i]; if (m.def && m.def.hostile && Math.hypot(m.x - px, m.y - py) < 2.6 * TS) { mining.active = false; mining.progress = 0; return; } }
+    }
+
     // 幻影鉱脈は正気度が低いときだけ掘れる
     if (meta.phantom && Game.state.sanity >= 40) { mining.active = false; return; }
     const tierUsed = toolTierFor(meta.tool);
@@ -278,7 +284,7 @@ Game.Player = (function () {
     }
     if (def.shift) { Game.World.shift(); return; }
     if (def.respec) { const n = respec(); Game.Inventory.remove(sel.id, 1); Game.UI.toast('記憶の書を読んだ — スキルを振り直した（' + n + 'P返却）'); Game.UI.refreshAll(); return; }
-    if (def.food || def.cures || def.buff || def.skillTome || def.xpGain) { Game.Inventory.useSelected(); return; }
+    if (def.food || def.cures || def.buff || def.skillTome || def.xpGain || def.invExpand) { Game.Inventory.useSelected(); return; }
     if (def.armor) { equipSelectedArmor(); return; }
     if (def.relic) { equipRelic(); return; }
 
@@ -334,6 +340,7 @@ Game.Player = (function () {
     // 金塊＋低確率で遺物
     arr[n + 1] = { id: 'gold_bar', count: 1 + Math.floor(Math.random() * 3) };
     if (Game.RELIC_IDS && Math.random() < 0.12) arr[n + 2] = { id: Game.RELIC_IDS[Math.floor(Math.random() * Game.RELIC_IDS.length)], count: 1 };
+    if (Math.random() < 0.08) arr[n + 3] = { id: 'expand_pouch', count: 1 }; // 稀に拡張のポーチ
     return arr;
   }
 
@@ -575,12 +582,15 @@ Game.Player = (function () {
     Game.UI.refreshAll();
   }
 
+  // レベル必要EXP曲線（序盤は緩やか・高レベルで急増。旧 5+level*3 より大幅に厳しく）
+  function xpForLevel(lv) { return Math.round(12 + lv * 9 + lv * lv * 1.7); }
+
   function gainXP(n) {
     const p = Game.state.player;
     if (p.level >= (Game.MAX_LEVEL || 9999)) { p.xp = 0; return; }
     p.xp += Math.max(1, Math.round(n * (1 + skillBonus().xpBoost)));
     while (p.xp >= p.xpNext && p.level < (Game.MAX_LEVEL || 9999)) {
-      p.xp -= p.xpNext; p.level++; p.xpNext = 5 + p.level * 3;
+      p.xp -= p.xpNext; p.level++; p.xpNext = xpForLevel(p.level);
       p.baseMaxHealth = (p.baseMaxHealth || 100) + 2;
       p.skillPoints = (p.skillPoints || 0) + 2; // レベルごとにスキルポイント
       applyEquipStats();

@@ -179,6 +179,7 @@ Game.UI = (function () {
     { id: 'bomb', n: 2, price: 2 },
     { id: 'carrot_seeds', n: 3, price: 1 }, { id: 'pumpkin_seeds', n: 2, price: 1 }, { id: 'tomato_seeds', n: 3, price: 1 },
     { id: 'xp_orb', n: 1, price: 3 }, { id: 'wisdom_tome', n: 1, price: 8 },
+    { id: 'expand_pouch', n: 1, price: 6 },
     { id: 'bounty_board', n: 1, price: 4 },
     { id: 'ring_crit', n: 1, price: 10 }, { id: 'heart_regen', n: 1, price: 10 },
     { rand: true, price: 4, label: '謎の装備（ランダム）' },
@@ -762,7 +763,7 @@ Game.UI = (function () {
     const btns = [];
     if (def.armor && def.slot) btns.push('<button id="inv-act" class="big-btn">装備する</button>');
     else if (def.relic) btns.push('<button id="inv-act" class="big-btn">遺物を装備</button>');
-    else if (def.food || def.cures || def.buff || def.skillTome || def.xpGain) btns.push('<button id="inv-act" class="big-btn">' + (def.food ? '食べる' : def.skillTome ? '読む' : '使う') + '</button>');
+    else if (def.food || def.cures || def.buff || def.skillTome || def.xpGain || def.invExpand) btns.push('<button id="inv-act" class="big-btn">' + (def.food ? '食べる' : def.skillTome ? '読む' : '使う') + '</button>');
     else if (Game.Loot.rollable(st.id) || def.tool) btns.push('<button id="inv-hot" class="big-btn alt">ホットバーへ装備</button>');
     if (Game.Net && Game.Net.isConnected()) btns.push('<button id="inv-give" class="big-btn alt">仲間に渡す</button>');
     btns.push('<button id="inv-drop" class="big-btn inv-discard">捨てる' + (st.count > 1 ? '（1個）' : '') + '</button>');

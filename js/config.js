@@ -404,6 +404,7 @@ Game.ITEMS = {
   pharaoh_crown: { name:'王の冠', stack:1, color:'#e8c54a', armor:4, slot:'head', flavor:'墳墓に眠りし王の黄金の冠。威厳が身を護る。' },
   mind_tome:     { name:'記憶の書', stack:8, color:'#d0c0ff', respec:true, flavor:'稀少な記憶の書。読めばスキルを振り直せる。' },
   wisdom_tome:   { name:'知恵の書', stack:8, color:'#ffd86b', skillTome:1, flavor:'古の知恵が宿る稀覯本。読めばスキルポイントを1得る。' },
+  expand_pouch:  { name:'拡張のポーチ', stack:8, color:'#caa86a', invExpand:[2,5], flavor:'魔法で空間が広がる革袋。使えば持ち物の上限が増える（最大100）。' },
   xp_orb:        { name:'経験の宝珠', stack:16, color:'#7fd0ff', xpGain:40, flavor:'砕けば膨大な経験が流れ込む輝く珠。' },
   // ===== 遺物(relic) アクセサリー: 装備スロット1つに1個。控えめなパッシブ効果 =====
   ring_crit:     { name:'会心の指輪', stack:1, color:'#ff7a5a', relic:{crit:0.08}, flavor:'裂け目に抗った剣豪の指輪。急所を見抜く眼が宿る。会心率+8%。' },
@@ -737,7 +738,7 @@ Game.ITEM_GLYPH = {
   healing_totem:'⛲', street_lamp:'🪔', table:'🪑', chair:'🪑', bookshelf:'📚', glass:'🪟', rug:'🟥',
   chitin:'🦂', bone_club:'🦴', gold_sword:'⚔️', war_hammer:'🔨', crystal_blade:'⚔️', chitin_spear:'🔱',
   gold_helmet:'⛑️', gold_chest:'🛡️', crystal_helmet:'🪖', crystal_chest:'🛡️', star_helmet:'⛑️', chitin_armor:'🦺',
-  sand_greatsword:'⚔️', magma_hammer:'🔨', pharaoh_crown:'👑', mind_tome:'📖', wisdom_tome:'📗', xp_orb:'🔮',
+  sand_greatsword:'⚔️', magma_hammer:'🔨', pharaoh_crown:'👑', mind_tome:'📖', wisdom_tome:'📗', xp_orb:'🔮', expand_pouch:'🎒',
   ring_crit:'💍', amulet_swift:'📿', fang_vamp:'🦷', heart_regen:'❤️‍🔥', eye_xp:'👁️', band_power:'💪', crest_guard:'🛡️',
   energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️', prism_blade:'⚔️', dragon_fang:'⚔️', colossus_blade:'⚔️', mire_scythe:'⚔️',
 };

@@ -189,12 +189,14 @@ window.Game = window.Game || {};
     p.status = sp.status || {};
     p.str = sp.str || 0; p.vit = sp.vit || 0; p.dex = sp.dex || 0; p.skillPoints = sp.skillPoints || 0; p.skills = sp.skills || {};
     Game.state.ngLevel = data.ngLevel || 0;
-    // インベントリ
+    // インベントリ（拡張済みなら容量も復元）
     if (data.inventory) {
+      while (Game.state.inventory.length < data.inventory.length) Game.state.inventory.push(null);
       for (let i = 0; i < data.inventory.length && i < Game.state.inventory.length; i++) {
         const sl = data.inventory[i];
         Game.state.inventory[i] = sl ? { id: sl.id, count: sl.count, roll: sl.roll || null } : null;
       }
+      p.invSlots = Game.state.inventory.length;
     }
     Game.Player.applyEquipStats();
     startWorld();

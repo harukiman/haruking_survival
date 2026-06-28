@@ -86,12 +86,31 @@ Game.Inventory = (function () {
     if (Game.UI) Game.UI.refreshHotbar();
   }
 
+  // インベントリ上限を拡張（最大100）。増えた数を返す（0=これ以上不可）
+  const MAX_SLOTS = 100;
+  function expand(n) {
+    const s = slots(); const add = Math.min(n, MAX_SLOTS - s.length);
+    for (let i = 0; i < add; i++) s.push(null);
+    if (add > 0) Game.state.player.invSlots = s.length;
+    return add;
+  }
+
   // 選択中アイテムを「使う」（食べる）。設置/採掘は player 側で扱う
   function useSelected() {
     const sl = selectedSlot();
     if (!sl) return false;
     const def = Game.ITEMS[sl.id];
     const p = Game.state.player;
+    // 拡張のポーチ: インベントリ上限 +2〜5（最大100）
+    if (def && def.invExpand) {
+      const want = def.invExpand[0] + Math.floor(Math.random() * (def.invExpand[1] - def.invExpand[0] + 1));
+      const got = expand(want);
+      if (got <= 0) { Game.UI.toast('これ以上拡張できない（最大' + MAX_SLOTS + '）'); return false; }
+      remove(sl.id, 1); Game.Audio.play('enchant');
+      if (Game.Render.spawnFloat) Game.Render.spawnFloat(p.x, p.y - 18, 'スロット +' + got, '#caa86a', true);
+      Game.UI.toast(def.name + ' — インベントリ +' + got + '（現在 ' + slots().length + '）');
+      Game.UI.refreshAll(); return true;
+    }
     // 知恵の書: スキルポイント+1
     if (def && def.skillTome) {
       p.skillPoints = (p.skillPoints || 0) + 1;
@@ -180,5 +199,5 @@ Game.Inventory = (function () {
     for (let i = 0; i < s.length; i++) s[i] = i < list.length ? list[i] : null;
   }
 
-  return { makeEmpty, slots, count, add, addInstance, remove, selectedSlot, selectedItemDef, setHotbar, useSelected, autoSort };
+  return { makeEmpty, slots, count, add, addInstance, remove, selectedSlot, selectedItemDef, setHotbar, useSelected, autoSort, expand };
 })();
