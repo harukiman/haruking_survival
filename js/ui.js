@@ -350,6 +350,43 @@ Game.UI = (function () {
     const opening = el.optionsScreen.classList.contains('hidden');
     el.optionsScreen.classList.toggle('hidden');
     Game.state.paused = opening;
+    if (opening) renderOptions();
+  }
+
+  // マイクラ風 設定一覧（音量/明るさ/ボタン/操作）
+  function renderOptions() {
+    const c = document.getElementById('opt-settings'); if (!c || !Game.Settings) return;
+    const S = Game.Settings;
+    const slider = function (key, label, min, max) {
+      return '<div class="opt-row"><label>' + label + ' <span class="opt-val" id="ov-' + key + '">' + S.get(key) + '%</span></label>' +
+        '<input type="range" class="opt-slider" data-k="' + key + '" min="' + min + '" max="' + max + '" value="' + S.get(key) + '"></div>';
+    };
+    const toggle = function (key, label) {
+      return '<div class="opt-row tg"><label>' + label + '</label><button class="opt-toggle ' + (S.get(key) ? 'on' : '') + '" data-k="' + key + '">' + (S.get(key) ? 'ON' : 'OFF') + '</button></div>';
+    };
+    c.innerHTML =
+      slider('bgmVol', '🎵 BGM音量', 0, 100) +
+      slider('sfxVol', '🔊 効果音量', 0, 100) +
+      slider('brightness', '🔆 明るさ', 40, 100) +
+      slider('btnSize', '📐 ボタンサイズ', 70, 140) +
+      slider('btnOpacity', '👁 ボタン透明度', 30, 100) +
+      slider('joySens', '🕹 スティック感度', 60, 160) +
+      toggle('leftHanded', '✋ 左利き(操作左右反転)') +
+      toggle('dmgNumbers', '🔢 ダメージ数値表示') +
+      toggle('screenShake', '📳 画面のゆれ') +
+      toggle('showFps', '📈 FPS表示');
+    c.querySelectorAll('.opt-slider').forEach(function (sl) {
+      sl.addEventListener('input', function () {
+        const k = this.dataset.k, v = parseInt(this.value, 10);
+        S.set(k, v); const lab = document.getElementById('ov-' + k); if (lab) lab.textContent = v + '%';
+      });
+    });
+    c.querySelectorAll('.opt-toggle').forEach(function (tg) {
+      tg.addEventListener('click', function () {
+        const k = this.dataset.k, v = !S.get(k); S.set(k, v);
+        this.classList.toggle('on', v); this.textContent = v ? 'ON' : 'OFF';
+      });
+    });
   }
 
   // ===== エンチャント台 =====

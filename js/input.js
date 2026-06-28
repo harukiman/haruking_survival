@@ -80,8 +80,10 @@ Game.Input = (function () {
         for (let i = 0; i < e.changedTouches.length; i++) {
           const t = e.changedTouches[i];
           if (joy.active) break;
-          // 左側＆HUDより下で開始したタッチをスティックに割り当て
-          if (t.clientX < window.innerWidth * 0.55 && t.clientY > 90) {
+          // 移動スティックの割り当て（左利きは右側で受け付け）
+          const lh = Game.Settings && Game.Settings.get('leftHanded');
+          const inZone = lh ? (t.clientX > window.innerWidth * 0.45) : (t.clientX < window.innerWidth * 0.55);
+          if (inZone && t.clientY > 90) {
             joy.active = true; joy.id = t.identifier; joy.ox = t.clientX; joy.oy = t.clientY; joy.dx = 0; joy.dy = 0;
             if (joyEl) { joyEl.style.left = t.clientX + 'px'; joyEl.style.top = t.clientY + 'px'; joyEl.classList.remove('hidden'); }
             setKnob(0, 0); e.preventDefault();
@@ -207,7 +209,7 @@ Game.Input = (function () {
     if (keys['w'] || keys['arrowup'] || touch.up) dy -= 1;
     if (keys['s'] || keys['arrowdown'] || touch.down) dy += 1;
     // フローティング仮想スティック（デッドゾーン0.22）
-    if (joy.active && Math.hypot(joy.dx, joy.dy) > 0.22) { dx += joy.dx; dy += joy.dy; }
+    if (joy.active && Math.hypot(joy.dx, joy.dy) > 0.22) { const sn = (Game.Settings ? Game.Settings.get('joySens') : 100) / 100; dx += joy.dx * sn; dy += joy.dy * sn; }
 
     const tmp = { dx: dx, dy: dy, mine: false, dash: false };
     pollGamepad(tmp);

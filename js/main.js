@@ -198,6 +198,7 @@ window.Game = window.Game || {};
     Game.World.updateChunks(pt.tx, pt.ty);
     Game.Audio.ensure();
     Game.Audio.startBGM();
+    if (Game.Settings) Game.Settings.apply();
     if (!running) { running = true; last = performance.now(); requestAnimationFrame(frame); }
   }
 
@@ -220,6 +221,16 @@ window.Game = window.Game || {};
     Game.state.tick++;
   }
 
+  let fpsAcc = 0, fpsCnt = 0, fpsLast = 0;
+  function updateFps(now) {
+    const el = document.getElementById('fps'); if (!el) return;
+    const show = Game.Settings && Game.Settings.get('showFps');
+    if (!show) { if (!el.classList.contains('hidden')) el.classList.add('hidden'); return; }
+    el.classList.remove('hidden');
+    fpsCnt++;
+    if (now - fpsLast >= 500) { const fps = Math.round(fpsCnt * 1000 / (now - fpsLast)); el.textContent = fps + ' fps'; fpsLast = now; fpsCnt = 0; }
+  }
+
   function frame(now) {
     let dt = now - last; last = now;
     if (dt > 250) dt = 250;
@@ -230,6 +241,7 @@ window.Game = window.Game || {};
     Game.Render.draw(alpha);
     Game.Audio.tickBGM();
     Game.Net.tick();
+    updateFps(now);
     requestAnimationFrame(frame);
   }
 

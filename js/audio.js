@@ -221,14 +221,20 @@ Game.Audio = (function () {
     }
   }
 
+  let bgmVol = 0.6, sfxVol = 0.9;
+  function setVolumes(bgm, sfx) {
+    bgmVol = bgm; sfxVol = sfx; ensure();
+    if (bgmGain) bgmGain.gain.value = enabled ? bgmVol * 0.5 : 0;
+    if (sfxGain) sfxGain.gain.value = sfxVol;
+  }
   function toggle() {
     enabled = !enabled;
-    if (bgmGain) bgmGain.gain.value = enabled ? 0.32 : 0;
+    if (bgmGain) bgmGain.gain.value = enabled ? bgmVol * 0.5 : 0;
     if (!enabled) cineStop();
     if (enabled) { ensure(); if (!bgm.started) startBGM(); }
     return enabled;
   }
   function isEnabled() { return enabled; }
 
-  return { play, ensure, toggle, isEnabled, startBGM, tickBGM, updateMood, setMood, cineStart, cineStop, cue };
+  return { play, ensure, toggle, isEnabled, startBGM, tickBGM, updateMood, setMood, cineStart, cineStop, cue, setVolumes };
 })();

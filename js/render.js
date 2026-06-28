@@ -71,6 +71,7 @@ Game.Render = (function () {
     drawSlashes(ctx);
     Game.Projectiles.draw(ctx);
     drawParticles(ctx);
+    drawFloaters(ctx);
     Game.Lighting.drawOverlay(ctx);
     drawWeather(ctx);
     drawCursor(ctx);
@@ -339,5 +340,28 @@ Game.Render = (function () {
     }
   }
 
-  return { draw, buildChunkCache, spawnParticles, spawnBlood, spawnSlash, flash };
+  // 浮遊コンバットテキスト（ダメージ/回復/レベルアップ）
+  const floaters = [];
+  function spawnFloat(wx, wy, text, color, big) {
+    if (Game.Settings && !Game.Settings.get('dmgNumbers')) return;
+    floaters.push({ x: wx + (Math.random() - 0.5) * 8, y: wy, vy: -0.7, life: big ? 60 : 38, max: big ? 60 : 38, text: '' + text, color: color || '#fff', big: !!big });
+  }
+  function drawFloaters(ctx) {
+    if (!floaters.length) return;
+    const z = Game.Camera.zoom();
+    ctx.textAlign = 'center';
+    for (let i = floaters.length - 1; i >= 0; i--) {
+      const f = floaters[i]; f.y += f.vy; f.life--;
+      if (f.life <= 0) { floaters.splice(i, 1); continue; }
+      const s = Game.Camera.worldToScreen(f.x, f.y);
+      ctx.globalAlpha = Math.min(1, f.life / (f.max * 0.5));
+      ctx.font = '700 ' + Math.round((f.big ? 20 : 13) * z) + 'px -apple-system,sans-serif';
+      ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,0.7)';
+      ctx.strokeText(f.text, s.x, s.y); ctx.fillStyle = f.color; ctx.fillText(f.text, s.x, s.y);
+      ctx.globalAlpha = 1;
+    }
+    ctx.textAlign = 'left';
+  }
+
+  return { draw, buildChunkCache, spawnParticles, spawnBlood, spawnSlash, spawnFloat, flash };
 })();

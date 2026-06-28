@@ -121,6 +121,7 @@ Game.Survival = (function () {
       amount = Math.max(1, amount - armor);
     }
     p.health -= amount;
+    if (Game.Render.spawnFloat) Game.Render.spawnFloat(p.x, p.y - 16, '-' + amount, '#ff6a6a');
     if (physical) { p.invuln = 30; Game.Audio.play('hurt'); }
     if (p.health <= 0) { p.health = 0; die(); }
     Game.UI.refreshStats();

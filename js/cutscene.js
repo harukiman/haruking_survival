@@ -57,7 +57,7 @@ Game.Cutscene = (function () {
     ctx.fillStyle = '#05070e'; ctx.fillRect(0, 0, W, H);
     // カメラシェイク（シーン頭で強く→減衰）
     const decay = Math.max(0, 1 - local * 2.2);
-    const sh = shakeMag * decay * 14;
+    const sh = (Game.Settings && !Game.Settings.get('screenShake')) ? 0 : shakeMag * decay * 14;
     ctx.save();
     if (sh > 0.2) ctx.translate((Math.random() - 0.5) * sh, (Math.random() - 0.5) * sh);
     sc.draw(local, now);
@@ -317,7 +317,7 @@ Game.Cutscene = (function () {
       for (let i = 0; i < scenes.length; i++) { if (e < acc + scenes[i].d) { sc = scenes[i]; local = (e - acc) / scenes[i].d; idx = i; break; } acc += scenes[i].d; }
       if (idx !== curScene) { curScene = idx; shakeMag = sc.shake || 0; if (sc.onEnter) try { sc.onEnter(); } catch (er) {} }
       ctx.clearRect(0, 0, W, H); ctx.fillStyle = '#03040a'; ctx.fillRect(0, 0, W, H);
-      const sh = shakeMag * Math.max(0, 1 - local * 2.2) * 14;
+      const sh = (Game.Settings && !Game.Settings.get('screenShake')) ? 0 : shakeMag * Math.max(0, 1 - local * 2.2) * 14;
       ctx.save();
       if (sh > 0.2) ctx.translate((Math.random() - 0.5) * sh, (Math.random() - 0.5) * sh);
       sc.draw(local, now);

@@ -459,6 +459,7 @@ Game.Player = (function () {
       applyEquipStats();
       p.health = p.maxHealth;
       Game.Audio.play('levelup');
+      if (Game.Render.spawnFloat) Game.Render.spawnFloat(p.x, p.y - 20, 'LEVEL UP!', '#6fd0ff', true);
       Game.UI.toast('レベルアップ！ Lv.' + p.level + '（スキルP +2）');
       if (Game.Achievements && p.level >= 5) Game.Achievements.unlock('level5');
     }

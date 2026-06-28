@@ -327,6 +327,7 @@ Game.Mobs = (function () {
     m.hp -= dmg;
     m.hurt = 8;
     Game.Render.spawnBlood(m.x, m.y, 5);
+    if (Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - m.def.size * 0.5, dmg, '#ffe27a');
     const dx = m.x - fromX, dy = m.y - fromY, l = Math.hypot(dx, dy) || 1;
     m.knockX = (dx / l) * 7; m.knockY = (dy / l) * 7;
     if (!m.def.hostile) m.fleeTimer = 180; // 動物は逃げる
