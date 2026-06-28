@@ -5,6 +5,7 @@ Game.Input = (function () {
   const keys = {};
   const mouse = { x: 0, y: 0, down: false, inside: false, moved: false };
   const touch = { up: false, down: false, left: false, right: false, mine: false, dash: false };
+  const joy = { active: false, id: null, ox: 0, oy: 0, dx: 0, dy: 0 }; // フローティング仮想スティック
   let placeQueued = false;   // 設置エッジ
   let lastDir = 'down';
   const cursor = { x: 200, y: 200, active: false }; // ゲームパッド右スティックの選択カーソル
@@ -68,6 +69,43 @@ Game.Input = (function () {
   }
 
   function initTouch() {
+    // フローティング仮想スティック（左側のタッチで出現）
+    const cv = Game.canvas, JR = 52;
+    const joyEl = document.getElementById('joystick'), knob = document.getElementById('joy-knob');
+    function setKnob(kx, ky) { if (knob) knob.style.transform = 'translate(' + kx + 'px,' + ky + 'px)'; }
+    if (cv) {
+      cv.addEventListener('touchstart', function (e) {
+        if (document.body.classList.contains('has-pad')) return;
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          const t = e.changedTouches[i];
+          if (joy.active) break;
+          // 左側＆HUDより下で開始したタッチをスティックに割り当て
+          if (t.clientX < window.innerWidth * 0.55 && t.clientY > 90) {
+            joy.active = true; joy.id = t.identifier; joy.ox = t.clientX; joy.oy = t.clientY; joy.dx = 0; joy.dy = 0;
+            if (joyEl) { joyEl.style.left = t.clientX + 'px'; joyEl.style.top = t.clientY + 'px'; joyEl.classList.remove('hidden'); }
+            setKnob(0, 0); e.preventDefault();
+          }
+        }
+      }, { passive: false });
+      cv.addEventListener('touchmove', function (e) {
+        if (!joy.active) return;
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          const t = e.changedTouches[i];
+          if (t.identifier !== joy.id) continue;
+          let dx = t.clientX - joy.ox, dy = t.clientY - joy.oy; const len = Math.hypot(dx, dy) || 1;
+          const cl = Math.min(len, JR), nx = dx / len, ny = dy / len;
+          joy.dx = nx * (cl / JR); joy.dy = ny * (cl / JR); setKnob(nx * cl, ny * cl); e.preventDefault();
+        }
+      }, { passive: false });
+      const endJoy = function (e) {
+        if (!joy.active) return;
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          if (e.changedTouches[i].identifier === joy.id) { joy.active = false; joy.dx = 0; joy.dy = 0; if (joyEl) joyEl.classList.add('hidden'); }
+        }
+      };
+      cv.addEventListener('touchend', endJoy, { passive: false });
+      cv.addEventListener('touchcancel', endJoy, { passive: false });
+    }
     const dbtns = document.querySelectorAll('#dpad .dbtn');
     dbtns.forEach(function (b) {
       const dir = b.getAttribute('data-dir');
@@ -167,6 +205,8 @@ Game.Input = (function () {
     if (keys['d'] || keys['arrowright'] || touch.right) dx += 1;
     if (keys['w'] || keys['arrowup'] || touch.up) dy -= 1;
     if (keys['s'] || keys['arrowdown'] || touch.down) dy += 1;
+    // フローティング仮想スティック（デッドゾーン0.22）
+    if (joy.active && Math.hypot(joy.dx, joy.dy) > 0.22) { dx += joy.dx; dy += joy.dy; }
 
     const tmp = { dx: dx, dy: dy, mine: false, dash: false };
     pollGamepad(tmp);

@@ -53,6 +53,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Segoe U
 #bigmap { display: block; width: min(78vmin, 560px); height: min(78vmin, 560px); image-rendering: pixelated;
   border-radius: 8px; opacity: 0.92; }
 #bigmap-cap { color: #cdd8ee; font-size: .72rem; text-align: center; margin-top: 6px; opacity: 0.85; }
+#bigmap-bar { display: flex; gap: 8px; justify-content: center; margin-top: 8px; pointer-events: auto; }
+.map-btn { pointer-events: auto; background: rgba(30,42,62,0.92); border: 1px solid #4a5e7e; color: #cfe0f0;
+  font-size: .8rem; font-weight: 700; padding: 7px 14px; border-radius: 9px; cursor: pointer; }
+.map-btn:active { filter: brightness(1.2); }
 /* エンチャント詳細 */
 .ench-name { font-weight: 700; font-size: 1rem; margin: 8px 0 2px; }
 .ench-stat { color: #9fb0c4; font-size: .85rem; margin-bottom: 8px; }
@@ -183,6 +187,12 @@ body.shadow-mode #app::after {
 
 /* ===== モバイル操作 ===== */
 #touch-controls { position: absolute; inset: 0; z-index: 25; pointer-events: none; }
+/* フローティング仮想スティック */
+#joystick { position: absolute; width: 116px; height: 116px; margin-left: -58px; margin-top: -58px;
+  border-radius: 50%; background: rgba(120,140,180,0.16); border: 2px solid rgba(190,210,240,0.45);
+  pointer-events: none; z-index: 26; }
+#joy-knob { position: absolute; left: 50%; top: 50%; width: 52px; height: 52px; margin-left: -26px; margin-top: -26px;
+  border-radius: 50%; background: rgba(190,210,240,0.5); border: 2px solid rgba(225,238,255,0.8); }
 #dpad { position: absolute; left: calc(14px + env(safe-area-inset-left)); bottom: calc(84px + env(safe-area-inset-bottom)); width: 144px; height: 144px; pointer-events: auto; opacity: .92; }
 .dbtn { position: absolute; width: 48px; height: 48px; font-size: 1.05rem; border-radius: 10px;
   background: rgba(40,52,72,0.72); border: 1px solid #4a5e7e; color: #e8edf2; transition: transform .05s; }

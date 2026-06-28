@@ -67,6 +67,13 @@ Game.UI = (function () {
     bmCtx = el.bigmap.getContext('2d');
     el.btnMap = document.getElementById('btn-map');
     if (el.btnMap) el.btnMap.addEventListener('click', toggleBigMap);
+    // ミニマップをタップで大マップ開閉
+    if (el.minimap) el.minimap.addEventListener('click', toggleBigMap);
+    const mmWrap = document.getElementById('minimap-wrap'); if (mmWrap) { mmWrap.style.pointerEvents = 'auto'; mmWrap.style.cursor = 'pointer'; }
+    const opBtn = document.getElementById('bigmap-opacity');
+    if (opBtn) opBtn.addEventListener('click', function (e) { e.stopPropagation(); cycleBigMapOpacity(); });
+    const clBtn = document.getElementById('bigmap-close');
+    if (clBtn) clBtn.addEventListener('click', function (e) { e.stopPropagation(); if (bigMapOpen) toggleBigMap(); });
 
     el.loreScreen = document.getElementById('lore-screen');
     el.loreTitle = document.getElementById('lore-title');
@@ -107,12 +114,23 @@ Game.UI = (function () {
   }
 
   // ===== 大マップ（半透明オーバーレイ・操作継続）=====
+  const BIGMAP_OPACITY = [{ n: '濃い', v: 0.96 }, { n: '標準', v: 0.78 }, { n: '薄い', v: 0.5 }, { n: '極薄', v: 0.3 }];
+  let bigMapOpacityIdx = 1;
+  function applyBigMapOpacity() {
+    const o = BIGMAP_OPACITY[bigMapOpacityIdx];
+    const panel = document.getElementById('bigmap-panel');
+    if (panel) panel.style.opacity = o.v;
+    const ob = document.getElementById('bigmap-opacity');
+    if (ob) ob.textContent = '薄さ: ' + o.n;
+  }
+  function cycleBigMapOpacity() { bigMapOpacityIdx = (bigMapOpacityIdx + 1) % BIGMAP_OPACITY.length; applyBigMapOpacity(); }
+
   function toggleBigMap() {
     if (!el.bigmapScreen) return;
     bigMapOpen = !bigMapOpen;
     el.bigmapScreen.classList.toggle('hidden', !bigMapOpen);
     if (el.btnMap) el.btnMap.classList.toggle('active', bigMapOpen);
-    if (bigMapOpen) updateBigMap();
+    if (bigMapOpen) { applyBigMapOpacity(); updateBigMap(); }
   }
   function isBigMapOpen() { return bigMapOpen; }
 
@@ -248,6 +266,10 @@ Game.UI = (function () {
     el.tooltip.style.top = Math.min(y, window.innerHeight - 80) + 'px';
   }
   function hideTip() { if (el.tooltip) el.tooltip.style.display = 'none'; }
+  // タッチ環境では mouseleave が発火せずツールチップが残るため、画面タッチで強制的に消す
+  if (typeof document !== 'undefined') {
+    document.addEventListener('touchstart', function () { hideTip(); }, { passive: true });
+  }
 
   function refreshHotbar() {
     if (!el.hotbar || !Game.state) return;
