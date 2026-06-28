@@ -101,6 +101,9 @@ Game.UI = (function () {
 
     document.getElementById('btn-close-inv').addEventListener('click', toggleInventory);
     document.getElementById('btn-close-chest').addEventListener('click', closeChest);
+    var cm = document.getElementById('chest-multi'); if (cm) cm.addEventListener('click', toggleChestMulti);
+    var cds = document.getElementById('chest-deposit-sel'); if (cds) cds.addEventListener('click', depositSelected);
+    var cda = document.getElementById('chest-deposit-all'); if (cda) cda.addEventListener('click', depositAll);
     document.getElementById('btn-close-lore').addEventListener('click', closeLore);
     document.getElementById('btn-close-quest').addEventListener('click', closeQuest);
     el.questTracker.addEventListener('click', openQuest);
@@ -512,8 +515,15 @@ Game.UI = (function () {
     if (def.armor && def.slot) btns.push('<button id="inv-act" class="big-btn">装備する</button>');
     else if (def.food || def.cures) btns.push('<button id="inv-act" class="big-btn">' + (def.cures ? '使う' : '食べる') + '</button>');
     else if (Game.Loot.rollable(st.id) || def.tool) btns.push('<button id="inv-hot" class="big-btn alt">ホットバーへ装備</button>');
+    if (Game.Net && Game.Net.isConnected()) btns.push('<button id="inv-give" class="big-btn alt">仲間に渡す</button>');
     btns.push('<button id="inv-drop" class="big-btn inv-discard">捨てる' + (st.count > 1 ? '（1個）' : '') + '</button>');
     el.invDetail.innerHTML = h + btns.join('');
+    const give = document.getElementById('inv-give');
+    if (give) give.addEventListener('click', function () {
+      const cur = Game.Inventory.slots()[invSelected]; if (!cur) return;
+      const one = { id: cur.id, count: 1, roll: cur.roll || null };
+      if (Game.Net.giveItem(one)) { cur.count--; if (cur.count <= 0) { Game.Inventory.slots()[invSelected] = null; invSelected = -1; } refreshInventory(); }
+    });
     const drop = document.getElementById('inv-drop');
     if (drop) drop.addEventListener('click', function () {
       const cur = Game.Inventory.slots()[invSelected]; if (!cur) return;
@@ -662,10 +672,31 @@ Game.UI = (function () {
     el.chestInvGrid.innerHTML = '';
     inv.forEach(function (st, i) {
       const cell = document.createElement('div');
-      cell.className = 'slot'; cell.innerHTML = slotHTML(st);
-      cell.addEventListener('click', function () { invToChest(i); });
+      cell.className = 'slot' + (chestMulti && chestSel[i] ? ' multi-sel' : ''); cell.innerHTML = slotHTML(st);
+      cell.addEventListener('click', function () {
+        if (chestMulti) { if (!st) return; chestSel[i] = !chestSel[i]; refreshChest(); }
+        else invToChest(i);
+      });
       el.chestInvGrid.appendChild(cell);
     });
+  }
+  let chestMulti = false; const chestSel = {};
+  function toggleChestMulti() {
+    chestMulti = !chestMulti; for (const k in chestSel) delete chestSel[k];
+    const mb = document.getElementById('chest-multi'); if (mb) mb.textContent = 'まとめて選択: ' + (chestMulti ? 'ON' : 'OFF');
+    const sb = document.getElementById('chest-deposit-sel'); if (sb) sb.classList.toggle('hidden', !chestMulti);
+    refreshChest();
+  }
+  function depositSelected() {
+    const idx = Object.keys(chestSel).filter(function (k) { return chestSel[k]; }).map(Number).sort(function (a, b) { return b - a; });
+    idx.forEach(function (i) { invToChest(i); });
+    for (const k in chestSel) delete chestSel[k];
+    refreshChest();
+  }
+  function depositAll() {
+    const inv = Game.Inventory.slots();
+    for (let i = inv.length - 1; i >= 0; i--) if (inv[i]) invToChest(i);
+    refreshChest();
   }
   function chestToInv(i) {
     const chest = chestData(); if (!chest || !chest[i]) return;

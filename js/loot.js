@@ -28,10 +28,11 @@ Game.Loot = (function () {
 
   function rollRarity(bonus) {
     const r = Math.random() - (bonus || 0);
-    if (r > 0.60) return 0;
-    if (r > 0.28) return 1;
-    if (r > 0.07) return 2;
-    return 3;
+    // バランス調整: コモン多め・高レアは稀に（インフレ防止）
+    if (r > 0.42) return 0;   // コモン 約58%（affixなし）
+    if (r > 0.13) return 1;   // レア 約29%
+    if (r > 0.03) return 2;   // エピック 約10%
+    return 3;                 // レジェンダリー 約3%
   }
 
   function roll(id, bonus) {

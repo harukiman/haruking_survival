@@ -194,6 +194,8 @@ body.shadow-mode #app::after {
   transform: translate(-50%, -50%); opacity: 0.85; }
 .drag-ghost .icon { width: 30px; height: 30px; }
 .inv-discard { background: #7a2f3a !important; border-color: #c0505a !important; }
+.chest-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.slot.multi-sel { outline: 3px solid #ffe27a; outline-offset: -3px; }
 .craft-list { display: flex; flex-direction: column; gap: 5px; }
 .craft-tabs { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 6px; }
 .craft-tab { padding: 6px 10px; border-radius: 8px; border: 1px solid #33455e; background: #16203200; background: rgba(20,28,42,0.6);

@@ -4,7 +4,7 @@ window.Game = window.Game || {};
 Game.Net = (function () {
   let room = null;
   let sendPos = null, sendEdit = null, sendHello = null, sendWorld = null, sendChat = null;
-  let sendMobsA = null, sendHitA = null, sendReadyA = null;
+  let sendMobsA = null, sendHitA = null, sendReadyA = null, sendGiveA = null;
   let pendingDeaths = [], pendingLaunch = false, pendingDiscovery = null;
   let isHost = false, connected = false, mobInterval = null;
   let myName = '旅人' + Math.floor(Math.random() * 9000 + 1000);
@@ -33,6 +33,14 @@ Game.Net = (function () {
     const a6 = room.makeAction('mobs');  sendMobsA = a6[0];
     const a7 = room.makeAction('hit');   sendHitA = a7[0];
     const a9 = room.makeAction('ready');  sendReadyA = a9[0];
+    const a10 = room.makeAction('give');  sendGiveA = a10[0];
+    a10[1](function (d, id) { // アイテム受け取り（1対1の受け渡し）
+      if (!Game.state) return;
+      if (d.roll) Game.Inventory.addInstance({ id: d.id, roll: d.roll });
+      else Game.Inventory.add(d.id, d.count || 1);
+      Game.UI.refreshAll && Game.UI.refreshAll();
+      Game.UI.toast((peers[id] && peers[id].name || '仲間') + ' から ' + (Game.ITEMS[d.id] ? Game.ITEMS[d.id].name : d.id) + ' を受け取った');
+    });
     a9[1](function (d, id) { // client→host: 発射準備 / 発見通知
       if (!isHost) return;
       if (d && d.disc) { if (Game.Discovery) Game.Discovery.onRemote(d.disc); pendingDiscovery = d.disc; } // ホスト再生＋他クライアントへ中継
@@ -129,6 +137,16 @@ Game.Net = (function () {
     if (isHost) pendingDiscovery = kind;
     else if (sendReadyA) sendReadyA({ disc: kind });
   }
+  // 最寄りの仲間にアイテムを渡す（1対1）。成功で true
+  function giveItem(slot) {
+    if (!connected || !sendGiveA || !slot) return false;
+    const p = Game.state.player; let best = null, bd = Infinity;
+    for (const id in peers) { const pe = peers[id]; if (pe.tx == null || pe.world !== Game.state.worldName) continue; const d = Math.hypot((pe.tx) - p.x, (pe.ty) - p.y); if (d < bd) { bd = d; best = id; } }
+    if (!best) { Game.UI.toast('近くに同じ世界の仲間がいません'); return false; }
+    sendGiveA({ id: slot.id, count: slot.count, roll: slot.roll || null }, best);
+    Game.UI.toast((peers[best].name || '仲間') + ' に ' + (Game.ITEMS[slot.id] ? Game.ITEMS[slot.id].name : slot.id) + ' を渡した');
+    return true;
+  }
 
-  return { available, start, leave, tick, broadcastEdit, getPeers, peerCount, isConnected, setName, chat, sendMobsSnapshot, sendHit, sendMobDeath, sendLaunchReady, broadcastLaunch, broadcastDiscovery, get host() { return isHost; } };
+  return { available, start, leave, tick, broadcastEdit, getPeers, peerCount, isConnected, setName, chat, sendMobsSnapshot, sendHit, sendMobDeath, sendLaunchReady, broadcastLaunch, broadcastDiscovery, giveItem, get host() { return isHost; } };
 })();
