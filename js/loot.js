@@ -130,7 +130,7 @@ Game.Loot = (function () {
 
   // モブ撃破時の装備ドロップ（ground drop配列にpush）
   function rollMobDrop(def, x, y) {
-    const chance = (def.boss ? 1.0 : 0.10) + lootBonus();
+    const chance = (def.boss ? 1.0 : 0.07) + lootBonus();
     const drops = [];
     const n = def.boss ? 2 : (Math.random() < chance ? 1 : 0);
     const pool = gearPoolFor(def);

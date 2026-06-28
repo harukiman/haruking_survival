@@ -83,10 +83,10 @@ Game.Mobs = (function () {
     if (Game.state.mobs.length >= TUNE.MOB_CAP) return;
     const p = Game.state.player, ptx = Math.floor(p.x / TS), pty = Math.floor(p.y / TS);
     let spawned = 0;
-    for (let dy = -8; dy <= 8 && spawned < 2; dy++) {
-      for (let dx = -8; dx <= 8 && spawned < 2; dx++) {
+    for (let dy = -8; dy <= 8 && spawned < 1; dy++) {
+      for (let dx = -8; dx <= 8 && spawned < 1; dx++) {
         if (Game.World.objAt(ptx + dx, pty + dy) !== Game.OBJ.SPAWNER) continue;
-        if (Math.random() > 0.5) continue;
+        if (Math.random() > 0.32) continue;
         const stx = ptx + dx, sty = pty + dy;
         const g = Game.World.groundAt(stx, sty);
         let pool;
@@ -139,8 +139,8 @@ Game.Mobs = (function () {
     const mobs = Game.state.mobs;
     const p = Game.state.player;
 
-    if (Game.state.tick % TUNE.SPAWN_INTERVAL === 0) { trySpawn(); if (Game.state.bloodMoon) { trySpawn(); trySpawn(); } }
-    if (Game.state.tick % 45 === 0) spawnerSpawn();
+    if (Game.state.tick % TUNE.SPAWN_INTERVAL === 0) { trySpawn(); if (Game.state.bloodMoon) trySpawn(); }
+    if (Game.state.tick % 80 === 0) spawnerSpawn();
 
     for (let i = mobs.length - 1; i >= 0; i--) {
       const m = mobs[i];

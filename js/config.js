@@ -485,8 +485,8 @@ Game.ARMOR_SLOTS = ['head', 'chest'];
 Game.TUNE = {
   ATTACK_COOLDOWN: 14,        // tick
   ATTACK_RANGE: 1.6,          // tile
-  MOB_CAP: 36,
-  SPAWN_INTERVAL: 60,         // tick ごとにスポーン試行
+  MOB_CAP: 16,
+  SPAWN_INTERVAL: 100,        // tick ごとにスポーン試行（密度を抑えめに）
   DESPAWN_TILES: 28,          // この距離超で消滅
   CROP_GROW_TICKS: 1400,      // 1段階の成長 tick
   COOK_TICKS: 200,            // 精錬1個あたり tick
