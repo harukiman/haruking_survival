@@ -930,7 +930,7 @@ Game.UI = (function () {
         row.className = 'craft-row' + (entry.can ? '' : ' disabled');
         let ing = '';
         for (const id in r.in) ing += (Game.ITEMS[id] ? Game.ITEMS[id].name : id) + '×' + r.in[id] + ' ';
-        const station = r.station ? ' <em>(' + (r.station === 'furnace' ? 'かまど' : '作業台') + ')</em>' : '';
+        const station = r.station ? ' <em>(' + (r.station === 'furnace' ? 'かまど' : r.station === 'campfire' ? '焚き火' : r.station === 'enchant_table' ? 'エンチャント台' : '作業台') + ')</em>' : '';
         const iurl = Game.Icons && Game.Icons.dataURL(r.out.id, null);
         row.innerHTML = (iurl ? '<span class="ci img" style="background-image:url(' + iurl + ')"></span>' : '<span class="ci" style="background:' + (out.color || '#888') + '"></span>') +
           '<span class="cn">' + out.name + (r.out.n > 1 ? '×' + r.out.n : '') + station + '</span>' +

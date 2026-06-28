@@ -46,7 +46,7 @@ Game.Achievements = (function () {
 
   // 種別判定用（手に入れた時の実績）
   Game.MAGIC_ITEMS = ['warp_staff', 'flame_staff', 'frost_staff', 'flying_carpet'];
-  Game.LEGENDARY_ITEMS = ['sand_greatsword', 'magma_hammer', 'pharaoh_crown', 'cosmic_blade', 'star_cannon', 'excalibur', 'gae_bolg', 'gate_babylon', 'prism_blade', 'dragon_fang', 'colossus_blade', 'mire_scythe', 'magma_maul'];
+  Game.LEGENDARY_ITEMS = ['sand_greatsword', 'magma_hammer', 'pharaoh_crown', 'cosmic_blade', 'star_cannon', 'excalibur', 'gae_bolg', 'gate_babylon', 'prism_blade', 'dragon_fang', 'colossus_blade', 'mire_scythe', 'magma_maul', 'starcore_greatsword', 'voidcore_blade'];
 
   function set() { return Game.state.achievements || (Game.state.achievements = {}); }
 

@@ -9,7 +9,8 @@ Game.Crafting = (function () {
     if (!stationName) return true; // 手作り
     const objId = stationName === 'crafting_table' ? Game.OBJ.CRAFTING_TABLE
       : stationName === 'furnace' ? Game.OBJ.FURNACE
-      : stationName === 'campfire' ? Game.OBJ.CAMPFIRE : null;
+      : stationName === 'campfire' ? Game.OBJ.CAMPFIRE
+      : stationName === 'enchant_table' ? Game.OBJ.ENCHANT_TABLE : null;
     if (objId === null) return false;
     const p = Game.state.player;
     const TS = Game.CFG.TILE_SIZE;

@@ -363,6 +363,11 @@ Game.ITEMS = {
   colossus_blade:{ name:'巨像の大剣', stack:1, color:'#d08a4a', tool:'sword', tier:5, attack:23, proj:{kind:'slash', dmg:22, big:true, cd:38}, wsfx:'beam', flavor:'黄昏の巨像の核より鍛えし剛剣。一振りで大地を断つ。' },
   mire_scythe: { name:'澱みの大鎌', stack:1, color:'#7a9a3a', tool:'sword', tier:5, attack:21, proj:{kind:'venom', dmg:18, count:2, spread:0.3, cd:34}, wsfx:'beam', flavor:'沼の主の骸より鍛えし大鎌。振るえば毒の刃が弧を描いて奔る。' },
   magma_maul:  { name:'溶岩の大槌', stack:1, color:'#d8521f', tool:'sword', tier:5, attack:25, aoe:true, proj:{kind:'fire', dmg:20, explosive:1.6, cd:40}, wsfx:'beam', flavor:'溶岩の王の核より鍛えし大槌。叩きつければ灼熱が炸裂する。' },
+  // ===== エンドゲーム手作り装備(ボス素材) =====
+  starcore_greatsword:{ name:'星核の大剣', stack:1, color:'#cfe0ff', tool:'sword', tier:5, attack:24, proj:{kind:'slash', dmg:24, big:true, cd:34}, wsfx:'beam', flavor:'星核を鍛え込んだ大剣。振るえば星屑の一閃が奔る。' },
+  voidcore_blade:{ name:'虚無の刃', stack:1, color:'#c060ff', tool:'sword', tier:5, attack:22, proj:{kind:'hex', dmg:18, count:2, spread:0.35, pierce:true, cd:32}, wsfx:'beam', flavor:'影核と虚の心臓より生まれた刃。貫く闇の弾を放つ。' },
+  star_aegis:  { name:'星核の鎧', stack:1, color:'#bfe0ff', armor:8, slot:'chest', warm:true, flavor:'星鋼と星核で鍛えた鎧。あらゆる衝撃を受け流す。' },
+  void_helm:   { name:'虚無の兜', stack:1, color:'#a060e0', armor:5, slot:'head', flavor:'影核を埋め込んだ兜。影の囁きを遮る。' },
   // 乗り物
   car:           { name:'車', stack:1, color:'#c0444a', vehicle:'car', flavor:'大地を駆ける鉄の馬。' },
   boat:          { name:'ボート', stack:1, color:'#9c6b3f', vehicle:'boat', flavor:'水を越えるための小舟。' },
@@ -500,6 +505,10 @@ Game.RECIPES = [
   // ロケット(高コスト)・宇宙装備
   { out:{id:'rocket', n:1}, in:{iron:20, shadow_steel:10, lumen:10, shadow_core:3}, station:'crafting_table' },
   { out:{id:'cosmic_blade', n:1}, in:{star_metal:5, shadow_steel:3}, station:'crafting_table' },
+  { out:{id:'starcore_greatsword', n:1}, in:{star_core:1, star_metal:4, iron:2}, station:'enchant_table' },
+  { out:{id:'voidcore_blade', n:1}, in:{shadow_core:1, void_heart:1, shadow_steel:4}, station:'enchant_table' },
+  { out:{id:'star_aegis', n:1}, in:{star_core:1, star_metal:6}, station:'enchant_table' },
+  { out:{id:'void_helm', n:1}, in:{shadow_core:1, shadow_steel:4}, station:'enchant_table' },
   { out:{id:'star_cannon', n:1}, in:{star_metal:4, lumen:5}, station:'crafting_table' },
   { out:{id:'gravity_boots', n:1}, in:{star_metal:4}, station:'crafting_table' },
   // 家具・家作り
@@ -801,7 +810,7 @@ Game.ITEM_GLYPH = {
   gold_helmet:'⛑️', gold_chest:'🛡️', crystal_helmet:'🪖', crystal_chest:'🛡️', star_helmet:'⛑️', chitin_armor:'🦺',
   sand_greatsword:'⚔️', magma_hammer:'🔨', pharaoh_crown:'👑', mind_tome:'📖', wisdom_tome:'📗', xp_orb:'🔮', expand_pouch:'🎒',
   ring_crit:'💍', amulet_swift:'📿', fang_vamp:'🦷', heart_regen:'❤️‍🔥', eye_xp:'👁️', band_power:'💪', crest_guard:'🛡️',
-  energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️', prism_blade:'⚔️', dragon_fang:'⚔️', colossus_blade:'⚔️', mire_scythe:'⚔️', magma_maul:'🔨',
+  energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️', prism_blade:'⚔️', dragon_fang:'⚔️', colossus_blade:'⚔️', mire_scythe:'⚔️', magma_maul:'🔨', starcore_greatsword:'⚔️', voidcore_blade:'⚔️', star_aegis:'🛡️', void_helm:'⛑️',
 };
 
 Game.INV_SIZE = 36;       // 先頭9 = ホットバー
