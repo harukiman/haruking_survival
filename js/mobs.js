@@ -102,8 +102,8 @@ Game.Mobs = (function () {
           type = 'swamp_lord'; // 夜の毒の沼地に沼の主が稀出現
         } else {
           const pool = Game.state.bloodMoon
-            ? ['zombie', 'zombie', 'skeleton', 'spider', 'leech', 'bandit', 'bat', 'gazer', 'troll', 'harpy']
-            : ['zombie', 'skeleton', 'spider', 'slime', 'leech', 'bat', 'gazer', 'harpy'];
+            ? ['zombie', 'zombie', 'skeleton', 'spider', 'leech', 'bandit', 'bat', 'gazer', 'troll', 'harpy', 'viper']
+            : ['zombie', 'skeleton', 'spider', 'slime', 'leech', 'bat', 'gazer', 'harpy', 'viper'];
           type = pool[Math.floor(Math.random() * pool.length)];
         }
       } else {
@@ -113,6 +113,7 @@ Game.Mobs = (function () {
           if (Math.random() < 0.04 && countType('wanderer') === 0) type = 'wanderer';
           else if (diffH && g === Game.TILE.FOREST && Math.random() < 0.05) type = 'troll';
           else if (diffH && g === Game.TILE.FOREST && Math.random() < 0.12) type = 'mud_crawler';
+          else if (diffH && g === Game.TILE.FOREST && Math.random() < 0.10) type = 'giant_toad';
           else if (diffH && Math.random() < 0.12) type = 'boar';
           else { const pool = ['rabbit', 'deer', 'sheep']; type = pool[Math.floor(Math.random() * pool.length)]; }
         } else if (g === Game.TILE.SAND && diffH && Math.random() < 0.5) {
@@ -121,9 +122,9 @@ Game.Mobs = (function () {
           type = Math.random() < 0.45 ? 'frost_wolf' : 'ice_bear';
         } else if (g === Game.TILE.STONE && Math.random() < 0.3) {
           type = 'slime';
-        } else if (g === Game.TILE.SWAMP && diffH && Math.random() < 0.5) {
+        } else if (g === Game.TILE.SWAMP && diffH && Math.random() < 0.55) {
           // 毒の沼地: 沼特有の敵が出やすい
-          const sp = ['bog_horror', 'mud_crawler', 'mud_crawler', 'leech', 'leech'];
+          const sp = ['bog_horror', 'mud_crawler', 'leech', 'swamp_wisp', 'swamp_wisp', 'giant_toad', 'giant_toad', 'viper'];
           type = sp[Math.floor(Math.random() * sp.length)];
         }
       }

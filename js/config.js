@@ -651,6 +651,10 @@ Game.MOBS = {
   wanted_boss:{ name:'賞金首の大物', hostile:true, hp:260, speed:1.55, color:'#d84a4a', size:26, drops:[{item:'gold_bar',n:[4,8]},{item:'iron',n:[3,6]}], dmg:11, xp:65, boss:true, big:true, shape:'tall', summon:'bandit' },
   // 沼の主: 夜の毒の沼地に稀に顕現する瘴気のボス
   swamp_lord:{ name:'沼の主', hostile:true, hp:300, speed:1.0, color:'#5a7a3a', size:30, drops:[{item:'mire_scythe',n:[1,1]},{item:'glow_spore',n:[4,8]},{item:'guts',n:[2,4]},{item:'gold_bar',n:[2,4]}], dmg:11, xp:78, boss:true, big:true, shape:'blob', summon:'leech', inflict:{poison:300, infection:300}, ranged:{dmg:8,range:7,cd:75,kind:'venom',status:{poison:240}} },
+  // 沼地/夜の新モブ3種
+  swamp_wisp:{ name:'沼の鬼火', hostile:true, hp:12, speed:1.4, color:'#8fe06a', size:10, drops:[{item:'glow_spore',n:[0,1]},{item:'shadow_shard',n:[0,1]}], dmg:4, xp:4, ghost:true, shape:'wisp', ranged:{dmg:5,range:6,cd:80,kind:'venom',status:{poison:200}} },
+  giant_toad:{ name:'大蛙', hostile:true, hp:22, speed:1.2, color:'#5a8a3a', size:13, drops:[{item:'raw_meat',n:[1,2]},{item:'guts',n:[0,1]}], dmg:5, xp:5, hop:true, shape:'blob', inflict:{poison:180} },
+  viper:{ name:'毒蛇', hostile:true, hp:11, speed:2.3, color:'#7a9a3a', size:9, drops:[{item:'guts',n:[0,1]},{item:'hide',n:[0,1]}], dmg:4, xp:4, shape:'spiky', inflict:{poison:240} },
   // ===== P30 敵の多様化: 遠距離魔法・巨人・形状バリエーション =====
   hex_caster:{ name:'影の呪術師', hostile:true, hp:18, speed:1.0, color:'#a060e0', size:11, drops:[{item:'shadow_crystal',n:[0,1]},{item:'shadow_shard',n:[1,2]}], dmg:4, xp:5, shadow:true, ghost:true, shape:'wisp', ranged:{dmg:6,range:7,cd:80,kind:'hex'} },
   gazer:    { name:'浮遊する眼', hostile:true, hp:14, speed:1.3, color:'#6a3a6a', size:11, drops:[{item:'shadow_shard',n:[1,2]}], dmg:4, xp:4, ghost:true, shape:'orb', ranged:{dmg:5,range:6,cd:70,kind:'hex'} },
