@@ -33,6 +33,7 @@ Game.Save = (function () {
       resonated: s.resonated || {},
       discovered: s.discovered || {},
       bossSeen: s.bossSeen || {},
+      bestiary: s.bestiary || {},
       questIndex: s.questIndex || 0,
       questDone: s.questDone || {},
       reunified: !!s.reunified,

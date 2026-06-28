@@ -249,6 +249,18 @@ Game.UI = (function () {
       }
       h += '</div>';
     }
+    // 魔物図鑑
+    if (Game.MOBS) {
+      const best = Game.state.bestiary || {};
+      const types = Object.keys(Game.MOBS).filter(function (id) { return !Game.MOBS[id].npc; });
+      const found = types.filter(function (id) { return best[id]; }).length;
+      h += '<h2>魔物図鑑 <span style="color:#ffe27a;font-size:.9rem">' + found + ' / ' + types.length + '</span></h2><div class="ach-list">';
+      types.forEach(function (id) {
+        const m = Game.MOBS[id], got = best[id];
+        h += '<div class="ach-row' + (got ? ' got' : '') + '"><span class="ach-mk">' + (got ? (m.boss ? '👑' : '☠') : '❔') + '</span><div><b>' + (got ? m.name : '？？？') + '</b>' + (got ? '<br><span class="ach-d">撃破 ' + best[id] + ' 体' + (m.boss ? '・ボス' : '') + '</span>' : '') + '</div></div>';
+      });
+      h += '</div>';
+    }
     body.innerHTML = h;
     body.querySelectorAll('.stat-plus').forEach(function (b) { b.addEventListener('click', function () { Game.Player.spendStat(b.getAttribute('data-stat')); renderStats(); }); });
     body.querySelectorAll('.sk-node[data-skill]').forEach(function (b) { b.addEventListener('click', function () { const id = b.getAttribute('data-skill'); if (Game.Player.unlockSkill(id)) renderStats(); }); });

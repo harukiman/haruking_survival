@@ -54,6 +54,7 @@ window.Game = window.Game || {};
       resonated: {},
       discovered: {},
       bossSeen: {},
+      bestiary: {},
       questIndex: 0,
       questDone: {},
       reunified: false,
@@ -145,6 +146,7 @@ window.Game = window.Game || {};
     Game.state.resonated = data.resonated || {};
     Game.state.discovered = data.discovered || {};
     Game.state.bossSeen = data.bossSeen || {};
+    Game.state.bestiary = data.bestiary || {};
     Game.state.questIndex = data.questIndex || 0;
     Game.state.questDone = data.questDone || {};
     Game.state.reunified = !!data.reunified;
