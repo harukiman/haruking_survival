@@ -263,11 +263,11 @@ Game.UI = (function () {
     let ring = '';
     if (stack.roll) ring = ';box-shadow:0 0 0 2px ' + Game.Loot.rarityColor(stack) + ',0 0 6px ' + Game.Loot.rarityColor(stack);
     const title = stack.roll ? Game.Loot.displayName(stack) : (def ? def.name : stack.id);
+    // canvas手続きアイコン（クラス別シェイプ×色）。失敗時は色/絵文字にフォールバック
+    const url = Game.Icons && Game.Icons.dataURL(stack.id, stack.roll);
+    if (url) return '<span class="icon img" style="background-image:url(' + url + ')' + ring + '" title="' + title + '" data-tip="' + stack.id + '"></span>' + cnt;
     const glyph = Game.ITEM_GLYPH[stack.id];
-    if (glyph) {
-      // 絵文字アイコン＋レアリティ枠（区別しやすく）
-      return '<span class="icon glyph" style="' + (stack.roll ? 'background:transparent' + ring : 'background:transparent') + '" data-tip="' + stack.id + '">' + glyph + '</span>' + cnt;
-    }
+    if (glyph) return '<span class="icon glyph" style="background:transparent' + ring + '" data-tip="' + stack.id + '">' + glyph + '</span>' + cnt;
     return '<span class="icon" style="background:' + col + ring + '" title="' + title + '" data-tip="' + stack.id + '"></span>' + cnt;
   }
 
@@ -621,8 +621,7 @@ Game.UI = (function () {
     for (const id in Game.ITEMS) {
       const def = Game.ITEMS[id];
       const cell = document.createElement('div'); cell.className = 'slot';
-      const g = Game.ITEM_GLYPH[id];
-      cell.innerHTML = g ? '<span class="icon glyph">' + g + '</span>' : '<span class="icon" style="background:' + (def.color || '#888') + '"></span>';
+      cell.innerHTML = slotHTML({ id: id, count: 1 });
       cell.title = def.name;
       cell.addEventListener('click', function () {
         if (Game.Loot.rollable(id)) { Game.Inventory.addInstance({ id: id, roll: Game.Loot.roll(id, 0.2) }); }
@@ -659,8 +658,8 @@ Game.UI = (function () {
         let ing = '';
         for (const id in r.in) ing += (Game.ITEMS[id] ? Game.ITEMS[id].name : id) + '×' + r.in[id] + ' ';
         const station = r.station ? ' <em>(' + (r.station === 'furnace' ? 'かまど' : '作業台') + ')</em>' : '';
-        const glyph = Game.ITEM_GLYPH[r.out.id];
-        row.innerHTML = (glyph ? '<span class="ci" style="background:transparent;font-size:18px;text-align:center">' + glyph + '</span>' : '<span class="ci" style="background:' + (out.color || '#888') + '"></span>') +
+        const iurl = Game.Icons && Game.Icons.dataURL(r.out.id, null);
+        row.innerHTML = (iurl ? '<span class="ci img" style="background-image:url(' + iurl + ')"></span>' : '<span class="ci" style="background:' + (out.color || '#888') + '"></span>') +
           '<span class="cn">' + out.name + (r.out.n > 1 ? '×' + r.out.n : '') + station + '</span>' +
           '<span class="cin">' + ing + '</span>';
         row.addEventListener('click', function () { if (Game.Crafting.craft(r)) refreshInventory(); });
