@@ -71,6 +71,31 @@ Game.Mobs = (function () {
     }
   }
 
+  // ダンジョンの魔物の巣から、テーマ別の敵を湧かせる
+  function spawnerSpawn() {
+    if (Game.state.mobs.length >= TUNE.MOB_CAP) return;
+    const p = Game.state.player, ptx = Math.floor(p.x / TS), pty = Math.floor(p.y / TS);
+    let spawned = 0;
+    for (let dy = -8; dy <= 8 && spawned < 2; dy++) {
+      for (let dx = -8; dx <= 8 && spawned < 2; dx++) {
+        if (Game.World.objAt(ptx + dx, pty + dy) !== Game.OBJ.SPAWNER) continue;
+        if (Math.random() > 0.5) continue;
+        const stx = ptx + dx, sty = pty + dy;
+        const g = Game.World.groundAt(stx, sty);
+        let pool;
+        if (Game.state.worldName === 'shadow') pool = ['wraith', 'watcher'];
+        else if (g === Game.TILE.SNOW) pool = ['frost_wisp', 'frost_wisp', 'cursed_armor'];
+        else pool = ['zombie', 'skeleton', 'spider', 'cursed_armor'];
+        const type = pool[Math.floor(Math.random() * pool.length)];
+        // 近傍の歩ける床へ
+        for (let a = 0; a < 6; a++) {
+          const ox = stx + (Math.floor(Math.random() * 3) - 1), oy = sty + (Math.floor(Math.random() * 3) - 1);
+          if (Game.World.isWalkable(ox, oy)) { spawnMob(type, ox * TS + TS / 2, oy * TS + TS / 2); spawned++; break; }
+        }
+      }
+    }
+  }
+
   function moveMob(m, dx, dy, speed) {
     const len = Math.hypot(dx, dy);
     if (len < 0.001) return;
@@ -100,6 +125,7 @@ Game.Mobs = (function () {
     const p = Game.state.player;
 
     if (Game.state.tick % TUNE.SPAWN_INTERVAL === 0) { trySpawn(); if (Game.state.bloodMoon) { trySpawn(); trySpawn(); } }
+    if (Game.state.tick % 45 === 0) spawnerSpawn();
 
     for (let i = mobs.length - 1; i >= 0; i--) {
       const m = mobs[i];

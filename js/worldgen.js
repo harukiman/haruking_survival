@@ -31,6 +31,26 @@ Game.WorldGen = (function () {
       return { ground: ground, obj: O.STELA };
     }
 
+    // ダンジョン（両世界・複数種: 遺跡/氷窟/影の神殿）
+    if (ground !== T.DEEP_WATER && ground !== T.WATER) {
+      const DG = 74;
+      const ax = Math.round(wx / DG) * DG, ay = Math.round(wy / DG) * DG;
+      if (U.hash3(ax, ay, seed + 8888) < 0.085) {
+        const dx = wx - ax, dy = wy - ay, hw = 5, hh = 4;
+        if (Math.abs(dx) <= hw && Math.abs(dy) <= hh) {
+          const ice = ground === T.SNOW;
+          const wall = ice ? O.ICE_WALL : O.DUNGEON_WALL;
+          const edge = Math.abs(dx) === hw || Math.abs(dy) === hh;
+          const entrance = dy === hh && Math.abs(dx) <= 1; // 下側に入口
+          if (edge && !entrance) return { ground: T.DUNGEON_FLOOR, obj: wall };
+          if (dx === 0 && dy === 0) return { ground: T.DUNGEON_FLOOR, obj: O.TREASURE_CHEST };
+          if (dy === 0 && Math.abs(dx) === 3) return { ground: T.DUNGEON_FLOOR, obj: O.SPAWNER };
+          const rh = U.hash3(wx, wy, seed + 99);
+          return { ground: T.DUNGEON_FLOOR, obj: rh < 0.05 ? O.ROCK : O.NONE };
+        }
+      }
+    }
+
     // 影世界: 同じ地形形状(標高)・別オブジェクト
     const shadow = Game.state && Game.state.worldName === 'shadow';
 

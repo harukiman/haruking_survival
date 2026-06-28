@@ -15,7 +15,7 @@ Game.CFG = {
 };
 
 // 地面レイヤー
-Game.TILE = { DEEP_WATER:0, WATER:1, SAND:2, GRASS:3, FOREST:4, DIRT:5, STONE:6, SNOW:7 };
+Game.TILE = { DEEP_WATER:0, WATER:1, SAND:2, GRASS:3, FOREST:4, DIRT:5, STONE:6, SNOW:7, DUNGEON_FLOOR:8 };
 
 // オブジェクトレイヤー（0=なし、50番台=影世界固有、100番台=プレイヤー設置物）
 Game.OBJ = {
@@ -32,6 +32,8 @@ Game.OBJ = {
   // 建築・自由度
   WOOD_FLOOR:117, STONE_FLOOR:118, WALL:119, WINDOW:120, BRIDGE:121, SIGN:122,
   ENCHANT_TABLE:123,
+  // ダンジョン
+  DUNGEON_WALL:124, ICE_WALL:125, SPAWNER:126,
 };
 
 // 地面の色（手続き描画のベース）
@@ -44,6 +46,7 @@ Game.TILE_COLOR = {
   [Game.TILE.DIRT]:       '#8a5a36',
   [Game.TILE.STONE]:      '#7f8488',
   [Game.TILE.SNOW]:       '#e8eef2',
+  [Game.TILE.DUNGEON_FLOOR]: '#3a3540',
 };
 
 // 影世界の地面パレット（同じTILE idを別色で描画）
@@ -56,6 +59,7 @@ Game.SHADOW_TILE_COLOR = {
   [Game.TILE.DIRT]:       '#33223a',
   [Game.TILE.STONE]:      '#3b3550',
   [Game.TILE.SNOW]:       '#5a5575',
+  [Game.TILE.DUNGEON_FLOOR]: '#2a2438',
 };
 
 Game.SOLID_TILE = {
@@ -76,6 +80,7 @@ Game.LIGHT_LEVEL = {
   [Game.OBJ.RESONANCE_CORE]: 7,   // 影で目印として光る
   [Game.OBJ.TREASURE_CHEST]: 4,
   [Game.OBJ.ENCHANT_TABLE]: 5,
+  [Game.OBJ.SPAWNER]: 3,
 };
 
 // オブジェクトのメタ情報。solid=移動阻害, drops=破壊時ドロップ
@@ -131,6 +136,10 @@ Game.OBJ_META = {
   [Game.OBJ.BRIDGE]:     { name:'橋', solid:false, bridge:true, mineable:true, tool:null, tier:0, hp:3, drops:[{item:'bridge', n:[1,1]}], render:'bridge' },
   [Game.OBJ.SIGN]:       { name:'立て札', solid:false, mineable:true, tool:null, tier:0, hp:2, drops:[{item:'sign', n:[1,1]}], render:'sign' },
   [Game.OBJ.ENCHANT_TABLE]:{ name:'エンチャント台', solid:true, mineable:true, tool:'pickaxe', tier:1, hp:8, light:5, drops:[{item:'enchant_table', n:[1,1]}], render:'enchant', enchant:true },
+  // ダンジョン
+  [Game.OBJ.DUNGEON_WALL]:{ name:'遺跡の壁', solid:true, mineable:true, tool:'pickaxe', tier:2, hp:20, drops:[{item:'stone', n:[1,2]}], render:'dwall' },
+  [Game.OBJ.ICE_WALL]:   { name:'氷壁', solid:true, mineable:true, tool:'pickaxe', tier:1, hp:14, drops:[{item:'stone', n:[0,1]}], render:'icewall' },
+  [Game.OBJ.SPAWNER]:    { name:'魔物の巣', solid:true, mineable:true, tool:'pickaxe', tier:2, hp:16, light:3, drops:[{item:'bone', n:[1,3]},{item:'shadow_shard', n:[0,1]}], render:'spawner', spawner:true },
 };
 
 // アイテム定義。place=設置するOBJ id, tool/tier=道具, food=空腹回復
@@ -344,6 +353,9 @@ Game.MOBS = {
   leech:    { name:'蛭', hostile:true, hp:5, speed:2.3, color:'#5a2030', size:7, drops:[{item:'guts',n:[1,2]}], dmg:2, xp:2, inflict:{bleed:240, infection:300} },
   // 深層の徘徊ボス
   hunger_beast:{ name:'飢餓の獣', hostile:true, hp:140, speed:1.7, color:'#7a1840', size:26, drops:[{item:'void_heart',n:[1,2]},{item:'shadow_core',n:[1,3]},{item:'shadow_crystal',n:[3,6]},{item:'guts',n:[2,4]}], dmg:9, xp:35, shadow:true, big:true, inflict:{bleed:300} },
+  // ダンジョン系
+  frost_wisp:{ name:'氷霊', hostile:true, hp:10, speed:1.6, color:'#9fd8ff', size:9, drops:[{item:'lumen',n:[0,1]},{item:'bone',n:[0,1]}], dmg:3, xp:3, inflict:{cold:240} },
+  cursed_armor:{ name:'呪鎧', hostile:true, hp:30, speed:0.9, color:'#7a7a86', size:13, drops:[{item:'iron',n:[1,3]},{item:'iron_ore',n:[1,2]}], dmg:6, xp:5 },
   // 友好NPC: 謎の旅人
   wanderer: { name:'謎の旅人', hostile:false, hp:20, speed:1.0, color:'#caa84a', size:11, drops:[], xp:0, friendly:true, npc:true },
 };

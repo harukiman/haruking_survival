@@ -191,6 +191,20 @@ Game.Tiles = (function () {
       x.fillStyle = '#5a3a1e'; x.fillRect(TS / 2 - 1, TS / 2, 2, TS / 2 - 2);
       x.fillStyle = '#b5803f'; x.fillRect(6, 6, TS - 12, 12);
       x.strokeStyle = '#5a3d1f'; x.lineWidth = 1; x.strokeRect(6, 6, TS - 12, 12);
+    } else if (r === 'dwall') {
+      x.fillStyle = '#5a5560'; x.fillRect(1, 1, TS - 2, TS - 2);
+      x.strokeStyle = '#3a3640'; x.lineWidth = 1.5;
+      for (let yy = 5; yy < TS; yy += 9) { x.beginPath(); x.moveTo(1, yy); x.lineTo(TS - 1, yy); x.stroke(); }
+      x.beginPath(); x.moveTo(TS / 2, 1); x.lineTo(TS / 2, 5); x.moveTo(TS / 3, 14); x.lineTo(TS / 3, 23); x.stroke();
+    } else if (r === 'icewall') {
+      x.fillStyle = '#bfe4f5'; x.fillRect(1, 1, TS - 2, TS - 2);
+      x.fillStyle = 'rgba(255,255,255,0.5)'; x.fillRect(3, 3, TS - 10, 4);
+      x.strokeStyle = '#8fc8e0'; x.lineWidth = 1; x.strokeRect(2, 2, TS - 4, TS - 4);
+    } else if (r === 'spawner') {
+      x.fillStyle = '#2a2030'; x.fillRect(3, 3, TS - 6, TS - 6);
+      x.strokeStyle = '#a04a6a'; x.lineWidth = 2; x.strokeRect(5, 5, TS - 10, TS - 10);
+      x.fillStyle = '#e05a8a'; circle(x, TS / 2, TS / 2, 4);
+      x.fillStyle = '#2a2030'; circle(x, TS / 2, TS / 2, 2);
     } else if (r === 'enchant') {
       x.fillStyle = '#2a1f44'; x.fillRect(4, 12, TS - 8, TS - 14);
       x.fillStyle = '#3a2a5a'; x.fillRect(6, 8, TS - 12, 8);
