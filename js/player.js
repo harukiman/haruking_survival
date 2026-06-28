@@ -296,6 +296,9 @@ Game.Player = (function () {
       : ['iron_sword', 'iron_chest', 'iron_helmet', 'shadow_blade', 'shadow_helmet'];
     const gid = gearPool[Math.floor(Math.random() * gearPool.length)];
     arr[n] = { id: gid, count: 1, roll: Game.Loot.roll(gid, 0.3 + Game.Loot.lootBonus()) };
+    // 金塊＋低確率で遺物
+    arr[n + 1] = { id: 'gold_bar', count: 1 + Math.floor(Math.random() * 3) };
+    if (Game.RELIC_IDS && Math.random() < 0.12) arr[n + 2] = { id: Game.RELIC_IDS[Math.floor(Math.random() * Game.RELIC_IDS.length)], count: 1 };
     return arr;
   }
 

@@ -58,6 +58,7 @@ Game.OBJ = {
   HEALING_TOTEM:129, STREET_LAMP:130, TABLE:131, CHAIR:132, BOOKSHELF:133, GLASS:134, RUG:135,
   TOMB_WALL:136, FORGE_WALL:137, CRYSTAL_WALL:138,
   BOUNTY_BOARD:139,
+  BANDIT_SPAWNER:140,
 };
 
 // 地面の色（手続き描画のベース）
@@ -118,6 +119,7 @@ Game.LIGHT_LEVEL = {
   [Game.OBJ.TREASURE_CHEST]: 4,
   [Game.OBJ.ENCHANT_TABLE]: 5,
   [Game.OBJ.SPAWNER]: 3,
+  [Game.OBJ.BANDIT_SPAWNER]: 8,
   [Game.OBJ.ROCKET]: 6,
   [Game.OBJ.STAR_ORE]: 4,
   [Game.OBJ.HEALING_TOTEM]: 7,
@@ -185,6 +187,7 @@ Game.OBJ_META = {
   [Game.OBJ.FORGE_WALL]: { name:'溶岩岩の壁', solid:true, mineable:true, tool:'pickaxe', tier:3, hp:24, drops:[{item:'stone', n:[1,2]},{item:'iron_ore', n:[0,1]}], render:'fwall' },
   [Game.OBJ.CRYSTAL_WALL]:{ name:'水晶の壁', solid:true, mineable:true, tool:'pickaxe', tier:3, hp:22, light:3, drops:[{item:'shadow_crystal', n:[0,1]},{item:'lumen', n:[0,1]},{item:'stone', n:[1,2]}], render:'cwall' },
   [Game.OBJ.SPAWNER]:    { name:'魔物の巣', solid:true, mineable:true, tool:'pickaxe', tier:2, hp:16, light:3, drops:[{item:'bone', n:[1,3]},{item:'shadow_shard', n:[0,1]}], render:'spawner', spawner:true },
+  [Game.OBJ.BANDIT_SPAWNER]:{ name:'略奪者の篝火', solid:true, mineable:true, tool:null, tier:0, hp:10, light:8, drops:[{item:'gold_bar', n:[0,1]},{item:'iron', n:[0,2]}], render:'bandit_spawner', spawner:true },
   // ロケット/宇宙
   [Game.OBJ.ROCKET]:     { name:'ロケット', solid:true, mineable:true, tool:'pickaxe', tier:1, hp:30, light:6, drops:[{item:'rocket', n:[1,1]}], render:'rocket_obj', rocket:true },
   [Game.OBJ.STAR_ORE]:   { name:'星鉱', solid:true, mineable:true, tool:'pickaxe', tier:3, hp:16, light:4, drops:[{item:'star_metal', n:[1,2]}], render:'starore' },

@@ -132,19 +132,21 @@ Game.Mobs = (function () {
     let spawned = 0;
     for (let dy = -8; dy <= 8 && spawned < 1; dy++) {
       for (let dx = -8; dx <= 8 && spawned < 1; dx++) {
-        if (Game.World.objAt(ptx + dx, pty + dy) !== Game.OBJ.SPAWNER) continue;
+        const spObj = Game.World.objAt(ptx + dx, pty + dy);
+        if (spObj !== Game.OBJ.SPAWNER && spObj !== Game.OBJ.BANDIT_SPAWNER) continue;
         if (Math.random() > 0.32) continue;
         const stx = ptx + dx, sty = pty + dy;
         const g = Game.World.groundAt(stx, sty);
         let pool;
-        if (Game.state.worldName === 'space') { pool = (Math.random() < 0.04 && countType('star_guardian') === 0) ? ['star_guardian'] : ['void_drone', 'void_drone', 'astral_serpent', 'void_jelly']; }
+        if (spObj === Game.OBJ.BANDIT_SPAWNER) { pool = ['bandit', 'bandit', 'bandit', 'skeleton']; } // 略奪者の野営地
+        else if (Game.state.worldName === 'space') { pool = (Math.random() < 0.04 && countType('star_guardian') === 0) ? ['star_guardian'] : ['void_drone', 'void_drone', 'astral_serpent', 'void_jelly']; }
         else if (Game.state.worldName === 'shadow') pool = ['wraith', 'watcher', 'hex_caster', 'gazer'];
         else if (g === Game.TILE.SNOW) pool = ['frost_wisp', 'frost_wisp', 'cursed_armor', 'ice_bear'];
         else if (g === Game.TILE.SAND) pool = ['scorpion', 'scorpion', 'dust_mage', 'cursed_armor', 'golem'];
         else pool = ['zombie', 'skeleton', 'spider', 'cursed_armor', 'golem', 'ember_imp', 'bog_horror'];
         // テーマ別ダンジョンボス（稀・1体まで）
         let type = null;
-        if (Game.state.worldName === 'light') {
+        if (Game.state.worldName === 'light' && spObj !== Game.OBJ.BANDIT_SPAWNER) {
           if (g === Game.TILE.SAND && Math.random() < 0.03 && countType('tomb_king') === 0) type = 'tomb_king';
           else if (g === Game.TILE.STONE && Math.random() < 0.03 && countType('forge_titan') === 0) type = 'forge_titan';
           else if (g === Game.TILE.SNOW && Math.random() < 0.03 && countType('crystal_queen') === 0) type = 'crystal_queen';

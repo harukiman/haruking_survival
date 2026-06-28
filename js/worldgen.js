@@ -100,6 +100,24 @@ Game.WorldGen = (function () {
       }
     }
 
+    // 略奪者の野営地（地上=光世界のみ・無法者ロアと接続。柵で囲まれた拠点＋焚き火＋篝火の巣＋中央宝箱）
+    if (walkableGround && !shadow && !(Game.state && Game.state.worldName === 'space')) {
+      const BG = 61;
+      const bax = Math.round(wx / BG) * BG, bay = Math.round(wy / BG) * BG;
+      if (U.hash3(bax, bay, seed + 71717) < 0.045) {
+        const bdx = wx - bax, bdy = wy - bay;
+        if (Math.abs(bdx) <= 3 && Math.abs(bdy) <= 3) {
+          const edge = Math.abs(bdx) === 3 || Math.abs(bdy) === 3;
+          const entrance = bdy === 3 && bdx === 0; // 下側に入口
+          if (edge) return { ground: ground, obj: entrance ? O.NONE : O.FENCE };
+          if (bdx === 0 && bdy === 0) return { ground: ground, obj: O.TREASURE_CHEST };
+          if ((bdx === 2 && bdy === 0) || (bdx === -2 && bdy === 0)) return { ground: ground, obj: O.BANDIT_SPAWNER };
+          if ((bdx === -1 && bdy === -1) || (bdx === 1 && bdy === 1)) return { ground: ground, obj: O.CAMPFIRE };
+          return { ground: ground, obj: O.NONE };
+        }
+      }
+    }
+
     // 共鳴遺跡（両世界の同座標に対構造）
     if (ground !== T.DEEP_WATER && ground !== T.WATER) {
       const G = 96;

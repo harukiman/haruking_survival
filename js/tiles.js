@@ -231,6 +231,14 @@ Game.Tiles = (function () {
       x.strokeStyle = '#a04a6a'; x.lineWidth = 2; x.strokeRect(5, 5, TS - 10, TS - 10);
       x.fillStyle = '#e05a8a'; circle(x, TS / 2, TS / 2, 4);
       x.fillStyle = '#2a2030'; circle(x, TS / 2, TS / 2, 2);
+    } else if (r === 'bandit_spawner') {
+      // 略奪者の篝火: 石組み＋炎＋骸骨旗
+      x.fillStyle = '#3a2a1a'; for (let i = 0; i < 6; i++) { const a = i * 1.05; circle(x, TS / 2 + Math.cos(a) * 8, TS - 7 + Math.sin(a) * 3, 2.4); }
+      x.fillStyle = '#ff7a2a'; x.beginPath(); x.moveTo(TS / 2, TS - 16); x.quadraticCurveTo(TS / 2 + 6, TS - 8, TS / 2, TS - 5); x.quadraticCurveTo(TS / 2 - 6, TS - 8, TS / 2, TS - 16); x.fill();
+      x.fillStyle = '#ffd24a'; circle(x, TS / 2, TS - 8, 2);
+      x.strokeStyle = '#6a5030'; x.lineWidth = 2; x.beginPath(); x.moveTo(7, 4); x.lineTo(7, TS - 6); x.stroke();
+      x.fillStyle = '#8a1f2a'; x.fillRect(7, 4, 11, 8);
+      x.fillStyle = '#e8e0d0'; circle(x, 12, 8, 1.6);
     } else if (r === 'rocket_obj') {
       x.fillStyle = '#d8d8e0'; x.beginPath(); x.moveTo(TS / 2, 2); x.lineTo(TS / 2 + 7, TS - 8); x.lineTo(TS / 2 - 7, TS - 8); x.closePath(); x.fill();
       x.fillStyle = '#c0444a'; x.beginPath(); x.moveTo(TS / 2 - 7, TS - 8); x.lineTo(TS / 2 - 12, TS - 2); x.lineTo(TS / 2 - 4, TS - 8); x.closePath(); x.fill();
