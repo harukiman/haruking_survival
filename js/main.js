@@ -65,6 +65,7 @@ window.Game = window.Game || {};
       tileData: worlds.light.tileData,
       mobs: worlds.light.mobs,
       drops: worlds.light.drops,
+      projectiles: [],
     };
     return st;
   }
@@ -205,6 +206,7 @@ window.Game = window.Game || {};
     Game.Survival.update();
     Game.DayNight.update();
     Game.Mobs.update();
+    Game.Projectiles.update();
     if (Game.state.tick % 30 === 0) Game.Farming.update();
     if (Game.state.tick % 30 === 15) Game.Quests.update();
     const pt = Game.Player.playerTile();

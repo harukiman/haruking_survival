@@ -219,6 +219,14 @@ Game.ITEMS = {
   sign:          { name:'立て札', stack:16, color:'#a9762f', place:Game.OBJ.SIGN },
   enchant_table: { name:'エンチャント台', stack:4, color:'#5a3a8a', place:Game.OBJ.ENCHANT_TABLE },
   void_heart:    { name:'虚の心臓', stack:16, color:'#d040b0', flavor:'飢餓の獣の核。喰らうほどに飢える、終わりなき渇望の結晶。' },
+  // 上位武器（銃）
+  bullet:        { name:'弾丸', stack:99, color:'#caa86a' },
+  pistol:        { name:'拳銃', stack:1, color:'#5a5a5e', tool:'gun', ammo:'bullet', fireDmg:7, flavor:'狭間に流れ着いた、火を吐く鋼。' },
+  shadow_rifle:  { name:'影のライフル', stack:1, color:'#6a4f9a', tool:'gun', ammo:'bullet', fireDmg:14, flavor:'影鋼で鍛えた連射銃。闇さえ撃ち抜く。' },
+  // 乗り物
+  car:           { name:'車', stack:1, color:'#c0444a', vehicle:'car', flavor:'大地を駆ける鉄の馬。' },
+  boat:          { name:'ボート', stack:1, color:'#9c6b3f', vehicle:'boat', flavor:'水を越えるための小舟。' },
+  plane:         { name:'飛行機', stack:1, color:'#8a96c0', vehicle:'plane', flavor:'空を行く翼。すべての境界を越えて。' },
   shadow_altar:  { name:'影の祭壇', stack:4, color:'#3a2050', place:Game.OBJ.SHADOW_ALTAR },
   // ボス報酬
   shadow_core:   { name:'影核', stack:16, color:'#c060ff', flavor:'影の主の心臓。世界を裂いた最初の祈りが、結晶となって残ったもの。' },
@@ -278,6 +286,13 @@ Game.RECIPES = [
   { out:{id:'rift_anchor', n:1}, in:{shadow_crystal:2, iron:2}, station:'crafting_table' },
   { out:{id:'shadow_altar', n:1}, in:{shadow_steel:3, shadow_crystal:5}, station:'crafting_table' },
   { out:{id:'sanity_charm', n:1}, in:{shadow_core:1, lumen:5}, station:'crafting_table' },
+  // 銃・弾・乗り物
+  { out:{id:'bullet', n:8}, in:{iron:1, coal:1}, station:'crafting_table' },
+  { out:{id:'pistol', n:1}, in:{iron:5, wood:1}, station:'crafting_table' },
+  { out:{id:'shadow_rifle', n:1}, in:{shadow_steel:4, lumen:2}, station:'crafting_table' },
+  { out:{id:'boat', n:1}, in:{wood:8}, station:'crafting_table' },
+  { out:{id:'car', n:1}, in:{iron:8, coal:4}, station:'crafting_table' },
+  { out:{id:'plane', n:1}, in:{shadow_steel:6, iron:6, lumen:4}, station:'crafting_table' },
   { out:{id:'unity_core', n:1}, in:{shadow_core:3, lumen:10, shadow_crystal:10}, station:'crafting_table' }, // 世界統合
   // 建築・自由度
   { out:{id:'wood_floor', n:4}, in:{wood:1}, station:null },
@@ -374,6 +389,7 @@ Game.ITEM_GLYPH = {
   bandage:'🩹', antidote:'🧪',
   torch:'🔥', campfire:'🔥', lantern:'🏮', lumen_lantern:'💡', crafting_table:'🛠️', furnace:'🔥', chest:'📦', bed:'🛏️', fence:'🚧', door:'🚪', wall:'🧱', window:'🪟', bridge:'🌉', sign:'🪧', wood_floor:'🟫', stone_floor:'⬜',
   shadow_shard:'🌑', shadow_mirror:'🪞', shadow_crystal:'🔮', lumen:'✨', shadow_steel:'⬛', shadow_core:'💜', unity_core:'⭐', void_heart:'💗', rift_anchor:'🕳️', enchant_table:'✦',
+  bullet:'🔸', pistol:'🔫', shadow_rifle:'🔫', car:'🚗', boat:'🛶', plane:'✈️',
 };
 
 Game.INV_SIZE = 36;       // 先頭9 = ホットバー

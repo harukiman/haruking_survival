@@ -7,16 +7,17 @@ Game.Audio = (function () {
   let enabled = true;
   let lastPlay = {};
 
-  // BGM 状態
-  const bgm = { started: false, mood: null, pads: [], filter: null, nextNote: 0, cfg: null };
+  // BGM 状態（持続ドローン無し・16ステップのシーケンサ）
+  const bgm = { started: false, mood: null, genre: null, filter: null, step: 0, nextStep: 0 };
 
-  // 穏やかで協和的なペンタトニック。耳障りにならないよう sine 主体・低音量・ゆったり
-  const MOODS = {
-    day:    { root: 261.63, scale: [0, 2, 4, 7, 9],  tempo: 2.8, wave: 'sine', padVol: 0.028, noteVol: 0.03, detune: 2 },
-    night:  { root: 196.00, scale: [0, 3, 5, 7, 10], tempo: 3.4, wave: 'sine', padVol: 0.032, noteVol: 0.026, detune: 2 },
-    shadow: { root: 174.61, scale: [0, 3, 5, 7, 10], tempo: 3.0, wave: 'sine', padVol: 0.034, noteVol: 0.026, detune: 3 },
-    boss:   { root: 196.00, scale: [0, 3, 5, 7, 10], tempo: 1.5, wave: 'triangle', padVol: 0.03, noteVol: 0.03, detune: 3 },
+  // ジャンル別プリセット（聞き心地よく・持続音なし）。状況→ジャンルで幅を出す
+  const GENRES = {
+    classic:  { root: 261.63, scale: [0, 2, 4, 5, 7, 9, 11], bpm: 76,  wave: 'sine', cut: 1600, kick: false, bassEvery: 8, arp: [0, 4, 7, 11, 7, 4], arpEvery: 2, noteVol: 0.05, bassVol: 0.045, kickVol: 0 },
+    animepop: { root: 293.66, scale: [0, 2, 4, 7, 9],        bpm: 120, wave: 'triangle', cut: 2600, kick: true, bassEvery: 4, arp: [0, 4, 7, 9, 7, 4], arpEvery: 1, noteVol: 0.045, bassVol: 0.04, kickVol: 0.10 },
+    city:     { root: 261.63, scale: [0, 3, 5, 7, 10],       bpm: 92,  wave: 'sine', cut: 1400, kick: true, bassEvery: 4, arp: [0, 3, 7, 10], arpEvery: 2, noteVol: 0.038, bassVol: 0.05, kickVol: 0.07 },
+    edm:      { root: 220.00, scale: [0, 3, 5, 7, 10],       bpm: 128, wave: 'sawtooth', cut: 2200, kick: true, bassEvery: 2, arp: [0, 0, 7, 5, 3, 3, 7, 10], arpEvery: 1, noteVol: 0.038, bassVol: 0.05, kickVol: 0.12 },
   };
+  const MOOD_GENRE = { day: 'animepop', night: 'city', shadow: 'classic', boss: 'edm' };
 
   function ensure() {
     if (!ctx) {
@@ -68,58 +69,67 @@ Game.Audio = (function () {
       case 'dash':   if (throttled('dash', 0.25)) beep(520, 0.07, 'sine', 0.05); break;
       case 'gun':    if (throttled('gun', 0.05)) { beep(900, 0.04, 'square', 0.08); beep(300, 0.08, 'sawtooth', 0.07); } break;
       case 'engine': if (throttled('engine', 0.3)) beep(110, 0.2, 'sawtooth', 0.05); break;
+      case 'splash': if (throttled('splash', 0.12)) { beep(420 + Math.random() * 80, 0.08, 'sine', 0.04); beep(240, 0.1, 'sine', 0.03); } break;
     }
   }
 
-  // ===== BGM（手続き生成・状況連動）=====
+  // ===== BGM（ジャンル別シーケンサ・持続音なし）=====
   function startBGM() {
     if (!enabled) return; ensure(); if (!ctx || bgm.started) return;
     bgm.started = true;
-    bgm.filter = ctx.createBiquadFilter(); bgm.filter.type = 'lowpass'; bgm.filter.frequency.value = 900; bgm.filter.connect(bgmGain);
-    // 3声のパッド（root, 5th, octave）
-    for (let i = 0; i < 3; i++) {
-      const osc = ctx.createOscillator(), g = ctx.createGain();
-      osc.type = 'sine'; g.gain.value = 0; osc.connect(g); g.connect(bgm.filter); osc.start();
-      bgm.pads.push({ osc: osc, gain: g });
-    }
+    bgm.filter = ctx.createBiquadFilter(); bgm.filter.type = 'lowpass'; bgm.filter.frequency.value = 1800; bgm.filter.connect(bgmGain);
+    bgm.step = 0; bgm.nextStep = ctx.currentTime + 0.1;
     setMood('day', true);
   }
 
   function setMood(mood, force) {
     if (!bgm.started || (!force && bgm.mood === mood)) return;
     bgm.mood = mood;
-    const cfg = MOODS[mood] || MOODS.day; bgm.cfg = cfg;
-    const t = ctx.currentTime;
-    const freqs = [cfg.root, cfg.root * 1.5, cfg.root * 2];
-    for (let i = 0; i < bgm.pads.length; i++) {
-      const pad = bgm.pads[i];
-      pad.osc.type = cfg.wave;
-      pad.osc.frequency.setTargetAtTime(freqs[i], t, 0.6);
-      pad.osc.detune.setTargetAtTime((i - 1) * cfg.detune, t, 0.6);
-      pad.gain.gain.setTargetAtTime(cfg.padVol, t, 0.8);
-    }
-    bgm.filter.frequency.setTargetAtTime(mood === 'shadow' ? 700 : mood === 'boss' ? 2200 : 1400, t, 0.8);
+    bgm.genre = GENRES[MOOD_GENRE[mood] || 'animepop'];
+    bgm.filter.frequency.setTargetAtTime(bgm.genre.cut, ctx.currentTime, 0.6);
   }
 
-  // 旋律スケジューラ（main から毎フレーム呼ぶ）
-  function tickBGM() {
-    if (!enabled || !bgm.started || !ctx || !bgm.cfg) return;
-    const now = ctx.currentTime;
-    if (now < bgm.nextNote) return;
-    const cfg = bgm.cfg;
-    const deg = cfg.scale[Math.floor(Math.random() * cfg.scale.length)];
-    const oct = Math.random() < 0.4 ? 2 : 1;
-    const freq = cfg.root * oct * Math.pow(2, deg / 12);
+  function tone(freq, dur, wave, vol, when) {
     const osc = ctx.createOscillator(), g = ctx.createGain();
-    osc.type = cfg.wave;
-    osc.frequency.value = freq;
-    const dur = cfg.tempo * (0.5 + Math.random() * 0.5);
-    g.gain.setValueAtTime(0.0001, now);
-    g.gain.exponentialRampToValueAtTime(cfg.noteVol, now + 0.04);
-    g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+    osc.type = wave; osc.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, when);
+    g.gain.exponentialRampToValueAtTime(vol, when + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, when + dur);
     osc.connect(g); g.connect(bgm.filter);
-    osc.start(now); osc.stop(now + dur + 0.05);
-    bgm.nextNote = now + cfg.tempo * (0.8 + Math.random() * 0.8);
+    osc.start(when); osc.stop(when + dur + 0.03);
+  }
+  function kickDrum(when, vol) {
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(150, when); osc.frequency.exponentialRampToValueAtTime(48, when + 0.12);
+    g.gain.setValueAtTime(vol, when); g.gain.exponentialRampToValueAtTime(0.0001, when + 0.16);
+    osc.connect(g); g.connect(bgmGain);
+    osc.start(when); osc.stop(when + 0.18);
+  }
+
+  // 16ステップのシーケンサ（main から毎フレーム呼ぶ）
+  function tickBGM() {
+    if (!enabled || !bgm.started || !ctx || !bgm.genre) return;
+    const now = ctx.currentTime;
+    while (bgm.nextStep <= now + 0.05) {
+      const G = bgm.genre, st = bgm.step, when = bgm.nextStep;
+      const stepDur = 60 / G.bpm / 2; // 8分音符
+      // キック
+      if (G.kick && st % 2 === 0) kickDrum(when, G.kickVol);
+      // ベース
+      if (st % G.bassEvery === 0) {
+        const bdeg = G.scale[(st / G.bassEvery) % G.scale.length | 0];
+        tone(G.root / 2 * Math.pow(2, bdeg / 12), stepDur * 1.6, 'triangle', G.bassVol, when);
+      }
+      // アルペジオ/メロディ
+      if (st % G.arpEvery === 0) {
+        const deg = G.arp[(st / G.arpEvery) % G.arp.length | 0];
+        const oct = (st % 8 < 4) ? 1 : 2;
+        tone(G.root * oct * Math.pow(2, deg / 12), stepDur * 0.9, G.wave, G.noteVol, when);
+      }
+      bgm.step = (st + 1) % 16;
+      bgm.nextStep += stepDur;
+    }
   }
 
   // 状況からムード判定して更新
@@ -137,7 +147,7 @@ Game.Audio = (function () {
 
   function toggle() {
     enabled = !enabled;
-    if (bgmGain) bgmGain.gain.value = enabled ? 0.5 : 0;
+    if (bgmGain) bgmGain.gain.value = enabled ? 0.32 : 0;
     if (enabled) { ensure(); if (!bgm.started) startBGM(); }
     return enabled;
   }

@@ -67,6 +67,7 @@ Game.Render = (function () {
     drawPeers(ctx);
     drawPlayer(ctx, alpha);
     drawSlashes(ctx);
+    Game.Projectiles.draw(ctx);
     drawParticles(ctx);
     Game.Lighting.drawOverlay(ctx);
     drawWeather(ctx);
@@ -213,6 +214,8 @@ Game.Render = (function () {
     const px = p.prevX + (p.x - p.prevX) * alpha;
     const py = p.prevY + (p.y - p.prevY) * alpha;
     const s = Game.Camera.worldToScreen(px, py);
+    // 乗り物
+    if (p.vehicle) drawVehicle(ctx, s.x, s.y, p.vehicle, p.dir);
     // 体
     ctx.fillStyle = '#3a78d6';
     ctx.beginPath(); ctx.arc(s.x, s.y, 10, 0, Math.PI * 2); ctx.fill();
@@ -230,6 +233,25 @@ Game.Render = (function () {
       ctx.beginPath(); ctx.arc(s.x, s.y, 12, 0, Math.PI * 2); ctx.stroke();
     }
   }
+
+  function drawVehicle(ctx, x, y, type, dir) {
+    ctx.save();
+    if (type === 'car') {
+      ctx.fillStyle = '#c0444a'; roundRectC(ctx, x - 16, y - 4, 32, 18, 5); ctx.fill();
+      ctx.fillStyle = '#88c0e0'; ctx.fillRect(x - 9, y - 1, 18, 7);
+      ctx.fillStyle = '#222'; ctx.beginPath(); ctx.arc(x - 10, y + 14, 4, 0, 7); ctx.arc(x + 10, y + 14, 4, 0, 7); ctx.fill();
+    } else if (type === 'boat') {
+      ctx.fillStyle = '#9c6b3f'; ctx.beginPath(); ctx.ellipse(x, y + 8, 20, 10, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#7a5230'; ctx.fillRect(x - 16, y + 4, 32, 4);
+    } else if (type === 'plane') {
+      ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.beginPath(); ctx.ellipse(x, y + 24, 22, 6, 0, 0, Math.PI * 2); ctx.fill(); // 影（飛行）
+      ctx.fillStyle = '#8a96c0'; ctx.fillRect(x - 22, y - 2, 44, 6); // 翼
+      ctx.fillStyle = '#aab4d8'; roundRectC(ctx, x - 7, y - 14, 14, 30, 6); ctx.fill();
+      ctx.fillStyle = '#cfe0ff'; ctx.fillRect(x - 4, y - 10, 8, 6);
+    }
+    ctx.restore();
+  }
+  function roundRectC(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
 
   // パーティクル（採掘デブリ等）
   const particles = [];

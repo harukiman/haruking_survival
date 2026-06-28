@@ -19,6 +19,7 @@ Game.Player = (function () {
       xp: 0, level: 1, xpNext: 5,
       baseMaxHealth: 100,
       stamina: 100, maxStamina: 100,
+      vehicle: null, // null|'car'|'boat'|'plane'
       armor: { head: null, chest: null }, // {id, roll} インスタンス
     };
   }
@@ -30,10 +31,15 @@ Game.Player = (function () {
   }
 
   function blocked(wx, wy) {
+    const v = Game.state.player.vehicle;
+    if (v === 'plane') return false; // 飛行機は全障害を越える
     const pts = [[wx - R, wy - R], [wx + R, wy - R], [wx - R, wy + R], [wx + R, wy + R]];
     for (let i = 0; i < pts.length; i++) {
       const tx = Math.floor(pts[i][0] / TS), ty = Math.floor(pts[i][1] / TS);
-      if (!Game.World.isWalkable(tx, ty)) return true;
+      if (Game.World.isWalkable(tx, ty)) continue;
+      // ボートは水上を進める
+      if (v === 'boat') { const g = Game.World.groundAt(tx, ty); if (g === Game.TILE.WATER || g === Game.TILE.DEEP_WATER) continue; }
+      return true;
     }
     return false;
   }
@@ -49,7 +55,13 @@ Game.Player = (function () {
     const dashing = intent.dash && moving && p.stamina > 0;
     if (dashing) { p.stamina = Math.max(0, p.stamina - 1.1); }
     else if (p.stamina < p.maxStamina) { p.stamina = Math.min(p.maxStamina, p.stamina + (moving ? 0.3 : 0.7)); }
-    const spd = p.speed * (dashing ? 1.85 : 1);
+    let spd = p.speed * (dashing ? 1.85 : 1);
+    if (p.vehicle === 'car') spd = p.speed * 2.3;
+    else if (p.vehicle === 'plane') spd = p.speed * 2.7;
+    else if (p.vehicle === 'boat') spd = p.speed * 1.5;
+    // 浅瀬は減速＋水音（乗り物なし・徒歩のみ）
+    const onWater = !p.vehicle && Game.World.groundAt(Math.floor(p.x / TS), Math.floor(p.y / TS)) === Game.TILE.WATER;
+    if (onWater) spd *= 0.5;
     if (moving) {
       dx /= len; dy /= len;
       p.dir = intent.dir || p.dir;
@@ -58,14 +70,18 @@ Game.Player = (function () {
       const ny = p.y + dy * spd;
       if (!blocked(p.x, ny)) p.y = ny;
       if (dashing && Game.state.tick % 4 === 0) Game.Render.spawnParticles(p.x, p.y, '#cfe0ff', 1);
+      if (onWater && Game.state.tick % 16 === 0) { Game.Audio.play('splash'); Game.Render.spawnParticles(p.x, p.y + 8, '#a8d0f0', 3); }
+      if (p.vehicle && Game.state.tick % 24 === 0) Game.Audio.play('engine');
     }
 
     if (p.invuln > 0) p.invuln--;
     if (p.attackCd > 0) p.attackCd--;
 
-    // 左クリック/採掘ボタン: 攻撃優先、なければ採掘
+    // 左クリック/採掘ボタン: 銃→発射、なければ攻撃→採掘
     if (intent.mine) {
-      if (Game.Combat.tryAttack()) { mining.active = false; mining.progress = 0; }
+      const sel = Game.Inventory.selectedItemDef();
+      if (sel && sel.tool === 'gun') { tryFire(sel); mining.active = false; }
+      else if (Game.Combat.tryAttack()) { mining.active = false; mining.progress = 0; }
       else mineTick();
     } else { mining.active = false; if (mining.progress > 0) mining.progress -= 0.5; }
 
@@ -202,6 +218,12 @@ Game.Player = (function () {
     if (!def) return;
 
     if (def.ending) { Game.Quests.reunify(); return; }
+    if (def.vehicle) {
+      const p = Game.state.player;
+      if (p.vehicle === def.vehicle) { p.vehicle = null; Game.UI.toast(def.name + ' から降りた'); }
+      else { p.vehicle = def.vehicle; Game.UI.toast(def.name + ' に乗った'); }
+      Game.Audio.play('engine'); return;
+    }
     if (def.shift) { Game.World.shift(); return; }
     if (def.food) { Game.Inventory.useSelected(); return; }
     if (def.armor) { equipSelectedArmor(); return; }
@@ -265,6 +287,18 @@ Game.Player = (function () {
     Game.Audio.play('equip');
     Game.UI.toast(Game.Loot.displayName(p.armor[def.slot]) + ' を装備');
     Game.UI.refreshAll();
+  }
+
+  function tryFire(sel) {
+    const p = Game.state.player;
+    if (p.attackCd > 0) return;
+    if (Game.Inventory.count(sel.ammo) < 1) { if (Game.state.tick % 30 === 0) Game.UI.toast('弾切れ'); return; }
+    Game.Inventory.remove(sel.ammo, 1);
+    Game.Projectiles.fire(sel.fireDmg || 6);
+    p.attackCd = sel.id === 'shadow_rifle' ? 7 : 12;
+    Game.Render.spawnParticles(p.x, p.y, '#ffe9a0', 2);
+    Game.Audio.play('gun');
+    Game.UI.refreshHotbar();
   }
 
   function equipFromInventory(idx) {
