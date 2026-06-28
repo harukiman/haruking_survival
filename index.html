@@ -12,7 +12,7 @@
 <meta property="og:type" content="website">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%234a8f3c'/%3E%3Crect x='10' y='6' width='12' height='8' fill='%23805333'/%3E%3Crect x='8' y='12' width='16' height='12' fill='%232f7d27'/%3E%3C/svg%3E">
 <title>Haruking Survival — 俯瞰サンドボックス</title>
-<link rel="stylesheet" href="css/style.css?v=9">
+<link rel="stylesheet" href="css/style.css?v=10">
 </head>
 <body>
 <div id="app">
@@ -26,6 +26,12 @@
       <div class="seed-row">
         <label>シード <input id="seed-input" type="text" placeholder="空欄でランダム" inputmode="numeric"></label>
       </div>
+      <div class="diff-row" id="diff-row">
+        <button class="diff-btn" data-diff="peaceful">のんびり</button>
+        <button class="diff-btn selected" data-diff="normal">ふつう</button>
+        <button class="diff-btn" data-diff="hard">ハード</button>
+      </div>
+      <p id="diff-desc" class="diff-desc">標準のサバイバル</p>
       <button id="btn-new" class="big-btn">はじめから</button>
       <button id="btn-continue" class="big-btn alt">つづきから</button>
       <p class="hint">PC: WASD/矢印=移動, 左クリック=採掘/攻撃, 右クリック=設置/対話/使用, 1-9=ホットバー, E=インベントリ, F=影渡り<br>スマホ: 左下=移動, 右下=採掘・設置・影渡り・メニュー</p>
@@ -137,31 +143,31 @@
   <div id="toast"></div>
 </div>
 
-<script src="js/config.js?v=9"></script>
-<script src="js/utils.js?v=9"></script>
-<script src="js/noise.js?v=9"></script>
-<script src="js/tiles.js?v=9"></script>
-<script src="js/worldgen.js?v=9"></script>
-<script src="js/world.js?v=9"></script>
-<script src="js/camera.js?v=9"></script>
-<script src="js/lighting.js?v=9"></script>
-<script src="js/render.js?v=9"></script>
-<script src="js/inventory.js?v=9"></script>
-<script src="js/loot.js?v=9"></script>
-<script src="js/crafting.js?v=9"></script>
-<script src="js/combat.js?v=9"></script>
-<script src="js/player.js?v=9"></script>
-<script src="js/survival.js?v=9"></script>
-<script src="js/farming.js?v=9"></script>
-<script src="js/daynight.js?v=9"></script>
-<script src="js/mobs.js?v=9"></script>
-<script src="js/input.js?v=9"></script>
-<script src="js/audio.js?v=9"></script>
-<script src="js/ui.js?v=9"></script>
-<script src="js/lore.js?v=9"></script>
-<script src="js/achievements.js?v=9"></script>
-<script src="js/quests.js?v=9"></script>
-<script src="js/save.js?v=9"></script>
-<script src="js/main.js?v=9"></script>
+<script src="js/config.js?v=10"></script>
+<script src="js/utils.js?v=10"></script>
+<script src="js/noise.js?v=10"></script>
+<script src="js/tiles.js?v=10"></script>
+<script src="js/worldgen.js?v=10"></script>
+<script src="js/world.js?v=10"></script>
+<script src="js/camera.js?v=10"></script>
+<script src="js/lighting.js?v=10"></script>
+<script src="js/render.js?v=10"></script>
+<script src="js/inventory.js?v=10"></script>
+<script src="js/loot.js?v=10"></script>
+<script src="js/crafting.js?v=10"></script>
+<script src="js/combat.js?v=10"></script>
+<script src="js/player.js?v=10"></script>
+<script src="js/survival.js?v=10"></script>
+<script src="js/farming.js?v=10"></script>
+<script src="js/daynight.js?v=10"></script>
+<script src="js/mobs.js?v=10"></script>
+<script src="js/input.js?v=10"></script>
+<script src="js/audio.js?v=10"></script>
+<script src="js/ui.js?v=10"></script>
+<script src="js/lore.js?v=10"></script>
+<script src="js/achievements.js?v=10"></script>
+<script src="js/quests.js?v=10"></script>
+<script src="js/save.js?v=10"></script>
+<script src="js/main.js?v=10"></script>
 </body>
 </html>

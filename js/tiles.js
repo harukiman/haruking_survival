@@ -167,6 +167,30 @@ Game.Tiles = (function () {
       x.fillStyle = '#9a7fd0';
       for (let yy = 10; yy < TS - 6; yy += 5) x.fillRect(TS/2 - 3, yy, 6, 2); // 刻文
       x.fillStyle = '#d8b0ff'; circle(x, TS/2, 9, 1.8);
+    } else if (r === 'wfloor') {
+      x.fillStyle = '#9c6b3f'; x.fillRect(1, 1, TS - 2, TS - 2);
+      x.strokeStyle = 'rgba(0,0,0,0.25)'; x.lineWidth = 1;
+      x.strokeRect(2, 2, TS - 4, TS - 4); x.beginPath(); x.moveTo(2, TS / 2); x.lineTo(TS - 2, TS / 2); x.stroke();
+    } else if (r === 'sfloor') {
+      x.fillStyle = '#8e9296'; x.fillRect(1, 1, TS - 2, TS - 2);
+      x.strokeStyle = 'rgba(0,0,0,0.22)'; x.lineWidth = 1;
+      x.strokeRect(2, 2, TS / 2 - 3, TS / 2 - 3); x.strokeRect(TS / 2 + 1, TS / 2 + 1, TS / 2 - 3, TS / 2 - 3);
+    } else if (r === 'wall') {
+      x.fillStyle = '#8a6a44'; x.fillRect(1, 1, TS - 2, TS - 2);
+      x.strokeStyle = '#5a4226'; x.lineWidth = 1.5;
+      for (let yy = 6; yy < TS; yy += 8) x.strokeRect(2, yy - 6, TS - 4, 8);
+    } else if (r === 'window') {
+      x.fillStyle = '#7a5a36'; x.fillRect(1, 1, TS - 2, TS - 2);
+      x.fillStyle = '#a8d8e8'; x.fillRect(5, 5, TS - 10, TS - 10);
+      x.strokeStyle = '#7a5a36'; x.lineWidth = 2; x.beginPath(); x.moveTo(TS / 2, 5); x.lineTo(TS / 2, TS - 5); x.moveTo(5, TS / 2); x.lineTo(TS - 5, TS / 2); x.stroke();
+    } else if (r === 'bridge') {
+      x.fillStyle = '#9c6b3f'; x.fillRect(2, 4, TS - 4, TS - 8);
+      x.fillStyle = '#7a5230'; for (let xx = 4; xx < TS - 2; xx += 6) x.fillRect(xx, 4, 2, TS - 8);
+      x.fillStyle = '#5a3d1f'; x.fillRect(2, 4, TS - 4, 2); x.fillRect(2, TS - 6, TS - 4, 2);
+    } else if (r === 'sign') {
+      x.fillStyle = '#5a3a1e'; x.fillRect(TS / 2 - 1, TS / 2, 2, TS / 2 - 2);
+      x.fillStyle = '#b5803f'; x.fillRect(6, 6, TS - 12, 12);
+      x.strokeStyle = '#5a3d1f'; x.lineWidth = 1; x.strokeRect(6, 6, TS - 12, 12);
     } else if (r === 'altar') {
       x.fillStyle = '#1f1430'; x.fillRect(4, 10, TS - 8, TS - 14);
       x.fillStyle = '#3a2050'; x.fillRect(7, 7, TS - 14, 8);

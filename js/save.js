@@ -44,6 +44,7 @@ Game.Save = (function () {
         baseMaxHealth: p.baseMaxHealth,
       },
       ngLevel: s.ngLevel || 0,
+      difficulty: s.difficulty || 'normal',
       inventory: s.inventory.map(function (sl) { return sl ? { id: sl.id, count: sl.count, roll: sl.roll || null } : null; }),
     };
   }

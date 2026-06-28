@@ -208,7 +208,9 @@ Game.Player = (function () {
     const targetMeta = Game.OBJ_META[def.place];
     if (targetMeta && targetMeta.solid && t.tx === pt.tx && t.ty === pt.ty) return;
     const g = Game.World.groundAt(t.tx, t.ty);
-    if (g === Game.TILE.DEEP_WATER) return;
+    // 橋は水上に架けられる。それ以外は深い水に設置不可
+    const targetMetaB = Game.OBJ_META[def.place];
+    if (g === Game.TILE.DEEP_WATER && !(targetMetaB && targetMetaB.bridge)) return;
     // 両世界リンク設置物（裂け目の楔）
     if (targetMeta && targetMeta.dualPlaced) Game.World.setObjBothWorlds(t.tx, t.ty, def.place);
     else Game.World.setObj(t.tx, t.ty, def.place);

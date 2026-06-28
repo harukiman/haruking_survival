@@ -20,6 +20,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Segoe U
 .seed-row { margin: 12px 0; font-size: .9rem; color: #9fb0c4; }
 .seed-row input { width: 60%; padding: 7px 10px; border-radius: 8px; border: 1px solid #33455e;
   background: #10182a; color: #e8edf2; margin-left: 6px; }
+.diff-row { display: flex; gap: 6px; margin: 14px 0 4px; }
+.diff-btn { flex: 1; padding: 9px 4px; border-radius: 9px; border: 1px solid #33455e;
+  background: #10182a; color: #b8c4d4; font-size: .9rem; font-weight: 700; cursor: pointer; }
+.diff-btn.selected { background: #2f5a8f; color: #fff; border-color: #5a8fd6; }
+.diff-desc { color: #8fa3bb; font-size: .78rem; margin: 0 0 6px; min-height: 1em; }
 .big-btn { display: block; width: 100%; margin: 10px 0; padding: 14px; font-size: 1.1rem; font-weight: 700;
   border: none; border-radius: 12px; background: #4a8f3c; color: #fff; cursor: pointer; transition: filter .12s; }
 .big-btn:hover { filter: brightness(1.12); }

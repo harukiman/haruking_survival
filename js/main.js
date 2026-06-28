@@ -57,6 +57,7 @@ window.Game = window.Game || {};
       reunified: false,
       ngLevel: 0,
       wasDeep: false,
+      difficulty: 'normal',
       // active 参照（worlds[worldName] を指す）
       chunks: worlds.light.chunks,
       modifiedTiles: worlds.light.modifiedTiles,
@@ -75,6 +76,7 @@ window.Game = window.Game || {};
     const ngLevel = opts.ngLevel || 0;
     Game.state = freshState(seed);
     Game.state.ngLevel = ngLevel;
+    Game.state.difficulty = opts.difficulty || 'normal';
     if (keepAch) Game.state.achievements = keepAch;
     const sp = Game.WorldGen.findSpawn(Game.state.seed);
     Game.state.spawn = sp;
@@ -88,8 +90,9 @@ window.Game = window.Game || {};
   // 周回（NG+）: 実績引継ぎ・難度上昇・新シード
   function startNGPlus() {
     const ng = (Game.state.ngLevel || 0) + 1;
+    const diff = Game.state.difficulty || 'normal';
     Game.Save.clear();
-    newGame('', { keepAchievements: true, ngLevel: ng });
+    newGame('', { keepAchievements: true, ngLevel: ng, difficulty: diff });
     Game.UI.toast('周回 NG+' + ng + ' 開始 — 影はさらに濃く、戦利品はさらに豊かに');
   }
   Game.startNGPlus = startNGPlus;
@@ -109,6 +112,7 @@ window.Game = window.Game || {};
     Game.state.questIndex = data.questIndex || 0;
     Game.state.questDone = data.questDone || {};
     Game.state.reunified = !!data.reunified;
+    Game.state.difficulty = data.difficulty || 'normal';
     if (data.weather) Game.state.weather = data.weather;
     // 両世界の差分/タイルデータ復元
     const restoreWorld = function (name, wd) {
@@ -192,10 +196,21 @@ window.Game = window.Game || {};
   function initTitle() {
     const btnContinue = document.getElementById('btn-continue');
     if (!Game.Save.hasSave()) { btnContinue.classList.add('disabled'); btnContinue.disabled = true; }
+    // 難易度セレクタ
+    let chosenDiff = 'normal';
+    const diffBtns = document.querySelectorAll('#diff-row .diff-btn');
+    const diffDesc = document.getElementById('diff-desc');
+    diffBtns.forEach(function (b) {
+      b.addEventListener('click', function () {
+        chosenDiff = b.getAttribute('data-diff');
+        diffBtns.forEach(function (o) { o.classList.toggle('selected', o === b); });
+        const d = Game.DIFFICULTIES[chosenDiff]; if (d && diffDesc) diffDesc.textContent = d.desc;
+      });
+    });
     document.getElementById('btn-new').addEventListener('click', function () {
       if (Game.Save.hasSave() && !confirm('新しい世界を始めると現在のセーブは上書きされます。よろしいですか？')) return;
       Game.Save.clear();
-      newGame(document.getElementById('seed-input').value.trim());
+      newGame(document.getElementById('seed-input').value.trim(), { difficulty: chosenDiff });
     });
     btnContinue.addEventListener('click', function () {
       if (this.disabled) return;

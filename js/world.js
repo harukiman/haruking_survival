@@ -86,11 +86,12 @@ Game.World = (function () {
 
   // タイルが移動可能か（プレイヤー/モブ衝突）
   function isWalkable(tx, ty) {
+    const o = objAt(tx, ty);
+    const meta = Game.OBJ_META[o];
+    if (meta && meta.bridge) return true; // 橋は水上でも通れる
     const g = groundAt(tx, ty);
     if (Game.SOLID_TILE[g]) return false;
-    const o = objAt(tx, ty);
     if (o === Game.OBJ.NONE) return true;
-    const meta = Game.OBJ_META[o];
     return meta ? !meta.solid : true;
   }
 

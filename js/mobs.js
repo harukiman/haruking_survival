@@ -10,12 +10,14 @@ Game.Mobs = (function () {
   function spawnMob(type, wx, wy) {
     const def = Game.MOBS[type];
     if (!def) return;
+    const diff = Game.DIFFICULTIES[Game.state.difficulty] || Game.DIFFICULTIES.normal;
     const mult = 1 + (Game.state.ngLevel || 0) * Game.TUNE.NG_HP_PER;
     const hp = Math.round(def.hp * mult);
+    const dmgMult = mult * (diff.dmgMult != null ? diff.dmgMult : 1);
     Game.state.mobs.push({
       type: type, def: def,
       x: wx, y: wy, prevX: wx, prevY: wy,
-      hp: hp, maxHp: hp, dmg: Math.round(def.dmg * mult) || def.dmg,
+      hp: hp, maxHp: hp, dmg: Math.round(def.dmg * dmgMult),
       vx: 0, vy: 0, dir: 'down',
       state: 'wander', stateTimer: 0, attackCd: 0,
       hurt: 0, fleeTimer: 0, hopPhase: Math.random() * 6,
@@ -37,15 +39,17 @@ Game.Mobs = (function () {
       const tx = Math.floor(wx / TS), ty = Math.floor(wy / TS);
       if (!Game.World.isWalkable(tx, ty)) continue;
       const g = Game.World.groundAt(tx, ty);
+      const diff = Game.DIFFICULTIES[Game.state.difficulty] || Game.DIFFICULTIES.normal;
       let type = null;
       if (shadowWorld) {
+        if (!diff.spawnHostiles) continue; // のんびり: 影世界でも敵なし
         // 影世界は固有の敵が常時出現。深層では徘徊者も
         const pool = Game.World.inDepths()
           ? ['wraith', 'watcher', 'abyss_stalker', 'abyss_stalker', 'spider']
           : ['wraith', 'wraith', 'watcher', 'spider'];
         type = pool[Math.floor(Math.random() * pool.length)];
-      } else if (night) {
-        // 夜は敵対モブ
+      } else if (night && diff.spawnHostiles) {
+        // 夜は敵対モブ（のんびりは出ない）
         const pool = ['zombie', 'skeleton', 'spider', 'slime'];
         type = pool[Math.floor(Math.random() * pool.length)];
       } else {

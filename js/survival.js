@@ -53,7 +53,8 @@ Game.Survival = (function () {
       }
       Game.state.sanity = Math.max(0, Game.state.sanity - drain);
       if (Game.state.sanity < 10 && Game.Achievements) Game.Achievements.unlock('deep_sanity');
-      if (Game.state.sanity <= 0 && p.health > 0 && Game.state.tick % 50 === 0) damage(2, 'sanity');
+      const diff = Game.DIFFICULTIES[Game.state.difficulty] || Game.DIFFICULTIES.normal;
+      if (diff.sanityKill && Game.state.sanity <= 0 && p.health > 0 && Game.state.tick % 50 === 0) damage(2, 'sanity');
     } else if (Game.state.sanity < T.SANITY_MAX) {
       Game.state.sanity = Math.min(T.SANITY_MAX, Game.state.sanity + 0.06);
     }

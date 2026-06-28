@@ -29,6 +29,8 @@ Game.OBJ = {
   WOOD_BLOCK:100, STONE_BLOCK:101, CRAFTING_TABLE:102, FURNACE:103, TORCH:104, CHEST:105,
   FARMLAND:106, WHEAT:107, CAMPFIRE:108, LANTERN:109, FENCE:110, DOOR:111, BED:112, SAPLING:113,
   RIFT_ANCHOR:114, LUMEN_LANTERN:115, SHADOW_ALTAR:116,
+  // 建築・自由度
+  WOOD_FLOOR:117, STONE_FLOOR:118, WALL:119, WINDOW:120, BRIDGE:121, SIGN:122,
 };
 
 // 地面の色（手続き描画のベース）
@@ -119,6 +121,13 @@ Game.OBJ_META = {
   [Game.OBJ.SEAL_WALL]:  { name:'封印壁', solid:true, mineable:false, tool:null, tier:0, hp:999, drops:[], render:'seal' },
   [Game.OBJ.RESONANCE_CORE]:{ name:'共鳴核', solid:true, mineable:true, tool:'pickaxe', tier:2, hp:16, light:6, drops:[{item:'shadow_crystal', n:[1,2]}], render:'rcore', resonator:true },
   [Game.OBJ.TREASURE_CHEST]:{ name:'宝箱', solid:true, mineable:true, tool:null, tier:0, hp:6, light:3, drops:[], render:'tchest', treasure:true },
+  // 建築・自由度
+  [Game.OBJ.WOOD_FLOOR]: { name:'木の床', solid:false, mineable:true, tool:null, tier:0, hp:3, drops:[{item:'wood_floor', n:[1,1]}], render:'wfloor' },
+  [Game.OBJ.STONE_FLOOR]:{ name:'石の床', solid:false, mineable:true, tool:null, tier:0, hp:4, drops:[{item:'stone_floor', n:[1,1]}], render:'sfloor' },
+  [Game.OBJ.WALL]:       { name:'壁', solid:true, mineable:true, tool:null, tier:0, hp:6, drops:[{item:'wall', n:[1,1]}], render:'wall' },
+  [Game.OBJ.WINDOW]:     { name:'窓', solid:true, mineable:true, tool:null, tier:0, hp:4, drops:[{item:'window', n:[1,1]}], render:'window' },
+  [Game.OBJ.BRIDGE]:     { name:'橋', solid:false, bridge:true, mineable:true, tool:null, tier:0, hp:3, drops:[{item:'bridge', n:[1,1]}], render:'bridge' },
+  [Game.OBJ.SIGN]:       { name:'立て札', solid:false, mineable:true, tool:null, tier:0, hp:2, drops:[{item:'sign', n:[1,1]}], render:'sign' },
 };
 
 // アイテム定義。place=設置するOBJ id, tool/tier=道具, food=空腹回復
@@ -192,6 +201,13 @@ Game.ITEMS = {
   // 設置物
   rift_anchor:   { name:'裂け目の楔', stack:16, color:'#7a4fb0', place:Game.OBJ.RIFT_ANCHOR },
   lumen_lantern: { name:'光のランタン', stack:16, color:'#ffe9a0', place:Game.OBJ.LUMEN_LANTERN },
+  // 建築・自由度
+  wood_floor:    { name:'木の床', stack:99, color:'#b07a40', place:Game.OBJ.WOOD_FLOOR },
+  stone_floor:   { name:'石の床', stack:99, color:'#9a9ea2', place:Game.OBJ.STONE_FLOOR },
+  wall:          { name:'壁', stack:99, color:'#8a6a44', place:Game.OBJ.WALL },
+  window:        { name:'窓', stack:99, color:'#a8d8e8', place:Game.OBJ.WINDOW },
+  bridge:        { name:'橋', stack:99, color:'#9c6b3f', place:Game.OBJ.BRIDGE },
+  sign:          { name:'立て札', stack:16, color:'#a9762f', place:Game.OBJ.SIGN },
   shadow_altar:  { name:'影の祭壇', stack:4, color:'#3a2050', place:Game.OBJ.SHADOW_ALTAR },
   // ボス報酬
   shadow_core:   { name:'影核', stack:16, color:'#c060ff', flavor:'影の主の心臓。世界を裂いた最初の祈りが、結晶となって残ったもの。' },
@@ -252,7 +268,21 @@ Game.RECIPES = [
   { out:{id:'shadow_altar', n:1}, in:{shadow_steel:3, shadow_crystal:5}, station:'crafting_table' },
   { out:{id:'sanity_charm', n:1}, in:{shadow_core:1, lumen:5}, station:'crafting_table' },
   { out:{id:'unity_core', n:1}, in:{shadow_core:3, lumen:10, shadow_crystal:10}, station:'crafting_table' }, // 世界統合
+  // 建築・自由度
+  { out:{id:'wood_floor', n:4}, in:{wood:1}, station:null },
+  { out:{id:'stone_floor', n:4}, in:{stone:1}, station:null },
+  { out:{id:'wall', n:2}, in:{wood:2}, station:null },
+  { out:{id:'window', n:2}, in:{wood:1, stone:1}, station:'crafting_table' },
+  { out:{id:'bridge', n:4}, in:{wood:2}, station:null },
+  { out:{id:'sign', n:1}, in:{wood:2}, station:null },
 ];
+
+// 難易度（自由度: のんびり建築〜高難度）
+Game.DIFFICULTIES = {
+  peaceful: { name:'のんびり', desc:'敵が出ず、正気では死なない。建築と探索を満喫', spawnHostiles:false, sanityKill:false, dmgMult:0 },
+  normal:   { name:'ふつう', desc:'標準のサバイバル', spawnHostiles:true, sanityKill:true, dmgMult:1 },
+  hard:     { name:'ハード', desc:'敵は手強く正気も削れやすい', spawnHostiles:true, sanityKill:true, dmgMult:1.4 },
+};
 
 // モブ定義
 Game.MOBS = {
