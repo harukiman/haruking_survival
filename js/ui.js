@@ -101,6 +101,7 @@ Game.UI = (function () {
 
     document.getElementById('btn-close-inv').addEventListener('click', toggleInventory);
     document.getElementById('btn-close-chest').addEventListener('click', closeChest);
+    var ct = document.getElementById('btn-close-trade'); if (ct) ct.addEventListener('click', closeTrade);
     var cm = document.getElementById('chest-multi'); if (cm) cm.addEventListener('click', toggleChestMulti);
     var cds = document.getElementById('chest-deposit-sel'); if (cds) cds.addEventListener('click', depositSelected);
     var cda = document.getElementById('chest-deposit-all'); if (cda) cda.addEventListener('click', depositAll);
@@ -160,6 +161,45 @@ Game.UI = (function () {
     bbEl.classList.remove('hidden');
     if (bbName.textContent !== boss.def.name) bbName.textContent = boss.def.name;
     bbFill.style.width = Math.max(0, boss.hp / boss.maxHp * 100) + '%';
+  }
+
+  // ===== 旅商人トレード =====
+  const TRADE = [
+    { id: 'bandage', n: 3, price: 1 }, { id: 'antidote', n: 2, price: 1 },
+    { id: 'strength_potion', n: 1, price: 2 }, { id: 'swift_potion', n: 1, price: 2 },
+    { id: 'iron_potion', n: 1, price: 2 }, { id: 'regen_potion', n: 1, price: 2 },
+    { id: 'ammo_9mm', n: 16, price: 1 }, { id: 'ammo_762', n: 12, price: 2 },
+    { id: 'energy_cell', n: 10, price: 2 }, { id: 'rocket_ammo', n: 2, price: 3 },
+    { id: 'bomb', n: 2, price: 2 }, { rand: true, price: 4, label: '謎の装備（ランダム）' },
+  ];
+  function openTrade() { const sc = document.getElementById('trade-screen'); if (!sc) return; sc.classList.remove('hidden'); Game.state.paused = true; refreshTrade(); }
+  function closeTrade() { const sc = document.getElementById('trade-screen'); if (sc) sc.classList.add('hidden'); Game.state.paused = false; }
+  function refreshTrade() {
+    const body = document.getElementById('trade-body'); if (!body) return;
+    const gold = Game.Inventory.count('gold_bar');
+    let h = '<p class="hint">所持 金塊 <b style="color:#e8c54a">' + gold + '</b>　欲しい品を選べ。</p><div class="trade-list">';
+    TRADE.forEach(function (t, i) {
+      const can = gold >= t.price;
+      const name = t.rand ? t.label : (Game.ITEMS[t.id].name + (t.n > 1 ? ' ×' + t.n : ''));
+      const url = !t.rand && Game.Icons ? Game.Icons.dataURL(t.id, null) : null;
+      h += '<button class="trade-row' + (can ? '' : ' disabled') + '" data-i="' + i + '"' + (can ? '' : ' disabled') + '>' +
+        '<span class="tr-ic"' + (url ? ' style="background-image:url(' + url + ')"' : '') + '></span>' +
+        '<span class="tr-name">' + name + '</span><span class="tr-price">🟨' + t.price + '</span></button>';
+    });
+    h += '</div>';
+    body.innerHTML = h;
+    body.querySelectorAll('.trade-row[data-i]').forEach(function (btn) { btn.addEventListener('click', function () { buyTrade(parseInt(btn.getAttribute('data-i'), 10)); }); });
+  }
+  function buyTrade(i) {
+    const t = TRADE[i]; if (!t) return;
+    if (Game.Inventory.count('gold_bar') < t.price) return;
+    Game.Inventory.remove('gold_bar', t.price);
+    if (t.rand) {
+      const pool = (Game.GEN_BY_TIER[3] || []).concat(Game.GEN_BY_TIER[2] || []);
+      const id = pool[Math.floor(Math.random() * pool.length)];
+      if (id) { Game.Inventory.addInstance({ id: id, roll: Game.Loot.roll(id, 0.1) }); toast('購入: ' + Game.ITEMS[id].name); }
+    } else { Game.Inventory.add(t.id, t.n); toast('購入: ' + Game.ITEMS[t.id].name); }
+    Game.Audio.play('craft'); refreshTrade(); refreshHotbar();
   }
 
   // ===== ステータス & スキル画面 =====
@@ -910,6 +950,6 @@ Game.UI = (function () {
     openChest, openSharedChest, closeChest, refreshChest, refreshWorld,
     showLore, closeLore, refreshQuest, openQuest, closeQuest, showEnding, showIntro, refreshNet, refreshStatus,
     toggleOptions, openEnchant, closeEnchant,
-    toggleBigMap, isBigMapOpen, updateBigMap, openStats, closeStats, renderStats, refreshBossBar,
+    toggleBigMap, isBigMapOpen, updateBigMap, openStats, closeStats, renderStats, refreshBossBar, openTrade, closeTrade,
   };
 })();

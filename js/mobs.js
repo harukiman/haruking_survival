@@ -295,16 +295,10 @@ Game.Mobs = (function () {
     'あんたの旅、見届けさせてもらうよ。ほら、土産だ。',
   ];
   function interactNPC(m) {
-    if (m.traded) { Game.UI.toast('旅人：「達者でな」'); return; }
-    m.traded = true;
-    const gifts = ['bandage', 'antidote', 'apple', 'lumen', 'torch', 'cooked_meat', 'iron'];
-    const gift = gifts[Math.floor(Math.random() * gifts.length)];
-    const n = 1 + Math.floor(Math.random() * 2);
-    Game.Inventory.add(gift, n);
-    Game.UI.toast('旅人：「' + WANDER_LINES[Math.floor(Math.random() * WANDER_LINES.length)] + '」（' + Game.ITEMS[gift].name + '×' + n + '）');
-    Game.Audio.play('craft');
-    m.fleeTimer = 0; m.leaveTimer = 200; // 少ししたら去る
-    Game.UI.refreshAll();
+    if (!m.greeted) { m.greeted = true; Game.UI.toast('旅人：「' + WANDER_LINES[Math.floor(Math.random() * WANDER_LINES.length)] + '」'); }
+    m.leaveTimer = 0; // 商談中は去らない
+    Game.Audio.play('select');
+    if (Game.UI.openTrade) Game.UI.openTrade();
   }
 
   function countType(type) {
