@@ -30,6 +30,14 @@ Game.Mobs = (function () {
       m.maxHp = m.hp = Math.round(m.maxHp * (TUNE.ELITE_HP_MULT || 2.2));
       m.dmg = Math.round(m.dmg * (TUNE.ELITE_DMG_MULT || 1.5));
       m.auraPhase = Math.random() * 6;
+      // 精鋭アフィックス: 特殊変異を1つ抽選
+      const ak = Object.keys(Game.ELITE_AFFIXES || {});
+      if (ak.length) {
+        m.eliteAffix = ak[Math.floor(Math.random() * ak.length)];
+        const af = Game.ELITE_AFFIXES[m.eliteAffix];
+        if (af.speed) m.eliteSpeedMult = af.speed;
+        m.auraRGB = hexToRgb(af.aura);
+      }
     }
     Game.state.mobs.push(m);
     // ボス登場アニメムービー（種別ごと初回・ローカル再生）
@@ -137,9 +145,15 @@ Game.Mobs = (function () {
     }
   }
 
+  function hexToRgb(hex) {
+    const h = hex.replace('#', '');
+    return [parseInt(h.substr(0, 2), 16), parseInt(h.substr(2, 2), 16), parseInt(h.substr(4, 2), 16)];
+  }
+
   function moveMob(m, dx, dy, speed) {
     const len = Math.hypot(dx, dy);
     if (len < 0.001) return;
+    if (m.eliteSpeedMult) speed *= m.eliteSpeedMult; // 俊足アフィックス
     dx /= len; dy /= len;
     if (Math.abs(dx) > Math.abs(dy)) m.dir = dx < 0 ? 'left' : 'right';
     else m.dir = dy < 0 ? 'up' : 'down';
@@ -190,6 +204,12 @@ Game.Mobs = (function () {
       // 遠すぎたら消滅
       if (distP > TUNE.DESPAWN_TILES * TS) { mobs.splice(i, 1); continue; }
 
+      // 精鋭アフィックス: 再生(不死) — 毎秒 最大HPの一定割合を回復
+      if (m.eliteAffix === 'regened' && m.hp < m.maxHp && Game.state.tick % 30 === 0) {
+        const af = Game.ELITE_AFFIXES.regened;
+        m.hp = Math.min(m.maxHp, m.hp + Math.max(1, Math.round(m.maxHp * af.regenPct)));
+      }
+
       if (m.def.hostile) {
         const aggro = (m.def.boss ? 22 : 13) * TS;
         // ボスは手下を召喚
@@ -211,6 +231,7 @@ Game.Mobs = (function () {
           if (distP < (m.def.size * 0.5 + 12) && m.attackCd <= 0) {
             Game.Survival.damage(m.dmg || m.def.dmg, 'mob');
             if (m.def.inflict) for (const k in m.def.inflict) Game.Status.add(k, m.def.inflict[k]);
+            if (m.eliteAffix === 'blazing') Game.Status.add('burn', Game.ELITE_AFFIXES.blazing.burn); // 業火: 接触で炎上
             m.attackCd = m.def.boss ? 30 : 42;
             const kl = distP || 1;
             p.x += (dxp / kl) * (m.def.boss ? 12 : 6); p.y += (dyp / kl) * (m.def.boss ? 12 : 6);
@@ -345,6 +366,11 @@ Game.Mobs = (function () {
   function damageMob(m, dmg, fromX, fromY) {
     m.hp -= dmg;
     m.hurt = 8;
+    // 棘鎧アフィックス: 被ダメの一定割合を反射
+    if (m.eliteAffix === 'thorns' && m.hp > 0) {
+      const refl = Math.max(1, Math.round(dmg * Game.ELITE_AFFIXES.thorns.thorns));
+      Game.Survival.damage(refl, 'thorns');
+    }
     Game.Render.spawnBlood(m.x, m.y, 5);
     if (Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - m.def.size * 0.5, dmg, '#ffe27a');
     const dx = m.x - fromX, dy = m.y - fromY, l = Math.hypot(dx, dy) || 1;
@@ -385,12 +411,28 @@ Game.Mobs = (function () {
     if (Game.Achievements && m.def.hostile) Game.Achievements.unlock('first_night');
     // 精鋭撃破演出＆実績
     if (m.elite) {
-      Game.Render.flash('#ffd86b');
-      Game.Render.spawnParticles(m.x, m.y, '#ffe27a', 22);
+      const af = m.eliteAffix && Game.ELITE_AFFIXES[m.eliteAffix];
+      const prefix = af ? af.name : '精鋭の';
+      const auraC = af ? af.aura : '#ffd86b';
+      Game.Render.flash(auraC);
+      Game.Render.spawnParticles(m.x, m.y, auraC, 22);
       if (Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - m.def.size * 0.6, '精鋭撃破!', '#ffd86b', true);
-      Game.UI.toast('精鋭の' + m.def.name + 'を討伐！ 戦利品を得た');
+      Game.UI.toast(prefix + m.def.name + 'を討伐！ 戦利品を得た');
       Game.state.eliteKills = (Game.state.eliteKills || 0) + 1;
       if (Game.Achievements) Game.Achievements.unlock('elite_hunter');
+      // 分裂アフィックス: 弱体な分身を2体生成
+      if (m.eliteAffix === 'splitting' && !m.isSplit) {
+        const n = Game.ELITE_AFFIXES.splitting.split || 2;
+        for (let k = 0; k < n; k++) {
+          spawnMob(m.type, m.x + (Math.random() - 0.5) * 36, m.y + (Math.random() - 0.5) * 36);
+          const c = Game.state.mobs[Game.state.mobs.length - 1];
+          if (c && c.type === m.type) {
+            c.elite = false; c.eliteAffix = null; c.eliteSpeedMult = 0; c.isSplit = true;
+            c.maxHp = c.hp = Math.max(1, Math.round((m.def.hp || 4) * 0.4));
+            c.dmg = Math.max(1, Math.round((m.def.dmg || 2) * 0.6));
+          }
+        }
+      }
     }
     if (m.def.boss) {
       if (m.type === 'sovereign') {
@@ -429,10 +471,12 @@ Game.Mobs = (function () {
         m.auraPhase = (m.auraPhase || 0) + 0.08;
         const pulse = 0.5 + Math.sin(m.auraPhase) * 0.5;
         const ar = r * (1.7 + pulse * 0.25);
+        const rgb = m.auraRGB || [255, 216, 107];
+        const cs = rgb[0] + ',' + rgb[1] + ',' + rgb[2];
         const grd = ctx.createRadialGradient(s.x, s.y - hop, r * 0.6, s.x, s.y - hop, ar);
-        grd.addColorStop(0, 'rgba(255,216,107,0)');
-        grd.addColorStop(0.7, 'rgba(255,216,107,' + (0.18 + pulse * 0.14) + ')');
-        grd.addColorStop(1, 'rgba(255,170,60,0)');
+        grd.addColorStop(0, 'rgba(' + cs + ',0)');
+        grd.addColorStop(0.7, 'rgba(' + cs + ',' + (0.18 + pulse * 0.14) + ')');
+        grd.addColorStop(1, 'rgba(' + cs + ',0)');
         ctx.fillStyle = grd;
         ctx.beginPath(); ctx.arc(s.x, s.y - hop, ar, 0, Math.PI * 2); ctx.fill();
       }

@@ -7,6 +7,7 @@ Game.Status = (function () {
     poison:    { name: '毒', icon: '🤢', dps: 1, color: '#7ac03a' },
     infection: { name: '感染', icon: '🦠', dps: 1, color: '#b06ad0' },
     cold:      { name: '凍え', icon: '❄', dps: 1, color: '#7ac0e0' },
+    burn:      { name: '炎上', icon: '🔥', dps: 2, color: '#ff7a3a' },
     wellfed:   { name: '満腹', icon: '🍗', buff: true, color: '#e0b04a' },
     strength:  { name: '力の薬', icon: '💪', buff: true, color: '#ff8a4a' },
     swiftness: { name: '俊足の薬', icon: '💨', buff: true, color: '#7fe0a0' },

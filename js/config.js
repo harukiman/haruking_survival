@@ -1,6 +1,15 @@
 // config.js — 全定数とゲームデータ（ロジック無し）
 window.Game = window.Game || {};
 
+// 精鋭(elite)個体の特殊変異アフィックス。spawn時に1つ抽選 → 名前接頭辞/オーラ色/固有効果。
+Game.ELITE_AFFIXES = {
+  swift:     { name:'俊足の',   aura:'#5fffd0', speed:1.45 },                  // 移動速度UP
+  blazing:   { name:'業火の',   aura:'#ff7a3a', burn:90 },                     // 接触で炎上(burn)付与
+  regened:   { name:'不死の',   aura:'#7fff8a', regenPct:0.035 },              // 毎秒 最大HPの3.5%回復
+  thorns:    { name:'棘鎧の',   aura:'#c8c8e0', thorns:0.30 },                 // 被ダメの30%を反射
+  splitting: { name:'分裂の',   aura:'#ff7fd0', split:2 },                     // 死亡時に弱体な分身を2体生成
+};
+
 Game.CFG = {
   TILE_SIZE: 32,          // 1タイル = 32px
   CHUNK_SIZE: 16,         // 1チャンク = 16x16タイル
