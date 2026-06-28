@@ -2,18 +2,20 @@
 window.Game = window.Game || {};
 
 Game.Cutscene = (function () {
-  let cv, ctx, raf, onDone, t0, skipBtn, playing = false, W = 0, H = 0;
+  let cv, ctx, raf, onDone, t0, skipBtn, playing = false, W = 0, H = 0, curScene = -1, shakeMag = 0;
 
   const SCENES = [
-    { d: 3600, draw: sceneUnified, text: 'かつて、世界はひとつだった。' },
-    { d: 4200, draw: scenePrayers, text: '「永遠の昼」を願う者と、「安らぎの夜」を望む者。' },
-    { d: 4200, draw: sceneSplit, text: '相反するふたつの祈りが、大地を引き裂いた。' },
-    { d: 4000, draw: sceneDescend, text: 'いま、あなたは世界の狭間に降り立つ——' },
+    { d: 4400, draw: sceneUnified, text: 'かつて、世界はひとつだった。', onEnter: function () { Game.Audio.cineStart(); Game.Audio.cue('swell'); } },
+    { d: 4600, draw: scenePrayers, text: '「永遠の昼」を願う者と、「安らぎの夜」を望む者。', onEnter: function () { Game.Audio.cue('choir'); } },
+    { d: 2600, draw: sceneTension, text: 'ふたつの祈りは、譲らなかった——', shake: 0.35, onEnter: function () { Game.Audio.cue('riser'); } },
+    { d: 4400, draw: sceneSplit, text: '相反する願いが、大地を引き裂いた。', shake: 1, onEnter: function () { Game.Audio.cue('impact'); Game.Audio.cue('crack'); } },
+    { d: 4200, draw: sceneDescend, text: 'いま、あなたは世界の狭間に降り立つ——', shake: 0.2, onEnter: function () { Game.Audio.cue('shimmer'); } },
+    { d: 4600, draw: sceneTitle, text: '', onEnter: function () { Game.Audio.cue('choir'); Game.Audio.cue('boom'); } },
   ];
   const TOTAL = SCENES.reduce(function (a, s) { return a + s.d; }, 0);
 
   function play(cb) {
-    onDone = cb; playing = true;
+    onDone = cb; playing = true; curScene = -1; shakeMag = 0;
     cv = document.createElement('canvas');
     cv.id = 'cutscene-canvas';
     cv.style.cssText = 'position:absolute;inset:0;z-index:60;background:#05070e;touch-action:none';
@@ -42,18 +44,25 @@ Game.Cutscene = (function () {
     let e = now - t0;
     if (e >= TOTAL) { finish(); return; }
     // 現在シーン
-    let acc = 0, sc = SCENES[0], local = 0;
+    let acc = 0, sc = SCENES[0], local = 0, idx = 0;
     for (let i = 0; i < SCENES.length; i++) {
-      if (e < acc + SCENES[i].d) { sc = SCENES[i]; local = (e - acc) / SCENES[i].d; break; }
+      if (e < acc + SCENES[i].d) { sc = SCENES[i]; local = (e - acc) / SCENES[i].d; idx = i; break; }
       acc += SCENES[i].d;
     }
+    if (idx !== curScene) { curScene = idx; shakeMag = sc.shake || 0; if (sc.onEnter) try { sc.onEnter(); } catch (er) {} }
     ctx.clearRect(0, 0, W, H);
     ctx.fillStyle = '#05070e'; ctx.fillRect(0, 0, W, H);
+    // カメラシェイク（シーン頭で強く→減衰）
+    const decay = Math.max(0, 1 - local * 2.2);
+    const sh = shakeMag * decay * 14;
+    ctx.save();
+    if (sh > 0.2) ctx.translate((Math.random() - 0.5) * sh, (Math.random() - 0.5) * sh);
     sc.draw(local, now);
-    drawText(sc.text, local);
+    ctx.restore();
+    if (sc.text) drawText(sc.text, local);
     // 全体フェードイン/アウト
     if (e < 600) { ctx.fillStyle = 'rgba(5,7,14,' + (1 - e / 600) + ')'; ctx.fillRect(0, 0, W, H); }
-    if (e > TOTAL - 700) { ctx.fillStyle = 'rgba(5,7,14,' + ((e - (TOTAL - 700)) / 700) + ')'; ctx.fillRect(0, 0, W, H); }
+    if (e > TOTAL - 900) { ctx.fillStyle = 'rgba(5,7,14,' + ((e - (TOTAL - 900)) / 900) + ')'; ctx.fillRect(0, 0, W, H); }
     raf = requestAnimationFrame(frame);
   }
 
@@ -62,6 +71,7 @@ Game.Cutscene = (function () {
     playing = false;
     cancelAnimationFrame(raf);
     window.removeEventListener('resize', resize);
+    if (Game.Audio && Game.Audio.cineStop) Game.Audio.cineStop();
     if (cv && cv.parentNode) cv.parentNode.removeChild(cv);
     if (skipBtn && skipBtn.parentNode) skipBtn.parentNode.removeChild(skipBtn);
     if (onDone) onDone();
@@ -96,17 +106,79 @@ Game.Cutscene = (function () {
   function sceneUnified(t, now) {
     // 平和な統一世界＋昇る陽
     const horizon = H * 0.62;
-    ctx.fillStyle = '#11305a'; ctx.fillRect(0, 0, W, horizon);
+    const sky = ctx.createLinearGradient(0, 0, 0, horizon);
+    sky.addColorStop(0, '#0c2348'); sky.addColorStop(1, '#1d4a7a');
+    ctx.fillStyle = sky; ctx.fillRect(0, 0, W, horizon);
+    // 星（夜明け前の名残）
+    for (let i = 0; i < 40; i++) { const x = (i * 71) % W, y = (i * 37) % (horizon * 0.7); ctx.globalAlpha = (1 - t) * (0.3 + (i % 3) * 0.2); ctx.fillStyle = '#fff'; ctx.fillRect(x, y, 1.4, 1.4); }
+    ctx.globalAlpha = 1;
     // 陽
     const sy = horizon - 30 - t * 40;
-    const g = ctx.createRadialGradient(W / 2, sy, 8, W / 2, sy, 90);
-    g.addColorStop(0, '#fff3c0'); g.addColorStop(1, 'rgba(255,210,100,0)');
-    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(W / 2, sy, 90, 0, Math.PI * 2); ctx.fill();
+    // ゴッドレイ（放射光）
+    ctx.save(); ctx.translate(W / 2, sy); ctx.globalAlpha = 0.10 + t * 0.10;
+    for (let i = 0; i < 12; i++) { ctx.rotate(Math.PI / 6 + now * 0.0002); ctx.fillStyle = '#ffe9a8'; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-26, -Math.max(W, H)); ctx.lineTo(26, -Math.max(W, H)); ctx.closePath(); ctx.fill(); }
+    ctx.restore(); ctx.globalAlpha = 1;
+    const g = ctx.createRadialGradient(W / 2, sy, 8, W / 2, sy, 110);
+    g.addColorStop(0, '#fff7da'); g.addColorStop(1, 'rgba(255,210,100,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(W / 2, sy, 110, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#ffe08a'; ctx.beginPath(); ctx.arc(W / 2, sy, 26, 0, Math.PI * 2); ctx.fill();
     // 大地
-    ctx.fillStyle = '#2f7d3a'; ctx.fillRect(0, horizon, W, H - horizon);
+    const gnd = ctx.createLinearGradient(0, horizon, 0, H);
+    gnd.addColorStop(0, '#367f3f'); gnd.addColorStop(1, '#1f5a2a');
+    ctx.fillStyle = gnd; ctx.fillRect(0, horizon, W, H - horizon);
     ctx.fillStyle = '#3c9647';
     for (let i = 0; i < 7; i++) { const x = (i + 0.5) * W / 7; ctx.beginPath(); ctx.arc(x, horizon + 14, 18 + (i % 3) * 6, 0, Math.PI); ctx.fill(); }
+  }
+
+  function sceneTension(t, now) {
+    // ふたつの天体が中央へ引き寄せられ、空が裂け始める緊張
+    const horizon = H * 0.62;
+    const red = t * 0.5;
+    ctx.fillStyle = 'rgb(' + (14 + red * 80) + ',' + (20 + red * 10) + ',' + (44 - red * 20) + ')'; ctx.fillRect(0, 0, W, horizon);
+    ctx.fillStyle = '#23461f'; ctx.fillRect(0, horizon, W, H - horizon);
+    const conv = t * W * 0.16;
+    const lx = W * 0.30 + conv, rx = W * 0.70 - conv, cy = H * 0.34;
+    const jit = t * 5;
+    // 陽
+    ctx.fillStyle = '#ffd86b'; ctx.beginPath(); ctx.arc(lx + (Math.random() - 0.5) * jit, cy + (Math.random() - 0.5) * jit, 24, 0, 7); ctx.fill();
+    // 月
+    ctx.fillStyle = '#cdd8ff'; ctx.beginPath(); ctx.arc(rx + (Math.random() - 0.5) * jit, cy + (Math.random() - 0.5) * jit, 24, 0, 7); ctx.fill();
+    // 火花が中央に集まる
+    ctx.fillStyle = 'rgba(255,200,120,' + (0.4 + t * 0.5) + ')';
+    for (let i = 0; i < 40; i++) { const a = i * 0.6 + now * 0.004; const r = (1 - ((i * 0.05 + now * 0.0006) % 1)) * 140; ctx.fillRect(W / 2 + Math.cos(a) * r, cy + Math.sin(a) * r, 2, 2); }
+    // 中央に光が凝縮
+    const g = ctx.createRadialGradient(W / 2, cy, 2, W / 2, cy, 30 + t * 70); g.addColorStop(0, 'rgba(255,255,255,' + (0.5 + t * 0.5) + ')'); g.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(W / 2, cy, 100, 0, 7); ctx.fill();
+  }
+
+  function sceneTitle(t, now) {
+    // タイトルロゴ reveal（光と影の半分背景＋星＋ロゴ）
+    ctx.fillStyle = '#0a0d18'; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = 'rgba(255,210,100,0.06)'; ctx.fillRect(0, 0, W / 2, H);
+    ctx.fillStyle = 'rgba(150,90,220,0.08)'; ctx.fillRect(W / 2, 0, W / 2, H);
+    // 上昇する塵
+    for (let i = 0; i < 60; i++) { const x = (i * 89) % W; const y = (H - ((i * 53 + now * 0.04) % H)); ctx.globalAlpha = 0.25 + (i % 3) * 0.12; ctx.fillStyle = i % 2 ? '#ffe9a8' : '#bfa6ff'; ctx.fillRect(x, y, 1.6, 1.6); }
+    ctx.globalAlpha = 1;
+    // 中央のオーラ
+    const cy = H * 0.42;
+    const pulse = 0.5 + Math.sin(now * 0.004) * 0.5;
+    const g = ctx.createRadialGradient(W / 2, cy, 6, W / 2, cy, 180); g.addColorStop(0, 'rgba(180,200,255,' + (0.18 + pulse * 0.12) + ')'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(W / 2, cy, 180, 0, 7); ctx.fill();
+    // ロゴ
+    const a = Math.max(0, Math.min(1, t < 0.3 ? t / 0.3 : 1));
+    const scale = 0.9 + a * 0.1;
+    ctx.save(); ctx.translate(W / 2, cy); ctx.scale(scale, scale); ctx.globalAlpha = a; ctx.textAlign = 'center';
+    const big = W < 460 ? 38 : 64;
+    ctx.font = '800 ' + big + 'px -apple-system,"Hiragino Sans",sans-serif';
+    ctx.shadowColor = '#7fa8ff'; ctx.shadowBlur = 24;
+    const grad = ctx.createLinearGradient(-W / 2, 0, W / 2, 0); grad.addColorStop(0, '#ffe9a8'); grad.addColorStop(0.5, '#ffffff'); grad.addColorStop(1, '#bfa6ff');
+    ctx.fillStyle = grad; ctx.fillText('HARUKING', 0, -8); ctx.fillText('SURVIVAL', 0, big * 0.92 - 8);
+    ctx.shadowBlur = 0; ctx.restore();
+    // サブタイトル
+    ctx.globalAlpha = Math.max(0, Math.min(1, (t - 0.35) / 0.3));
+    ctx.fillStyle = '#cfd6ee'; ctx.font = (W < 460 ? 14 : 19) + 'px -apple-system,"Hiragino Sans",sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('— 俯瞰型サンドボックスサバイバル —', W / 2, cy + (W < 460 ? 78 : 120));
+    ctx.globalAlpha = 1; ctx.textAlign = 'left';
   }
 
   function scenePrayers(t, now) {
@@ -155,6 +227,8 @@ Game.Cutscene = (function () {
     // 粒子
     ctx.fillStyle = 'rgba(200,170,255,0.7)';
     for (let i = 0; i < 30; i++) { const px = W / 2 + (Math.sin(i * 13.7 + now * 0.002) * gap * 0.6); const py = (i * 53 + now * 0.05) % H; ctx.fillRect(px, py, 2, 2); }
+    // 引き裂きの瞬間の閃光
+    if (t < 0.14) { ctx.fillStyle = 'rgba(255,255,255,' + (1 - t / 0.14) + ')'; ctx.fillRect(0, 0, W, H); }
   }
 
   function sceneDescend(t, now) {
@@ -179,16 +253,49 @@ Game.Cutscene = (function () {
   // ===== ロケット発射ムービー =====
   function playLaunch(toSpace, cb) {
     const scenes = toSpace ? [
-      { d: 2600, draw: lcCountdown, text: '発射シーケンス…' },
-      { d: 3200, draw: lcLiftoff, text: '点火——大地を蹴って、空へ' },
-      { d: 3400, draw: lcStars, text: '大気を抜け、星の海へ' },
+      { d: 2600, draw: lcCountdown, text: '発射シーケンス…', onEnter: function () { Game.Audio.cineStart(); Game.Audio.cue('boom'); } },
+      { d: 3200, draw: lcLiftoff, text: '点火——大地を蹴って、空へ', shake: 0.8, onEnter: function () { Game.Audio.cue('impact'); Game.Audio.cue('riser'); } },
+      { d: 3400, draw: lcStars, text: '大気を抜け、星の海へ', onEnter: function () { Game.Audio.cue('shimmer'); Game.Audio.cue('swell'); } },
     ] : [
-      { d: 2600, draw: lcReentry, text: '帰還——青き世界へ降りてゆく' },
+      { d: 2600, draw: lcReentry, text: '帰還——青き世界へ降りてゆく', onEnter: function () { Game.Audio.cineStart(); Game.Audio.cue('swell'); } },
     ];
     runScenes(scenes, cb);
   }
+
+  // ===== ランドマーク発見ムービー =====
+  const DISCOVERY = {
+    dungeon:  { title: 'ダンジョン発見', sub: '魔物の巣が、闇の奥で蠢いている', col: '#e0644a', icon: '🏰', audio: 'boom' },
+    vault:    { title: '共鳴遺跡 発見', sub: '光と影、ふたつの世界が呼応する', col: '#e3c24a', icon: '🌀', audio: 'shimmer' },
+    stela:    { title: '古の石碑', sub: '失われた世界の記憶が刻まれている', col: '#b6a6f0', icon: '🗿', audio: 'choir' },
+    treasure: { title: '秘宝の間', sub: '封印が解かれ、宝が姿を現す', col: '#ffd86b', icon: '💎', audio: 'shimmer' },
+    cosmic:   { title: '星の遺物', sub: '宇宙の彼方、未知の宝が眠る', col: '#7fc8ff', icon: '✨', audio: 'swell' },
+    boss:     { title: '強大な気配', sub: '空気が張り詰める——強敵が現れた', col: '#ff5a4a', icon: '💀', audio: 'impact' },
+  };
+  function playDiscovery(kind, cb) {
+    const d = DISCOVERY[kind] || DISCOVERY.dungeon;
+    runScenes([{ d: 3400, draw: function (t, now) { scDiscovery(t, now, d); }, text: '', shake: kind === 'boss' ? 0.5 : 0.15, onEnter: function () { Game.Audio.cue(d.audio); } }], cb);
+  }
+  function scDiscovery(t, now, d) {
+    ctx.fillStyle = '#05060c'; ctx.fillRect(0, 0, W, H);
+    const cx = W / 2, cy = H * 0.40;
+    // 広がる光輪
+    for (let r = 0; r < 3; r++) { const rr = ((t * 1.4 + r * 0.33) % 1); ctx.strokeStyle = d.col; ctx.globalAlpha = (1 - rr) * 0.5; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(cx, cy, rr * Math.max(W, H) * 0.6, 0, 7); ctx.stroke(); }
+    ctx.globalAlpha = 1;
+    // 中央グロー
+    const g = ctx.createRadialGradient(cx, cy, 4, cx, cy, 130); g.addColorStop(0, d.col); g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.globalAlpha = 0.45 + Math.sin(now * 0.006) * 0.2; ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, 130, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
+    // アイコン
+    const pop = t < 0.3 ? t / 0.3 : 1; ctx.textAlign = 'center'; ctx.font = (64 * pop) + 'px sans-serif'; ctx.fillText(d.icon, cx, cy + 24);
+    // テキスト
+    let a = t < 0.25 ? t / 0.25 : (t > 0.85 ? (1 - t) / 0.15 : 1); a = Math.max(0, Math.min(1, a));
+    ctx.globalAlpha = a; ctx.fillStyle = d.col; ctx.font = 'bold ' + (W < 460 ? 24 : 34) + 'px -apple-system,"Hiragino Sans",sans-serif';
+    ctx.shadowColor = d.col; ctx.shadowBlur = 16; ctx.fillText(d.title, cx, cy + 124); ctx.shadowBlur = 0;
+    ctx.fillStyle = '#dfe2f0'; ctx.font = (W < 460 ? 13 : 17) + 'px -apple-system,"Hiragino Sans",sans-serif'; ctx.fillText(d.sub, cx, cy + 124 + (W < 460 ? 28 : 36));
+    ctx.globalAlpha = 1; ctx.textAlign = 'left';
+  }
+
   function runScenes(scenes, cb) {
-    playing = true; onDone = cb;
+    playing = true; onDone = cb; curScene = -1; shakeMag = 0;
     cv = document.createElement('canvas'); cv.id = 'cutscene-canvas';
     cv.style.cssText = 'position:absolute;inset:0;z-index:60;background:#03040a;touch-action:none';
     document.getElementById('app').appendChild(cv); ctx = cv.getContext('2d'); resize();
@@ -202,10 +309,16 @@ Game.Cutscene = (function () {
     (function loop(now) {
       if (!playing) return;
       const e = now - t0; if (e >= total) { finish(); return; }
-      let acc = 0, sc = scenes[0], local = 0;
-      for (let i = 0; i < scenes.length; i++) { if (e < acc + scenes[i].d) { sc = scenes[i]; local = (e - acc) / scenes[i].d; break; } acc += scenes[i].d; }
+      let acc = 0, sc = scenes[0], local = 0, idx = 0;
+      for (let i = 0; i < scenes.length; i++) { if (e < acc + scenes[i].d) { sc = scenes[i]; local = (e - acc) / scenes[i].d; idx = i; break; } acc += scenes[i].d; }
+      if (idx !== curScene) { curScene = idx; shakeMag = sc.shake || 0; if (sc.onEnter) try { sc.onEnter(); } catch (er) {} }
       ctx.clearRect(0, 0, W, H); ctx.fillStyle = '#03040a'; ctx.fillRect(0, 0, W, H);
-      sc.draw(local, now); drawText(sc.text, local);
+      const sh = shakeMag * Math.max(0, 1 - local * 2.2) * 14;
+      ctx.save();
+      if (sh > 0.2) ctx.translate((Math.random() - 0.5) * sh, (Math.random() - 0.5) * sh);
+      sc.draw(local, now);
+      ctx.restore();
+      if (sc.text) drawText(sc.text, local);
       if (e < 500) { ctx.fillStyle = 'rgba(3,4,10,' + (1 - e / 500) + ')'; ctx.fillRect(0, 0, W, H); }
       if (e > total - 600) { ctx.fillStyle = 'rgba(3,4,10,' + ((e - (total - 600)) / 600) + ')'; ctx.fillRect(0, 0, W, H); }
       raf = requestAnimationFrame(loop);
@@ -253,5 +366,5 @@ Game.Cutscene = (function () {
     ctx.restore();
   }
 
-  return { play, playLaunch, isPlaying: function () { return playing; } };
+  return { play, playLaunch, playDiscovery, isPlaying: function () { return playing; } };
 })();

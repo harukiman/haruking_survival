@@ -145,13 +145,90 @@ Game.Audio = (function () {
     setMood(mood);
   }
 
+  // ===== シネマティック演出音（OP/発射/発見ムービー用・オーケストラ風）=====
+  const cine = { on: false, nodes: [], master: null };
+  function cineStart() {
+    if (!enabled) return; ensure(); if (!ctx) return;
+    cineStop();
+    cine.on = true;
+    const t = ctx.currentTime;
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.16, t + 2.6);
+    const filt = ctx.createBiquadFilter(); filt.type = 'lowpass'; filt.frequency.setValueAtTime(500, t); filt.frequency.linearRampToValueAtTime(1900, t + 16);
+    g.connect(master); filt.connect(g);
+    cine.master = g; cine.nodes = [];
+    // 低い持続コード（Cマイナー: ドラマ性）
+    const chord = [65.41, 77.78, 98.00, 130.81];
+    chord.forEach(function (f, i) {
+      const o = ctx.createOscillator(); o.type = i < 2 ? 'sawtooth' : 'triangle'; o.frequency.value = f; o.detune.value = (i % 2 ? 6 : -6);
+      const og = ctx.createGain(); og.gain.value = 0.22 / (i + 1);
+      o.connect(og); og.connect(filt); o.start(t); cine.nodes.push(o, og);
+    });
+    // うねる高弦
+    const hi = ctx.createOscillator(); hi.type = 'sine'; hi.frequency.value = 523.25;
+    const hg = ctx.createGain(); hg.gain.setValueAtTime(0.0001, t); hg.gain.linearRampToValueAtTime(0.05, t + 8);
+    const lfo = ctx.createOscillator(); lfo.frequency.value = 0.15; const lg = ctx.createGain(); lg.gain.value = 8;
+    lfo.connect(lg); lg.connect(hi.frequency); hi.connect(hg); hg.connect(filt); hi.start(t); lfo.start(t);
+    cine.nodes.push(hi, hg, lfo, lg);
+  }
+  function cineStop() {
+    if (!ctx) { cine.on = false; return; }
+    cine.on = false; const t = ctx.currentTime;
+    if (cine.master) { try { cine.master.gain.cancelScheduledValues(t); cine.master.gain.setValueAtTime(cine.master.gain.value, t); cine.master.gain.exponentialRampToValueAtTime(0.0001, t + 0.8); } catch (e) {} }
+    cine.nodes.forEach(function (n) { try { if (n.stop) n.stop(t + 1.0); } catch (e) {} });
+    cine.nodes = []; cine.master = null;
+  }
+  function noiseBurst(t, dur, vol, cutoff, highpass) {
+    const len = Math.max(1, Math.floor(ctx.sampleRate * dur));
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate); const data = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / len);
+    const src = ctx.createBufferSource(); src.buffer = buf;
+    const f = ctx.createBiquadFilter(); f.type = highpass ? 'highpass' : 'lowpass'; f.frequency.value = cutoff;
+    const g = ctx.createGain(); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(f); f.connect(g); g.connect(master); src.start(t); src.stop(t + dur);
+  }
+  function cue(name) {
+    if (!enabled) return; ensure(); if (!ctx) return;
+    const t = ctx.currentTime;
+    if (name === 'boom' || name === 'impact') {
+      const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(120, t); o.frequency.exponentialRampToValueAtTime(40, t + 0.5);
+      const g = ctx.createGain(); g.gain.setValueAtTime(name === 'impact' ? 0.5 : 0.34, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.7);
+      o.connect(g); g.connect(master); o.start(t); o.stop(t + 0.75);
+      noiseBurst(t, 0.45, name === 'impact' ? 0.24 : 0.14, 420);
+    } else if (name === 'riser') {
+      const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.setValueAtTime(110, t); o.frequency.exponentialRampToValueAtTime(880, t + 2.2);
+      const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.11, t + 2.0); g.gain.exponentialRampToValueAtTime(0.0001, t + 2.4);
+      const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1200; f.Q.value = 2;
+      o.connect(f); f.connect(g); g.connect(master); o.start(t); o.stop(t + 2.5);
+      noiseBurst(t, 2.2, 0.09, 3000, true);
+    } else if (name === 'swell' || name === 'choir') {
+      const chord = name === 'choir' ? [261.63, 329.63, 392.00, 523.25] : [196, 261.63, 329.63, 392];
+      chord.forEach(function (fr, i) {
+        const o = ctx.createOscillator(); o.type = name === 'choir' ? 'sine' : 'sawtooth'; o.frequency.value = fr; o.detune.value = (i % 2 ? 5 : -5);
+        const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.055, t + 0.9); g.gain.exponentialRampToValueAtTime(0.0001, t + 2.4);
+        const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 2200;
+        o.connect(f); f.connect(g); g.connect(master); o.start(t); o.stop(t + 2.5);
+      });
+    } else if (name === 'shimmer') {
+      [523.25, 659.25, 783.99, 1046.5, 1318.5].forEach(function (fr, i) {
+        const o = ctx.createOscillator(); o.type = 'triangle'; o.frequency.value = fr;
+        const g = ctx.createGain(); const st = t + i * 0.08; g.gain.setValueAtTime(0.0001, st); g.gain.exponentialRampToValueAtTime(0.085, st + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, st + 0.5);
+        o.connect(g); g.connect(master); o.start(st); o.stop(st + 0.55);
+      });
+    } else if (name === 'crack') {
+      noiseBurst(t, 0.5, 0.28, 2500);
+      const o = ctx.createOscillator(); o.type = 'square'; o.frequency.setValueAtTime(300, t); o.frequency.exponentialRampToValueAtTime(60, t + 0.4);
+      const g = ctx.createGain(); g.gain.setValueAtTime(0.18, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.45); o.connect(g); g.connect(master); o.start(t); o.stop(t + 0.5);
+    }
+  }
+
   function toggle() {
     enabled = !enabled;
     if (bgmGain) bgmGain.gain.value = enabled ? 0.32 : 0;
+    if (!enabled) cineStop();
     if (enabled) { ensure(); if (!bgm.started) startBGM(); }
     return enabled;
   }
   function isEnabled() { return enabled; }
 
-  return { play, ensure, toggle, isEnabled, startBGM, tickBGM, updateMood, setMood };
+  return { play, ensure, toggle, isEnabled, startBGM, tickBGM, updateMood, setMood, cineStart, cineStop, cue };
 })();

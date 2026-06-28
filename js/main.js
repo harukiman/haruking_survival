@@ -52,6 +52,7 @@ window.Game = window.Game || {};
       lore: {},
       riftBank: null,
       resonated: {},
+      discovered: {},
       questIndex: 0,
       questDone: {},
       reunified: false,
@@ -141,6 +142,7 @@ window.Game = window.Game || {};
     Game.state.lore = data.lore || {};
     Game.state.riftBank = data.riftBank || null;
     Game.state.resonated = data.resonated || {};
+    Game.state.discovered = data.discovered || {};
     Game.state.questIndex = data.questIndex || 0;
     Game.state.questDone = data.questDone || {};
     Game.state.reunified = !!data.reunified;
@@ -209,6 +211,7 @@ window.Game = window.Game || {};
     Game.Projectiles.update();
     if (Game.state.tick % 30 === 0) Game.Farming.update();
     if (Game.state.tick % 30 === 15) Game.Quests.update();
+    if (Game.Discovery && Game.state.tick % 15 === 7) Game.Discovery.scan();
     const pt = Game.Player.playerTile();
     if (Game.state.tick % 10 === 0) Game.World.updateChunks(pt.tx, pt.ty);
     if (Game.state.tick % 20 === 0) Game.UI.updateMinimap();
