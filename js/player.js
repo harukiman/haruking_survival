@@ -187,6 +187,7 @@ Game.Player = (function () {
     const def = sel ? Game.ITEMS[sel.id] : null;
     if (!def) return;
 
+    if (def.ending) { Game.Quests.reunify(); return; }
     if (def.shift) { Game.World.shift(); return; }
     if (def.food) { Game.Inventory.useSelected(); return; }
     if (def.armor) { equipArmor(sel.id); return; }

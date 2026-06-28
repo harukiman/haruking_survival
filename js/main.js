@@ -52,6 +52,9 @@ window.Game = window.Game || {};
       lore: {},
       riftBank: null,
       resonated: {},
+      questIndex: 0,
+      questDone: {},
+      reunified: false,
       // active 参照（worlds[worldName] を指す）
       chunks: worlds.light.chunks,
       modifiedTiles: worlds.light.modifiedTiles,
@@ -86,6 +89,9 @@ window.Game = window.Game || {};
     Game.state.lore = data.lore || {};
     Game.state.riftBank = data.riftBank || null;
     Game.state.resonated = data.resonated || {};
+    Game.state.questIndex = data.questIndex || 0;
+    Game.state.questDone = data.questDone || {};
+    Game.state.reunified = !!data.reunified;
     if (data.weather) Game.state.weather = data.weather;
     // 両世界の差分/タイルデータ復元
     const restoreWorld = function (name, wd) {
@@ -124,6 +130,8 @@ window.Game = window.Game || {};
     document.getElementById('title-screen').classList.add('hidden');
     Game.UI.showGameUI();
     Game.UI.refreshAll();
+    Game.Quests.update();
+    Game.UI.refreshQuest();
     Game.UI.updateMinimap();
     const pt = Game.Player.playerTile();
     Game.World.updateChunks(pt.tx, pt.ty);
@@ -140,6 +148,7 @@ window.Game = window.Game || {};
     Game.DayNight.update();
     Game.Mobs.update();
     if (Game.state.tick % 30 === 0) Game.Farming.update();
+    if (Game.state.tick % 30 === 15) Game.Quests.update();
     const pt = Game.Player.playerTile();
     if (Game.state.tick % 10 === 0) Game.World.updateChunks(pt.tx, pt.ty);
     if (Game.state.tick % 20 === 0) Game.UI.updateMinimap();

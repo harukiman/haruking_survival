@@ -34,9 +34,21 @@ Game.UI = (function () {
     el.loreBody = document.getElementById('lore-body');
     el.loreCount = document.getElementById('lore-count');
 
+    el.questTracker = document.getElementById('quest-tracker');
+    el.questText = document.getElementById('quest-text');
+    el.questScreen = document.getElementById('quest-screen');
+    el.questList = document.getElementById('quest-list');
+    el.endingScreen = document.getElementById('ending-screen');
+    el.endingStats = document.getElementById('ending-stats');
+
     document.getElementById('btn-close-inv').addEventListener('click', toggleInventory);
     document.getElementById('btn-close-chest').addEventListener('click', closeChest);
     document.getElementById('btn-close-lore').addEventListener('click', closeLore);
+    document.getElementById('btn-close-quest').addEventListener('click', closeQuest);
+    el.questTracker.addEventListener('click', openQuest);
+    document.getElementById('btn-ending-continue').addEventListener('click', function () {
+      el.endingScreen.classList.add('hidden'); Game.state.paused = false;
+    });
     buildHotbar();
     // モバイル端末ならタッチUI表示
     if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
@@ -262,6 +274,44 @@ Game.UI = (function () {
     Game.state.paused = false;
   }
 
+  // ===== クエスト =====
+  function refreshQuest() {
+    if (!el.questTracker || !Game.state) return;
+    const q = Game.Quests.current();
+    if (!q || (q.id === 'reunify' && Game.state.reunified)) {
+      el.questText.textContent = 'すべての目標を達成した';
+    } else {
+      el.questText.textContent = q.name + '：' + q.desc;
+    }
+    el.questTracker.classList.remove('hidden');
+  }
+  function openQuest() {
+    if (!Game.state) return;
+    el.questList.innerHTML = '';
+    const curIdx = Game.state.questIndex || 0;
+    Game.QUESTS.forEach(function (q, i) {
+      const done = !!(Game.state.questDone && Game.state.questDone[q.id]);
+      const row = document.createElement('div');
+      row.className = 'quest-row' + (done ? ' done' : (i === curIdx ? ' current' : ' locked'));
+      row.innerHTML = '<span class="qmark">' + (done ? '✓' : (i === curIdx ? '▶' : '・')) + '</span>' +
+        '<span class="qname">' + q.name + '</span><span class="qdesc">' + q.desc + '</span>';
+      el.questList.appendChild(row);
+    });
+    el.questScreen.classList.remove('hidden');
+    Game.state.paused = true;
+  }
+  function closeQuest() { el.questScreen.classList.add('hidden'); Game.state.paused = false; }
+
+  // ===== エンディング =====
+  function showEnding(stats) {
+    el.endingStats.innerHTML =
+      '<div>生存日数　<b>' + stats.days + '</b> 日</div>' +
+      '<div>レベル　　<b>' + stats.level + '</b></div>' +
+      '<div>実績　　　<b>' + stats.ach + ' / ' + stats.achTotal + '</b></div>';
+    el.endingScreen.classList.remove('hidden');
+    Game.state.paused = false; // 演出後に「歩き続ける」で閉じる。pausedにしない（背景見せる）
+  }
+
   function toast(msg) {
     el.toast.textContent = msg;
     el.toast.classList.add('show');
@@ -298,6 +348,6 @@ Game.UI = (function () {
     init, showGameUI, refreshHotbar, refreshStats, refreshInventory,
     refreshCraft, refreshAll, toggleInventory, toast, updateMinimap,
     openChest, openSharedChest, closeChest, refreshChest, refreshWorld,
-    showLore, closeLore,
+    showLore, closeLore, refreshQuest, openQuest, closeQuest, showEnding,
   };
 })();

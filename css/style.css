@@ -53,6 +53,32 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Segoe U
 .lore-box h2 { color: #d8b0ff; font-size: 1.1rem; }
 #lore-body { color: #e8dcff; line-height: 2; font-size: 1rem; margin: 14px 0; letter-spacing: .03em; }
 #lore-count { color: #9a7fd0; text-align: right; }
+/* クエスト目標トラッカー */
+#quest-tracker { position: absolute; bottom: 66px; left: 50%; transform: translateX(-50%); z-index: 18;
+  background: rgba(8,12,20,0.7); border: 1px solid #3a4a64; color: #ffe9a0; font-size: .8rem;
+  padding: 5px 14px; border-radius: 20px; max-width: 64vw; white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; pointer-events: auto; cursor: pointer; }
+.quest-list { display: flex; flex-direction: column; gap: 5px; }
+.quest-row { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px;
+  background: rgba(30,40,58,0.6); font-size: .86rem; }
+.quest-row .qmark { width: 16px; text-align: center; }
+.quest-row .qname { font-weight: 700; min-width: 96px; }
+.quest-row .qdesc { color: #9fb0c4; font-size: .78rem; }
+.quest-row.done { opacity: .6; } .quest-row.done .qmark { color: #6fc46b; }
+.quest-row.current { border: 1px solid #e8c54a; background: rgba(80,66,30,0.5); }
+.quest-row.current .qmark { color: #e8c54a; }
+.quest-row.locked { opacity: .4; }
+/* エンディング */
+.ending-box { text-align: center; max-width: 440px; width: 100%; padding: 28px 22px;
+  background: radial-gradient(circle at 50% 0%, #2a2450, #0e0c1a); border: 1px solid #6a5a9a; border-radius: 16px; }
+.ending-box h1 { font-size: 1.6rem; color: #ffe9c0; margin-bottom: 14px; line-height: 1.3; }
+.ending-msg { color: #d8d0e8; line-height: 2; margin-bottom: 18px; }
+.ending-stats { display: flex; flex-direction: column; gap: 6px; font-size: 1rem; color: #cfe0f0; margin-bottom: 20px; }
+.ending-stats b { color: #ffe9a0; }
+@media (max-width: 560px) {
+  #quest-tracker { bottom: 60px; font-size: .7rem; padding: 4px 11px; max-width: 70vw; }
+  .ending-box h1 { font-size: 1.3rem; }
+}
 /* 影世界モードの全体トーン */
 body.shadow-mode #hotbar, body.shadow-mode #hud > div { filter: hue-rotate(8deg); }
 body.shadow-mode #app::after {

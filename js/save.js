@@ -31,6 +31,9 @@ Game.Save = (function () {
       lore: s.lore || {},
       riftBank: s.riftBank || null,
       resonated: s.resonated || {},
+      questIndex: s.questIndex || 0,
+      questDone: s.questDone || {},
+      reunified: !!s.reunified,
       worlds: { light: dumpWorld(s.worlds.light), shadow: dumpWorld(s.worlds.shadow) },
       player: {
         x: p.x, y: p.y, dir: p.dir,

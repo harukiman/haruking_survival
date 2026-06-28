@@ -16,6 +16,7 @@ Game.Achievements = (function () {
     boss_slain:    { name:'影を統べし者', desc:'影の主を打ち倒した' },
     lore_complete: { name:'碑文の蒐集家', desc:'全ての石碑を読んだ' },
     resonance:     { name:'共鳴', desc:'二相を繋ぎ封印を解いた' },
+    reunified:     { name:'世界を還せし者', desc:'光と影をひとつに還した' },
   };
 
   function set() { return Game.state.achievements || (Game.state.achievements = {}); }

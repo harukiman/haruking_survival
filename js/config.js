@@ -196,6 +196,8 @@ Game.ITEMS = {
   // ボス報酬
   shadow_core:   { name:'影核', stack:16, color:'#c060ff' },
   sanity_charm:  { name:'影核のお守り', stack:1, color:'#c060ff', armor:2, slot:'head', lumen:true, immuneSanity:true },
+  // エンディング
+  unity_core:    { name:'統合の核', stack:1, color:'#ffffff', ending:true },
 };
 
 // クラフトレシピ。station=null は手作り、それ以外は近接が必要
@@ -249,6 +251,7 @@ Game.RECIPES = [
   { out:{id:'rift_anchor', n:1}, in:{shadow_crystal:2, iron:2}, station:'crafting_table' },
   { out:{id:'shadow_altar', n:1}, in:{shadow_steel:3, shadow_crystal:5}, station:'crafting_table' },
   { out:{id:'sanity_charm', n:1}, in:{shadow_core:1, lumen:5}, station:'crafting_table' },
+  { out:{id:'unity_core', n:1}, in:{shadow_core:3, lumen:10, shadow_crystal:10}, station:'crafting_table' }, // 世界統合
 ];
 
 // モブ定義
