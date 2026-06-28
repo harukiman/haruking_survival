@@ -317,10 +317,16 @@ Game.Player = (function () {
     if (p.attackCd > 0) return;
     if (Game.Inventory.count(sel.ammo) < 1) { if (Game.state.tick % 30 === 0) Game.UI.toast('弾切れ'); return; }
     Game.Inventory.remove(sel.ammo, 1);
-    Game.Projectiles.fire(sel.fireDmg || 6);
-    p.attackCd = sel.id === 'shadow_rifle' ? 7 : 12;
+    const kind = sel.bkind || 'bullet';
+    const pellets = sel.pellets || 1;
+    const dmg = effAttack(sel.fireDmg || 6); // 銃もLv/STR補正
+    for (let i = 0; i < pellets; i++) {
+      const spr = pellets > 1 ? (Math.random() - 0.5) * (sel.spread || 0.5) : (sel.spread || 0);
+      Game.Projectiles.fire(dmg, kind, { spread: spr, explosive: sel.explosive || 0, speed: sel.bspeed });
+    }
+    p.attackCd = sel.cd || 12;
     Game.Render.spawnParticles(p.x, p.y, '#ffe9a0', 2);
-    Game.Audio.play('gun');
+    Game.Audio.play(sel.gunsfx || 'gun');
     Game.UI.refreshHotbar();
   }
 

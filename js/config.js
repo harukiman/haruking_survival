@@ -265,8 +265,22 @@ Game.ITEMS = {
   void_heart:    { name:'虚の心臓', stack:16, color:'#d040b0', flavor:'飢餓の獣の核。喰らうほどに飢える、終わりなき渇望の結晶。' },
   // 上位武器（銃）
   bullet:        { name:'弾丸', stack:99, color:'#caa86a' },
-  pistol:        { name:'拳銃', stack:1, color:'#5a5a5e', tool:'gun', ammo:'bullet', fireDmg:7, flavor:'狭間に流れ着いた、火を吐く鋼。' },
-  shadow_rifle:  { name:'影のライフル', stack:1, color:'#6a4f9a', tool:'gun', ammo:'bullet', fireDmg:14, flavor:'影鋼で鍛えた連射銃。闇さえ撃ち抜く。' },
+  pistol:        { name:'拳銃', stack:1, color:'#5a5a5e', tool:'gun', ammo:'bullet', fireDmg:7, cd:12, gunsfx:'gun_pistol', flavor:'狭間に流れ着いた、火を吐く鋼。' },
+  shadow_rifle:  { name:'影のライフル', stack:1, color:'#6a4f9a', tool:'gun', ammo:'bullet', fireDmg:14, cd:7, gunsfx:'gun_rifle', flavor:'影鋼で鍛えた連射銃。闇さえ撃ち抜く。' },
+  // ===== P32 実銃系＋口径別弾（大口径ほど高威力・高コスト）=====
+  ammo_9mm:    { name:'9mm弾', stack:99, color:'#c8a050', flavor:'小口径。安価で取り回しが良い。' },
+  ammo_556:    { name:'5.56mm弾', stack:99, color:'#c0b048', flavor:'高初速のライフル弾。' },
+  ammo_762:    { name:'7.62mm弾', stack:99, color:'#b88838', flavor:'貫通力に優れる大口径。' },
+  shell_12g:   { name:'12ゲージ散弾', stack:99, color:'#b04a3a', flavor:'拡散する散弾。近距離で凶悪。' },
+  ammo_50:     { name:'.50口径弾', stack:99, color:'#9a7a40', flavor:'対物ライフル弾。一撃が重い。' },
+  rocket_ammo: { name:'ロケット弾', stack:16, color:'#3a3a40', flavor:'着弾で爆発する。巻き込みに注意。' },
+  glock17:     { name:'グロック17', stack:1, color:'#1c1c20', tool:'gun', ammo:'ammo_9mm', fireDmg:8,  cd:11, bkind:'bullet', gunsfx:'gun_pistol', flavor:'信頼性の高い定番ハンドガン。' },
+  mp5:         { name:'MP5', stack:1, color:'#202024', tool:'gun', ammo:'ammo_9mm', fireDmg:7,  cd:4,  bkind:'bullet', gunsfx:'gun_smg', flavor:'高速連射のサブマシンガン。' },
+  m4:          { name:'M4カービン', stack:1, color:'#23231f', tool:'gun', ammo:'ammo_556', fireDmg:12, cd:7, bkind:'tracer', gunsfx:'gun_rifle', flavor:'扱いやすい主力アサルトライフル。' },
+  ak47:        { name:'AK-47', stack:1, color:'#2a2118', tool:'gun', ammo:'ammo_762', fireDmg:15, cd:8, bkind:'tracer', gunsfx:'gun_rifle', flavor:'頑強で威力に優れる名銃。' },
+  m870:        { name:'レミントンM870', stack:1, color:'#1e1e22', tool:'gun', ammo:'shell_12g', fireDmg:6, cd:24, pellets:5, spread:0.5, bkind:'bullet', gunsfx:'gun_shotgun', flavor:'散弾を撒くポンプアクション。' },
+  barrett:     { name:'バレットM82', stack:1, color:'#18181c', tool:'gun', ammo:'ammo_50', fireDmg:34, cd:42, bspeed:14, bkind:'tracer', gunsfx:'gun_sniper', flavor:'対物狙撃銃。隔絶した一撃。' },
+  rpg7:        { name:'RPG-7', stack:1, color:'#26261e', tool:'gun', ammo:'rocket_ammo', fireDmg:46, cd:55, explosive:2.4, bspeed:6, bkind:'rocket', gunsfx:'gun_rocket', flavor:'携行式ロケット。着弾で爆発し範囲を吹き飛ばす。' },
   // 乗り物
   car:           { name:'車', stack:1, color:'#c0444a', vehicle:'car', flavor:'大地を駆ける鉄の馬。' },
   boat:          { name:'ボート', stack:1, color:'#9c6b3f', vehicle:'boat', flavor:'水を越えるための小舟。' },
@@ -276,7 +290,7 @@ Game.ITEMS = {
   star_metal:    { name:'星鋼', stack:99, color:'#aee0ff', flavor:'星の核から採れる金属。地上のどんな鋼より硬く、軽い。' },
   star_core:     { name:'星核', stack:16, color:'#ffe9ff', flavor:'小さな星そのもの。無限の力が秘められている。' },
   cosmic_blade:  { name:'コズミックブレード', stack:1, color:'#aee0ff', tool:'sword', tier:5, attack:18, flavor:'星鋼で鍛えし剣。一閃が闇を裂く。' },
-  star_cannon:   { name:'スターキャノン', stack:1, color:'#aee0ff', tool:'gun', ammo:'bullet', fireDmg:22, flavor:'星の力を撃ち放つ砲。' },
+  star_cannon:   { name:'スターキャノン', stack:1, color:'#aee0ff', tool:'gun', ammo:'bullet', fireDmg:22, cd:10, explosive:2.0, bkind:'rocket', gunsfx:'gun_rocket', flavor:'星の力を撃ち放つ砲。着弾で炸裂する。' },
   gravity_boots: { name:'重力ブーツ', stack:1, color:'#88a', armor:4, slot:'chest', flavor:'星の重力を御す靴。' },
   // 家具・家作り
   healing_totem: { name:'癒しの祭壇', stack:16, color:'#7fd0a0', place:Game.OBJ.HEALING_TOTEM, flavor:'傍にいる者の傷を癒す祭壇。' },
@@ -418,6 +432,20 @@ Game.RECIPES = [
   { out:{id:'crystal_chest', n:1}, in:{shadow_crystal:5, shadow_steel:3}, station:'crafting_table' },
   { out:{id:'star_helmet', n:1}, in:{star_metal:3}, station:'crafting_table' },
   { out:{id:'chitin_armor', n:1}, in:{chitin:5}, station:'crafting_table' },
+  // ===== P32 弾薬(大口径ほど高コスト)＋実銃 =====
+  { out:{id:'ammo_9mm', n:8}, in:{iron:1}, station:'crafting_table' },
+  { out:{id:'ammo_556', n:6}, in:{iron:1, coal:1}, station:'crafting_table' },
+  { out:{id:'ammo_762', n:6}, in:{iron:2, coal:1}, station:'crafting_table' },
+  { out:{id:'shell_12g', n:5}, in:{iron:1, coal:1}, station:'crafting_table' },
+  { out:{id:'ammo_50', n:4}, in:{iron:3, coal:2}, station:'crafting_table' },
+  { out:{id:'rocket_ammo', n:1}, in:{iron:5, coal:3, gold_bar:1}, station:'crafting_table' },
+  { out:{id:'glock17', n:1}, in:{iron:4, wood:1}, station:'crafting_table' },
+  { out:{id:'mp5', n:1}, in:{iron:6, gold_bar:1}, station:'crafting_table' },
+  { out:{id:'m4', n:1}, in:{iron:8, gold_bar:2}, station:'crafting_table' },
+  { out:{id:'ak47', n:1}, in:{iron:9, gold_bar:2}, station:'crafting_table' },
+  { out:{id:'m870', n:1}, in:{iron:7, wood:2}, station:'crafting_table' },
+  { out:{id:'barrett', n:1}, in:{iron:12, gold_bar:3, shadow_steel:1}, station:'crafting_table' },
+  { out:{id:'rpg7', n:1}, in:{iron:14, gold_bar:4, shadow_steel:2}, station:'crafting_table' },
 ];
 
 // 装備セット効果（head+chest が同セットで発動）
@@ -558,6 +586,8 @@ Game.ITEM_GLYPH = {
   torch:'🔥', campfire:'🔥', lantern:'🏮', lumen_lantern:'💡', crafting_table:'🛠️', furnace:'🔥', chest:'📦', bed:'🛏️', fence:'🚧', door:'🚪', wall:'🧱', window:'🪟', bridge:'🌉', sign:'🪧', wood_floor:'🟫', stone_floor:'⬜',
   shadow_shard:'🌑', shadow_mirror:'🪞', shadow_crystal:'🔮', lumen:'✨', shadow_steel:'⬛', shadow_core:'💜', unity_core:'⭐', void_heart:'💗', rift_anchor:'🕳️', enchant_table:'✦',
   bullet:'🔸', pistol:'🔫', shadow_rifle:'🔫', car:'🚗', boat:'🛶', plane:'✈️',
+  ammo_9mm:'🔸', ammo_556:'🔹', ammo_762:'🟤', shell_12g:'🔴', ammo_50:'🟠', rocket_ammo:'🧨',
+  glock17:'🔫', mp5:'🔫', m4:'🔫', ak47:'🔫', m870:'🔫', barrett:'🎯', rpg7:'🚀',
   rocket:'🚀', star_metal:'🌟', star_core:'💫', cosmic_blade:'🌠', star_cannon:'🔫', gravity_boots:'👢',
   warp_staff:'🪄', flame_staff:'🔥', frost_staff:'❄️', flying_carpet:'🧞',
   healing_totem:'⛲', street_lamp:'🪔', table:'🪑', chair:'🪑', bookshelf:'📚', glass:'🪟', rug:'🟥',

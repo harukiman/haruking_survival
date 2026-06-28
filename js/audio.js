@@ -68,6 +68,13 @@ Game.Audio = (function () {
       case 'enchant': beep(620, 0.1, 'sine', 0.09); beep(820, 0.12, 'sine', 0.08); beep(1040, 0.16, 'triangle', 0.07); break;
       case 'dash':   if (throttled('dash', 0.25)) beep(520, 0.07, 'sine', 0.05); break;
       case 'gun':    if (throttled('gun', 0.05)) { beep(900, 0.04, 'square', 0.08); beep(300, 0.08, 'sawtooth', 0.07); } break;
+      case 'gun_pistol': if (throttled('gp', 0.04)) { beep(820, 0.04, 'square', 0.09); beep(260, 0.07, 'sawtooth', 0.07); } break;
+      case 'gun_smg':    if (throttled('gs', 0.02)) { beep(1050, 0.025, 'square', 0.06); beep(360, 0.05, 'sawtooth', 0.05); } break;
+      case 'gun_rifle':  if (throttled('gr', 0.04)) { beep(680, 0.05, 'square', 0.1); beep(220, 0.1, 'sawtooth', 0.08); } break;
+      case 'gun_shotgun': if (throttled('gsh', 0.1)) { beep(180, 0.14, 'sawtooth', 0.13); beep(90, 0.18, 'triangle', 0.1); if (ctx) noiseBurst(ctx.currentTime, 0.12, 0.18, 1800); } break;
+      case 'gun_sniper': if (throttled('gsn', 0.1)) { beep(1300, 0.05, 'square', 0.12); beep(140, 0.22, 'sawtooth', 0.12); } break;
+      case 'gun_rocket': if (throttled('gro', 0.1)) { beep(140, 0.18, 'sawtooth', 0.12); beep(70, 0.26, 'triangle', 0.1); } break;
+      case 'boom_sfx':   beep(110, 0.3, 'sawtooth', 0.16); beep(60, 0.4, 'triangle', 0.13); if (ctx) noiseBurst(ctx.currentTime, 0.4, 0.22, 600); break;
       case 'engine': if (throttled('engine', 0.3)) beep(110, 0.2, 'sawtooth', 0.05); break;
       case 'splash': if (throttled('splash', 0.12)) { beep(420 + Math.random() * 80, 0.08, 'sine', 0.04); beep(240, 0.1, 'sine', 0.03); } break;
     }
