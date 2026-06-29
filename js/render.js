@@ -289,6 +289,7 @@ Game.Render = (function () {
     const type = w.type;
     const snow = type === 'snow' || type === 'blizzard';
     const sand = type === 'sandstorm';
+    const storm = type === 'storm';
     const t = Game.state.tick;
     ctx.save();
     // 霧: 薄い灰白のもや＋ゆっくり流れる層＋周辺の視界低下（控えめ）
@@ -304,12 +305,13 @@ Game.Render = (function () {
     // 砂嵐/吹雪は視界を覆うヴェール（砂嵐は砂地でも分かるよう濃いめのオレンジ褐色）
     if (sand) { ctx.fillStyle = 'rgba(188,128,52,0.34)'; ctx.fillRect(0, 0, v.w, v.h); }
     else if (type === 'blizzard') { ctx.fillStyle = 'rgba(235,242,250,0.22)'; ctx.fillRect(0, 0, v.w, v.h); }
-    const count = sand ? 210 : (type === 'blizzard') ? 170 : 90;
-    ctx.strokeStyle = sand ? 'rgba(120,82,34,0.7)' : snow ? 'rgba(255,255,255,0.8)' : 'rgba(150,180,220,0.5)';
+    else if (storm) { ctx.fillStyle = 'rgba(18,22,40,0.30)'; ctx.fillRect(0, 0, v.w, v.h); } // 雷雨: 暗い空のヴェール
+    const count = sand ? 210 : (type === 'blizzard') ? 170 : storm ? 160 : 90;
+    ctx.strokeStyle = sand ? 'rgba(120,82,34,0.7)' : snow ? 'rgba(255,255,255,0.8)' : storm ? 'rgba(170,195,235,0.6)' : 'rgba(150,180,220,0.5)';
     ctx.fillStyle = sand ? 'rgba(150,104,46,0.75)' : 'rgba(255,255,255,0.85)';
     ctx.lineWidth = sand ? 1.6 : 1;
-    const sx = sand ? 16 : type === 'blizzard' ? 5 : snow ? 1.2 : 7;
-    const sy = sand ? 4 : type === 'blizzard' ? 6 : snow ? 3 : 13;
+    const sx = sand ? 16 : type === 'blizzard' ? 5 : snow ? 1.2 : storm ? 9 : 7;
+    const sy = sand ? 4 : type === 'blizzard' ? 6 : snow ? 3 : storm ? 16 : 13;
     for (let i = 0; i < count; i++) {
       const x = (i * 137 + t * sx) % (v.w + 40) - 20;
       const y = (i * 89 + t * sy) % (v.h + 40) - 20;

@@ -24,7 +24,7 @@ Game.DayNight = (function () {
       if (r < 0.28) {
         if (g === Game.TILE.SNOW) s.weather.type = Math.random() < 0.5 ? 'blizzard' : 'snow';
         else if (g === Game.TILE.SAND) s.weather.type = Math.random() < 0.6 ? 'sandstorm' : 'clear';
-        else s.weather.type = 'rain';
+        else s.weather.type = Math.random() < 0.35 ? 'storm' : 'rain';
       } else if (r < 0.36) {
         s.weather.type = 'fog'; // 霧（どの地形でも・控えめ）
       } else s.weather.type = 'clear';
@@ -33,6 +33,18 @@ Game.DayNight = (function () {
         if (s.weather.type === 'sandstorm') Game.UI.toast('🏜 砂嵐が来た… 視界が悪く、足が重い');
         else if (s.weather.type === 'blizzard') Game.UI.toast('❄ 吹雪だ… 凍えに気をつけろ。火か毛皮を');
         else if (s.weather.type === 'fog') Game.UI.toast('🌫 霧が立ち込めてきた… 視界に気をつけろ');
+        else if (s.weather.type === 'storm') Game.UI.toast('⛈ 雷雨だ… 稲光と雷鳴、雨脚が強い');
+      }
+    }
+    // 雷雨: 稀に稲光(画面フラッシュ＋雷鳴＋空からの稲妻)。演出のみ(ダメージ無し)
+    if (s.weather.type === 'storm' && !s.paused && s.worldName !== 'space' && Math.random() < 0.012) {
+      if (Game.Render.flash) Game.Render.flash('rgba(200,220,255,0.5)');
+      if (Game.Audio) Game.Audio.play('thunder');
+      if (Game.Render.spawnLightning) {
+        const TS = Game.CFG.TILE_SIZE;
+        const lx = s.player.x + (Math.random() - 0.5) * 320;
+        const ly = s.player.y + (Math.random() - 0.5) * 220;
+        Game.Render.spawnLightning(lx, ly - 340, lx, ly);
       }
     }
   }
