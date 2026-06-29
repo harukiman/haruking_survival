@@ -178,6 +178,17 @@ Game.Render = (function () {
           ctx.fillRect(x, y, 3, 2);
         }
       }
+      // 日中の蝶（明るい biome の生命感・羽ばたきアニメ）
+      if (!night && (g === Game.TILE.GRASS || g === Game.TILE.FOREST || g === Game.TILE.BLOOM)) {
+        const bc = ['#ffd24a', '#ff8ad8', '#7fd0ff', '#ffffff'];
+        for (let i = 0; i < 4; i++) {
+          const bx = ((i * 173 + t * 0.6) % (w + 30)) - 15;
+          const by = ((i * 101) % h + Math.sin(t * 0.05 + i * 2) * 22 + h) % h;
+          const flap = Math.sin(t * 0.4 + i) > 0 ? 2.4 : 0.8;
+          ctx.globalAlpha = 0.62; ctx.fillStyle = bc[i % bc.length];
+          ctx.fillRect(bx - flap, by, flap, 2); ctx.fillRect(bx + 1, by, flap, 2);
+        }
+      }
     }
     ctx.globalAlpha = 1; ctx.restore();
   }

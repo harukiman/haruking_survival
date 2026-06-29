@@ -583,6 +583,8 @@ Game.Player = (function () {
   }
   function bossTitle() {
     const n = bossesDefeated();
+    if (n >= 13) return '万魔を統べる者';
+    if (n >= 11) return '終焉に挑みし者';
     if (n >= 9) return '二相の覇者';
     if (n >= 6) return '魔物狩りの達人';
     if (n >= 3) return '歴戦の討伐者';
