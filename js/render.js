@@ -449,16 +449,38 @@ Game.Render = (function () {
   }
 
   function drawDrops(ctx) {
-    const drops = Game.state.drops;
+    const drops = Game.state.drops; const z = Game.Camera.zoom(); const t = Game.state.tick;
     for (let i = 0; i < drops.length; i++) {
       const d = drops[i];
       const s = Game.Camera.worldToScreen(d.x, d.y);
       const item = Game.ITEMS[d.id];
-      ctx.fillStyle = (item && item.color) || '#fff';
-      const bob = Math.sin((Game.state.tick + i * 7) * 0.15) * 2;
-      ctx.fillRect(s.x - 5, s.y - 5 + bob, 10, 10);
+      const bob = Math.sin((t + i * 7) * 0.15) * 2;
+      // レア装備(roll)は希少度色で発光＋光柱＋きらめき。金塊/刻片など高価品も金色グロー
+      const rare = d.roll && Game.Loot.rarityColor;
+      const precious = !rare && (d.id === 'gold_bar' || d.id === 'kokuhen' || (item && item.relic));
+      if (rare || precious) {
+        const col = rare ? Game.Loot.rarityColor(d) : '#ffd24a';
+        const pulse = 0.5 + Math.sin(t * 0.12 + i) * 0.5;
+        // 光柱
+        const beam = ctx.createLinearGradient(s.x, s.y - 46 * z, s.x, s.y + 4);
+        beam.addColorStop(0, 'rgba(0,0,0,0)'); beam.addColorStop(1, col);
+        ctx.globalAlpha = 0.18 + pulse * 0.14; ctx.fillStyle = beam;
+        ctx.beginPath(); ctx.moveTo(s.x - 5 * z, s.y + 2); ctx.lineTo(s.x + 5 * z, s.y + 2); ctx.lineTo(s.x + 2 * z, s.y - 46 * z); ctx.lineTo(s.x - 2 * z, s.y - 46 * z); ctx.closePath(); ctx.fill();
+        // 地面のグロー
+        const g = ctx.createRadialGradient(s.x, s.y + bob, 1, s.x, s.y + bob, 16 * z);
+        g.addColorStop(0, col); g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.globalAlpha = 0.35 + pulse * 0.25; ctx.fillStyle = g; ctx.beginPath(); ctx.arc(s.x, s.y + bob, 16 * z, 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = 1;
+        // きらめき
+        if ((t + i * 13) % 30 < 4) { ctx.fillStyle = '#fff'; const sx = s.x + Math.cos(i + t * 0.1) * 8 * z, sy = s.y - 6 + Math.sin(i + t * 0.1) * 8 * z + bob; ctx.fillRect(sx - 1, sy - 1, 2, 2); }
+        ctx.save(); ctx.shadowColor = col; ctx.shadowBlur = 8 * z;
+        ctx.fillStyle = col; ctx.fillRect(s.x - 5 * z, s.y - 5 * z + bob, 10 * z, 10 * z); ctx.restore();
+      } else {
+        ctx.fillStyle = (item && item.color) || '#fff';
+        ctx.fillRect(s.x - 5 * z, s.y - 5 * z + bob, 10 * z, 10 * z);
+      }
       ctx.strokeStyle = 'rgba(0,0,0,0.4)'; ctx.lineWidth = 1;
-      ctx.strokeRect(s.x - 5, s.y - 5 + bob, 10, 10);
+      ctx.strokeRect(s.x - 5 * z, s.y - 5 * z + bob, 10 * z, 10 * z);
     }
   }
 
