@@ -104,6 +104,17 @@ Game.Inventory = (function () {
     if (!sl) return false;
     const def = Game.ITEMS[sl.id];
     const p = Game.state.player;
+    // ボス再召喚アイテム: 近くにボスを呼び戻す（重複不可）
+    if (def && def.summonBoss) {
+      if (Game.state.worldName !== 'light') { Game.UI.toast('地上(光の世界)でのみ使える'); return false; }
+      let exists = false; const mobs = Game.state.mobs; for (let i = 0; i < mobs.length; i++) if (mobs[i].type === def.summonBoss) { exists = true; break; }
+      if (exists) { Game.UI.toast('既にその強敵が顕現している'); return false; }
+      remove(sl.id, 1);
+      Game.Mobs.spawnMob(def.summonBoss, p.x + 140, p.y);
+      Game.Audio.play('shift');
+      Game.UI.toast(def.name + ' を掲げた — ' + ((Game.MOBS[def.summonBoss] && Game.MOBS[def.summonBoss].name) || '強敵') + ' が顕現する！');
+      Game.UI.refreshAll(); return true;
+    }
     // 拡張のポーチ: インベントリ上限 +2〜5（最大100）
     if (def && def.invExpand) {
       const want = def.invExpand[0] + Math.floor(Math.random() * (def.invExpand[1] - def.invExpand[0] + 1));
