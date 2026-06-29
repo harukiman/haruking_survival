@@ -30,8 +30,9 @@ Game.Rocket = (function () {
         Game.World.travelTo(name);
         Game.state.paused = false;
         Game.UI.toast(name === 'space' ? '宇宙に到達した…！' : '地上に帰還した');
+        if (name === 'space' && Game.Story) Game.Story.unlock('starworld', true);
       });
-    } else { Game.World.travelTo(name); }
+    } else { Game.World.travelTo(name); if (name === 'space' && Game.Story) Game.Story.unlock('starworld', true); }
   }
 
   return { board, peerReady, onRemoteLaunch };

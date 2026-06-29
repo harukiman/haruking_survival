@@ -94,7 +94,7 @@ Game.Achievements = (function () {
     if (key === 'swamp') unlock('visit_swamp');
     if (key === 'volcanic') unlock('visit_volcanic');
     if (key === 'bloom') unlock('visit_bloom');
-    if (['grass', 'forest', 'sand', 'snow', 'swamp', 'volcanic'].every(function (k) { return vb[k]; })) unlock('biome_master');
+    if (['grass', 'forest', 'sand', 'snow', 'swamp', 'volcanic'].every(function (k) { return vb[k]; })) { unlock('biome_master'); if (Game.Story) Game.Story.unlock('biomes', true); }
   }
 
   function count() { return Object.keys(set()).length; }

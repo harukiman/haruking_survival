@@ -41,7 +41,7 @@ Game.Lore = (function () {
     const first = !set()[i];
     set()[i] = 1;
     Game.UI.showLore(frag.t, frag.b, count(), Game.LORE.length);
-    if (first) { Game.Audio.play('craft'); if (Game.Achievements && count() >= Game.LORE.length) Game.Achievements.unlock('lore_complete'); }
+    if (first) { Game.Audio.play('craft'); if (count() >= Game.LORE.length) { if (Game.Achievements) Game.Achievements.unlock('lore_complete'); if (Game.Story) Game.Story.unlock('stelae', true); } }
   }
 
   function count() { return Object.keys(set()).length; }
