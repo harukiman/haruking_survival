@@ -75,6 +75,10 @@ Game.Player = (function () {
     // 浅瀬は減速＋水音（乗り物なし・徒歩のみ）
     const gUnder = Game.World.groundAt(Math.floor(p.x / TS), Math.floor(p.y / TS));
     if (Game.Achievements && Game.Achievements.visitBiome && Game.state.worldName === 'light') Game.Achievements.visitBiome(gUnder);
+    // ダンジョン侵入時に自動セーブ(進入のたび一度)。床がダンジョンに変わった瞬間を検出
+    const inDun = gUnder === Game.TILE.DUNGEON_FLOOR;
+    if (inDun && !p._inDungeon) { p._inDungeon = true; if (Game.Save && !(Game.Net && Game.Net.isConnected() && !Game.Net.host)) Game.Save.save(); }
+    else if (!inDun && p._inDungeon) { p._inDungeon = false; }
     const onWater = !p.vehicle && gUnder === Game.TILE.WATER;
     if (onWater) spd *= 0.5;
     // 毒の沼地: 足が重く、稀に毒を受ける（徒歩のみ）

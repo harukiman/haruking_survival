@@ -142,6 +142,7 @@ Game.Survival = (function () {
     const p = Game.state.player;
     if (Game.state.deathPending) return; // 二重発火防止
     Game.state.deathPending = true;
+    if (Game.Save && !(Game.Net && Game.Net.isConnected() && !Game.Net.host)) Game.Save.save(); // 死亡時セーブ(進行を保全)
     // 死亡サマリーを表示してから復活（マルチ参加中は簡略に即復活）
     if (Game.UI && Game.UI.showDeath && !(Game.Net && Game.Net.isConnected())) {
       const best = Game.state.bestiary || {};
