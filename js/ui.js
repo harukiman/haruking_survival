@@ -112,6 +112,7 @@ Game.UI = (function () {
 
     document.getElementById('btn-close-inv').addEventListener('click', toggleInventory);
     { const sb = document.getElementById('btn-sort-inv'); if (sb) sb.addEventListener('click', function () { Game.Inventory.autoSort(); Game.Audio.play('select'); refreshInventory(); refreshHotbar(); }); }
+    { const sbtn = document.getElementById('btn-inv-story'); if (sbtn) sbtn.addEventListener('click', function () { el.invScreen.classList.add('hidden'); Game.Audio.play('select'); openStory(); }); } // インベントリから記憶回廊を開く
     document.getElementById('btn-close-chest').addEventListener('click', closeChest);
     var ct = document.getElementById('btn-close-trade'); if (ct) ct.addEventListener('click', closeTrade);
     var cst = document.getElementById('btn-close-story'); if (cst) cst.addEventListener('click', closeStory);
