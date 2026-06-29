@@ -534,6 +534,12 @@ Game.Mobs = (function () {
   }
 
   function killMob(m) {
+    // 撃破ポーフ: 体の色＋白い飛沫で消滅を強調(ボスは専用ムービーがあるので控えめ)
+    if (Game.Render.spawnParticles && !m.def.boss) {
+      const sz = m.def.size || 12, n = Math.min(18, 6 + Math.round(sz / 2));
+      Game.Render.spawnParticles(m.x, m.y, m.def.color || '#aaa', n);
+      Game.Render.spawnParticles(m.x, m.y, '#ffffff', Math.round(n * 0.4));
+    }
     const idx = Game.state.mobs.indexOf(m);
     if (idx >= 0) Game.state.mobs.splice(idx, 1);
     // 魔物図鑑: 撃破した種別と撃破数を記録（友好NPC除く）
