@@ -16,8 +16,27 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Segoe U
 .overlay > * { margin-top: auto; margin-bottom: auto; flex: 0 0 auto; }
 
 /* ===== タイトル ===== */
-.title-box { text-align: center; max-width: 460px; width: 100%;
-  background: rgba(20, 28, 42, 0.9); border: 1px solid #2c3a52; border-radius: 16px; padding: 28px 22px; }
+/* タイトル: 光と影の二相を表す生きた背景 */
+#title-screen { overflow: hidden; }
+#title-screen::before { content: ''; position: absolute; inset: -20%; z-index: -1;
+  background:
+    radial-gradient(circle at 22% 30%, rgba(110,196,107,0.22), transparent 42%),
+    radial-gradient(circle at 78% 70%, rgba(150,90,220,0.22), transparent 42%),
+    radial-gradient(circle at 50% 50%, rgba(232,197,74,0.10), transparent 55%),
+    linear-gradient(120deg, #0a1424 0%, #14102a 50%, #0a1424 100%);
+  animation: titleDrift 18s ease-in-out infinite alternate; }
+#title-screen::after { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: 0.5;
+  background-image: radial-gradient(1.5px 1.5px at 20% 30%, #cfe0ff 50%, transparent),
+    radial-gradient(1.5px 1.5px at 70% 60%, #ffe9a8 50%, transparent),
+    radial-gradient(1.5px 1.5px at 40% 80%, #b89cf0 50%, transparent),
+    radial-gradient(1.5px 1.5px at 85% 25%, #cfe0ff 50%, transparent),
+    radial-gradient(1.5px 1.5px at 55% 15%, #ffe9a8 50%, transparent);
+  background-size: 100% 100%; animation: titleMotes 22s linear infinite; }
+@keyframes titleDrift { 0% { transform: translate(-2%, -1%) scale(1.05); } 100% { transform: translate(2%, 1%) scale(1.12); } }
+@keyframes titleMotes { 0% { transform: translateY(0); opacity: 0.35; } 50% { opacity: 0.6; } 100% { transform: translateY(-24px); opacity: 0.35; } }
+.title-box { text-align: center; max-width: 460px; width: 100%; position: relative;
+  background: rgba(20, 28, 42, 0.82); border: 1px solid #2c3a52; border-radius: 16px; padding: 28px 22px; backdrop-filter: blur(3px);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5); }
 .title-box h1 { font-size: 2.2rem; line-height: 1.05; letter-spacing: 2px; color: #6fc46b; text-shadow: 0 2px 0 #1d3a1b; }
 .title-box h1 span { color: #e8c54a; }
 /* リファインしたタイトル */
