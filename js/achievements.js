@@ -34,6 +34,7 @@ Game.Achievements = (function () {
     slay_lava_lord: { name:'灼熱を制す', desc:'溶岩の王を打ち倒した' },
     slay_spore_queen: { name:'菌糸の終焉', desc:'胞子の女王を打ち倒した' },
     slay_endbringer: { name:'終焉を越えて', desc:'終焉の王を打ち倒した — 全ての強敵の頂' },
+    all_conquered: { name:'強敵を束ねし者', desc:'終焉の鍵の素材を落とす強敵を全て退けた' },
     // マイルストーン
     level20:       { name:'熟達者', desc:'レベル20に到達' },
     level50:       { name:'達人', desc:'レベル50に到達' },

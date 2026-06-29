@@ -584,6 +584,14 @@ Game.Mobs = (function () {
         const pl = Game.state.player; pl.health = Math.min(pl.maxHealth, pl.health + 5);
         Game.UI.toast('討伐の証を得た — 最大HP +5　称号「' + Game.Player.bossTitle() + '」');
       }
+      // 終焉の鍵 解放ヒント: 鍵素材を落とす強敵を全て退けたら一度だけ案内(実績で既出判定)
+      if (m.type !== 'endbringer' && Game.Achievements && !Game.Achievements.has('all_conquered')) {
+        const be = Game.state.bestiary || {};
+        if (be.hunger_beast && be.star_guardian && (be.sovereign || be.abyss_dragon)) {
+          Game.Achievements.unlock('all_conquered');
+          Game.UI.toast('強敵たちの力が集った——「終焉の鍵」を鍛えられる（付呪台: 影核3・星核2・虚の心臓1・金塊5）');
+        }
+      }
       // 撃破アニメムービー（ローカル再生）
       if (Game.Cutscene && Game.Cutscene.playBossOutro && !(Game.Net.isConnected() && !Game.Net.host)) {
         Game.state.paused = true;
