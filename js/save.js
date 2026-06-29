@@ -67,6 +67,19 @@ Game.Save = (function () {
     } catch (e) { return false; }
   }
 
+  // イベント駆動オートセーブ: ネット参加者(非ホスト)は保存せず、短時間の連発をスロットルし、
+  // 控えめなインジケータを表示する。reason==='force' でスロットルを無視。
+  let lastAuto = 0;
+  function autosave(reason) {
+    if (Game.Net && Game.Net.isConnected && Game.Net.isConnected() && !Game.Net.host) return false; // ゲストはホスト世界を保存しない
+    const t = (typeof performance !== 'undefined' && performance.now) ? performance.now() : 0;
+    if (reason !== 'force' && (t - lastAuto) < 4000) return false; // 4秒スロットル(イベント連発対策)
+    lastAuto = t;
+    const ok = save();
+    if (ok && Game.UI && Game.UI.flashSave) Game.UI.flashSave(reason);
+    return ok;
+  }
+
   function hasSave() {
     try { return !!localStorage.getItem(KEY); } catch (e) { return false; }
   }
@@ -83,5 +96,5 @@ Game.Save = (function () {
     try { localStorage.removeItem(KEY); } catch (e) {}
   }
 
-  return { serialize, save, load, hasSave, clear };
+  return { serialize, save, autosave, load, hasSave, clear };
 })();

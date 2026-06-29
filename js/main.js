@@ -147,6 +147,7 @@ window.Game = window.Game || {};
     Game.Save.clear();
     newGame('', { keepAchievements: true, ngLevel: ng, difficulty: diff });
     if (Game.Story) Game.Story.unlock('cycle', true); // 周回で記憶回廊「巡り還る刻」を解放
+    if (Game.Save) Game.Save.autosave('force'); // 周回開始を即保存(リロードで周回が復元される)
     Game.UI.toast('周回 NG+' + ng + ' 開始 — 影はさらに濃く、戦利品はさらに豊かに');
   }
   Game.startNGPlus = startNGPlus;
@@ -328,7 +329,7 @@ window.Game = window.Game || {};
   }
 
   function initSaveHooks() {
-    setInterval(function () { if (running && !document.hidden) Game.Save.save(); }, CFG.AUTOSAVE_MS);
+    setInterval(function () { if (running && !document.hidden) Game.Save.autosave('periodic'); }, CFG.AUTOSAVE_MS);
     window.addEventListener('beforeunload', function () { if (running) Game.Save.save(); });
     document.addEventListener('visibilitychange', function () { if (document.hidden && running) Game.Save.save(); });
   }

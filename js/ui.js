@@ -1367,12 +1367,26 @@ Game.UI = (function () {
     mmCtx.strokeRect(0, 0, size, size);
   }
 
+  // 控えめなオートセーブ表示(右下に一瞬フェード)。proactive-UX原則: 邪魔しない
+  let saveEl = null, saveTimer = null;
+  function flashSave(reason) {
+    if (!saveEl) {
+      saveEl = document.createElement('div'); saveEl.id = 'autosave-ind';
+      saveEl.style.cssText = 'position:fixed;right:10px;bottom:10px;z-index:60;background:rgba(16,24,42,.82);color:#9fd8a0;border:1px solid #33455e;border-radius:8px;padding:5px 9px;font-size:.72rem;pointer-events:none;opacity:0;transition:opacity .35s;backdrop-filter:blur(2px)';
+      (document.getElementById('app') || document.body).appendChild(saveEl);
+    }
+    saveEl.textContent = '💾 オートセーブ';
+    saveEl.style.opacity = '1';
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(function () { if (saveEl) saveEl.style.opacity = '0'; }, 1100);
+  }
+
   return {
     init, showGameUI, refreshHotbar, refreshStats, refreshInventory,
     refreshCraft, refreshAll, toggleInventory, toast, updateMinimap,
     openChest, openSharedChest, closeChest, refreshChest, refreshWorld,
     showLore, closeLore, refreshQuest, openQuest, closeQuest, refreshBounty, showEnding, showDeath, showIntro, refreshNet, refreshStatus,
-    toggleOptions, openEnchant, closeEnchant,
+    toggleOptions, openEnchant, closeEnchant, flashSave,
     toggleBigMap, isBigMapOpen, updateBigMap, openStats, closeStats, toggleStats, renderStats, refreshBossBar, openTrade, closeTrade, openShop, openStory, closeStory,
   };
 })();

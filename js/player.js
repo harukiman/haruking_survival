@@ -77,7 +77,7 @@ Game.Player = (function () {
     if (Game.Achievements && Game.Achievements.visitBiome && Game.state.worldName === 'light') Game.Achievements.visitBiome(gUnder);
     // ダンジョン侵入時に自動セーブ(進入のたび一度)。床がダンジョンに変わった瞬間を検出
     const inDun = gUnder === Game.TILE.DUNGEON_FLOOR;
-    if (inDun && !p._inDungeon) { p._inDungeon = true; if (Game.Save && !(Game.Net && Game.Net.isConnected() && !Game.Net.host)) Game.Save.save(); }
+    if (inDun && !p._inDungeon) { p._inDungeon = true; if (Game.Save) Game.Save.autosave('dungeon'); }
     else if (!inDun && p._inDungeon) { p._inDungeon = false; }
     const onWater = !p.vehicle && gUnder === Game.TILE.WATER;
     if (onWater) spd *= 0.5;
@@ -710,6 +710,7 @@ Game.Player = (function () {
       if (Game.Render.spawnFloat) Game.Render.spawnFloat(p.x, p.y - 20, 'LEVEL UP!', '#6fd0ff', true);
       Game.UI.toast('レベルアップ！ Lv.' + p.level + '（スキルP +2）');
       if (Game.Achievements) { if (p.level >= 5) Game.Achievements.unlock('level5'); if (p.level >= 20) Game.Achievements.unlock('level20'); if (p.level >= 50) Game.Achievements.unlock('level50'); }
+      if (Game.Save) Game.Save.autosave('levelup'); // 節目イベント: レベルアップで自動保存(4秒スロットル)
     }
     Game.UI.refreshStats();
   }

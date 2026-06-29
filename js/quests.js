@@ -45,7 +45,7 @@ Game.Quests = (function () {
         advanced = true;
       } else break;
     }
-    if (advanced) Game.UI.refreshQuest();
+    if (advanced) { Game.UI.refreshQuest(); if (Game.Save) Game.Save.autosave('quest'); } // 目標達成で自動保存
   }
 
   // 世界統合エンディング（統合の核を使用）

@@ -639,6 +639,8 @@ Game.Mobs = (function () {
       }
       // 刻片(記念の通貨的素材)をボス撃破で入手
       if (Game.Inventory) Game.Inventory.add('kokuhen', 1);
+      // 節目イベント: ボス撃破で自動保存(進行保全)
+      if (Game.Save) Game.Save.autosave('boss');
       // 物語ムービー: 節目のボスは初撃破で記憶回廊の章を解放＋シネマ再生(撃破outroの代わり)
       const STORY_BOSS = { sovereign: 'shadow_king', tomb_king: 'tomb_king', forge_titan: 'forge_titan', hunger_beast: 'hunger', crystal_queen: 'crystal_queen', abyss_dragon: 'abyss', star_guardian: 'star', twilight_colossus: 'twilight', swamp_lord: 'frontier', lava_lord: 'frontier', spore_queen: 'frontier', endbringer: 'endbringer' };
       const sid = STORY_BOSS[m.type];

@@ -145,6 +145,7 @@ Game.World = (function () {
     if (target === 'shadow' && Game.Story) Game.Story.unlock('sundering', true); // 初の影渡りで第一章
     Game.state.shiftCount = (Game.state.shiftCount || 0) + 1;
     if (Game.state.shiftCount >= 4 && Game.Story && !Game.Story.seen('phase')) Game.Story.unlock('phase', true); // 幾度も相を渡ると「相を渡る」
+    if (Game.Save) Game.Save.autosave('shift'); // 相を渡る(イベント)で自動保存
     return true;
   }
 
