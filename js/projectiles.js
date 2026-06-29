@@ -180,7 +180,7 @@ Game.Projectiles = (function () {
       // 壁（solid）に当たれば消滅（貫通/ブーメランは壁を無視）
       const tx = Math.floor(pr.x / TS), ty = Math.floor(pr.y / TS);
       const o = Game.World.objAt(tx, ty), meta = Game.OBJ_META[o];
-      if (meta && meta.solid && !pr.pierce && !pr.boomerang) { if (pr.explosive) explode(pr.x, pr.y, pr.explosive, pr.dmg, pr.kind); else Game.Render.spawnParticles(pr.x, pr.y, '#caa86a', 3); arr.splice(i, 1); continue; }
+      if (meta && meta.solid && !pr.pierce && !pr.boomerang) { if (pr.explosive) explode(pr.x, pr.y, pr.explosive, pr.dmg, pr.kind); else { Game.Render.spawnParticles(pr.x, pr.y, '#caa86a', 3); if (Game.Render.spawnImpact && !pr.hostile) Game.Render.spawnImpact(pr.x, pr.y, '#c9cdd6'); } arr.splice(i, 1); continue; }
       let hit = false;
       if (pr.hostile) {
         if (Math.hypot(pl.x - pr.x, pl.y - pr.y) < 13) {
@@ -205,6 +205,7 @@ Game.Projectiles = (function () {
           if (Math.hypot(mo.x - pr.x, mo.y - pr.y) < mo.def.size * 0.5 + 6) {
             if (Game.Net.isConnected() && !Game.Net.host) Game.Net.sendHit(mo.id, pr.dmg, pr.x, pr.y); else { Game.Mobs.damageMob(mo, pr.dmg, pr.x, pr.y); if (Game.Mobs.applyDot) Game.Mobs.applyDot(mo, pr.kind); }
             if (pr.chain) { const hs = {}; hs[mo.id] = 1; chainTo(mo.x, mo.y, Math.round(pr.dmg * 0.8), pr.chain, hs); }
+            if (Game.Render.spawnImpact) Game.Render.spawnImpact(pr.x, pr.y, pr.kind === 'laser' || pr.kind === 'pierce' ? '#9fd8ff' : '#ffd86a');
             hit = true; break;
           }
         }
