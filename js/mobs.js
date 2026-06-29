@@ -26,7 +26,7 @@ Game.Mobs = (function () {
       // 個体差: 同じ種でも大きさ/色味/動き方を変えて一辺倒を避ける
       sizeVar: 0.86 + Math.random() * 0.30,          // 0.86〜1.16
       tint: Math.round((Math.random() - 0.5) * 38),  // 色の明暗揺らぎ -19〜+19
-      moveStyle: (function () { const r = Math.random(); return r < 0.5 ? 'direct' : r < 0.78 ? 'zigzag' : 'strafe'; })(),
+      moveStyle: (function () { const r = Math.random(); return r < 0.42 ? 'direct' : r < 0.64 ? 'zigzag' : r < 0.82 ? 'strafe' : 'pounce'; })(),
       wobble: Math.random() * 6,
     };
     // 精鋭(elite)抽選: 非ボスの敵対モブが低確率で精鋭化（HP/攻撃UP・発光オーラ・確定レアドロップ）
@@ -203,6 +203,15 @@ Game.Mobs = (function () {
     m.dot = m.dot || {}; m.dot[e[0]] = Math.max(m.dot[e[0]] || 0, e[1]);
   }
 
+  // 形が未指定のモブを、種ごとに安定して多彩な形へ(一辺倒の'round'を解消)
+  const SHAPE_POOL = ['blob', 'tall', 'spiky', 'round'];
+  function defaultShape(type) {
+    if (type === 'slime') return 'blob';
+    if (type === 'spider') return 'spider';
+    let h = 0; for (let i = 0; i < type.length; i++) h = (h * 31 + type.charCodeAt(i)) >>> 0;
+    return SHAPE_POOL[h % SHAPE_POOL.length];
+  }
+
   // 16進色を明暗シフト(個体差の色味)
   function shadeHex(hex, amt) {
     if (typeof hex !== 'string' || hex[0] !== '#' || hex.length < 7) return hex;
@@ -341,7 +350,7 @@ Game.Mobs = (function () {
           m.dir = Math.abs(dxp) > Math.abs(dyp) ? (dxp < 0 ? 'left' : 'right') : (dyp < 0 ? 'up' : 'down');
         } else if (distP < aggro) {
           // 敵対: プレイヤーを追跡（個体ごとの動き方=直進/ジグザグ/回り込みで一辺倒を避ける）
-          let mvx = dxp, mvy = dyp;
+          let mvx = dxp, mvy = dyp, spdM = 1;
           const st = m.moveStyle;
           if (st === 'zigzag') {
             const px = -dyp, py = dxp, pl2 = Math.hypot(px, py) || 1, mag = Math.hypot(dxp, dyp);
@@ -350,8 +359,11 @@ Game.Mobs = (function () {
           } else if (st === 'strafe' && distP < aggro * 0.62 && distP > m.def.size * 0.5 + 26) {
             const px = -dyp, py = dxp; const dart = (Game.state.tick + m.wobble * 17) % 96 < 24;
             mvx = px * 0.9 + dxp * (dart ? 0.85 : 0.12); mvy = py * 0.9 + dyp * (dart ? 0.85 : 0.12);
+          } else if (st === 'pounce') {
+            // 跳びかかり: 周期的に素早く踏み込み、間で溜める
+            const ph = (Game.state.tick + m.wobble * 20) % 74; spdM = ph < 13 ? 2.0 : 0.62;
           }
-          moveMob(m, mvx, mvy, m.def.speed * 0.82);
+          moveMob(m, mvx, mvy, m.def.speed * 0.82 * spdM);
           // 接触攻撃
           if (distP < (m.def.size * 0.5 + 12) && m.attackCd <= 0) {
             Game.Survival.damage(m.dmg || m.def.dmg, m.def.name || 'mob');
@@ -704,7 +716,7 @@ Game.Mobs = (function () {
         else if (m.dot.slow > 0) bodyCol = '#8fd0ff';
       }
       ctx.fillStyle = m.hurt > 0 ? '#fff' : bodyCol;
-      const shape = m.def.shape || (m.type === 'slime' ? 'blob' : m.type === 'spider' ? 'spider' : 'round');
+      const shape = m.def.shape || defaultShape(m.type);
       let eyeY = -r * 0.3;
       if (shape === 'blob') {
         roundRect(ctx, -r, -r * 0.7, r * 2, r * 1.5, 6); ctx.fill();
