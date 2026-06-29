@@ -273,6 +273,7 @@ Game.Cutscene = (function () {
     treasure: { title: '秘宝の間', sub: '封印が解かれ、宝が姿を現す', col: '#ffd86b', icon: '💎', audio: 'shimmer' },
     cosmic:   { title: '星の遺物', sub: '宇宙の彼方、未知の宝が眠る', col: '#7fc8ff', icon: '✨', audio: 'swell' },
     boss:     { title: '強大な気配', sub: '空気が張り詰める——強敵が現れた', col: '#ff5a4a', icon: '💀', audio: 'impact' },
+    altar:    { title: '古の祭壇', sub: '触れし者に、つかの間の祝福を', col: '#ffe27a', icon: '⛩️', audio: 'choir' },
   };
   function playDiscovery(kind, cb) {
     const d = DISCOVERY[kind] || DISCOVERY.dungeon;

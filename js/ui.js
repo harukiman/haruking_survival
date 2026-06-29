@@ -364,6 +364,7 @@ Game.UI = (function () {
     stela:    { col: '#b6a6f0', shape: 'pillar', label: '石碑' },
     vault:    { col: '#e3c24a', shape: 'diamondHollow', label: '共鳴遺跡' },
     boss:     { col: '#ff5a4a', shape: 'cross', label: 'ボス' },
+    altar:    { col: '#ffe27a', shape: 'circle', label: '古の祭壇' },
   };
   function drawLandmark(ctx, x, y, kind) {
     const d = LANDMARKS[kind]; const col = d ? d.col : '#fff'; const shape = d ? d.shape : 'circle';
