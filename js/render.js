@@ -473,11 +473,9 @@ Game.Render = (function () {
       const s = Game.Camera.worldToScreen(pe.x, pe.y);
       if (s.x < -30 || s.y < -30 || s.x > Game.view.w + 30 || s.y > Game.view.h + 30) continue;
       ctx.fillStyle = 'rgba(0,0,0,0.25)';
-      ctx.beginPath(); ctx.ellipse(s.x, s.y + 10, 9, 4, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#3fd07a';
-      ctx.beginPath(); ctx.arc(s.x, s.y, 10, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#f0c8a0';
-      ctx.beginPath(); ctx.arc(s.x, s.y - 3, 5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(s.x, s.y + 9, 9, 4, 0, 0, Math.PI * 2); ctx.fill();
+      // 自プレイヤーと同じ人型(仲間は緑の体で識別)
+      drawCharacter(ctx, s.x, s.y, s.y, '#3fa86a', pe.dir || 'down', 0, true, '#3a2a1a');
       if (pe.name) {
         ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
         ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(s.x - 24, s.y - 26, 48, 12);
@@ -503,47 +501,42 @@ Game.Render = (function () {
       ctx.beginPath(); ctx.ellipse(s.x, s.y + 9, 9, 4, 0, 0, Math.PI * 2); ctx.fill();
     }
     const by = s.y - bob;
-    const dir = p.dir;
-    let dx = 0, dy = 0;
-    if (dir === 'up') dy = -1; else if (dir === 'down') dy = 1;
-    else if (dir === 'left') dx = -1; else if (dir === 'right') dx = 1;
     // 装備で体の色を変える(防具チェスト)。未装備は旅人の青マント
     const arm = p.armor && p.armor.chest;
     const bodyCol = arm ? (Game.ITEMS[arm.id || arm] && Game.ITEMS[arm.id || arm].color) || '#5a6a8a' : '#3a78d6';
-    const outline = 'rgba(10,16,30,0.85)';
     const swing = moved > 0.25 ? Math.sin(Game.state.tick * 0.35) * 2 : 0; // 手足の振り
-    ctx.strokeStyle = outline; ctx.lineWidth = 2; ctx.lineCap = 'round';
-    if (!p.vehicle) {
-      // 脚(歩行で交互に振る)
-      ctx.strokeStyle = '#2a3550'; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.moveTo(s.x - 3, by + 6); ctx.lineTo(s.x - 3 + swing * 0.6, s.y + 9); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(s.x + 3, by + 6); ctx.lineTo(s.x + 3 - swing * 0.6, s.y + 9); ctx.stroke();
-      // 胴(マント/防具)
-      ctx.fillStyle = bodyCol;
-      roundRectR(ctx, s.x - 7, by - 4, 14, 13, 5); ctx.fill();
-      ctx.strokeStyle = outline; ctx.lineWidth = 2; ctx.beginPath(); roundRectR(ctx, s.x - 7, by - 4, 14, 13, 5); ctx.stroke();
-      // 肩のハイライト
-      ctx.fillStyle = 'rgba(255,255,255,0.14)'; roundRectR(ctx, s.x - 6, by - 3, 12, 4, 2); ctx.fill();
-      // 腕(振り)
-      ctx.strokeStyle = bodyCol; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.moveTo(s.x - 6, by - 1); ctx.lineTo(s.x - 8, by + 5 + swing * 0.5); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(s.x + 6, by - 1); ctx.lineTo(s.x + 8, by + 5 - swing * 0.5); ctx.stroke();
-    }
-    // 頭
-    ctx.fillStyle = '#f0c8a0';
-    ctx.beginPath(); ctx.arc(s.x, by - 8, 5.5, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = outline; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(s.x, by - 8, 5.5, 0, Math.PI * 2); ctx.stroke();
-    // 髪(上)
-    ctx.fillStyle = '#5a3f2a'; ctx.beginPath(); ctx.arc(s.x, by - 9.5, 5.2, Math.PI * 1.05, Math.PI * 1.95); ctx.fill();
-    // 目(向きで位置を変える)
-    ctx.fillStyle = '#222';
-    if (dir === 'down') { ctx.fillRect(s.x - 2.5, by - 8, 1.6, 1.8); ctx.fillRect(s.x + 1, by - 8, 1.6, 1.8); }
-    else if (dir === 'up') { /* 後ろ向きは目を描かない */ }
-    else { ctx.fillRect(s.x + dx * 2.2 - 0.8, by - 8, 1.8, 1.8); }
+    drawCharacter(ctx, s.x, by, s.y, bodyCol, p.dir, p.vehicle ? 0 : swing, !p.vehicle, '#5a3f2a');
     if (p.invuln > 0 && (Game.state.tick % 6) < 3) {
       ctx.strokeStyle = 'rgba(255,80,80,0.7)'; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.arc(s.x, by - 1, 13, 0, Math.PI * 2); ctx.stroke();
     }
+  }
+  // 人型キャラ描画(プレイヤー/他プレイヤー共通)。脚はfootY基準、bodyは by 基準
+  function drawCharacter(ctx, sx, by, footY, bodyCol, dir, swing, withLegs, hairCol) {
+    let dx = 0;
+    if (dir === 'left') dx = -1; else if (dir === 'right') dx = 1;
+    const outline = 'rgba(10,16,30,0.85)';
+    ctx.lineCap = 'round';
+    if (withLegs) {
+      ctx.strokeStyle = '#2a3550'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(sx - 3, by + 6); ctx.lineTo(sx - 3 + swing * 0.6, footY + 9); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(sx + 3, by + 6); ctx.lineTo(sx + 3 - swing * 0.6, footY + 9); ctx.stroke();
+      ctx.fillStyle = bodyCol;
+      roundRectR(ctx, sx - 7, by - 4, 14, 13, 5); ctx.fill();
+      ctx.strokeStyle = outline; ctx.lineWidth = 2; ctx.beginPath(); roundRectR(ctx, sx - 7, by - 4, 14, 13, 5); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,0.14)'; roundRectR(ctx, sx - 6, by - 3, 12, 4, 2); ctx.fill();
+      ctx.strokeStyle = bodyCol; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(sx - 6, by - 1); ctx.lineTo(sx - 8, by + 5 + swing * 0.5); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(sx + 6, by - 1); ctx.lineTo(sx + 8, by + 5 - swing * 0.5); ctx.stroke();
+    }
+    ctx.fillStyle = '#f0c8a0';
+    ctx.beginPath(); ctx.arc(sx, by - 8, 5.5, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = outline; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(sx, by - 8, 5.5, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = hairCol || '#5a3f2a'; ctx.beginPath(); ctx.arc(sx, by - 9.5, 5.2, Math.PI * 1.05, Math.PI * 1.95); ctx.fill();
+    ctx.fillStyle = '#222';
+    if (dir === 'down') { ctx.fillRect(sx - 2.5, by - 8, 1.6, 1.8); ctx.fillRect(sx + 1, by - 8, 1.6, 1.8); }
+    else if (dir === 'up') { /* 後ろ向き */ }
+    else { ctx.fillRect(sx + dx * 2.2 - 0.8, by - 8, 1.8, 1.8); }
   }
   function roundRectR(ctx, x, y, w, h, r) {
     ctx.beginPath(); ctx.moveTo(x + r, y);
