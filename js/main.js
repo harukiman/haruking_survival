@@ -146,6 +146,7 @@ window.Game = window.Game || {};
     const diff = Game.state.difficulty || 'normal';
     Game.Save.clear();
     newGame('', { keepAchievements: true, ngLevel: ng, difficulty: diff });
+    if (Game.Story) Game.Story.unlock('cycle', true); // 周回で記憶回廊「巡り還る刻」を解放
     Game.UI.toast('周回 NG+' + ng + ' 開始 — 影はさらに濃く、戦利品はさらに豊かに');
   }
   Game.startNGPlus = startNGPlus;

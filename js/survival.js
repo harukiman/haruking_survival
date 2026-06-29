@@ -216,6 +216,8 @@ Game.Survival = (function () {
     p.invuln = 60;
     Game.Player.spawnAt(Game.state.spawn.tx, Game.state.spawn.ty);
     Game.UI.refreshAll();
+    // はじめて斃れ再び立ち上がったとき、記憶回廊「名もなき者」を解放
+    if (Game.Story && !Game.Story.seen('traveler')) Game.Story.unlock('traveler', true);
   }
 
   return { update, eat, damage, die, respawn, nearLight };

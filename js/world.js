@@ -143,6 +143,8 @@ Game.World = (function () {
     Game.UI.updateMinimap();
     if (Game.Achievements) Game.Achievements.unlock(target === 'shadow' ? 'first_shift' : null);
     if (target === 'shadow' && Game.Story) Game.Story.unlock('sundering', true); // 初の影渡りで第一章
+    Game.state.shiftCount = (Game.state.shiftCount || 0) + 1;
+    if (Game.state.shiftCount >= 4 && Game.Story && !Game.Story.seen('phase')) Game.Story.unlock('phase', true); // 幾度も相を渡ると「相を渡る」
     return true;
   }
 

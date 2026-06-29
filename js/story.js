@@ -69,6 +69,29 @@ Game.STORY = [
     { text: '草原、森、砂、雪、沼、火山、菌の森、花の野——世界は裂けるほどに、多様な貌を見せた。', col: '#2e4a2e', col2: '#aef07a', icon: '🌍', d: 5000 },
     { text: 'あるいは「ひとつに還す」とは、この豊かさを手放すこと。\nそれでも、と問い続けるのが、旅人の役目なのだろう。', col: '#26402a', col2: '#cfffb0', icon: '🌸', d: 5200 },
   ] },
+  { id: 'shadowcrystal', title: '断章 ― 傷の結晶', trigger: '影晶をはじめて掘り当てたとき', col: '#3a2a55', scenes: [
+    { text: '世界が裂けたあの日、傷口から零れた血は、冷えて石となった。\n人はそれを影晶と呼ぶ——痛みの、結晶。', col: '#3a2a55', col2: '#b884e8', icon: '🔮', d: 5000 },
+    { text: '影晶は願いをよく憶えている。だから武具はそれを欲しがり、力に変える。\nだが憶えすぎた石は、持つ者の心にも、古い祈りを囁きはじめる。', col: '#2a1c44', col2: '#c79cf0', icon: '💜', d: 5400 },
+    { text: '——傷を糧にして進むのか。それとも、傷を癒して終わらせるのか。\n掌の中の輝きは、いつもその問いの形をしている。', col: '#241838', col2: '#e0c4ff', icon: '✦', d: 5200 },
+  ] },
+  { id: 'traveler', title: '断章 ― 名もなき者', trigger: 'はじめて斃れ、再び立ち上がったとき', col: '#243048', scenes: [
+    { text: 'あなたが何者であったか、碑は記していない。名も、故郷も、裂け目の向こうに置いてきた。', col: '#243048', col2: '#bcd0f0', icon: '🚶', d: 4800 },
+    { text: 'ただひとつ確かなのは——あなたは死しても、また目を覚ますこと。\n光と影、両の相をまたいで歩けること。それは呪いか、それとも世界が遺した最後の希望か。', col: '#1c2640', col2: '#cfe0ff', icon: '♾', d: 5600 },
+    { text: '名を失った者にしか、引き裂かれた世界は縫えない。\nどちらの祈りにも与しない、空白の手だけが。', col: '#181f34', col2: '#e0ecff', icon: '🤲', d: 5200 },
+  ] },
+  { id: 'phase', title: '断章 ― 相を渡る', trigger: '幾度も光と影の相を渡り歩いたとき', col: '#2a1f44', scenes: [
+    { text: '光の相に立つ草は、影の相では黒く萎れ、同じ大地が別の貌を見せる。\n二つは離れた世界ではない——一枚の布の、表と裏。', col: '#2a1f44', col2: '#b89cf0', icon: '🌓', d: 5000 },
+    { text: '渡るたび、布の縫い目が見えてくる。どこを綴じれば、布は一枚に戻るのか。\n相を渡る足だけが、その縫い目を知っている。', col: '#201838', col2: '#d0b8ff', icon: '🪡', d: 5400 },
+  ] },
+  { id: 'bounty', title: '断章 ― 手配書の風', trigger: 'はじめて賞金首を討ち取ったとき', col: '#3a2418', scenes: [
+    { text: '裂けた世界にも、まだ秩序を欲しがる者たちがいる。彼らは罪に値をつけ、風に手配書を流した。', col: '#3a2418', col2: '#e0b070', icon: '📜', d: 4800 },
+    { text: '賞金とは、失われた正義のなれの果て。それでも誰かがその紙を握りしめ、刃を取る。\n——壊れた世界で、なお「正しさ」を売り買いできると信じて。', col: '#2e1c10', col2: '#ffca80', icon: '🎯', d: 5200 },
+  ] },
+  { id: 'cycle', title: '断章 ― 巡り還る刻', trigger: '世界をひとつ還してなお、新たな旅へ踏み出したとき', col: '#1f2e3a', scenes: [
+    { text: 'ひとつに還した世界は、やがてまた、別の祈りに引き裂かれる。\n光を願う声と、影を願う声は、人がいる限り絶えはしない。', col: '#1f2e3a', col2: '#a0d0e0', icon: '🔁', d: 5200 },
+    { text: 'あなたは知っている——この旅に終わりがないことを。\nそれでも歩くのは、巡るたびに、世界が少しだけ深く視えるからだ。', col: '#182634', col2: '#c0e8f0', icon: '🌀', d: 5400 },
+    { text: '同じ物語を、より遠くまで。\n継ぐ者の足跡だけが、忘却に抗う唯一の碑である。', col: '#141f2c', col2: '#dff4ff', icon: '🗝', d: 5200 },
+  ] },
 ];
 
 Game.Story = (function () {
@@ -94,5 +117,8 @@ Game.Story = (function () {
     });
   }
   function count() { let n = 0; const s = set(); for (const k in s) if (s[k]) n++; return n; }
-  return { unlock, play, seen, list, count };
+  // デバッグ/閲覧用: 記憶回廊を全解除（演出なし）
+  function unlockAll() { const s = set(); Game.STORY.forEach(function (f) { s[f.id] = true; }); if (Game.UI && Game.UI.refreshStory) Game.UI.refreshStory(); }
+  function total() { return Game.STORY.length; }
+  return { unlock, play, seen, list, count, unlockAll, total };
 })();

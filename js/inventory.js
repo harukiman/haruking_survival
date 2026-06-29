@@ -21,6 +21,8 @@ Game.Inventory = (function () {
   function add(id, n) {
     const def = Game.ITEMS[id];
     if (!def) return n;
+    // 影晶をはじめて手にしたとき、記憶回廊「傷の結晶」を解放
+    if (id === 'shadow_crystal' && Game.Story && !Game.Story.seen('shadowcrystal')) Game.Story.unlock('shadowcrystal', true);
     const max = def.stack || 99;
     const s = slots();
     // 既存スタックに詰める

@@ -1010,7 +1010,8 @@ Game.UI = (function () {
     } else if (cmd === 'bts') { const n = parseInt(parts[1] || '0', 10) || 0; p.bts = Math.max(0, (p.bts || 0) + n); toast('bts ' + (n >= 0 ? '+' : '') + n + ' → ' + p.bts); refreshStats(); }
     else if (cmd === 'xp') { Game.Player.gainXP(Math.max(0, parseInt(parts[1] || '0', 10) || 0)); refreshAll(); toast('XP付与'); }
     else if (cmd === 'heal') { p.health = p.maxHealth; p.hunger = p.maxHunger; if (Game.state.sanity != null && Game.TUNE) Game.state.sanity = Game.TUNE.SANITY_MAX; if (Game.Status) Game.Status.clearAll(); refreshAll(); toast('全回復'); }
-    else if (cmd === 'help') { toast('give<id>[n] / spawn<type>[n] / bts<n> / xp<n> / heal'); }
+    else if (cmd === 'allstory' || cmd === 'story') { if (Game.Story && Game.Story.unlockAll) { Game.Story.unlockAll(); toast('記憶回廊を全解除しました（' + Game.Story.total() + '章）'); } }
+    else if (cmd === 'help') { toast('give<id>[n] / spawn<type>[n] / bts<n> / xp<n> / heal / allstory'); }
     else { toast('不明: ' + cmd + '（help）'); }
   }
 
@@ -1018,8 +1019,14 @@ Game.UI = (function () {
   let cheatBuilt = false;
   function buildCheatPanel(panel) {
     if (!panel || cheatBuilt) return; cheatBuilt = true;
-    let h = '<p class="hint">タップで付与（装備はランダムaffix付き／素材は10個）。デバッグ用。</p><div class="grid" id="cheat-grid"></div>';
+    let h = '<button id="cheat-allstory" class="big-btn alt" style="width:100%;margin:2px 0 8px">📖 記憶回廊を全解除</button>';
+    h += '<p class="hint">▼ アイテム：タップで付与（装備はランダムaffix付き／素材は10個）</p><div class="grid" id="cheat-grid"></div>';
+    h += '<p class="hint">▼ 敵：タップでプレイヤー付近に召喚</p><div class="grid" id="cheat-mobgrid"></div>';
     panel.innerHTML = h;
+    // 記憶回廊 全解除
+    const asBtn = document.getElementById('cheat-allstory');
+    if (asBtn) asBtn.addEventListener('click', function () { if (Game.Story && Game.Story.unlockAll) { Game.Story.unlockAll(); toast('記憶回廊を全解除しました（' + Game.Story.total() + '章）'); } });
+    // 全アイテム
     const grid = document.getElementById('cheat-grid');
     for (const id in Game.ITEMS) {
       const def = Game.ITEMS[id];
@@ -1032,6 +1039,22 @@ Game.UI = (function () {
         toast('付与: ' + def.name); refreshInventory();
       });
       grid.appendChild(cell);
+    }
+    // 全敵（ボスは赤、敵は橙、生物は緑のラベル）
+    const mg = document.getElementById('cheat-mobgrid');
+    for (const type in Game.MOBS) {
+      const def = Game.MOBS[type];
+      const col = def.boss ? '#e0504a' : (def.hostile ? '#d8923c' : '#5fa85f');
+      const cell = document.createElement('div'); cell.className = 'slot mob-cheat';
+      cell.style.cssText = 'display:flex;align-items:center;justify-content:center;text-align:center;font-size:.62rem;line-height:1.05;padding:3px;border-color:' + col + ';color:' + col;
+      cell.textContent = (def.boss ? '★' : '') + (def.name || type);
+      cell.title = type + (def.boss ? ' (ボス)' : def.hostile ? ' (敵)' : ' (生物)');
+      cell.addEventListener('click', function () {
+        const p = Game.state.player;
+        Game.Mobs.spawnMob(type, p.x + (Math.random() - 0.5) * 120 + 60, p.y + (Math.random() - 0.5) * 120);
+        toast('召喚: ' + (def.name || type));
+      });
+      mg.appendChild(cell);
     }
   }
 
