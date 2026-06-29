@@ -26,7 +26,7 @@ Game.Mobs = (function () {
       // 個体差: 同じ種でも大きさ/色味/動き方を変えて一辺倒を避ける
       sizeVar: 0.86 + Math.random() * 0.30,          // 0.86〜1.16
       tint: Math.round((Math.random() - 0.5) * 38),  // 色の明暗揺らぎ -19〜+19
-      moveStyle: (function () { const r = Math.random(); return r < 0.42 ? 'direct' : r < 0.64 ? 'zigzag' : r < 0.82 ? 'strafe' : 'pounce'; })(),
+      moveStyle: (function () { const r = Math.random(); return r < 0.36 ? 'direct' : r < 0.56 ? 'zigzag' : r < 0.72 ? 'strafe' : r < 0.86 ? 'pounce' : 'orbit'; })(),
       wobble: Math.random() * 6,
     };
     // 精鋭(elite)抽選: 非ボスの敵対モブが低確率で精鋭化（HP/攻撃UP・発光オーラ・確定レアドロップ）
@@ -372,6 +372,11 @@ Game.Mobs = (function () {
           } else if (st === 'pounce') {
             // 跳びかかり: 周期的に素早く踏み込み、間で溜める
             const ph = (Game.state.tick + m.wobble * 20) % 74; spdM = ph < 13 ? 2.0 : 0.62;
+          } else if (st === 'orbit' && distP < aggro * 0.7 && distP > m.def.size * 0.5 + 30) {
+            // 旋回: 一定距離を保ちながら円を描いて回り込み、隙を伺う
+            const dir = (m.wobble % 2) ? 1 : -1; const px = -dyp * dir, py = dxp * dir;
+            const pull = (distP > 5 * TS) ? 0.5 : -0.25; // 遠ければ寄り、近すぎれば離れる
+            mvx = px + dxp * pull; mvy = py + dyp * pull; spdM = 1.05;
           }
           moveMob(m, mvx, mvy, m.def.speed * 0.82 * spdM);
           // 接触攻撃
