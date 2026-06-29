@@ -20,8 +20,9 @@ Game.Audio = (function () {
     space:    { root: 246.94, scale: [0, 2, 4, 6, 7, 9, 11],  bpm: 60,  wave: 'sine', cut: 1300, kick: false, bassEvery: 8, arp: [0, 4, 7, 11, 9, 7], arpEvery: 2, noteVol: 0.042, bassVol: 0.04, kickVol: 0 },     // 宇宙=幻想的(リディアン)
     desert:   { root: 277.18, scale: [0, 1, 4, 5, 7, 8, 11],  bpm: 100, wave: 'triangle', cut: 1900, kick: true, bassEvery: 4, arp: [0, 4, 5, 8, 7, 4], arpEvery: 2, noteVol: 0.04, bassVol: 0.045, kickVol: 0.06 }, // 砂漠=エキゾチック(ダブルハーモニック)
     snow:     { root: 261.63, scale: [0, 2, 4, 7, 9],         bpm: 66,  wave: 'sine', cut: 1200, kick: false, bassEvery: 8, arp: [0, 7, 9, 4, 7, 2], arpEvery: 2, noteVol: 0.04, bassVol: 0.038, kickVol: 0 },        // 雪原=静謐(ペンタ)
+    meadow:   { root: 329.63, scale: [0, 2, 4, 7, 9],         bpm: 84,  wave: 'triangle', cut: 1700, kick: false, bassEvery: 8, arp: [0, 4, 7, 9, 7, 4], arpEvery: 2, noteVol: 0.042, bassVol: 0.04, kickVol: 0 },     // 花の野=穏やかな田園(明るいペンタ)
   };
-  const MOOD_GENRE = { day: 'animepop', night: 'city', shadow: 'classic', boss: 'edm', space: 'space', desert: 'desert', snow: 'snow' };
+  const MOOD_GENRE = { day: 'animepop', night: 'city', shadow: 'classic', boss: 'edm', space: 'space', desert: 'desert', snow: 'snow', meadow: 'meadow' };
 
   function ensure() {
     if (!ctx) {
@@ -191,6 +192,7 @@ Game.Audio = (function () {
       const g = Game.World.groundAt(Math.floor(p.x / TS), Math.floor(p.y / TS));
       if (g === Game.TILE.SNOW) mood = 'snow';
       else if (g === Game.TILE.SAND && !Game.DayNight.isNight()) mood = 'desert';
+      else if (g === Game.TILE.BLOOM && !Game.DayNight.isNight()) mood = 'meadow';
       else if (Game.DayNight.isNight()) mood = 'night';
       else mood = 'day';
     }
