@@ -16,6 +16,7 @@ Game.Player = (function () {
       hungerTimer: 0, regenTimer: 0,
       invuln: 0, hotbarIndex: 0,
       attackCd: 0,
+      reloadCd: 0, reloadInfo: null, mags: {}, // 銃のマガジン(装填弾数)管理
       xp: 0, level: 1, xpNext: 24, invSlots: 36, bts: 0,
       baseMaxHealth: 100,
       stamina: 100, maxStamina: 100,
@@ -122,6 +123,17 @@ Game.Player = (function () {
 
     if (p.invuln > 0) p.invuln--;
     if (p.attackCd > 0) p.attackCd--;
+    // リロード進行: 完了したら予備弾を消費してマガジンへ装填
+    if (p.reloadCd > 0) {
+      p.reloadCd--;
+      if (p.reloadCd === 0 && p.reloadInfo) {
+        const ri = p.reloadInfo; p.reloadInfo = null;
+        const reserve = Game.Inventory.count(ri.ammo);
+        const take = Math.min(ri.need, reserve);
+        if (take > 0) { Game.Inventory.remove(ri.ammo, take); p.mags[ri.gid] = (p.mags[ri.gid] || 0) + take; Game.Audio.play('equip'); Game.UI.toast('リロード完了 — ' + (Game.ITEMS[ri.ammo] ? Game.ITEMS[ri.ammo].name : ri.ammo) + ' ' + p.mags[ri.gid] + '発'); }
+        Game.UI.refreshHotbar();
+      }
+    }
 
     // 左クリック/採掘ボタン: 銃→発射、なければ攻撃→採掘
     if (intent.mine) {
@@ -443,11 +455,46 @@ Game.Player = (function () {
     Game.UI.refreshAll();
   }
 
+  // 選択中の銃のID（マガジン管理キー）
+  function selGunId() { const sl = Game.Inventory.selectedSlot(); return sl ? sl.id : null; }
+  function magCap(sel) { return sel.mag || 12; }
+  function magLoaded(sel) { const gid = selGunId(); return (gid && Game.state.player.mags) ? (Game.state.player.mags[gid] || 0) : 0; }
+
+  // リロード開始（予備弾があれば）。実際の装填は reloadCd 完了時。
+  function startReload(sel, gid) {
+    const p = Game.state.player;
+    if (p.reloadCd > 0) return false;
+    const cap = magCap(sel);
+    const cur = p.mags[gid] || 0;
+    if (cur >= cap) return false;
+    const reserve = Game.Inventory.count(sel.ammo);
+    if (reserve <= 0) { if (Game.state.tick % 30 === 0) Game.UI.toast('弾切れ — ' + (Game.ITEMS[sel.ammo] ? Game.ITEMS[sel.ammo].name : sel.ammo) + ' が必要'); return false; }
+    p.reloadCd = sel.reloadTime || 48; // ~1.6秒 @30Hz
+    p.reloadInfo = { gid: gid, ammo: sel.ammo, need: cap - cur };
+    Game.Audio.play('gun');
+    Game.UI.toast('リロード中… 🔄');
+    Game.UI.refreshHotbar();
+    return true;
+  }
+  // 手動リロード（Rキー等）
+  function reloadCurrent() {
+    const sel = Game.Inventory.selectedItemDef(); const gid = selGunId();
+    if (sel && sel.tool === 'gun' && gid) startReload(sel, gid);
+  }
+
   function tryFire(sel) {
     const p = Game.state.player;
+    if (p.reloadCd > 0) return;       // リロード中は撃てない
     if (p.attackCd > 0) return;
-    if (Game.Inventory.count(sel.ammo) < 1) { if (Game.state.tick % 30 === 0) Game.UI.toast('弾切れ'); return; }
-    Game.Inventory.remove(sel.ammo, 1);
+    if (!p.mags) p.mags = {};
+    const gid = selGunId(); if (!gid) return;
+    let loaded = p.mags[gid];
+    if (loaded == null) { // 初回はマガジン未装填 → 予備弾から自動装填
+      if (Game.Inventory.count(sel.ammo) > 0) { startReload(sel, gid); return; }
+      p.mags[gid] = 0; loaded = 0;
+    }
+    if (loaded <= 0) { startReload(sel, gid); return; } // 空 → リロード
+    p.mags[gid] = loaded - 1; // マガジンから1発消費
     const kind = sel.bkind || 'bullet';
     const pellets = sel.pellets || 1;
     const dmg = effAttack(sel.fireDmg || 6); // 銃もLv/STR補正
@@ -458,6 +505,7 @@ Game.Player = (function () {
     p.attackCd = sel.cd || 12;
     Game.Render.spawnParticles(p.x, p.y, '#ffe9a0', 2);
     Game.Audio.play(sel.gunsfx || 'gun');
+    if (p.mags[gid] <= 0 && Game.Inventory.count(sel.ammo) > 0) startReload(sel, gid); // 0になったら自動リロード
     Game.UI.refreshHotbar();
   }
 
@@ -753,5 +801,6 @@ Game.Player = (function () {
     interact, useNearby, gainXP, totalArmor, setBonus, sleep, equipSelectedArmor, equipFromInventory, equipRelic, unequipSlot, applyEquipStats, bossesDefeated, bossTitle,
     effAttack, attackCooldown, levelDmgBonus, levelArmorBonus, spendStat, unlockSkill, respec,
     skillBonus, skillFlag, canUnlock, currentWeaponAtk, equippedArmorAt, xpForLevel,
+    reloadCurrent, magLoaded, magCap, selGunId,
   };
 })();

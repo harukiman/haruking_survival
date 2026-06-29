@@ -623,6 +623,33 @@ Game.UI = (function () {
       slots[i].classList.toggle('selected', i === Game.state.player.hotbarIndex);
     }
     setupTooltip(el.hotbar);
+    refreshAmmo();
+  }
+
+  // 銃の弾薬HUD: 選択中の銃の「装填 / 予備」と弾種、リロード状態を表示
+  let ammoEl = null;
+  function refreshAmmo() {
+    const p = Game.state && Game.state.player; if (!p) return;
+    const sel = Game.Inventory.selectedItemDef();
+    if (!ammoEl) {
+      ammoEl = document.getElementById('ammo-hud');
+      if (!ammoEl) {
+        ammoEl = document.createElement('div'); ammoEl.id = 'ammo-hud';
+        ammoEl.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:74px;z-index:55;background:rgba(16,24,42,.82);border:1px solid #33455e;border-radius:9px;padding:4px 11px;font-size:.82rem;color:#e8edf2;pointer-events:none;display:none;white-space:nowrap';
+        (document.getElementById('app') || document.body).appendChild(ammoEl);
+      }
+    }
+    if (!sel || sel.tool !== 'gun') { ammoEl.style.display = 'none'; return; }
+    const ammoName = Game.ITEMS[sel.ammo] ? Game.ITEMS[sel.ammo].name : sel.ammo;
+    const reserve = Game.Inventory.count(sel.ammo);
+    ammoEl.style.display = 'block';
+    if (p.reloadCd > 0) {
+      ammoEl.innerHTML = '🔄 <b style="color:#ffd86b">リロード中…</b>　<span style="color:#9fb6d0">' + ammoName + ' 予備' + reserve + '</span>';
+    } else {
+      const loaded = Game.Player.magLoaded(sel), cap = Game.Player.magCap(sel);
+      const col = loaded === 0 ? '#e0664a' : (loaded <= cap * 0.25 ? '#e0a84a' : '#7fe0a0');
+      ammoEl.innerHTML = '🔫 <span style="color:#9fb6d0">' + ammoName + '</span>　装填 <b style="color:' + col + '">' + loaded + '</b><span style="color:#5a6b80">/' + cap + '</span>　予備 <b>' + reserve + '</b>' + (loaded === 0 && reserve === 0 ? ' <span style="color:#e0664a">弾切れ</span>' : '');
+    }
   }
 
   function refreshStats() {
@@ -931,12 +958,25 @@ Game.UI = (function () {
       h += '<div class="ench-stat">💠 遺物効果 <b style="color:#ffd86b">' + parts.join('・') + '</b></div>';
       const eq = Game.state.player.accessory; if (eq) { const ed = Game.ITEMS[eq.id || eq]; if (ed) h += '<div class="tt-flavor" style="color:#7a8494">装備中: ' + ed.name + '（入替）</div>'; }
     }
+    // 銃: 必要弾・装弾数・使い方を明示
+    if (def.tool === 'gun') {
+      const an = Game.ITEMS[def.ammo] ? Game.ITEMS[def.ammo].name : def.ammo;
+      const reserve = Game.Inventory.count(def.ammo);
+      h += '<div class="ench-stat">🔫 必要な弾: <b style="color:#ffd86b">' + an + '</b>（所持 ' + reserve + '）</div>';
+      h += '<div class="ench-stat">🧮 装弾数: <b style="color:#9fd8ff">' + (def.mag || 12) + '</b>発　·　弾を撃ち切ると<b>自動リロード</b></div>';
+      h += '<div class="tt-flavor" style="color:#9fb6d0">▶ ホットバーに置いて攻撃ボタン/画面タップで発射。弾が無いと撃てません</div>';
+    }
+    // 投擲(爆弾・火炎瓶など): 使い方を明示
+    if (def.throw) {
+      h += '<div class="ench-stat">💥 投擲武器（' + (def.throw.explosive ? '範囲ダメージ' : 'ダメージ') + ' ' + def.throw.dmg + '）</div>';
+      h += '<div class="tt-flavor" style="color:#9fb6d0">▶ ホットバーに置いて選択し、攻撃ボタン/画面タップで投げる。向いている方向へ飛びます</div>';
+    }
     if (def.flavor) h += '<div class="tt-flavor" style="margin-bottom:6px">' + def.flavor + '</div>';
     const btns = [];
     if (def.armor && def.slot) btns.push('<button id="inv-act" class="big-btn">装備する</button>');
     else if (def.relic) btns.push('<button id="inv-act" class="big-btn">遺物を装備</button>');
     else if (def.food || def.cures || def.buff || def.skillTome || def.xpGain || def.invExpand || def.summonBoss || def.opensShop) btns.push('<button id="inv-act" class="big-btn">' + (def.food ? '食べる' : def.skillTome ? '読む' : def.summonBoss ? '掲げる' : def.opensShop ? '鳴らす' : '使う') + '</button>');
-    else if (Game.Loot.rollable(st.id) || def.tool) btns.push('<button id="inv-hot" class="big-btn alt">ホットバーへ装備</button>');
+    else if (Game.Loot.rollable(st.id) || def.tool || def.throw) btns.push('<button id="inv-hot" class="big-btn alt">ホットバーへ装備</button>');
     if (Game.Net && Game.Net.isConnected()) btns.push('<button id="inv-give" class="big-btn alt">仲間に渡す</button>');
     btns.push('<button id="inv-drop" class="big-btn inv-discard">捨てる' + (st.count > 1 ? '（1個）' : '') + '</button>');
     el.invDetail.innerHTML = h + btns.join('');
