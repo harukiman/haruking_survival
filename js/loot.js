@@ -12,12 +12,16 @@ Game.Loot = (function () {
     { key: 'sharp', name: '鋭利な', atk: [1, 2] },
     { key: 'brutal', name: '残虐な', atk: [2, 4] },
     { key: 'keen', name: '鋭敏な', atk: [1, 3] },
+    { key: 'savage', name: '殺戮の', atk: [3, 5] },
     { key: 'vampiric', name: '吸血の', life: [0.08, 0.2] },
+    { key: 'critical', name: '会心の', crit: [0.04, 0.10] },
   ];
   const ARMOR_AFFIXES = [
     { key: 'sturdy', name: '頑強な', arm: [1, 2] },
     { key: 'guardian', name: '守護の', arm: [2, 3] },
+    { key: 'fortified', name: '鉄壁の', arm: [2, 4] },
     { key: 'vital', name: '生命の', hp: [6, 16] },
+    { key: 'titan', name: '剛健の', hp: [12, 24] },
     { key: 'warded', name: '護られし', sanity: true },
   ];
 
@@ -56,6 +60,7 @@ Game.Loot = (function () {
       if (pick.arm) af.arm = rr(pick.arm[0], pick.arm[1]);
       if (pick.hp) af.hp = rr(pick.hp[0], pick.hp[1]);
       if (pick.life) af.life = Math.round((pick.life[0] + Math.random() * (pick.life[1] - pick.life[0])) * 100) / 100;
+      if (pick.crit) af.crit = Math.round((pick.crit[0] + Math.random() * (pick.crit[1] - pick.crit[0])) * 100) / 100;
       if (pick.sanity) af.sanity = true;
       affixes.push(af);
     }
@@ -64,7 +69,7 @@ Game.Loot = (function () {
 
   // 実効ステータス
   function stats(slot) {
-    const out = { atk: 0, armor: 0, hp: 0, lifesteal: 0, sanityResist: false };
+    const out = { atk: 0, armor: 0, hp: 0, lifesteal: 0, crit: 0, sanityResist: false };
     if (!slot) return out;
     const def = Game.ITEMS[slot.id];
     if (!def) return out;
@@ -79,6 +84,7 @@ Game.Loot = (function () {
         if (a.arm) out.armor += a.arm;
         if (a.hp) out.hp += a.hp;
         if (a.life) out.lifesteal += a.life;
+        if (a.crit) out.crit += a.crit;
         if (a.sanity) out.sanityResist = true;
       });
     }
@@ -98,6 +104,7 @@ Game.Loot = (function () {
     if (Game.ITEMS[slot.id] && Game.ITEMS[slot.id].armor != null) parts.push('防御 ' + s.armor);
     if (s.hp) parts.push('最大HP +' + s.hp);
     if (s.lifesteal) parts.push('吸血 ' + Math.round(s.lifesteal * 100) + '%');
+    if (s.crit) parts.push('会心 +' + Math.round(s.crit * 100) + '%');
     if (s.sanityResist) parts.push('正気耐性');
     return parts.join(' / ');
   }
