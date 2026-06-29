@@ -43,6 +43,7 @@ Game.Projectiles = (function () {
       const ux = Math.cos(ang), uy = Math.sin(ang);
       const pr = spawn(p.x + ux * 14, p.y + uy * 14, ux * sp, uy * sp, dmg, kind, false, null, opts.explosive || 0);
       pr.ang = ang;
+      if (opts.crit) pr.crit = true;
       if (opts.pierce || kind === 'slash' || kind === 'pierce' || kind === 'laser') { pr.pierce = true; pr.hits = {}; }
       if (opts.chain || kind === 'chain') { pr.chain = opts.chain || 3; }
       if (opts.boomerang || kind === 'boomerang') { pr.boomerang = true; pr.pierce = true; pr.hits = {}; pr.ox = p.x; pr.oy = p.y; pr.life = 140; pr.spin = 0; }
@@ -196,7 +197,7 @@ Game.Projectiles = (function () {
           const mo = mobs[m]; if (mo.def.friendly || (pr.hits && pr.hits[mo.id])) continue;
           if (Math.hypot(mo.x - pr.x, mo.y - pr.y) < mo.def.size * 0.5 + reach) {
             pr.hits[mo.id] = 1;
-            if (Game.Net.isConnected() && !Game.Net.host) Game.Net.sendHit(mo.id, pr.dmg, pr.x, pr.y); else { Game.Mobs.damageMob(mo, pr.dmg, pr.x, pr.y); if (Game.Mobs.applyDot) Game.Mobs.applyDot(mo, pr.kind); }
+            if (Game.Net.isConnected() && !Game.Net.host) Game.Net.sendHit(mo.id, pr.dmg, pr.x, pr.y); else { Game.Mobs.damageMob(mo, pr.dmg, pr.x, pr.y, pr.crit); if (Game.Mobs.applyDot) Game.Mobs.applyDot(mo, pr.kind); }
           }
         }
       } else {
@@ -204,7 +205,7 @@ Game.Projectiles = (function () {
         for (let m = 0; m < mobs.length; m++) {
           const mo = mobs[m]; if (mo.def.friendly) continue;
           if (Math.hypot(mo.x - pr.x, mo.y - pr.y) < mo.def.size * 0.5 + 6) {
-            if (Game.Net.isConnected() && !Game.Net.host) Game.Net.sendHit(mo.id, pr.dmg, pr.x, pr.y); else { Game.Mobs.damageMob(mo, pr.dmg, pr.x, pr.y); if (Game.Mobs.applyDot) Game.Mobs.applyDot(mo, pr.kind); }
+            if (Game.Net.isConnected() && !Game.Net.host) Game.Net.sendHit(mo.id, pr.dmg, pr.x, pr.y); else { Game.Mobs.damageMob(mo, pr.dmg, pr.x, pr.y, pr.crit); if (Game.Mobs.applyDot) Game.Mobs.applyDot(mo, pr.kind); }
             if (pr.chain) { const hs = {}; hs[mo.id] = 1; chainTo(mo.x, mo.y, Math.round(pr.dmg * 0.8), pr.chain, hs); }
             if (Game.Render.spawnImpact) Game.Render.spawnImpact(pr.x, pr.y, pr.kind === 'laser' || pr.kind === 'pierce' ? '#9fd8ff' : '#ffd86a');
             hit = true; break;

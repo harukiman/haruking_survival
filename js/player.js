@@ -520,10 +520,11 @@ Game.Player = (function () {
     let dmg = effAttack(sel.fireDmg || 6); // 銃もLv/STR補正
     // 会心: 近接と同じ判定を遠距離にも適用(クリ時 1.8x ＋ 音/反動)
     const critCh = (Game.TUNE.BASE_CRIT || 0.08) + skillBonus().crit + (setBonus().crit || 0);
-    if (Math.random() < critCh) { dmg = Math.round(dmg * (Game.TUNE.CRIT_MULT || 1.8)); Game.Audio.play('crit'); if (Game.Render.shake) Game.Render.shake(5); }
+    const isCrit = Math.random() < critCh;
+    if (isCrit) { dmg = Math.round(dmg * (Game.TUNE.CRIT_MULT || 1.8)); Game.Audio.play('crit'); if (Game.Render.shake) Game.Render.shake(5); }
     for (let i = 0; i < pellets; i++) {
       const spr = pellets > 1 ? (Math.random() - 0.5) * (sel.spread || 0.5) : (sel.spread || 0);
-      Game.Projectiles.fire(dmg, kind, { spread: spr, explosive: sel.explosive || 0, speed: sel.bspeed });
+      Game.Projectiles.fire(dmg, kind, { spread: spr, explosive: sel.explosive || 0, speed: sel.bspeed, crit: isCrit });
     }
     p.attackCd = sel.cd || 12;
     // マズルフラッシュ(銃口の閃光)。銃種で色/大きさを変える
