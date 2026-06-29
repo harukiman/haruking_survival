@@ -27,6 +27,21 @@ Game.Combat = (function () {
       p.attackCd = stk.cd || Game.Player.attackCooldown();
       return true;
     }
+    // 渦召喚武器（渦の杖）: 範囲内最寄り敵の位置に渦を生む。無標的なら向いた先
+    if (_def && _def.vortex) {
+      const vx = _def.vortex;
+      const reach = (vx.range || 8) * TS;
+      let bm = null, bd = Infinity;
+      for (let i = 0; i < mobs.length; i++) { const m = mobs[i]; if (m.def.friendly) continue; const d = Math.hypot(m.x - p.x, m.y - p.y); if (d <= reach && d < bd) { bd = d; bm = m; } }
+      let tx2, ty2;
+      if (bm) { tx2 = bm.x; ty2 = bm.y; }
+      else { let dx2 = 0, dy2 = 0; if (p.dir === 'up') dy2 = -1; else if (p.dir === 'down') dy2 = 1; else if (p.dir === 'left') dx2 = -1; else dx2 = 1; tx2 = p.x + dx2 * 4 * TS; ty2 = p.y + dy2 * 4 * TS; }
+      Game.Projectiles.callVortex(tx2, ty2, Game.Player.effAttack(vx.dmg), vx.radius, vx.dur);
+      Game.Audio.play('whirl');
+      Game.Render.spawnSlash(p.x, p.y, p.dir, '#b66ad0');
+      p.attackCd = vx.cd || Game.Player.attackCooldown();
+      return true;
+    }
     let projFired = false;
     if (_def && _def.proj) {
       const pj = _def.proj;

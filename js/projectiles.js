@@ -116,8 +116,53 @@ Game.Projectiles = (function () {
     }
   }
 
+  // 渦召喚（渦の杖など）: 標的点に渦を生み、範囲内の敵を中心へ引き寄せつつ周期的に小ダメージ
+  const vortices = [];
+  function callVortex(tx, ty, dmg, radiusTiles, dur) {
+    vortices.push({ x: tx, y: ty, radius: (radiusTiles || 3) * TS, dmg: dmg || 6, life: dur || 60, maxLife: dur || 60, tk: 0 });
+  }
+  function updateVortices() {
+    const mobs = Game.state.mobs;
+    for (let i = vortices.length - 1; i >= 0; i--) {
+      const v = vortices[i]; v.life--; v.tk++;
+      for (let m = 0; m < mobs.length; m++) {
+        const mo = mobs[m]; if (mo.def.friendly || mo.def.boss) continue; // ボスは引き寄せ耐性
+        const dx = v.x - mo.x, dy = v.y - mo.y, d = Math.hypot(dx, dy);
+        if (d <= v.radius && d > 4) { mo.knockX = (dx / d) * 2.6; mo.knockY = (dy / d) * 2.6; } // 中心へ引き寄せ(壁尊重のknock経由)
+      }
+      if (v.tk % 10 === 0) { // 周期ダメージ
+        for (let m = 0; m < mobs.length; m++) {
+          const mo = mobs[m]; if (mo.def.friendly) continue;
+          if (Math.hypot(v.x - mo.x, v.y - mo.y) <= v.radius) {
+            if (Game.Net.isConnected() && !Game.Net.host) Game.Net.sendHit(mo.id, v.dmg, v.x, v.y);
+            else Game.Mobs.damageMob(mo, v.dmg, v.x, v.y);
+          }
+        }
+      }
+      Game.Render.spawnParticles(v.x + (Math.random() - 0.5) * v.radius, v.y + (Math.random() - 0.5) * v.radius, '#b66ad0', 1);
+      if (v.life <= 0) vortices.splice(i, 1);
+    }
+  }
+  function drawVortices(ctx) {
+    for (let i = 0; i < vortices.length; i++) {
+      const v = vortices[i]; const s = Game.Camera.worldToScreen(v.x, v.y);
+      const z = Game.Camera.zoom ? Game.Camera.zoom() : 1;
+      const t = Game.state.tick;
+      ctx.save();
+      ctx.strokeStyle = 'rgba(160,90,210,0.55)'; ctx.lineWidth = 2;
+      for (let k = 0; k < 3; k++) {
+        const rad = v.radius * z * (0.35 + k * 0.3);
+        const a = t * 0.15 + k * 2;
+        ctx.beginPath(); ctx.arc(s.x, s.y, rad, a, a + Math.PI * 1.4); ctx.stroke();
+      }
+      ctx.fillStyle = 'rgba(180,110,230,0.25)'; ctx.beginPath(); ctx.arc(s.x, s.y, 5 * z, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+  }
+
   function update() {
     updateStrikes();
+    updateVortices();
     const arr = Game.state.projectiles;
     if (!arr || !arr.length) return;
     const mobs = Game.state.mobs;
@@ -171,6 +216,7 @@ Game.Projectiles = (function () {
 
   function draw(ctx) {
     drawStrikes(ctx);
+    drawVortices(ctx);
     const arr = Game.state.projectiles;
     if (!arr || !arr.length) return;
     for (let i = 0; i < arr.length; i++) {
@@ -211,5 +257,5 @@ Game.Projectiles = (function () {
     }
   }
 
-  return { spawn, fire, enemyShoot, update, draw, explode, callMeteor };
+  return { spawn, fire, enemyShoot, update, draw, explode, callMeteor, callVortex };
 })();

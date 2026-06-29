@@ -460,8 +460,8 @@ Game.Player = (function () {
   function tryStaff(sel) {
     const p = Game.state.player;
     if (p.attackCd > 0) return;
-    // 流星召喚の杖は近接攻撃ロジック側(Combat)で標的頭上に流星を落とす
-    if (sel.strike) { Game.Combat.tryAttack(); return; }
+    // 流星/渦召喚の杖は近接攻撃ロジック側(Combat)で標的に効果を生む
+    if (sel.strike || sel.vortex) { Game.Combat.tryAttack(); return; }
     Game.Projectiles.fire(sel.fireDmg || 12, sel.magic || 'fire');
     p.attackCd = 16;
     Game.Render.spawnParticles(p.x, p.y, sel.magic === 'frost' ? '#9fd8ff' : '#ff7a3c', 4);
