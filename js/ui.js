@@ -1026,6 +1026,8 @@ Game.UI = (function () {
   let craftCatFilter = 'all';
   let craftSearch = '';
   let craftCanOnly = false;
+  let craftPage = 0;
+  const CRAFT_PAGE_SIZE = 12; // 1ページの行数(横ページ送り)
 
   // デバッグコマンド: 任意の敵召喚・アイテム付与など
   let cheatUnlocked = false;
@@ -1104,16 +1106,16 @@ Game.UI = (function () {
     // 検索＋「作成可能のみ」ツール
     const tools = document.createElement('div'); tools.className = 'craft-tools';
     const search = document.createElement('input'); search.type = 'text'; search.className = 'craft-search'; search.placeholder = '🔍 レシピ検索…'; search.value = craftSearch;
-    search.addEventListener('input', function () { craftSearch = search.value; refreshCraftRows(); });
+    search.addEventListener('input', function () { craftSearch = search.value; craftPage = 0; refreshCraftRows(); });
     const onlyBtn = document.createElement('button'); onlyBtn.className = 'craft-only' + (craftCanOnly ? ' on' : ''); onlyBtn.textContent = '作成可能のみ';
-    onlyBtn.addEventListener('click', function () { craftCanOnly = !craftCanOnly; refreshCraft(); });
+    onlyBtn.addEventListener('click', function () { craftCanOnly = !craftCanOnly; craftPage = 0; refreshCraft(); });
     tools.appendChild(search); tools.appendChild(onlyBtn);
     el.craftList.appendChild(tools);
     // タブ
     const tabs = document.createElement('div'); tabs.className = 'craft-tabs';
     const mkTab = function (key, label) {
       const t = document.createElement('button'); t.className = 'craft-tab' + (craftCatFilter === key ? ' on' : ''); t.textContent = label;
-      t.addEventListener('click', function () { craftCatFilter = key; refreshCraft(); }); return t;
+      t.addEventListener('click', function () { craftCatFilter = key; craftPage = 0; refreshCraft(); }); return t;
     };
     tabs.appendChild(mkTab('all', 'すべて'));
     CRAFT_CATS.forEach(function (c) { tabs.appendChild(mkTab(c[0], c[1].replace(/ .*/, ''))); });
@@ -1130,31 +1132,69 @@ Game.UI = (function () {
     let list = Game.Crafting.availableList();
     if (craftCanOnly) list = list.filter(function (e) { return e.can; });
     if (q) list = list.filter(function (e) { const o = Game.ITEMS[e.recipe.out.id]; return o && o.name.indexOf(q) >= 0; });
-    let shown = 0;
+    // カテゴリ順に平坦化（作成可能を上に）。各行に所属カテゴリラベルを保持
+    const flat = [];
     CRAFT_CATS.forEach(function (cat) {
       if (craftCatFilter !== 'all' && craftCatFilter !== cat[0]) return;
       const rows = list.filter(function (e) { return craftCategory(Game.ITEMS[e.recipe.out.id]) === cat[0]; });
       if (!rows.length) return;
-      rows.sort(function (a, b) { return (b.can ? 1 : 0) - (a.can ? 1 : 0); }); // 作成可能を上に
-      const head = document.createElement('div'); head.className = 'craft-cat-head'; head.textContent = cat[1] + '（' + rows.length + '）';
-      box.appendChild(head);
-      rows.forEach(function (entry) {
-        shown++;
-        const r = entry.recipe, out = Game.ITEMS[r.out.id];
-        const row = document.createElement('div');
-        row.className = 'craft-row' + (entry.can ? '' : ' disabled');
-        let ing = '';
-        for (const id in r.in) ing += (Game.ITEMS[id] ? Game.ITEMS[id].name : id) + '×' + r.in[id] + ' ';
-        const station = r.station ? ' <em>(' + (r.station === 'furnace' ? 'かまど' : r.station === 'campfire' ? '焚き火' : r.station === 'enchant_table' ? 'エンチャント台' : '作業台') + ')</em>' : '';
-        const iurl = Game.Icons && Game.Icons.dataURL(r.out.id, null);
-        row.innerHTML = (iurl ? '<span class="ci img" style="background-image:url(' + iurl + ')"></span>' : '<span class="ci" style="background:' + (out.color || '#888') + '"></span>') +
-          '<span class="cn">' + out.name + (r.out.n > 1 ? '×' + r.out.n : '') + station + '</span>' +
-          '<span class="cin">' + ing + '</span>';
-        row.addEventListener('click', function () { if (Game.Crafting.craft(r)) refreshInventory(); });
-        box.appendChild(row);
-      });
+      rows.sort(function (a, b) { return (b.can ? 1 : 0) - (a.can ? 1 : 0); });
+      rows.forEach(function (entry) { flat.push({ entry: entry, cat: cat[1] }); });
     });
-    if (!shown) { const e = document.createElement('div'); e.className = 'craft-cat-head'; e.textContent = '該当するレシピが無い'; box.appendChild(e); }
+    if (!flat.length) { const e = document.createElement('div'); e.className = 'craft-cat-head'; e.textContent = '該当するレシピが無い'; box.appendChild(e); return; }
+    // ページング（横タップ/スワイプで遷移）
+    const pages = Math.max(1, Math.ceil(flat.length / CRAFT_PAGE_SIZE));
+    if (craftPage >= pages) craftPage = pages - 1;
+    if (craftPage < 0) craftPage = 0;
+    const start = craftPage * CRAFT_PAGE_SIZE;
+    const slice = flat.slice(start, start + CRAFT_PAGE_SIZE);
+    let lastCat = null;
+    slice.forEach(function (item) {
+      if (item.cat !== lastCat) { lastCat = item.cat; const head = document.createElement('div'); head.className = 'craft-cat-head'; head.textContent = item.cat; box.appendChild(head); }
+      const entry = item.entry, r = entry.recipe, out = Game.ITEMS[r.out.id];
+      const row = document.createElement('div');
+      row.className = 'craft-row' + (entry.can ? '' : ' disabled');
+      let ing = '';
+      for (const id in r.in) ing += (Game.ITEMS[id] ? Game.ITEMS[id].name : id) + '×' + r.in[id] + ' ';
+      const station = r.station ? ' <em>(' + (r.station === 'furnace' ? 'かまど' : r.station === 'campfire' ? '焚き火' : r.station === 'enchant_table' ? 'エンチャント台' : '作業台') + ')</em>' : '';
+      const iurl = Game.Icons && Game.Icons.dataURL(r.out.id, null);
+      row.innerHTML = (iurl ? '<span class="ci img" style="background-image:url(' + iurl + ')"></span>' : '<span class="ci" style="background:' + (out.color || '#888') + '"></span>') +
+        '<span class="cn">' + out.name + (r.out.n > 1 ? '×' + r.out.n : '') + station + '</span>' +
+        '<span class="cin">' + ing + '</span>';
+      row.addEventListener('click', function () { if (Game.Crafting.craft(r)) refreshInventory(); });
+      box.appendChild(row);
+    });
+    // ページャ（◀ ページ X/Y ▶）
+    if (pages > 1) {
+      const pager = document.createElement('div'); pager.className = 'craft-pager';
+      pager.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:14px;padding:8px 4px 2px;user-select:none';
+      const prev = document.createElement('button'); prev.className = 'craft-page-btn'; prev.textContent = '◀'; prev.disabled = craftPage === 0;
+      const lab = document.createElement('span'); lab.style.cssText = 'font-size:.86rem;color:#cbd6e6;min-width:84px;text-align:center'; lab.textContent = 'ページ ' + (craftPage + 1) + ' / ' + pages;
+      const next = document.createElement('button'); next.className = 'craft-page-btn'; next.textContent = '▶'; next.disabled = craftPage >= pages - 1;
+      const mkStyle = function (btn) { btn.style.cssText = 'min-width:48px;min-height:38px;font-size:1.1rem;border-radius:8px;border:1px solid #33455e;background:' + (btn.disabled ? '#1a2436' : '#22304a') + ';color:' + (btn.disabled ? '#4a5a70' : '#e8edf2') + ';'; };
+      mkStyle(prev); mkStyle(next);
+      prev.addEventListener('click', function () { if (craftPage > 0) { craftPage--; refreshCraftRows(); } });
+      next.addEventListener('click', function () { if (craftPage < pages - 1) { craftPage++; refreshCraftRows(); } });
+      pager.appendChild(prev); pager.appendChild(lab); pager.appendChild(next);
+      box.appendChild(pager);
+    }
+    // 横スワイプでページ遷移（スマホ最優先）
+    bindCraftSwipe(box, pages);
+  }
+
+  // クラフト一覧の横スワイプ（左で次ページ・右で前ページ）
+  function bindCraftSwipe(box, pages) {
+    if (box._swipeBound) return; box._swipeBound = true;
+    let sx = 0, sy = 0, tracking = false;
+    box.addEventListener('touchstart', function (e) { if (e.touches.length !== 1) return; sx = e.touches[0].clientX; sy = e.touches[0].clientY; tracking = true; }, { passive: true });
+    box.addEventListener('touchend', function (e) {
+      if (!tracking) return; tracking = false;
+      const t = e.changedTouches[0]; const dx = t.clientX - sx, dy = t.clientY - sy;
+      if (Math.abs(dx) > 56 && Math.abs(dx) > Math.abs(dy) * 1.4) {
+        if (dx < 0 && craftPage < pages - 1) { craftPage++; refreshCraftRows(); }
+        else if (dx > 0 && craftPage > 0) { craftPage--; refreshCraftRows(); }
+      }
+    }, { passive: true });
   }
 
   function refreshAll() { refreshHotbar(); refreshStats(); refreshInventory(); refreshChest(); refreshWorld(); }
