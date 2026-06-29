@@ -778,6 +778,9 @@ Game.Mobs = (function () {
       // 影
       ctx.fillStyle = 'rgba(0,0,0,0.25)';
       ctx.beginPath(); ctx.ellipse(0, r + hop, r, r * 0.4, 0, 0, Math.PI * 2); ctx.fill();
+      // アイドルの呼吸: ごく僅かな縦伸縮で生命感(足元基準でスクワッシュ&ストレッチ)
+      const breathe = 1 + Math.sin(m.hopPhase * 0.4 + (m.wobble || 0)) * 0.045;
+      ctx.translate(0, r); ctx.scale(2 - breathe, breathe); ctx.translate(0, -r);
       // 本体（形状バリエーション）。状態異常で色味、個体差で明暗
       let bodyCol = m.tint ? shadeHex(m.def.color, m.tint) : m.def.color;
       if (m.dot) {
