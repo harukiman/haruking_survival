@@ -386,8 +386,18 @@ Game.Cutscene = (function () {
     if (mode === 'rise') { sy = cy + (1 - t) * 60; ctx.globalAlpha = Math.min(1, t * 1.6); }
     else if (mode === 'fall') { sc *= (1 - t * 0.2); ctx.globalAlpha = 1 - t * 0.6; if (t > 0.3 && Math.random() < 0.5) ctx.translate((Math.random() - 0.5) * 8, 0); }
     else if (mode === 'win') { ctx.globalAlpha = Math.max(0, 0.5 - t * 0.5); }
+    else if (mode === 'clash') { sc *= (1 + t * 0.35); sy = cy - t * 18; } // 開戦: 踏み込んで迫る
     drawBossSilhouette(d, cx, sy, sc, mode);
     ctx.globalAlpha = 1;
+    // 開戦の咆哮: 斬撃の弧＋終端で白フラッシュ(→戦闘へ)
+    if (mode === 'clash') {
+      ctx.save(); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 7 * (1 - t); ctx.globalAlpha = Math.max(0, 1 - t * 1.25); ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.arc(cx, cy, 70 + t * 160, -0.7, 0.7); ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx, cy, 70 + t * 160, Math.PI - 0.7, Math.PI + 0.7); ctx.stroke(); ctx.restore();
+      // 衝撃の輪
+      ctx.strokeStyle = d.col; ctx.globalAlpha = Math.max(0, 0.8 - t); ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(cx, cy, t * 220, 0, 7); ctx.stroke(); ctx.globalAlpha = 1;
+      if (t > 0.72) { ctx.fillStyle = 'rgba(255,255,255,' + ((t - 0.72) / 0.28) * 0.9 + ')'; ctx.fillRect(0, 0, W, H); }
+    }
     // 撃破時の砕け粒子/勝利の光
     if (mode === 'fall') { ctx.fillStyle = d.col; for (let i = 0; i < 30; i++) { const a = i * 0.7 + now * 0.004; const r = t * 160; ctx.globalAlpha = 1 - t; ctx.fillRect(cx + Math.cos(a) * r, cy + Math.sin(a) * r, 3, 3); } ctx.globalAlpha = 1; }
     if (mode === 'win') { const g = ctx.createRadialGradient(cx, cy, 4, cx, cy, 160); g.addColorStop(0, 'rgba(255,255,255,' + (0.3 + t * 0.4) + ')'); g.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, 160, 0, 7); ctx.fill(); }
@@ -402,16 +412,33 @@ Game.Cutscene = (function () {
   function playBossIntro(type, cb) {
     const d = BOSS[type] || BOSS.sovereign;
     runScenes([
-      { d: 2800, draw: function (t, n) { bossScene(t, n, d, 'rise'); }, text: d.intro[0], shake: 0.35, onEnter: function () { Game.Audio.cineStart('tense'); Game.Audio.cue('boom'); } },
-      { d: 3000, draw: function (t, n) { bossScene(t, n, d, 'name'); }, text: d.intro[1], shake: 0.15, onEnter: function () { Game.Audio.cue('riser'); } },
+      { d: 3300, draw: function (t, n) { bossScene(t, n, d, 'rise'); }, text: d.intro[0], shake: 0.35, onEnter: function () { Game.Audio.cineStart('tense'); Game.Audio.cue('boom'); } },
+      { d: 3500, draw: function (t, n) { bossScene(t, n, d, 'name'); }, text: d.intro[1], shake: 0.15, onEnter: function () { Game.Audio.cue('riser'); } },
+      { d: 2000, draw: function (t, n) { bossScene(t, n, d, 'clash'); }, text: '——いざ、尋常に。', shake: 0.6, onEnter: function () { Game.Audio.cue('impact'); Game.Audio.cue('boom'); } },
     ], cb);
   }
   function playBossOutro(type, cb) {
     const d = BOSS[type] || BOSS.sovereign;
     runScenes([
-      { d: 2600, draw: function (t, n) { bossScene(t, n, d, 'fall'); }, text: d.outro[0], shake: 0.6, onEnter: function () { Game.Audio.cineStart('heroic'); Game.Audio.cue('impact'); } },
-      { d: 2800, draw: function (t, n) { bossScene(t, n, d, 'win'); }, text: d.outro[1], onEnter: function () { Game.Audio.cue('choir'); Game.Audio.cue('shimmer'); } },
+      { d: 3000, draw: function (t, n) { bossScene(t, n, d, 'fall'); }, text: d.outro[0], shake: 0.6, onEnter: function () { Game.Audio.cineStart('heroic'); Game.Audio.cue('impact'); } },
+      { d: 3400, draw: function (t, n) { bossScene(t, n, d, 'win'); }, text: d.outro[1], onEnter: function () { Game.Audio.cue('choir'); Game.Audio.cue('shimmer'); } },
+      { d: 2600, draw: function (t, n) { bossAftermath(t, n, d); }, text: '静寂が戻り、その力はあなたのものとなった。', onEnter: function () { Game.Audio.cue('swell'); } },
     ], cb);
+  }
+  // 撃破後の余韻: 静かな舞台に、得た力の輝きが残る
+  function bossAftermath(t, now, d) {
+    const bg = ctx.createRadialGradient(W / 2, H * 0.45, 10, W / 2, H * 0.45, Math.max(W, H) * 0.7);
+    bg.addColorStop(0, shadeHex(d.col, 0.18)); bg.addColorStop(1, '#04050a'); ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+    const cx = W / 2, cy = H * 0.45;
+    // 立ち昇る光の粒
+    for (let i = 0; i < 40; i++) { const x = cx + Math.sin(i * 1.7 + now * 0.001) * (40 + (i % 5) * 14); const y = cy + 120 - ((i * 31 + now * 0.05) % 240); ctx.globalAlpha = 0.3 + (i % 3) * 0.2; ctx.fillStyle = i % 2 ? '#fff' : d.col; ctx.fillRect(x, y, 2, 2); }
+    ctx.globalAlpha = 1;
+    // 中央の戦利の輝き
+    const pulse = 0.5 + Math.sin(now * 0.004) * 0.5;
+    const g = ctx.createRadialGradient(cx, cy, 3, cx, cy, 70 + pulse * 20); g.addColorStop(0, 'rgba(255,250,220,' + (0.5 + t * 0.4) + ')'); g.addColorStop(1, 'rgba(255,250,220,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, 90, 0, 7); ctx.fill();
+    ctx.fillStyle = '#fff7d8'; ctx.save(); ctx.translate(cx, cy); ctx.rotate(Math.PI / 4);
+    const s = 7 + pulse * 2; ctx.fillRect(-s, -s, s * 2, s * 2); ctx.restore();
   }
 
   function runScenes(scenes, cb) {
