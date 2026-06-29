@@ -7,6 +7,7 @@ Game.UI = (function () {
   let mmCtx = null;
   let bmCtx = null, bigMapOpen = false;
   let invSelected = -1;
+  const pendStat = { str: 0, vit: 0, dex: 0 }; // スキル振りの未確定分(確定で反映)
 
   function init() {
     el.hud = document.getElementById('hud');
@@ -353,9 +354,20 @@ Game.UI = (function () {
       h += '</div>';
     }
     const stats = [['str', '力 STR', '攻撃 +1 / pt'], ['vit', '体 VIT', '最大HP +5 / pt'], ['dex', '技 DEX', '攻撃速度UP / pt']];
+    const pendTotal = pendStat.str + pendStat.vit + pendStat.dex;
+    const remain = (p.skillPoints || 0) - pendTotal; // 確定前の残りポイント
     stats.forEach(function (s) {
-      h += '<div class="stat-row"><span class="sname">' + s[1] + ' <em>' + s[2] + '</em></span><span class="sval">' + (p[s[0]] || 0) + '</span><button class="stat-plus" data-stat="' + s[0] + '"' + ((p.skillPoints || 0) <= 0 ? ' disabled' : '') + '>＋</button></div>';
+      const cur = (p[s[0]] || 0) + pendStat[s[0]];
+      const pd = pendStat[s[0]];
+      h += '<div class="stat-row"><span class="sname">' + s[1] + ' <em>' + s[2] + '</em></span>' +
+        '<button class="stat-minus" data-stat="' + s[0] + '"' + (pd <= 0 ? ' disabled' : '') + '>－</button>' +
+        '<span class="sval">' + cur + (pd ? ' <span style="color:#7fe0a0;font-size:.8em">(+' + pd + ')</span>' : '') + '</span>' +
+        '<button class="stat-plus" data-stat="' + s[0] + '"' + (remain <= 0 ? ' disabled' : '') + '>＋</button></div>';
     });
+    if (pendTotal > 0) {
+      h += '<div class="stat-row" style="justify-content:flex-end;gap:8px"><span style="color:#9fb6d0;font-size:.82rem;margin-right:auto">未確定 ' + pendTotal + 'P（残 ' + remain + '）</span>' +
+        '<button id="stat-cancel" class="map-btn">取消</button><button id="stat-confirm" class="map-btn" style="background:#2a6a3a;border-color:#3f9a5a">確定</button></div>';
+    }
     const totalSk = Game.SKILL_TREE.length;
     const ownedSk = p.skills ? Object.keys(p.skills).filter(function (k) { return p.skills[k]; }).length : 0;
     h += '<h2>スキルツリー <span style="color:#ffe27a;font-size:.85rem">' + ownedSk + ' / ' + totalSk + '</span><span style="color:#7a8494;font-size:.74rem">　系統名をタップで開閉</span></h2>';
@@ -416,7 +428,22 @@ Game.UI = (function () {
       h += '</div>';
     }
     body.innerHTML = h;
-    body.querySelectorAll('.stat-plus').forEach(function (b) { b.addEventListener('click', function () { Game.Player.spendStat(b.getAttribute('data-stat')); renderStats(); }); });
+    // 保留方式: +/- で未確定に積み、確定でまとめて反映(確定前は調整自由)
+    body.querySelectorAll('.stat-plus').forEach(function (b) { b.addEventListener('click', function () {
+      const st = b.getAttribute('data-stat');
+      if (((p.skillPoints || 0) - (pendStat.str + pendStat.vit + pendStat.dex)) > 0) { pendStat[st]++; Game.Audio.play('cursor'); renderStats(); }
+    }); });
+    body.querySelectorAll('.stat-minus').forEach(function (b) { b.addEventListener('click', function () {
+      const st = b.getAttribute('data-stat');
+      if (pendStat[st] > 0) { pendStat[st]--; Game.Audio.play('cursor'); renderStats(); }
+    }); });
+    { const cf = document.getElementById('stat-confirm'); if (cf) cf.addEventListener('click', function () {
+      let applied = false;
+      ['str', 'vit', 'dex'].forEach(function (st) { for (let k = 0; k < pendStat[st]; k++) { if (Game.Player.spendStat(st)) applied = true; } pendStat[st] = 0; });
+      if (applied) { Game.Audio.play('craft'); toast('スキルを確定しました'); }
+      renderStats();
+    }); }
+    { const cc = document.getElementById('stat-cancel'); if (cc) cc.addEventListener('click', function () { pendStat.str = pendStat.vit = pendStat.dex = 0; Game.Audio.play('select'); renderStats(); }); }
     body.querySelectorAll('.sk-node[data-skill]').forEach(function (b) { b.addEventListener('click', function () { const id = b.getAttribute('data-skill'); if (Game.Player.unlockSkill(id)) renderStats(); }); });
     body.querySelectorAll('.sk-branch-name[data-br]').forEach(function (b) { b.addEventListener('click', function () { const k = b.getAttribute('data-br'); skOpen[k] = !skOpen[k]; renderStats(); }); });
   }
