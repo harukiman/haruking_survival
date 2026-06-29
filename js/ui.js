@@ -171,27 +171,43 @@ Game.UI = (function () {
   }
 
   // ===== 旅商人トレード =====
-  const TRADE = [
+  // 常設の基本在庫
+  const TRADE_BASE = [
     { id: 'bandage', n: 3, price: 1 }, { id: 'antidote', n: 2, price: 1 },
+    { id: 'ammo_9mm', n: 16, price: 1 }, { id: 'ammo_762', n: 12, price: 2 },
+    { id: 'carrot_seeds', n: 3, price: 1 }, { id: 'bounty_board', n: 1, price: 4 },
+  ];
+  // 来訪ごとに一部が並ぶ品（rare は低確率）
+  const TRADE_POOL = [
     { id: 'strength_potion', n: 1, price: 2 }, { id: 'swift_potion', n: 1, price: 2 },
     { id: 'iron_potion', n: 1, price: 2 }, { id: 'regen_potion', n: 1, price: 2 },
-    { id: 'ammo_9mm', n: 16, price: 1 }, { id: 'ammo_762', n: 12, price: 2 },
     { id: 'energy_cell', n: 10, price: 2 }, { id: 'rocket_ammo', n: 2, price: 3 },
-    { id: 'bomb', n: 2, price: 2 },
-    { id: 'carrot_seeds', n: 3, price: 1 }, { id: 'pumpkin_seeds', n: 2, price: 1 }, { id: 'tomato_seeds', n: 3, price: 1 },
-    { id: 'xp_orb', n: 1, price: 3 }, { id: 'wisdom_tome', n: 1, price: 8 },
-    { id: 'expand_pouch', n: 1, price: 6 },
-    { id: 'bounty_board', n: 1, price: 4 },
-    { id: 'ring_crit', n: 1, price: 10 }, { id: 'heart_regen', n: 1, price: 10 },
-    { rand: true, price: 4, label: '謎の装備（ランダム）' },
+    { id: 'bomb', n: 2, price: 2 }, { id: 'poison_flask', n: 2, price: 2 }, { id: 'flash_bomb', n: 2, price: 2 },
+    { id: 'pumpkin_seeds', n: 2, price: 1 }, { id: 'tomato_seeds', n: 3, price: 1 },
+    { id: 'banner', n: 1, price: 1 }, { id: 'brazier', n: 1, price: 2 }, { id: 'barrel', n: 1, price: 1 }, { id: 'potted_plant', n: 1, price: 1 },
+    { id: 'glow_spore', n: 3, price: 2 }, { id: 'obsidian', n: 2, price: 3 }, { id: 'sulfur', n: 3, price: 2 }, { id: 'luminous_cap', n: 3, price: 2 },
+    { id: 'xp_orb', n: 1, price: 3 },
+    // レア枠
+    { id: 'wisdom_tome', n: 1, price: 8, rare: true }, { id: 'expand_pouch', n: 1, price: 6, rare: true },
+    { id: 'ring_crit', n: 1, price: 10, rare: true }, { id: 'heart_regen', n: 1, price: 10, rare: true },
+    { id: 'amulet_swift', n: 1, price: 10, rare: true }, { id: 'siege_pick', n: 1, price: 14, rare: true },
   ];
-  function openTrade() { const sc = document.getElementById('trade-screen'); if (!sc) return; sc.classList.remove('hidden'); Game.state.paused = true; refreshTrade(); }
+  let tradeStock = [];
+  function rollTradeStock() {
+    const pool = TRADE_POOL.slice();
+    for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp; }
+    const picks = [];
+    for (let i = 0; i < pool.length && picks.length < 7; i++) { if (pool[i].rare && Math.random() > 0.4) continue; picks.push(pool[i]); }
+    tradeStock = TRADE_BASE.concat(picks);
+    tradeStock.push({ rand: true, price: 4, label: '謎の装備（ランダム）' });
+  }
+  function openTrade() { const sc = document.getElementById('trade-screen'); if (!sc) return; sc.classList.remove('hidden'); Game.state.paused = true; rollTradeStock(); refreshTrade(); }
   function closeTrade() { const sc = document.getElementById('trade-screen'); if (sc) sc.classList.add('hidden'); Game.state.paused = false; }
   function refreshTrade() {
     const body = document.getElementById('trade-body'); if (!body) return;
     const gold = Game.Inventory.count('gold_bar');
-    let h = '<p class="hint">所持 金塊 <b style="color:#e8c54a">' + gold + '</b>　欲しい品を選べ。</p><div class="trade-list">';
-    TRADE.forEach(function (t, i) {
+    let h = '<p class="hint">所持 金塊 <b style="color:#e8c54a">' + gold + '</b>　欲しい品を選べ。（品揃えは来訪ごとに変わる）</p><div class="trade-list">';
+    tradeStock.forEach(function (t, i) {
       const can = gold >= t.price;
       const name = t.rand ? t.label : (Game.ITEMS[t.id].name + (t.n > 1 ? ' ×' + t.n : ''));
       const url = !t.rand && Game.Icons ? Game.Icons.dataURL(t.id, null) : null;
@@ -204,7 +220,7 @@ Game.UI = (function () {
     body.querySelectorAll('.trade-row[data-i]').forEach(function (btn) { btn.addEventListener('click', function () { buyTrade(parseInt(btn.getAttribute('data-i'), 10)); }); });
   }
   function buyTrade(i) {
-    const t = TRADE[i]; if (!t) return;
+    const t = tradeStock[i]; if (!t) return;
     if (Game.Inventory.count('gold_bar') < t.price) return;
     Game.Inventory.remove('gold_bar', t.price);
     if (t.rand) {
