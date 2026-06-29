@@ -549,6 +549,8 @@ Game.Mobs = (function () {
     }
     // 大ダメージ/ボス被弾でも軽くシェイク
     if (!crit && (m.def.boss || dmg >= 16)) Game.Render.shake(m.def.boss ? 5 : 4);
+    // ヒットストップ: 会心/重い一撃で一瞬凍結し打撃の重みを演出(極短)
+    if (crit || dmg >= 22 || m.def.boss) Game.state.hitstop = Math.max(Game.state.hitstop || 0, crit ? 2 : 1);
     const dx = m.x - fromX, dy = m.y - fromY, l = Math.hypot(dx, dy) || 1;
     const kb = crit ? 11 : 7; // クリはノックバック強調
     m.knockX = (dx / l) * kb; m.knockY = (dy / l) * kb;
