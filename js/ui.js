@@ -611,6 +611,7 @@ Game.UI = (function () {
       toggle('screenShake', '📳 画面のゆれ') +
       toggle('lowHpWarn', '🩸 低HP警告') +
       toggle('ambient', '🌿 環境演出') +
+      toggle('homeCompass', '🧭 帰路コンパス') +
       toggle('showFps', '📈 FPS表示') +
       // ===== 操作ヘルプ(折りたたみ) =====
       '<div class="opt-help"><div class="opt-help-head" id="opt-help-head">' + (optHelpOpen ? '▼' : '▶') + ' ❔ 操作ヘルプ</div>' +

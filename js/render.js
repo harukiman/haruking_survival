@@ -90,7 +90,38 @@ Game.Render = (function () {
     drawBossVignette(ctx);
     drawCursor(ctx);
     drawDanger(ctx);
+    drawHomeCompass(ctx);
     drawFlash(ctx);
+  }
+
+  // 帰路コンパス: 拠点(spawn/ベッド)が遠いとき、画面端に方向矢印＋距離。広大な世界で迷子防止
+  function drawHomeCompass(ctx) {
+    if (Game.Settings && Game.Settings.get('homeCompass') === false) return;
+    const st = Game.state; if (!st || st.paused) return;
+    if (st.worldName !== 'light' || !st.spawn) return; // 拠点は光の世界
+    const TS = Game.CFG.TILE_SIZE, p = st.player;
+    const hx = st.spawn.tx * TS + TS / 2, hy = st.spawn.ty * TS + TS / 2;
+    const dx = hx - p.x, dy = hy - p.y;
+    const distTiles = Math.hypot(dx, dy) / TS;
+    if (distTiles < 18) return; // 近ければ非表示
+    const v = Game.view, sc = Game.Camera.worldToScreen(hx, hy), margin = 34;
+    ctx.save();
+    if (sc.x >= margin && sc.x <= v.w - margin && sc.y >= margin && sc.y <= v.h - margin) {
+      ctx.globalAlpha = 0.8; ctx.fillStyle = '#7fe0a0'; ctx.strokeStyle = 'rgba(0,0,0,0.55)'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(sc.x, sc.y, 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    } else {
+      const cx = v.w / 2, cy = v.h / 2, ddx = sc.x - cx, ddy = sc.y - cy;
+      const ex = v.w / 2 - margin, ey = v.h / 2 - margin;
+      const scale = Math.min(ex / Math.max(Math.abs(ddx), 1), ey / Math.max(Math.abs(ddy), 1));
+      const ax = cx + ddx * scale, ay = cy + ddy * scale, ang = Math.atan2(ddy, ddx);
+      ctx.translate(ax, ay); ctx.rotate(ang);
+      ctx.globalAlpha = 0.72; ctx.fillStyle = '#7fe0a0'; ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(11, 0); ctx.lineTo(-7, -8); ctx.lineTo(-7, 8); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.rotate(-ang);
+      ctx.globalAlpha = 0.85; ctx.fillStyle = '#cdeede'; ctx.font = '9px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('拠点 ' + Math.round(distTiles), 0, -14);
+    }
+    ctx.restore();
   }
 
   // 環境アンビエントパーティクル（蛍/葉/砂塵/影の粒子）。軽量・低透明度
