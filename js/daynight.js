@@ -65,7 +65,7 @@ Game.DayNight = (function () {
     const hours = (Game.state.timeOfDay * 24) % 24;
     const h = Math.floor(hours);
     const m = Math.floor((hours - h) * 60);
-    const icon = isNight() ? '🌙 ' : '☀ ';
+    const icon = Game.state.bloodMoon ? '🌑 ' : isNight() ? '🌙 ' : '☀ ';
     return icon + (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m;
   }
 
