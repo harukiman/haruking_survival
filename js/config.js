@@ -62,7 +62,7 @@ Game.OBJ = {
   DEAD_TREE:141, POISON_MUSHROOM:142,
   OBSIDIAN:143, SULFUR_VENT:144,
   BANNER:145, BRAZIER:146, BARREL:147, POTTED_PLANT:148,
-  GIANT_MUSHROOM:149, GLOW_SHROOM:150,
+  GIANT_MUSHROOM:149, GLOW_SHROOM:150, WISH_ALTAR:151,
 };
 
 // 地面の色（手続き描画のベース）
@@ -121,6 +121,7 @@ Game.SOLID_TILE = {
 // 発光オブジェクトの光量（lighting で使用）
 Game.LIGHT_LEVEL = {
   [Game.OBJ.TORCH]: 7,
+  [Game.OBJ.WISH_ALTAR]: 5,
   [Game.OBJ.CAMPFIRE]: 9,
   [Game.OBJ.LANTERN]: 10,
   [Game.OBJ.FURNACE]: 5,
@@ -189,6 +190,7 @@ Game.OBJ_META = {
   [Game.OBJ.STELA]:     { name:'石碑', solid:true, mineable:false, tool:null, tier:0, hp:999, drops:[], render:'stela', lore:true },
   // 影の祭壇（ボス召喚）
   [Game.OBJ.SHADOW_ALTAR]:{ name:'影の祭壇', solid:true, mineable:true, tool:'pickaxe', tier:2, hp:12, light:4, drops:[{item:'shadow_altar', n:[1,1]}], render:'altar', altar:true },
+  [Game.OBJ.WISH_ALTAR]:  { name:'古の祭壇', solid:true, mineable:false, tool:null, tier:0, hp:999, light:5, drops:[], render:'wishaltar', wishAltar:true },
   // 共鳴遺跡: 封印壁(破壊不可)・共鳴核(影で破壊→光の封印解除)・宝箱
   [Game.OBJ.SEAL_WALL]:  { name:'封印壁', solid:true, mineable:false, tool:null, tier:0, hp:999, drops:[], render:'seal' },
   [Game.OBJ.RESONANCE_CORE]:{ name:'共鳴核', solid:true, mineable:true, tool:'pickaxe', tier:2, hp:16, light:6, drops:[{item:'shadow_crystal', n:[1,2]}], render:'rcore', resonator:true },

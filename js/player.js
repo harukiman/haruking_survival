@@ -256,6 +256,31 @@ Game.Player = (function () {
 
   // 対話/設置/使用
   // 「開く/使う」ボタン用: 近隣の対話可能オブジェクト(チェスト等)を探して開く。無ければ通常interact
+  // 古の祭壇: 触れると一時的な祝福(長時間バフ)を授かる。同じ祭壇は一定時間で再充填
+  const ALTAR_BLESSINGS = [
+    { type: 'strength', name: '力の祝福' },
+    { type: 'swiftness', name: '俊足の祝福' },
+    { type: 'ironskin', name: '守りの祝福' },
+    { type: 'regen_buff', name: '再生の祝福' },
+  ];
+  function activateAltar(tx, ty) {
+    const p = Game.state.player;
+    const now = Game.state.tick;
+    const d = Game.World.getTileData(tx, ty) || {};
+    const cd = 30 * 240; // 約8分で再充填
+    if (d.altarUsed && now - d.altarUsed < cd) { Game.UI.toast('古の祭壇の力はまだ満ちていない…'); return; }
+    d.altarUsed = now; Game.World.setTileData(tx, ty, d);
+    const bl = ALTAR_BLESSINGS[Math.floor(Math.random() * ALTAR_BLESSINGS.length)];
+    Game.Status.apply(bl.type, 30 * 180); // 3分
+    applyEquipStats();
+    Game.Render.spawnParticles(p.x, p.y - 6, '#ffe9a0', 18);
+    if (Game.Render.spawnFloat) Game.Render.spawnFloat(p.x, p.y - 20, bl.name, '#ffe9a0', true);
+    Game.Audio.play('relic_get');
+    Game.UI.toast('古の祭壇に触れた — ' + bl.name + 'を授かった');
+    if (Game.Achievements) Game.Achievements.unlock('blessed');
+    Game.UI.refreshAll();
+  }
+
   function useNearby() {
     const npc = Game.Mobs.nearbyNPC(2.2 * TS);
     if (npc) { Game.Mobs.interactNPC(npc); return; }
@@ -269,6 +294,7 @@ Game.Player = (function () {
       if (o === O.RIFT_ANCHOR) { Game.UI.openSharedChest(tx, ty); return; }
       if (o === O.BOUNTY_BOARD) { Game.Bounty.open(tx, ty); return; }
       if (o === O.STELA) { Game.Lore.read(tx, ty); return; }
+      if (o === O.WISH_ALTAR) { activateAltar(tx, ty); return; }
       if (o === O.SHADOW_ALTAR) { Game.Mobs.summonBoss(tx, ty); return; }
       if (o === O.ENCHANT_TABLE) { Game.UI.openEnchant(); return; }
       if (o === O.BED) { sleep(); return; }
@@ -294,6 +320,7 @@ Game.Player = (function () {
       }
       if (obj === Game.OBJ.RIFT_ANCHOR) { Game.UI.openSharedChest(t.tx, t.ty); return; }
       if (obj === Game.OBJ.STELA) { Game.Lore.read(t.tx, t.ty); return; }
+      if (obj === Game.OBJ.WISH_ALTAR) { activateAltar(t.tx, t.ty); return; }
       if (obj === Game.OBJ.BOUNTY_BOARD) { Game.Bounty.open(t.tx, t.ty); return; }
       if (obj === Game.OBJ.SHADOW_ALTAR) { Game.Mobs.summonBoss(t.tx, t.ty); return; }
       if (obj === Game.OBJ.ENCHANT_TABLE) { Game.UI.openEnchant(); return; }

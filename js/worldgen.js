@@ -54,6 +54,11 @@ Game.WorldGen = (function () {
       return { ground: ground, obj: O.STELA };
     }
 
+    // 古の祭壇（さらに低確率・陸地）— 触れると一時的な祝福を授かる探索報酬
+    if (walkableGround && U.hash3(wx, wy, seed + 24601) < 0.0004) {
+      return { ground: ground, obj: O.WISH_ALTAR };
+    }
+
     // ダンジョン（両世界・テーマ＆サイズ複数種: 遺跡/氷窟/砂の墳墓/溶岩工房）
     if (ground !== T.DEEP_WATER && ground !== T.WATER) {
       const DG = 74;

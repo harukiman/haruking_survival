@@ -349,6 +349,14 @@ Game.Tiles = (function () {
       x.fillStyle = '#3a2050'; x.fillRect(7, 7, TS - 14, 8);
       x.fillStyle = '#c060ff'; circle(x, TS/2, 12, 3);
       x.strokeStyle = '#7a30c0'; x.lineWidth = 2; x.strokeRect(5, 11, TS - 10, TS - 16);
+    } else if (r === 'wishaltar') {
+      // 古の祭壇: 明るい石の台座＋温かな光の球
+      x.fillStyle = '#cdbfa0'; x.fillRect(4, 12, TS - 8, TS - 16);
+      x.fillStyle = '#e6dcc2'; x.fillRect(6, 8, TS - 12, 8);
+      x.strokeStyle = '#9a8a66'; x.lineWidth = 2; x.strokeRect(5, 9, TS - 10, TS - 14);
+      x.fillStyle = 'rgba(255,224,150,0.35)'; circle(x, TS/2, 10, 7);
+      x.fillStyle = '#ffe9a0'; circle(x, TS/2, 10, 3.4);
+      x.fillStyle = '#fff7e0'; circle(x, TS/2, 9, 1.4);
     } else if (r === 'seal') {
       x.fillStyle = '#4a4458'; x.fillRect(1, 1, TS - 2, TS - 2);
       x.fillStyle = '#5a5470'; x.fillRect(4, 4, TS - 8, TS - 8);
