@@ -106,8 +106,8 @@ Game.Mobs = (function () {
           type = 'spore_queen'; // キノコの森に胞子の女王が稀出現
         } else {
           const pool = Game.state.bloodMoon
-            ? ['zombie', 'zombie', 'skeleton', 'spider', 'leech', 'bandit', 'bat', 'gazer', 'troll', 'harpy', 'viper']
-            : ['zombie', 'skeleton', 'spider', 'slime', 'leech', 'bat', 'gazer', 'harpy', 'viper'];
+            ? ['zombie', 'zombie', 'skeleton', 'spider', 'leech', 'bandit', 'bat', 'gazer', 'troll', 'harpy', 'viper', 'charger']
+            : ['zombie', 'skeleton', 'spider', 'slime', 'leech', 'bat', 'gazer', 'harpy', 'viper', 'charger'];
           type = pool[Math.floor(Math.random() * pool.length)];
         }
       } else {
@@ -297,6 +297,25 @@ Game.Mobs = (function () {
           }
           if ((m.slamCd || 0) > 0) m.slamCd--;
           else if (distP < 6 * TS && Math.random() < 0.035) { m.slam = 18; m.slamR = (m.def.big ? 3 : 2.4); Game.Audio.play('whirl'); }
+        }
+        // 突進する敵: 溜め(テレグラフ)→高速ダッシュで突っ込む。溜め中に避ければ回避可能
+        if (m.def.charge) {
+          const ch = m.def.charge;
+          if (m.charge) {
+            if (m.charge.phase === 'windup') {
+              m.charge.t--;
+              if (m.charge.t <= 0) { const l = distP || 1; m.charge.vx = dxp / l; m.charge.vy = dyp / l; m.charge.phase = 'dash'; m.charge.t = ch.dashTicks; }
+              m.hopPhase += 0.2; continue; // 溜め中は静止
+            } else {
+              m.charge.t--;
+              moveMob(m, m.charge.vx, m.charge.vy, ch.dashSpeed);
+              if (distP < (m.def.size * 0.5 + 14)) { Game.Survival.damage(ch.dmg, m.def.name || 'mob'); const kl = distP || 1; p.x += (dxp / kl) * 16; p.y += (dyp / kl) * 16; m.charge = null; m.chargeCd = ch.cd; }
+              else if (m.charge.t <= 0) { m.charge = null; m.chargeCd = ch.cd; }
+              m.hopPhase += 0.2; continue;
+            }
+          }
+          if ((m.chargeCd || 0) > 0) m.chargeCd--;
+          else if (distP < ch.range * TS && distP > 2 * TS) { m.charge = { phase: 'windup', t: ch.windup }; m.dir = Math.abs(dxp) > Math.abs(dyp) ? (dxp < 0 ? 'left' : 'right') : (dyp < 0 ? 'up' : 'down'); Game.Audio.play('whirl'); }
         }
         const rg = m.def.ranged;
         // 遠距離魔法攻撃タイプ: 距離を取りつつ魔法弾を撃つ
@@ -594,6 +613,17 @@ Game.Mobs = (function () {
         ctx.beginPath(); ctx.arc(s.x, s.y, rr, 0, Math.PI * 2); ctx.fill();
         ctx.strokeStyle = 'rgba(255,70,40,0.9)'; ctx.lineWidth = 2.5;
         ctx.beginPath(); ctx.arc(s.x, s.y, rr, 0, Math.PI * 2); ctx.stroke();
+        ctx.restore();
+      }
+      // 突進の溜めテレグラフ(向き矢印)
+      if (m.charge && m.charge.phase === 'windup') {
+        const z = Game.Camera.zoom ? Game.Camera.zoom() : 1;
+        let ax = 0, ay = 0; if (m.dir === 'up') ay = -1; else if (m.dir === 'down') ay = 1; else if (m.dir === 'left') ax = -1; else ax = 1;
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,90,40,0.85)'; ctx.lineWidth = 3 * z; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(s.x + ax * 34 * z, s.y + ay * 34 * z); ctx.stroke();
+        ctx.fillStyle = 'rgba(255,120,60,0.9)';
+        ctx.beginPath(); ctx.arc(s.x + ax * 34 * z, s.y + ay * 34 * z, 4 * z, 0, Math.PI * 2); ctx.fill();
         ctx.restore();
       }
       const r = m.def.size * 0.5 * (m.champion ? 1.55 : m.elite ? 1.3 : 1);
