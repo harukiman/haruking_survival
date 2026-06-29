@@ -1457,6 +1457,7 @@ Game.UI = (function () {
       if (m.def.boss) { mmCtx.fillStyle = '#ff3030'; mmCtx.fillRect(mx - 2.5, my - 2.5, 5, 5); }
       else if (m.def.npc || m.def.friendly) { mmCtx.fillStyle = '#ffe24a'; mmCtx.fillRect(mx - 1.5, my - 1.5, 3, 3); }
       else if (m.def.hostile) { mmCtx.fillStyle = '#e0404a'; mmCtx.fillRect(mx - 1, my - 1, 2, 2); }
+      else { mmCtx.fillStyle = '#7fd06a'; mmCtx.fillRect(mx - 1, my - 1, 2, 2); } // 受動的な動物(狩り対象)
     }
     if (Game.Net && Game.Net.isConnected()) {
       const peers = Game.Net.getPeers();
