@@ -719,19 +719,24 @@ Game.Mobs = (function () {
       const r = m.def.size * 0.5 * (m.champion ? 1.55 : m.elite ? 1.3 : 1) * (m.sizeVar || 1);
       const hop = m.def.hop ? Math.abs(Math.sin(m.hopPhase)) * 5 : 0;
       ctx.save();
-      // 精鋭オーラ: 脈動する金色の発光リング
-      if (m.elite || m.bountyBoss) {
+      // 精鋭/ボスのオーラ: 脈動する発光リング(ボスは自色で威圧、精鋭は金色)
+      if (m.elite || m.bountyBoss || m.def.boss) {
         m.auraPhase = (m.auraPhase || 0) + 0.08;
         const pulse = 0.5 + Math.sin(m.auraPhase) * 0.5;
-        const ar = r * (1.7 + pulse * 0.25);
-        const rgb = m.auraRGB || [255, 216, 107];
+        const ar = r * ((m.def.boss ? 1.9 : 1.7) + pulse * 0.3);
+        const rgb = m.auraRGB || (m.def.boss ? hexToRgb(m.def.color || '#c060ff') : [255, 216, 107]);
         const cs = rgb[0] + ',' + rgb[1] + ',' + rgb[2];
         const grd = ctx.createRadialGradient(s.x, s.y - hop, r * 0.6, s.x, s.y - hop, ar);
         grd.addColorStop(0, 'rgba(' + cs + ',0)');
-        grd.addColorStop(0.7, 'rgba(' + cs + ',' + (0.18 + pulse * 0.14) + ')');
+        grd.addColorStop(0.65, 'rgba(' + cs + ',' + ((m.def.boss ? 0.24 : 0.18) + pulse * 0.16) + ')');
         grd.addColorStop(1, 'rgba(' + cs + ',0)');
         ctx.fillStyle = grd;
         ctx.beginPath(); ctx.arc(s.x, s.y - hop, ar, 0, Math.PI * 2); ctx.fill();
+        // ボスは足元に重厚な影＋地面の魔法陣リング
+        if (m.def.boss) {
+          ctx.strokeStyle = 'rgba(' + cs + ',' + (0.3 + pulse * 0.3) + ')'; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.ellipse(s.x, s.y + r * 0.5, r * 1.4, r * 0.5, 0, 0, Math.PI * 2); ctx.stroke();
+        }
       }
       if (m.def.ghost) ctx.globalAlpha = 0.7 + Math.sin(m.hopPhase * 0.5) * 0.15;
       ctx.translate(s.x, s.y - hop);
