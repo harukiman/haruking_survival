@@ -190,10 +190,19 @@ Game.Mobs = (function () {
     return N.title[Math.floor(Math.random() * N.title.length)] + N.name[Math.floor(Math.random() * N.name.length)];
   }
 
+  // 弾の種類→敵の状態異常付与（fire=燃焼/venom・hex=毒/frost=鈍足）
+  const KIND_DOT = { fire: ['burn', 150], venom: ['poison', 180], hex: ['poison', 150], frost: ['slow', 150] };
+  function applyDot(m, kind) {
+    if (!m || !m.def || m.def.npc) return;
+    const e = KIND_DOT[kind]; if (!e) return;
+    m.dot = m.dot || {}; m.dot[e[0]] = Math.max(m.dot[e[0]] || 0, e[1]);
+  }
+
   function moveMob(m, dx, dy, speed) {
     const len = Math.hypot(dx, dy);
     if (len < 0.001) return;
     if (m.eliteSpeedMult) speed *= m.eliteSpeedMult; // 俊足アフィックス
+    if (m.dot && m.dot.slow > 0) speed *= 0.55; // 凍えで鈍足
     dx /= len; dy /= len;
     if (Math.abs(dx) > Math.abs(dy)) m.dir = dx < 0 ? 'left' : 'right';
     else m.dir = dy < 0 ? 'up' : 'down';
@@ -228,6 +237,18 @@ Game.Mobs = (function () {
       if (m.hurt > 0) m.hurt--;
       if (m.attackCd > 0) m.attackCd--;
       if (m.rangedCd > 0) m.rangedCd--;
+      // 状態異常(DoT/鈍足): 炎/毒は継続ダメージ、凍は moveMob で減速
+      if (m.dot) {
+        if (m.dot.slow > 0) m.dot.slow--;
+        if (Game.state.tick % 20 === 0 && ((m.dot.burn || 0) > 0 || (m.dot.poison || 0) > 0)) {
+          const d = ((m.dot.burn || 0) > 0 ? 2 : 0) + ((m.dot.poison || 0) > 0 ? 1 : 0);
+          m.hp -= d; m.hurt = Math.max(m.hurt, 2);
+          if (Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - m.def.size * 0.5, d, m.dot.burn > 0 ? '#ff8a4a' : '#9fe04a');
+          if (m.hp <= 0) { killMob(m); continue; }
+        }
+        if (m.dot.burn > 0) m.dot.burn--;
+        if (m.dot.poison > 0) m.dot.poison--;
+      }
       if (m.leaveTimer) { m.leaveTimer--; if (m.leaveTimer <= 0) { mobs.splice(i, 1); continue; } }
       if (m.stateTimer > 0) m.stateTimer--;
 
@@ -565,8 +586,14 @@ Game.Mobs = (function () {
       // 影
       ctx.fillStyle = 'rgba(0,0,0,0.25)';
       ctx.beginPath(); ctx.ellipse(0, r + hop, r, r * 0.4, 0, 0, Math.PI * 2); ctx.fill();
-      // 本体（形状バリエーション）
-      ctx.fillStyle = m.hurt > 0 ? '#fff' : m.def.color;
+      // 本体（形状バリエーション）。状態異常で色味
+      let bodyCol = m.def.color;
+      if (m.dot) {
+        if (m.dot.burn > 0 && Game.state.tick % 6 < 3) bodyCol = '#ff7a3a';
+        else if (m.dot.poison > 0 && Game.state.tick % 12 < 6) bodyCol = '#7ad04a';
+        else if (m.dot.slow > 0) bodyCol = '#8fd0ff';
+      }
+      ctx.fillStyle = m.hurt > 0 ? '#fff' : bodyCol;
       const shape = m.def.shape || (m.type === 'slime' ? 'blob' : m.type === 'spider' ? 'spider' : 'round');
       let eyeY = -r * 0.3;
       if (shape === 'blob') {
@@ -631,5 +658,5 @@ Game.Mobs = (function () {
     ctx.closePath();
   }
 
-  return { list, update, draw, spawnMob, damageMob, killMob, summonBoss, nearbyNPC, interactNPC, applyMobSnapshot, applyRemoteHit, spawnNetDrops, buildSnapshot };
+  return { list, update, draw, spawnMob, damageMob, killMob, applyDot, summonBoss, nearbyNPC, interactNPC, applyMobSnapshot, applyRemoteHit, spawnNetDrops, buildSnapshot };
 })();

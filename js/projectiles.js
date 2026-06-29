@@ -67,13 +67,13 @@ Game.Projectiles = (function () {
   }
 
   // 爆発: 範囲内の敵にダメージ＋演出
-  function explode(x, y, radiusTiles, dmg) {
+  function explode(x, y, radiusTiles, dmg, kind) {
     const mobs = Game.state.mobs, r = radiusTiles * TS;
     for (let m = 0; m < mobs.length; m++) {
       const mo = mobs[m]; if (mo.def.friendly) continue;
       if (Math.hypot(mo.x - x, mo.y - y) <= r) {
         if (Game.Net.isConnected() && !Game.Net.host) Game.Net.sendHit(mo.id, Math.round(dmg * 0.7), x, y);
-        else Game.Mobs.damageMob(mo, Math.round(dmg * 0.7), x, y);
+        else { Game.Mobs.damageMob(mo, Math.round(dmg * 0.7), x, y); if (kind && Game.Mobs.applyDot) Game.Mobs.applyDot(mo, kind); }
       }
     }
     Game.Render.spawnParticles(x, y, '#ff8a3c', 24);
@@ -100,7 +100,7 @@ Game.Projectiles = (function () {
       // 壁（solid）に当たれば消滅（貫通/ブーメランは壁を無視）
       const tx = Math.floor(pr.x / TS), ty = Math.floor(pr.y / TS);
       const o = Game.World.objAt(tx, ty), meta = Game.OBJ_META[o];
-      if (meta && meta.solid && !pr.pierce && !pr.boomerang) { if (pr.explosive) explode(pr.x, pr.y, pr.explosive, pr.dmg); else Game.Render.spawnParticles(pr.x, pr.y, '#caa86a', 3); arr.splice(i, 1); continue; }
+      if (meta && meta.solid && !pr.pierce && !pr.boomerang) { if (pr.explosive) explode(pr.x, pr.y, pr.explosive, pr.dmg, pr.kind); else Game.Render.spawnParticles(pr.x, pr.y, '#caa86a', 3); arr.splice(i, 1); continue; }
       let hit = false;
       if (pr.hostile) {
         if (Math.hypot(pl.x - pr.x, pl.y - pr.y) < 13) {
@@ -115,7 +115,7 @@ Game.Projectiles = (function () {
           const mo = mobs[m]; if (mo.def.friendly || (pr.hits && pr.hits[mo.id])) continue;
           if (Math.hypot(mo.x - pr.x, mo.y - pr.y) < mo.def.size * 0.5 + reach) {
             pr.hits[mo.id] = 1;
-            if (Game.Net.isConnected() && !Game.Net.host) Game.Net.sendHit(mo.id, pr.dmg, pr.x, pr.y); else Game.Mobs.damageMob(mo, pr.dmg, pr.x, pr.y);
+            if (Game.Net.isConnected() && !Game.Net.host) Game.Net.sendHit(mo.id, pr.dmg, pr.x, pr.y); else { Game.Mobs.damageMob(mo, pr.dmg, pr.x, pr.y); if (Game.Mobs.applyDot) Game.Mobs.applyDot(mo, pr.kind); }
           }
         }
       } else {
@@ -123,13 +123,13 @@ Game.Projectiles = (function () {
         for (let m = 0; m < mobs.length; m++) {
           const mo = mobs[m]; if (mo.def.friendly) continue;
           if (Math.hypot(mo.x - pr.x, mo.y - pr.y) < mo.def.size * 0.5 + 6) {
-            if (Game.Net.isConnected() && !Game.Net.host) Game.Net.sendHit(mo.id, pr.dmg, pr.x, pr.y); else Game.Mobs.damageMob(mo, pr.dmg, pr.x, pr.y);
+            if (Game.Net.isConnected() && !Game.Net.host) Game.Net.sendHit(mo.id, pr.dmg, pr.x, pr.y); else { Game.Mobs.damageMob(mo, pr.dmg, pr.x, pr.y); if (Game.Mobs.applyDot) Game.Mobs.applyDot(mo, pr.kind); }
             if (pr.chain) { const hs = {}; hs[mo.id] = 1; chainTo(mo.x, mo.y, Math.round(pr.dmg * 0.8), pr.chain, hs); }
             hit = true; break;
           }
         }
       }
-      if (hit && pr.explosive) explode(pr.x, pr.y, pr.explosive, pr.dmg);
+      if (hit && pr.explosive) explode(pr.x, pr.y, pr.explosive, pr.dmg, pr.kind);
       if (hit || pr.life <= 0) arr.splice(i, 1);
     }
   }
