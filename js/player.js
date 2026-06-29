@@ -615,6 +615,51 @@ Game.Player = (function () {
     Game.UI.refreshAll();
   }
 
+  // ===== 装備ロードアウト(5セット保存・切替) =====
+  function gearSnapshot() {
+    const p = Game.state.player, a = p.armor || {};
+    const cp = it => it ? { id: it.id, roll: it.roll || null } : null;
+    return { head: cp(a.head), chest: cp(a.chest), accessory: cp(p.accessory), accessory2: cp(p.accessory2) };
+  }
+  function rollKey(it) { return it ? it.id + '|' + JSON.stringify(it.roll || null) : ''; }
+  // インベントリから ref に一致する1個を取り出して返す(見つからなければnull)
+  function takeFromInv(ref) {
+    if (!ref) return null;
+    const s = Game.Inventory.slots(); const k = rollKey(ref);
+    for (let i = 0; i < s.length; i++) {
+      if (s[i] && rollKey(s[i]) === k) {
+        const out = { id: s[i].id, roll: s[i].roll || null };
+        if (s[i].count > 1) s[i].count--; else s[i] = null;
+        return out;
+      }
+    }
+    return null;
+  }
+  function unequipAllSilent() {
+    const p = Game.state.player, a = p.armor || {};
+    ['head', 'chest'].forEach(function (key) {
+      const it = a[key]; if (!it) return;
+      if (it.roll) Game.Inventory.addInstance({ id: it.id, roll: it.roll }); else Game.Inventory.add(it.id, 1);
+      a[key] = null;
+    });
+    ['accessory', 'accessory2'].forEach(function (key) { if (p[key]) { Game.Inventory.add(p[key].id, 1); p[key] = null; } });
+  }
+  function saveLoadout(n) {
+    const p = Game.state.player; if (!p.loadouts) p.loadouts = [null, null, null, null, null];
+    p.loadouts[n] = gearSnapshot();
+    Game.Audio.play('craft'); Game.UI.toast('装備セット ' + (n + 1) + ' を保存しました');
+    if (Game.Save) Game.Save.autosave('loadout'); Game.UI.refreshAll();
+  }
+  function applyLoadout(n) {
+    const p = Game.state.player; if (!p.loadouts || !p.loadouts[n]) { Game.UI.toast('セット ' + (n + 1) + ' は空です（保存してください）'); return; }
+    const want = p.loadouts[n];
+    unequipAllSilent(); // 現装備を一旦インベントリへ
+    const a = p.armor || (p.armor = {});
+    a.head = takeFromInv(want.head); a.chest = takeFromInv(want.chest);
+    p.accessory = takeFromInv(want.accessory); p.accessory2 = takeFromInv(want.accessory2);
+    applyEquipStats(); Game.Audio.play('equip'); Game.UI.toast('装備セット ' + (n + 1) + ' を装備'); Game.UI.refreshAll();
+  }
+
   // 装備スロットを外してインベントリへ戻す。key: head/chest/accessory/accessory2
   function unequipSlot(key) {
     const p = Game.state.player;
@@ -840,5 +885,6 @@ Game.Player = (function () {
     effAttack, attackCooldown, levelDmgBonus, levelArmorBonus, spendStat, unlockSkill, respec,
     skillBonus, skillFlag, canUnlock, currentWeaponAtk, equippedArmorAt, xpForLevel,
     reloadCurrent, magLoaded, magCap, selGunId, contextAction,
+    saveLoadout, applyLoadout,
   };
 })();
