@@ -290,7 +290,7 @@ Game.Player = (function () {
     for (let i = 0; i < off.length; i++) {
       const tx = ptx + off[i][0], ty = pty + off[i][1], o = Game.World.objAt(tx, ty);
       if (o === O.CHEST) { Game.UI.openChest(tx, ty); return; }
-      if (o === O.TREASURE_CHEST) { const d = Game.World.getTileData(tx, ty); if (!d || !d.chest) Game.World.setTileData(tx, ty, { chest: makeTreasureLoot() }); Game.UI.openChest(tx, ty); return; }
+      if (o === O.TREASURE_CHEST) { openTreasure(tx, ty); return; }
       if (o === O.RIFT_ANCHOR) { Game.UI.openSharedChest(tx, ty); return; }
       if (o === O.BOUNTY_BOARD) { Game.Bounty.open(tx, ty); return; }
       if (o === O.STELA) { Game.Lore.read(tx, ty); return; }
@@ -313,11 +313,7 @@ Game.Player = (function () {
     // --- タイル対象の操作（狙っている時のみ・優先）---
     if (hasTile) {
       if (obj === Game.OBJ.CHEST) { Game.UI.openChest(t.tx, t.ty); return; }
-      if (obj === Game.OBJ.TREASURE_CHEST) {
-        let d = Game.World.getTileData(t.tx, t.ty);
-        if (!d || !d.chest) { Game.World.setTileData(t.tx, t.ty, { chest: makeTreasureLoot() }); }
-        Game.UI.openChest(t.tx, t.ty); return;
-      }
+      if (obj === Game.OBJ.TREASURE_CHEST) { openTreasure(t.tx, t.ty); return; }
       if (obj === Game.OBJ.RIFT_ANCHOR) { Game.UI.openSharedChest(t.tx, t.ty); return; }
       if (obj === Game.OBJ.STELA) { Game.Lore.read(t.tx, t.ty); return; }
       if (obj === Game.OBJ.WISH_ALTAR) { activateAltar(t.tx, t.ty); return; }
@@ -377,6 +373,28 @@ Game.Player = (function () {
     Game.Inventory.remove(sel.id, 1);
     Game.Audio.play('place');
     Game.UI.refreshAll();
+  }
+
+  // 宝箱を開ける。初回は低確率で「ミミック(擬態した魔物)」が飛び出す
+  function openTreasure(tx, ty) {
+    let d = Game.World.getTileData(tx, ty);
+    if (!d || !d.chest) {
+      if (!d || !d.mimicChecked) {
+        d = d || {}; d.mimicChecked = 1;
+        if (Math.random() < 0.12) {
+          Game.World.setTileData(tx, ty, d);
+          Game.World.setObj(tx, ty, Game.OBJ.NONE); // 宝箱は魔物だった→消える
+          Game.Mobs.spawnMob('mimic', tx * TS + TS / 2, ty * TS + TS / 2);
+          Game.Audio.play('hit');
+          Game.UI.toast('宝箱は擬態した魔物だった！');
+          if (Game.Achievements) Game.Achievements.unlock('mimic_bait');
+          return;
+        }
+      }
+      d.chest = makeTreasureLoot();
+      Game.World.setTileData(tx, ty, d);
+    }
+    Game.UI.openChest(tx, ty);
   }
 
   function makeTreasureLoot() {

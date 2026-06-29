@@ -751,6 +751,7 @@ Game.MOBS = {
   boar:     { name:'猪', hostile:true, hp:18, speed:1.8, color:'#8a6a4a', size:12, drops:[{item:'raw_meat',n:[1,3]},{item:'hide',n:[1,2]}], dmg:5, xp:4 },
   bat:      { name:'コウモリ', hostile:true, hp:6, speed:2.6, color:'#4a3a4a', size:7, drops:[{item:'guts',n:[0,1]},{item:'string',n:[0,1]}], dmg:2, xp:2, ghost:true },
   bandit:   { name:'山賊', hostile:true, hp:22, speed:1.6, color:'#7a5a3a', size:11, drops:[{item:'gold_bar',n:[0,2]},{item:'iron',n:[0,2]},{item:'bone',n:[0,1]}], dmg:6, xp:6 },
+  mimic:    { name:'ミミック', hostile:true, hp:55, speed:1.15, color:'#9c6b3f', size:14, drops:[{item:'gold_bar',n:[2,4]},{item:'lumen',n:[1,3]},{item:'shadow_crystal',n:[1,3]},{item:'iron_sword',n:[0,1]},{item:'gold_ore',n:[2,5]}], dmg:9, xp:16, shape:'blob' },
   golem:    { name:'岩ゴーレム', hostile:true, hp:48, speed:0.7, color:'#8a8d91', size:15, drops:[{item:'stone',n:[2,5]},{item:'iron_ore',n:[1,2]},{item:'gold_ore',n:[0,1]}], dmg:8, xp:9, big:true },
   scorpion: { name:'サソリ', hostile:true, hp:14, speed:1.9, color:'#b07030', size:9, drops:[{item:'chitin',n:[1,2]}], dmg:4, xp:4, inflict:{poison:240} },
   ice_bear: { name:'白熊', hostile:true, hp:40, speed:1.4, color:'#e8eef2', size:16, drops:[{item:'raw_meat',n:[2,4]},{item:'hide',n:[2,3]}], dmg:7, xp:8, inflict:{cold:240}, big:true },

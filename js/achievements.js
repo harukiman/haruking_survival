@@ -50,6 +50,7 @@ Game.Achievements = (function () {
     scavenger:     { name:'回収屋', desc:'投下された物資を回収した' },
     repel:         { name:'迎撃者', desc:'魔物の侵攻を退けた' },
     blessed:       { name:'祝福されし者', desc:'古の祭壇から祝福を授かった' },
+    mimic_bait:    { name:'罠だった', desc:'ミミックに噛みつかれた' },
     dual_relic:    { name:'二つの遺物', desc:'遺物を2つ同時に装備した' },
     elite_veteran: { name:'精鋭狩りの達人', desc:'精鋭個体を25体討伐した' },
     champion_master:{ name:'チャンピオンの覇者', desc:'チャンピオンを10体討伐した' },
