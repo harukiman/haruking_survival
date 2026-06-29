@@ -546,6 +546,17 @@ Game.Mobs = (function () {
   }
 
   function killMob(m) {
+    // 死亡時の炸裂(deathBurst): 至近距離のプレイヤーへAoEダメージ＋状態異常。点付けの危険
+    if (m.def.deathBurst && !(Game.Net.isConnected() && !Game.Net.host)) {
+      const db = m.def.deathBurst, p = Game.state.player;
+      Game.Render.spawnParticles(m.x, m.y, m.def.color || '#9fe04a', 18);
+      if (Game.Render.flash) Game.Render.flash('rgba(140,220,120,0.12)');
+      if (Math.hypot(p.x - m.x, p.y - m.y) <= db.r * TS) {
+        Game.Survival.damage(db.dmg, m.def.name || 'mob');
+        if (db.status && Game.Status) for (const k in db.status) Game.Status.add(k, db.status[k]);
+      }
+      Game.Audio.play('hit');
+    }
     // 撃破ポーフ: 体の色＋白い飛沫で消滅を強調(ボスは専用ムービーがあるので控えめ)
     if (Game.Render.spawnParticles && !m.def.boss) {
       const sz = m.def.size || 12, n = Math.min(18, 6 + Math.round(sz / 2));

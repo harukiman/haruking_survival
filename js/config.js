@@ -741,9 +741,9 @@ Game.MOBS = {
   gold_thief:{ name:'金喰い', hostile:false, hp:46, speed:2.7, color:'#ffd24a', size:13, drops:[{item:'gold_bar',n:[3,6]},{item:'kokuhen',n:[0,1]}], skittish:true, shape:'beast', xp:30 },
   deer:     { name:'鹿', hostile:false, hp:8,  speed:1.4, color:'#a9762f', size:11, drops:[{item:'raw_meat',n:[1,3]},{item:'hide',n:[1,2]}], flee:true, xp:2 },
   sheep:    { name:'羊', hostile:false, hp:6,  speed:1.0, color:'#eee', size:10, drops:[{item:'raw_meat',n:[1,2]},{item:'hide',n:[1,2]}], flee:true, xp:1 },
-  slime:    { name:'スライム', hostile:true, hp:6,  speed:1.1, color:'#5fc46b', size:10, drops:[{item:'slime_ball',n:[1,2]},{item:'shadow_shard',n:[0,1]}], dmg:2, hop:true, xp:2 },
+  slime:    { name:'スライム', hostile:true, hp:6,  speed:1.1, color:'#5fc46b', size:10, drops:[{item:'slime_ball',n:[1,2]},{item:'shadow_shard',n:[0,1]}], dmg:2, hop:true, xp:2, deathBurst:{r:1.4,dmg:3} },
   zombie:   { name:'ゾンビ', hostile:true, hp:14, speed:1.3, color:'#4a7a4a', size:11, drops:[{item:'raw_meat',n:[0,1]},{item:'guts',n:[0,1]},{item:'shadow_shard',n:[0,1]}], dmg:4, xp:3, inflict:{infection:200} },
-  skeleton: { name:'スケルトン', hostile:true, hp:12, speed:1.5, color:'#dcdcd0', size:10, drops:[{item:'bone',n:[1,3]},{item:'shadow_shard',n:[0,1]}], dmg:3, xp:3 },
+  skeleton: { name:'スケルトン', hostile:true, hp:12, speed:1.5, color:'#dcdcd0', size:10, drops:[{item:'bone',n:[1,3]},{item:'shadow_shard',n:[0,1]}], dmg:3, xp:3, ranged:{dmg:4,range:7,cd:90,kind:'bullet'} },
   spider:   { name:'クモ', hostile:true, hp:10, speed:2.2, color:'#3a2a3a', size:12, drops:[{item:'string',n:[1,2]},{item:'shadow_shard',n:[0,1]}], dmg:3, xp:3 },
   // 影世界固有モブ
   wraith:   { name:'影霊', hostile:true, hp:16, speed:2.0, color:'#6a4f9a', size:11, drops:[{item:'shadow_shard',n:[1,2]}], dmg:5, xp:4, shadow:true, ghost:true },
@@ -804,7 +804,7 @@ Game.MOBS = {
   dust_mage:{ name:'砂の呪術師', hostile:true, hp:16, speed:1.1, color:'#d8a050', size:10, drops:[{item:'chitin',n:[0,1]},{item:'gold_ore',n:[0,1]}], dmg:4, xp:5, shape:'wisp', ranged:{dmg:5,range:6,cd:90,kind:'venom',status:{poison:200}} },
   ember_imp:{ name:'灰の小鬼', hostile:true, hp:12, speed:1.5, color:'#e06030', size:8, drops:[{item:'coal',n:[1,2]},{item:'iron_ore',n:[0,1]}], dmg:4, xp:4, shape:'spiky', ranged:{dmg:5,range:5,cd:70,kind:'fire'} },
   troll:    { name:'森のトロル', hostile:true, hp:70, speed:0.85, color:'#6a8a4a', size:30, drops:[{item:'raw_meat',n:[2,4]},{item:'hide',n:[1,3]},{item:'bone',n:[1,2]}], dmg:11, xp:12, big:true, shape:'tall' },
-  bog_horror:{ name:'沼の怪異', hostile:true, hp:50, speed:0.9, color:'#5a6a3a', size:22, drops:[{item:'guts',n:[1,3]},{item:'string',n:[0,1]}], dmg:8, xp:9, shape:'blob', inflict:{infection:300} },
+  bog_horror:{ name:'沼の怪異', hostile:true, hp:50, speed:0.9, color:'#5a6a3a', size:22, drops:[{item:'guts',n:[1,3]},{item:'string',n:[0,1]}], dmg:8, xp:9, shape:'blob', inflict:{infection:300}, deathBurst:{r:2.2,dmg:7,status:{poison:240}} },
   // ===== P40 バイオーム多様化: 新通常モブ =====
   harpy:    { name:'ハーピー', hostile:true, hp:12, speed:2.4, color:'#a06a9a', size:10, drops:[{item:'string',n:[0,1]},{item:'bone',n:[0,1]}], dmg:4, xp:4, ghost:true, shape:'wisp', ranged:{dmg:5,range:6,cd:80,kind:'hex'} },
   dune_serpent:{ name:'砂蛇', hostile:true, hp:14, speed:2.0, color:'#cda050', size:10, drops:[{item:'chitin',n:[0,1]},{item:'hide',n:[0,1]}], dmg:5, xp:4, shape:'spiky', inflict:{poison:220} },
