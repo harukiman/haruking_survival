@@ -622,12 +622,12 @@ Game.RECIPES = [
 
 // 装備セット効果（head+chest が同セットで発動）
 Game.SETS = {
-  leather: { name:'革装束', items:['leather_helmet','leather_chest'], hungerSlow:0.5 },
+  leather: { name:'革装束', items:['leather_helmet','leather_chest'], hungerSlow:0.5, moveSpd:0.05 },
   iron:    { name:'鉄装束', items:['iron_helmet','iron_chest'], armor:2 },
-  shadow:  { name:'影鋼装束', items:['shadow_helmet','shadow_chest'], armor:1, sanityResist:true },
-  gold:    { name:'黄金装束', items:['gold_helmet','gold_chest'], armor:1, hungerSlow:0.3 },
-  crystal: { name:'影晶装束', items:['crystal_helmet','crystal_chest'], armor:2, sanityResist:true },
-  star:    { name:'星鋼装束', items:['star_helmet','gravity_boots'], armor:3 },
+  shadow:  { name:'影鋼装束', items:['shadow_helmet','shadow_chest'], armor:1, sanityResist:true, lifesteal:0.04 },
+  gold:    { name:'黄金装束', items:['gold_helmet','gold_chest'], armor:1, hungerSlow:0.3, crit:0.04 },
+  crystal: { name:'影晶装束', items:['crystal_helmet','crystal_chest'], armor:2, sanityResist:true, crit:0.05 },
+  star:    { name:'星鋼装束', items:['star_helmet','gravity_boots'], armor:3, moveSpd:0.06, crit:0.05 },
 };
 
 // スキルツリー（4系統・前提あり）。スキルポイントで習得、振り直しは記憶の書

@@ -89,7 +89,7 @@ Game.Player = (function () {
     // 砂嵐/吹雪は足が重い（飛行中は影響なし）
     const wt = Game.state.weather && Game.state.weather.type;
     if ((wt === 'sandstorm' || wt === 'blizzard') && p.vehicle !== 'plane' && p.vehicle !== 'carpet') spd *= 0.7;
-    if (!p.vehicle) spd *= (1 + skillBonus().moveSpd + (Game.Status ? Game.Status.buffSum().spd : 0)); // スキル健脚＋俊足の薬
+    if (!p.vehicle) spd *= (1 + skillBonus().moveSpd + setBonus().moveSpd + (Game.Status ? Game.Status.buffSum().spd : 0)); // スキル健脚＋俊足の薬＋セット効果
     if ((p.rolling || 0) > 0) {
       // 回避ロール中: 固定方向へ高速移動（壁は通常同様に停止）＋砂煙
       p.rolling--;
@@ -557,7 +557,7 @@ Game.Player = (function () {
   // 装備セット効果（head+chestが同セット）
   function setBonus() {
     const a = Game.state.player.armor;
-    const out = { armor: 0, sanityResist: false, hungerSlow: 0, name: null };
+    const out = { armor: 0, sanityResist: false, hungerSlow: 0, crit: 0, lifesteal: 0, moveSpd: 0, name: null };
     const hid = a.head && a.head.id, cid = a.chest && a.chest.id;
     if (!hid || !cid) return out;
     for (const k in Game.SETS) {
@@ -565,6 +565,9 @@ Game.Player = (function () {
       if (s.items.indexOf(hid) >= 0 && s.items.indexOf(cid) >= 0) {
         if (s.armor) out.armor += s.armor;
         if (s.sanityResist) out.sanityResist = true;
+        if (s.crit) out.crit += s.crit;
+        if (s.lifesteal) out.lifesteal += s.lifesteal;
+        if (s.moveSpd) out.moveSpd += s.moveSpd;
         if (s.hungerSlow) out.hungerSlow = Math.max(out.hungerSlow, s.hungerSlow);
         out.name = s.name;
       }

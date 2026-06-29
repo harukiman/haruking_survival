@@ -63,7 +63,7 @@ Game.Combat = (function () {
     // 武器ダメージにレベル/STR/スキル補正（同じ装備でもレベルで±）
     let dmg = Game.Player.effAttack(st.atk > 0 ? st.atk : 1);
     // 会心（クリティカル）: 基礎8% ＋ スキル ＋ 装備affix。クリ時 1.8x
-    const critCh = (Game.TUNE.BASE_CRIT || 0.08) + Game.Player.skillBonus().crit + (st.crit || 0);
+    const critCh = (Game.TUNE.BASE_CRIT || 0.08) + Game.Player.skillBonus().crit + (st.crit || 0) + (Game.Player.setBonus().crit || 0);
     const isCrit = Math.random() < critCh;
     if (isCrit) { dmg = Math.round(dmg * (Game.TUNE.CRIT_MULT || 1.8)); Game.Render.shake(7); Game.Audio.play('crit'); }
     // 範囲攻撃: スキル「旋風斬り」 or 範囲武器(大剣/戦鎚)は範囲内の敵すべてに当てる
@@ -80,7 +80,7 @@ Game.Combat = (function () {
       else Game.Mobs.damageMob(tg, dmg, p.x, p.y, isCrit);
     }
     // 吸血（装備のvampiric＋スキル lifesteal）
-    let ls = (st.lifesteal || 0) + Game.Player.skillBonus().lifesteal;
+    let ls = (st.lifesteal || 0) + Game.Player.skillBonus().lifesteal + (Game.Player.setBonus().lifesteal || 0);
     if (ls > 0 && p.health < p.maxHealth) {
       p.health = Math.min(p.maxHealth, p.health + Math.max(1, Math.round(dmg * ls)));
       Game.UI.refreshStats();

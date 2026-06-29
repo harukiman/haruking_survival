@@ -265,9 +265,10 @@ Game.UI = (function () {
     h += '</div>';
     // 派生ステータス（%）
     const sb = Game.Player.skillBonus();
-    const critPct = Math.round(((Game.TUNE.BASE_CRIT || 0.08) + (sb.crit || 0) + (wst.crit || 0)) * 100);
-    const lsPct = Math.round(((sb.lifesteal || 0) + (wst.lifesteal || 0)) * 100);
-    const spdPct = Math.round((sb.moveSpd || 0) * 100);
+    const setb = Game.Player.setBonus();
+    const critPct = Math.round(((Game.TUNE.BASE_CRIT || 0.08) + (sb.crit || 0) + (wst.crit || 0) + (setb.crit || 0)) * 100);
+    const lsPct = Math.round(((sb.lifesteal || 0) + (wst.lifesteal || 0) + (setb.lifesteal || 0)) * 100);
+    const spdPct = Math.round(((sb.moveSpd || 0) + (setb.moveSpd || 0)) * 100);
     const xpPct = Math.round((sb.xpBoost || 0) * 100);
     const regenV = (sb.regen || 0);
     const derived = [
@@ -280,6 +281,7 @@ Game.UI = (function () {
     h += '<div class="derived-stats">';
     derived.forEach(function (d) { h += '<span class="ds-chip">' + d[0] + ' <b style="color:' + d[2] + '">' + d[1] + '</b></span>'; });
     h += '</div>';
+    if (setb.name) h += '<div class="set-bonus" style="margin-top:4px;color:#caa86a;font-size:.82rem">✨ ' + setb.name + ' セット効果 発動中</div>';
     // ===== 討伐の証（ボス図鑑・恒久報酬） =====
     if (Game.MOBS) {
       const best = Game.state.bestiary || {};
