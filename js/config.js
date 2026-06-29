@@ -320,6 +320,7 @@ Game.ITEMS = {
   poison_flask:{ name:'毒の小瓶', stack:16, color:'#9fe04a', throw:{kind:'venom', dmg:14, explosive:1.6, speed:6}, flavor:'割れて毒の霧を撒く小瓶。範囲の敵をむしばむ。' },
   flash_bomb:  { name:'閃光玉', stack:16, color:'#ffe9a0', throw:{kind:'tracer', dmg:10, explosive:1.9, speed:6}, flavor:'硫黄を詰めた炸裂玉。眩い光と衝撃が範囲を焼く。' },
   frost_grenade:{ name:'氷結手榴弾', stack:16, color:'#9fd8ff', throw:{kind:'frost', dmg:10, explosive:2.0, speed:6}, flavor:'割れて冷気を撒く。範囲の敵を凍えさせ足を止める。渦の杖と好相性。' },
+  thunder_orb: { name:'雷玉', stack:16, color:'#ffe27a', throw:{kind:'chain', dmg:12, chain:4, speed:7}, flavor:'砕けると雷が敵から敵へ飛び移る。群れの殲滅に。' },
   // バフ薬（一時強化）
   strength_potion:{ name:'力の薬', stack:16, color:'#ff8a4a', buff:{type:'strength', dur:1800}, flavor:'飲めば一時、膂力がみなぎる。' },
   swift_potion:   { name:'俊足の薬', stack:16, color:'#7fe0a0', buff:{type:'swiftness', dur:1800}, flavor:'風のごとく駆ける。' },
@@ -603,6 +604,7 @@ Game.RECIPES = [
   { out:{id:'poison_flask', n:2}, in:{glow_spore:2, string:1}, station:'crafting_table' },
   { out:{id:'flash_bomb', n:2}, in:{sulfur:2, string:1}, station:'crafting_table' },
   { out:{id:'frost_grenade', n:2}, in:{shadow_crystal:1, string:1}, station:'crafting_table' },
+  { out:{id:'thunder_orb', n:2}, in:{lumen:2, sulfur:1, string:1}, station:'crafting_table' },
   { out:{id:'molotov', n:2}, in:{sulfur:2, string:1}, station:'crafting_table' },
   { out:{id:'obsidian_blade', n:1}, in:{obsidian:3, iron:1}, station:'crafting_table' },
   { out:{id:'fur_coat', n:1}, in:{hide:5}, station:'crafting_table' },

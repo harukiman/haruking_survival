@@ -570,9 +570,9 @@ Game.Player = (function () {
     if (p.attackCd > 0) return;
     const slot = Game.Inventory.selectedSlot(); if (!slot) return; // 投擲アイテムのID取得
     const t = sel.throw;
-    Game.Projectiles.fire(t.dmg, t.kind, { explosive: t.explosive, speed: t.speed });
+    Game.Projectiles.fire(t.dmg, t.kind, { explosive: t.explosive, speed: t.speed, chain: t.chain, count: t.count, spread: t.spread });
     Game.Inventory.remove(slot.id, 1);
-    p.attackCd = 26; Game.Audio.play('gun_rocket'); Game.UI.refreshHotbar();
+    p.attackCd = 26; Game.Audio.play(t.kind === 'chain' ? 'thunder' : 'gun_rocket'); Game.UI.refreshHotbar();
   }
   function tryWarp() {
     const p = Game.state.player;
