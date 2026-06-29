@@ -345,9 +345,16 @@ Game.UI = (function () {
       h += '<h2>魔物図鑑 <span style="color:#ffe27a;font-size:.9rem">' + found + ' / ' + types.length + '</span></h2>';
       h += '<div class="ach-d" style="margin:2px 0 6px">✦ 精鋭個体 討伐数: <b style="color:#ffd86b">' + (Game.state.eliteKills || 0) + '</b>　★ チャンピオン: <b style="color:#ff8ad8">' + (Game.state.championKills || 0) + '</b></div>';
       h += '<div class="ach-list">';
+      const dropNames = function (m) {
+        if (!m.drops || !m.drops.length) return '';
+        const seen = {}; const names = [];
+        m.drops.forEach(function (d) { const it = Game.ITEMS[d.item]; const nm = it ? it.name : d.item; if (!seen[nm]) { seen[nm] = 1; names.push(nm); } });
+        return names.length ? '<br><span class="ach-d" style="color:#9fd0a0">ドロップ: ' + names.join('・') + '</span>' : '';
+      };
       types.forEach(function (id) {
         const m = Game.MOBS[id], got = best[id];
-        h += '<div class="ach-row' + (got ? ' got' : '') + '"><span class="ach-mk">' + (got ? (m.boss ? '👑' : '☠') : '❔') + '</span><div><b>' + (got ? m.name : '？？？') + '</b>' + (got ? '<br><span class="ach-d">撃破 ' + best[id] + ' 体' + (m.boss ? '・ボス' : '') + '</span>' : '') + '</div></div>';
+        const info = got ? ('<br><span class="ach-d">撃破 ' + best[id] + ' 体' + (m.boss ? '・ボス' : (m.hostile ? '' : '・非敵対')) + ' ｜ HP ' + m.hp + (m.hostile ? '・攻 ' + (m.dmg || 0) : '') + '</span>' + dropNames(m)) : '';
+        h += '<div class="ach-row' + (got ? ' got' : '') + '"><span class="ach-mk">' + (got ? (m.boss ? '👑' : '☠') : '❔') + '</span><div><b>' + (got ? m.name : '？？？') + '</b>' + info + '</div></div>';
       });
       h += '</div>';
     }
