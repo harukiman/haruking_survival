@@ -749,6 +749,7 @@ Game.MOBS = {
   spider:   { name:'クモ', hostile:true, hp:10, speed:2.2, color:'#3a2a3a', size:12, drops:[{item:'string',n:[1,2]},{item:'shadow_shard',n:[0,1]}], dmg:3, xp:3 },
   // 影世界固有モブ
   wraith:   { name:'影霊', hostile:true, hp:16, speed:2.0, color:'#6a4f9a', size:11, drops:[{item:'shadow_shard',n:[1,2]}], dmg:5, xp:4, shadow:true, ghost:true },
+  shade_stalker:{ name:'影縫い', hostile:true, hp:22, speed:1.6, color:'#8a40d0', size:11, drops:[{item:'shadow_shard',n:[1,3]},{item:'shadow_crystal',n:[0,1]}], dmg:6, xp:6, shadow:true, ghost:true, shape:'wisp', blink:{cd:90} },
   watcher:  { name:'見張り目', hostile:true, hp:24, speed:0.8, color:'#241a3a', size:13, drops:[{item:'shadow_crystal',n:[0,2]},{item:'shadow_shard',n:[1,1]}], dmg:6, xp:5, shadow:true },
   // ボスと手下
   sovereign:{ name:'影の主', hostile:true, hp:260, speed:1.4, color:'#7a30c0', size:30, drops:[{item:'shadow_core',n:[2,4]},{item:'shadow_steel',n:[4,8]},{item:'shadow_crystal',n:[5,10]},{item:'warp_staff',n:[0,1]},{item:'mind_tome',n:[0,1]},{item:'excalibur',n:[0,1]}], dmg:10, xp:60, shadow:true, boss:true },

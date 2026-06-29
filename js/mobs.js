@@ -95,8 +95,8 @@ Game.Mobs = (function () {
         if (deep && Math.random() < 0.02 && countType('abyss_dragon') === 0) { type = 'abyss_dragon'; } // 深淵の竜(エンドゲーム)
         else if (deep && Math.random() < 0.04 && countType('hunger_beast') === 0) { type = 'hunger_beast'; }
         const pool = deep
-          ? ['wraith', 'watcher', 'abyss_stalker', 'abyss_stalker', 'spider', 'hex_caster']
-          : ['wraith', 'wraith', 'watcher', 'spider', 'hex_caster', 'gazer'];
+          ? ['wraith', 'watcher', 'abyss_stalker', 'abyss_stalker', 'spider', 'hex_caster', 'shade_stalker']
+          : ['wraith', 'wraith', 'watcher', 'spider', 'hex_caster', 'gazer', 'shade_stalker'];
         if (!type)
         type = pool[Math.floor(Math.random() * pool.length)];
       } else if (night && diff.spawnHostiles) {
@@ -308,6 +308,18 @@ Game.Mobs = (function () {
 
       if (m.def.hostile) {
         const aggro = (m.def.boss ? 22 : 13) * TS;
+        // 瞬間移動する敵: 一定間隔でプレイヤー近くへ blink(煙＋音)。間合いを潰す脅威
+        if (m.def.blink && distP < aggro && distP > 2.4 * TS) {
+          m.blinkCd = (m.blinkCd || m.def.blink.cd) - 1;
+          if (m.blinkCd <= 0) {
+            Game.Render.spawnParticles(m.x, m.y, m.def.color || '#b06ad0', 10);
+            const ang = Math.atan2(dyp, dxp), nd = (1.6 + Math.random()) * TS;
+            const nx = p.x - Math.cos(ang) * nd, ny = p.y - Math.sin(ang) * nd;
+            if (Game.World.isWalkable(nx, ny)) { m.x = nx; m.y = ny; m.prevX = nx; m.prevY = ny; }
+            Game.Render.spawnParticles(m.x, m.y, '#fff', 8); Game.Audio.play('shift');
+            m.blinkCd = m.def.blink.cd;
+          }
+        }
         // ボスは手下を召喚
         if (m.def.boss && m.attackCd <= 0 && Game.state.tick % 200 === 0) {
           const minion = m.def.summon || 'shadow_spawn';
