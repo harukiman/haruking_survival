@@ -927,7 +927,7 @@ Game.UI = (function () {
     window.removeEventListener('pointerup', invPointerUp);
     if (dragGhost) { dragGhost.remove(); dragGhost = null; }
     const src = dragSrc; dragSrc = -1;
-    if (!dragging) { invSelected = src; refreshInventory(); return; } // タップ=選択
+    if (!dragging) { invSelected = src; if (Game.Inventory.slots()[src]) Game.Audio.play('cursor'); refreshInventory(); return; } // タップ=選択
     dragging = false;
     const tgt = document.elementFromPoint(e.clientX, e.clientY);
     const slotEl = tgt && tgt.closest && tgt.closest('.slot');
@@ -1116,7 +1116,7 @@ Game.UI = (function () {
     const tabs = document.createElement('div'); tabs.className = 'craft-tabs';
     const mkTab = function (key, label) {
       const t = document.createElement('button'); t.className = 'craft-tab' + (craftCatFilter === key ? ' on' : ''); t.textContent = label;
-      t.addEventListener('click', function () { craftCatFilter = key; craftPage = 0; refreshCraft(); }); return t;
+      t.addEventListener('click', function () { craftCatFilter = key; craftPage = 0; Game.Audio.play('tab'); refreshCraft(); }); return t;
     };
     tabs.appendChild(mkTab('all', 'すべて'));
     CRAFT_CATS.forEach(function (c) { tabs.appendChild(mkTab(c[0], c[1].replace(/ .*/, ''))); });
@@ -1174,8 +1174,8 @@ Game.UI = (function () {
       const next = document.createElement('button'); next.className = 'craft-page-btn'; next.textContent = '▶'; next.disabled = craftPage >= pages - 1;
       const mkStyle = function (btn) { btn.style.cssText = 'min-width:48px;min-height:38px;font-size:1.1rem;border-radius:8px;border:1px solid #33455e;background:' + (btn.disabled ? '#1a2436' : '#22304a') + ';color:' + (btn.disabled ? '#4a5a70' : '#e8edf2') + ';'; };
       mkStyle(prev); mkStyle(next);
-      prev.addEventListener('click', function () { if (craftPage > 0) { craftPage--; refreshCraftRows(); } });
-      next.addEventListener('click', function () { if (craftPage < pages - 1) { craftPage++; refreshCraftRows(); } });
+      prev.addEventListener('click', function () { if (craftPage > 0) { craftPage--; Game.Audio.play('cursor'); refreshCraftRows(); } });
+      next.addEventListener('click', function () { if (craftPage < pages - 1) { craftPage++; Game.Audio.play('cursor'); refreshCraftRows(); } });
       pager.appendChild(prev); pager.appendChild(lab); pager.appendChild(next);
       box.appendChild(pager);
     }

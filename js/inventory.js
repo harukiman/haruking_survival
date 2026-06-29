@@ -86,7 +86,9 @@ Game.Inventory = (function () {
 
   function setHotbar(i) {
     if (!Game.state) return;
+    const prev = Game.state.player.hotbarIndex;
     Game.state.player.hotbarIndex = Game.Utils.clamp(i, 0, Game.HOTBAR_SIZE - 1);
+    if (Game.state.player.hotbarIndex !== prev && Game.Audio) Game.Audio.play('cursor'); // 切替カーソル音
     if (Game.UI) Game.UI.refreshHotbar();
   }
 
@@ -101,6 +103,15 @@ Game.Inventory = (function () {
   }
 
   // 選択中アイテムを「使う」（食べる）。設置/採掘は player 側で扱う
+  // 食材の食感を推定して効果音の種類を返す（apple=しゃりしゃり 等）
+  function foodSoundKind(def, id) {
+    const nm = (def && def.name) || '';
+    if (/茶|スープ|ジュース|蜜/.test(nm)) return 'drink';
+    if (def && (def.cookTo || /肉|meat|魚|fish/.test(id + nm))) return 'meat';
+    if (/シチュー|煮込み|パイ|パン|サラダ|かぼちゃ/.test(nm)) return 'soft';
+    if (/りんご|木の実|にんじん|トマト|サボテン|キノコ|草|berry|apple|carrot/.test(id + nm)) return 'crunch';
+    return 'soft';
+  }
   function useSelected() {
     const sl = selectedSlot();
     if (!sl) return false;
@@ -153,7 +164,7 @@ Game.Inventory = (function () {
       if (Game.Achievements) Game.Achievements.unlock('potion_master');
       Game.Player.applyEquipStats();
       Game.Render.spawnParticles(p.x, p.y - 6, '#ffe9a0', 10);
-      remove(sl.id, 1); Game.Audio.play('eat');
+      remove(sl.id, 1); if (Game.Audio.eat) Game.Audio.eat('drink'); else Game.Audio.play('eat');
       Game.UI.toast(def.name + ' を飲んだ — ' + (Game.Status.TYPES[def.buff.type] ? Game.Status.TYPES[def.buff.type].name : '') + ' 効果');
       Game.UI.refreshAll(); return true;
     }
@@ -161,7 +172,7 @@ Game.Inventory = (function () {
       def.cures.forEach(function (c) { Game.Status.cure(c); });
       if (def.heal) p.health = Math.min(p.maxHealth, p.health + def.heal);
       Game.Render.spawnParticles(p.x, p.y, '#9fe0b0', 8);
-      remove(sl.id, 1); Game.Audio.play('eat');
+      remove(sl.id, 1); if (Game.Audio.eat) Game.Audio.eat('drink'); else Game.Audio.play('eat');
       Game.UI.toast(def.name + ' を使った');
       Game.UI.refreshAll(); return true;
     }
@@ -179,7 +190,7 @@ Game.Inventory = (function () {
       }
       Game.Render.spawnParticles(p.x, p.y, def.sick ? '#6b7a3a' : '#ffd86b', 6);
       remove(sl.id, 1);
-      Game.Audio.play('eat');
+      if (Game.Audio.eat) Game.Audio.eat(foodSoundKind(def, sl.id)); else Game.Audio.play('eat');
       Game.UI.refreshAll();
       return true;
     }

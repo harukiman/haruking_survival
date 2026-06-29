@@ -61,6 +61,51 @@ Game.Audio = (function () {
     osc.connect(g); g.connect(sfxGain);
     osc.start(t0); osc.stop(t0 + dur + 0.02);
   }
+  // 整形ノイズ（sfxGain経由で音量設定を尊重）。decayPow を上げるほど立ち上がりが鋭い
+  function noiseShape(t, dur, vol, filtType, cutoff, Q, decayPow) {
+    if (!ctx) return;
+    const len = Math.max(1, Math.floor(ctx.sampleRate * dur));
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate); const d = buf.getChannelData(0);
+    const p = decayPow || 1;
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, p);
+    const src = ctx.createBufferSource(); src.buffer = buf;
+    const f = ctx.createBiquadFilter(); f.type = filtType; f.frequency.value = cutoff; if (Q) f.Q.value = Q;
+    const g = ctx.createGain(); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(f); f.connect(g); g.connect(sfxGain); src.start(t); src.stop(t + dur + 0.02);
+  }
+  // FPS風の発砲音: ①鋭いクラック(高域ノイズ) ②低域パンチ(急降下サイン+火薬ノイズ) ③反響テール
+  function gunShot(o) {
+    if (!enabled) return; ensure(); if (!ctx) return;
+    const t = ctx.currentTime; const v = (o.vol != null ? o.vol : 1);
+    // ① クラック（鋭い立ち上がり）
+    noiseShape(t, o.crackDur || 0.045, (o.crackVol || 0.5) * v, 'highpass', o.crackHz || 2600, 0.7, 3);
+    // ② ボディ（ピッチ急降下のサインで“ドスッ”）
+    const ob = ctx.createOscillator(), gb = ctx.createGain();
+    const bd = o.bodyDur || 0.09;
+    ob.type = 'sine'; ob.frequency.setValueAtTime(o.bodyHz || 230, t); ob.frequency.exponentialRampToValueAtTime(o.bodyLow || 55, t + bd);
+    gb.gain.setValueAtTime((o.bodyVol || 0.42) * v, t); gb.gain.exponentialRampToValueAtTime(0.0001, t + bd);
+    ob.connect(gb); gb.connect(sfxGain); ob.start(t); ob.stop(t + bd + 0.02);
+    // ②' 火薬の弾け（バンドパスノイズ）
+    noiseShape(t, bd, (o.bodyVol || 0.42) * 0.7 * v, 'bandpass', o.midHz || 720, 1.2, 2);
+    // ③ テール（反響）
+    if (o.tailDur) noiseShape(t + 0.006, o.tailDur, (o.tailVol || 0.12) * v, 'lowpass', o.tailHz || 1400, 0, 1.5);
+  }
+  // 食べる/飲む音（食材ごとに質感を変える）。kind: 'crunch'|'meat'|'drink'|'soft'
+  function eatSound(kind) {
+    if (!enabled) return; ensure(); if (!ctx) return;
+    const t = ctx.currentTime;
+    if (kind === 'drink') { // ごくごく
+      for (let i = 0; i < 3; i++) { const tt = t + i * 0.11; const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(300 - i * 30, tt); o.frequency.exponentialRampToValueAtTime(160, tt + 0.08); g.gain.setValueAtTime(0.0001, tt); g.gain.exponentialRampToValueAtTime(0.09, tt + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, tt + 0.1); o.connect(g); g.connect(sfxGain); o.start(tt); o.stop(tt + 0.12); }
+    } else if (kind === 'meat') { // むしゃっ（低めの噛みつき×2）
+      noiseShape(t, 0.09, 0.16, 'bandpass', 500, 1.4, 2);
+      noiseShape(t + 0.13, 0.08, 0.12, 'bandpass', 420, 1.4, 2);
+    } else if (kind === 'soft') { // もぐもぐ（やわらかい）
+      noiseShape(t, 0.07, 0.1, 'lowpass', 900, 0, 1.6);
+      noiseShape(t + 0.12, 0.06, 0.08, 'lowpass', 800, 0, 1.6);
+    } else { // crunch: しゃりしゃり（高域の歯切れよい連続噛み）
+      for (let i = 0; i < 3; i++) noiseShape(t + i * 0.085, 0.045, 0.15 - i * 0.02, 'highpass', 3200 + Math.random() * 800, 0.8, 2.5);
+    }
+  }
   function throttled(name, ms) {
     const now = (ctx && ctx.currentTime) || (performance.now() / 1000);
     if (lastPlay[name] && now - lastPlay[name] < ms) return false;
@@ -77,6 +122,8 @@ Game.Audio = (function () {
       case 'eat':    beep(280, 0.1, 'sine', 0.09); break;
       case 'hurt':   beep(150, 0.18, 'sawtooth', 0.12); break;
       case 'select': beep(440, 0.04, 'square', 0.05); break;
+      case 'cursor': if (throttled('cursor', 0.03)) { beep(660, 0.022, 'triangle', 0.035); } break;
+      case 'tab':    if (throttled('tab', 0.04)) { beep(520, 0.03, 'sine', 0.045); beep(720, 0.03, 'sine', 0.03); } break;
       case 'swing':  if (throttled('swing', 0.1)) beep(300, 0.05, 'triangle', 0.06); break;
       case 'hit':    beep(220, 0.07, 'square', 0.09); beep(160, 0.09, 'sawtooth', 0.06); break;
       case 'mobdie': beep(200, 0.12, 'sawtooth', 0.1); beep(120, 0.16, 'triangle', 0.08); break;
@@ -88,13 +135,13 @@ Game.Audio = (function () {
       case 'event_horde': sbeep(110, 0.35, 'sawtooth', 0.12, 0); sbeep(98, 0.4, 'sawtooth', 0.12, 0.18); sbeep(82, 0.5, 'triangle', 0.1, 0.4); if (ctx) noiseBurst(ctx.currentTime, 0.5, 0.1, 400); break;
       case 'enchant': beep(620, 0.1, 'sine', 0.09); beep(820, 0.12, 'sine', 0.08); beep(1040, 0.16, 'triangle', 0.07); break;
       case 'dash':   if (throttled('dash', 0.25)) beep(520, 0.07, 'sine', 0.05); break;
-      case 'gun':    if (throttled('gun', 0.05)) { beep(900, 0.04, 'square', 0.08); beep(300, 0.08, 'sawtooth', 0.07); } break;
-      case 'gun_pistol': if (throttled('gp', 0.04)) { beep(820, 0.04, 'square', 0.09); beep(260, 0.07, 'sawtooth', 0.07); } break;
-      case 'gun_smg':    if (throttled('gs', 0.02)) { beep(1050, 0.025, 'square', 0.06); beep(360, 0.05, 'sawtooth', 0.05); } break;
-      case 'gun_rifle':  if (throttled('gr', 0.04)) { beep(680, 0.05, 'square', 0.1); beep(220, 0.1, 'sawtooth', 0.08); } break;
-      case 'gun_shotgun': if (throttled('gsh', 0.1)) { beep(180, 0.14, 'sawtooth', 0.13); beep(90, 0.18, 'triangle', 0.1); if (ctx) noiseBurst(ctx.currentTime, 0.12, 0.18, 1800); } break;
-      case 'gun_sniper': if (throttled('gsn', 0.1)) { beep(1300, 0.05, 'square', 0.12); beep(140, 0.22, 'sawtooth', 0.12); } break;
-      case 'gun_rocket': if (throttled('gro', 0.1)) { beep(140, 0.18, 'sawtooth', 0.12); beep(70, 0.26, 'triangle', 0.1); } break;
+      case 'gun':    if (throttled('gun', 0.05)) gunShot({ crackHz: 2500, crackVol: 0.45, crackDur: 0.04, bodyHz: 240, bodyLow: 60, bodyVol: 0.42, bodyDur: 0.08, midHz: 760, tailDur: 0.07, tailVol: 0.1, tailHz: 1500 }); break;
+      case 'gun_pistol': if (throttled('gp', 0.04)) gunShot({ crackHz: 2400, crackVol: 0.46, crackDur: 0.04, bodyHz: 250, bodyLow: 62, bodyVol: 0.44, bodyDur: 0.08, midHz: 780, tailDur: 0.07, tailVol: 0.1, tailHz: 1500 }); break;
+      case 'gun_smg':    if (throttled('gs', 0.02)) gunShot({ crackHz: 3000, crackVol: 0.34, crackDur: 0.022, bodyHz: 290, bodyLow: 80, bodyVol: 0.3, bodyDur: 0.04, midHz: 920, tailDur: 0.025, tailVol: 0.06, tailHz: 1700, vol: 0.9 }); break;
+      case 'gun_rifle':  if (throttled('gr', 0.04)) gunShot({ crackHz: 2800, crackVol: 0.52, crackDur: 0.045, bodyHz: 205, bodyLow: 50, bodyVol: 0.5, bodyDur: 0.1, midHz: 660, tailDur: 0.12, tailVol: 0.14, tailHz: 1300 }); break;
+      case 'gun_shotgun': if (throttled('gsh', 0.1)) gunShot({ crackHz: 1700, crackVol: 0.5, crackDur: 0.06, bodyHz: 150, bodyLow: 40, bodyVol: 0.62, bodyDur: 0.16, midHz: 440, tailDur: 0.2, tailVol: 0.2, tailHz: 900, vol: 1.05 }); break;
+      case 'gun_sniper': if (throttled('gsn', 0.1)) gunShot({ crackHz: 3200, crackVol: 0.6, crackDur: 0.05, bodyHz: 185, bodyLow: 44, bodyVol: 0.56, bodyDur: 0.14, midHz: 600, tailDur: 0.32, tailVol: 0.17, tailHz: 1100, vol: 1.12 }); break;
+      case 'gun_rocket': if (throttled('gro', 0.1)) gunShot({ crackHz: 900, crackVol: 0.3, crackDur: 0.1, bodyHz: 135, bodyLow: 36, bodyVol: 0.56, bodyDur: 0.26, midHz: 320, tailDur: 0.3, tailVol: 0.2, tailHz: 700, vol: 1.05 }); break;
       case 'boom_sfx':   beep(110, 0.3, 'sawtooth', 0.16); beep(60, 0.4, 'triangle', 0.13); if (ctx) noiseBurst(ctx.currentTime, 0.4, 0.22, 600); break;
       case 'slash_air':  if (throttled('sla', 0.06)) { beep(680, 0.06, 'sine', 0.06); beep(1200, 0.05, 'triangle', 0.05); } break;
       case 'beam':       if (throttled('bm', 0.05)) { beep(1400, 0.06, 'sine', 0.07); beep(700, 0.1, 'sawtooth', 0.05); } break;
@@ -290,5 +337,6 @@ Game.Audio = (function () {
   }
   function isEnabled() { return enabled; }
 
-  return { play, ensure, toggle, isEnabled, startBGM, tickBGM, updateMood, setMood, cineStart, cineStop, cue, setVolumes };
+  function eat(kind) { eatSound(kind); }
+  return { play, eat, ensure, toggle, isEnabled, startBGM, tickBGM, updateMood, setMood, cineStart, cineStop, cue, setVolumes };
 })();
