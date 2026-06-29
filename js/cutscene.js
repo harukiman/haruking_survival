@@ -351,24 +351,59 @@ Game.Cutscene = (function () {
   function drawBossSilhouette(d, cx, cy, sc, mode) {
     ctx.save(); ctx.translate(cx, cy); ctx.scale(sc, sc);
     ctx.fillStyle = mode === 'fall' || mode === 'win' ? shadeHex(d.col, 0.5) : d.col;
+    const dk = shadeHex(d.col, 0.55), lt = shadeHex(d.col, 1.35);
+    let eyeY = -36;
     if (d.sil === 'beast') {
-      ctx.beginPath(); ctx.moveTo(0, -30);
-      for (let a = 0; a <= 12; a++) { const ang = a / 12 * Math.PI * 2; const r = 34 * (a % 2 ? 0.7 : 1); ctx.lineTo(Math.cos(ang) * r, Math.sin(ang) * r * 0.8 + 6); }
-      ctx.closePath(); ctx.fill();
+      // 四足の獣: 低く構えた巨躯＋脚＋尾＋角＋牙
+      ctx.fillStyle = dk; ctx.fillRect(-30, 8, 10, 26); ctx.fillRect(20, 8, 10, 26); ctx.fillRect(-14, 12, 9, 24); ctx.fillRect(6, 12, 9, 24); // 四肢
+      ctx.fillStyle = d.col;
+      ctx.beginPath(); ctx.ellipse(0, -2, 34, 22, 0, 0, Math.PI * 2); ctx.fill(); // 胴
+      ctx.beginPath(); ctx.arc(28, -16, 18, 0, Math.PI * 2); ctx.fill(); // 頭(前方)
+      // 角
+      ctx.fillStyle = lt; ctx.beginPath(); ctx.moveTo(22, -30); ctx.lineTo(14, -52); ctx.lineTo(30, -34); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(36, -30); ctx.lineTo(46, -50); ctx.lineTo(42, -28); ctx.closePath(); ctx.fill();
+      // 尾
+      ctx.strokeStyle = d.col; ctx.lineWidth = 7; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(-30, -4); ctx.quadraticCurveTo(-58, -14, -50, 16); ctx.stroke();
+      // 背の棘
+      ctx.fillStyle = lt; for (let k = -1; k <= 1; k++) { ctx.beginPath(); ctx.moveTo(k * 14, -22); ctx.lineTo(k * 14 + 5, -40); ctx.lineTo(k * 14 + 10, -22); ctx.closePath(); ctx.fill(); }
+      eyeY = -18; ctx.fillStyle = '#fff';
+      ctx.shadowColor = d.col; ctx.shadowBlur = 16; ctx.fillRect(24, eyeY, 5, 4); ctx.fillRect(33, eyeY, 5, 4); ctx.shadowBlur = 0;
+      ctx.restore(); return;
     } else if (d.sil === 'orb') {
-      const g = ctx.createRadialGradient(0, 0, 4, 0, 0, 40); g.addColorStop(0, '#fff'); g.addColorStop(0.5, d.col); g.addColorStop(1, shadeHex(d.col, 0.4));
-      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, 38, 0, 7); ctx.fill();
+      // 浮遊する眼＋周囲を巡る破片＋触手
+      ctx.strokeStyle = d.col; ctx.lineWidth = 3; ctx.globalAlpha = 0.7;
+      for (let k = 0; k < 5; k++) { const a = k / 5 * Math.PI * 2 + cy * 0; ctx.beginPath(); ctx.moveTo(0, 0); const ex = Math.cos(a) * 52, ey = Math.sin(a) * 52; ctx.quadraticCurveTo(Math.cos(a + 0.5) * 30, Math.sin(a + 0.5) * 30, ex, ey); ctx.stroke(); }
+      ctx.globalAlpha = 1;
+      const g = ctx.createRadialGradient(0, 0, 4, 0, 0, 42); g.addColorStop(0, '#fff'); g.addColorStop(0.5, d.col); g.addColorStop(1, dk);
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, 40, 0, 7); ctx.fill();
+      // 巡る破片
+      ctx.fillStyle = lt; for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2; const rr = 58; ctx.save(); ctx.translate(Math.cos(a) * rr, Math.sin(a) * rr); ctx.rotate(a); ctx.fillRect(-4, -4, 8, 8); ctx.restore(); }
+      // 縦の瞳
+      ctx.fillStyle = mode === 'win' ? 'rgba(255,255,255,0.6)' : '#1a0010'; ctx.beginPath(); ctx.ellipse(0, 0, 6, 18, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.restore(); return;
     } else {
-      // 巨人/人型シルエット
-      ctx.beginPath(); ctx.arc(0, -34, 16, 0, 7); ctx.fill(); // 頭
-      ctx.fillRect(-22, -20, 44, 50); // 胴
-      ctx.fillRect(-34, -16, 12, 38); ctx.fillRect(22, -16, 12, 38); // 腕
-      ctx.fillRect(-18, 30, 14, 28); ctx.fillRect(4, 30, 14, 28); // 脚
+      // 巨人/人型: 角・王冠・肩スパイク・マント・鉤爪で威圧的に
+      ctx.fillStyle = dk; ctx.beginPath(); ctx.moveTo(-30, -16); ctx.lineTo(-52, 40); ctx.lineTo(-18, 24); ctx.closePath(); ctx.fill(); // マント左
+      ctx.beginPath(); ctx.moveTo(30, -16); ctx.lineTo(52, 40); ctx.lineTo(18, 24); ctx.closePath(); ctx.fill(); // マント右
+      ctx.fillStyle = d.col;
+      ctx.beginPath(); ctx.arc(0, -34, 15, 0, 7); ctx.fill(); // 頭
+      ctx.beginPath(); ctx.moveTo(-26, -18); ctx.lineTo(26, -18); ctx.lineTo(20, 34); ctx.lineTo(-20, 34); ctx.closePath(); ctx.fill(); // 胴(台形)
+      ctx.fillRect(-38, -16, 13, 40); ctx.fillRect(25, -16, 13, 40); // 腕
+      ctx.fillRect(-18, 34, 14, 26); ctx.fillRect(4, 34, 14, 26); // 脚
+      // 肩スパイク
+      ctx.fillStyle = lt; [-30, 30].forEach(sx => { ctx.beginPath(); ctx.moveTo(sx - 8, -18); ctx.lineTo(sx, -36); ctx.lineTo(sx + 8, -18); ctx.closePath(); ctx.fill(); });
+      // 角(頭の左右)
+      ctx.beginPath(); ctx.moveTo(-12, -42); ctx.lineTo(-22, -62); ctx.lineTo(-6, -46); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(12, -42); ctx.lineTo(22, -62); ctx.lineTo(6, -46); ctx.closePath(); ctx.fill();
+      // 鉤爪
+      ctx.strokeStyle = lt; ctx.lineWidth = 2.5; ctx.lineCap = 'round';
+      [-31, 31].forEach(hx => { for (let c = -1; c <= 1; c++) { ctx.beginPath(); ctx.moveTo(hx, 24); ctx.lineTo(hx + c * 4, 34); ctx.stroke(); } });
+      eyeY = -38;
     }
     // 光る眼
     ctx.fillStyle = mode === 'win' ? 'rgba(255,255,255,0.6)' : '#fff';
-    ctx.shadowColor = d.col; ctx.shadowBlur = 16;
-    ctx.fillRect(-10, -36, 5, 5); ctx.fillRect(5, -36, 5, 5); ctx.shadowBlur = 0;
+    ctx.shadowColor = d.col; ctx.shadowBlur = 18;
+    ctx.fillRect(-10, eyeY, 5, 5); ctx.fillRect(5, eyeY, 5, 5); ctx.shadowBlur = 0;
     ctx.restore();
   }
   function shadeHex(hex, f) { const c = hex.replace('#', ''); const r = parseInt(c.slice(0, 2), 16) * f, g = parseInt(c.slice(2, 4), 16) * f, b = parseInt(c.slice(4, 6), 16) * f; return 'rgb(' + (r | 0) + ',' + (g | 0) + ',' + (b | 0) + ')'; }
