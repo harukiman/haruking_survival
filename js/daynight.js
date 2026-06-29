@@ -15,6 +15,7 @@ Game.DayNight = (function () {
       if (Game.Render.shake) Game.Render.shake(8);
       Game.Audio.play('thunder'); Game.Audio.play('event_horde');
     }
+    if (!nowBlood && s.bloodMoon && Game.Story && !Game.Story.seen('bloodmoon')) Game.Story.unlock('bloodmoon', true); // 血の月を越えた
     s.bloodMoon = nowBlood;
     // 天候: 一定間隔でランダム遷移
     if (!s.weather) s.weather = { type: 'clear', timer: 0 };
