@@ -15,6 +15,26 @@ Game.Input = (function () {
 
   const intent = { dx: 0, dy: 0, dir: 'down', mine: false, place: false, dash: false, usePointer: false, mouseTile: null };
 
+  // ===== キーリバインド =====
+  const DEF_BINDS = { up: 'w', down: 's', left: 'a', right: 'd', mine: ' ', place: 'q', use: 'g', inv: 'e', stats: 'c', map: 'n', roll: 'r', dash: 'shift', shift: 'f' };
+  function B(action) { const kb = Game.Settings && Game.Settings.get && Game.Settings.get('keybinds'); return (kb && kb[action]) || DEF_BINDS[action]; }
+  let rebinding = null; // {action, cb}
+  function beginRebind(action, cb) { rebinding = { action: action, cb: cb }; }
+  function applyRebind(k) {
+    if (!rebinding) return false;
+    if (k === 'escape') { const r = rebinding; rebinding = null; if (r.cb) r.cb(null); return true; }
+    const kb = Object.assign({}, (Game.Settings.get('keybinds') || DEF_BINDS));
+    kb[rebinding.action] = k; Game.Settings.set('keybinds', kb);
+    const r = rebinding; rebinding = null; if (r.cb) r.cb(k); return true;
+  }
+  const KEY_LABELS = { ' ': 'Space', 'arrowup': '↑', 'arrowdown': '↓', 'arrowleft': '←', 'arrowright': '→', 'escape': 'Esc' };
+  function keyLabel(k) { return KEY_LABELS[k] || (k ? k.toUpperCase() : '—'); }
+  const BIND_ACTIONS = [
+    ['up', '上移動'], ['down', '下移動'], ['left', '左移動'], ['right', '右移動'],
+    ['mine', '採掘/攻撃'], ['place', '設置'], ['use', '開く/使う'], ['inv', 'インベントリ'],
+    ['stats', 'ステータス'], ['map', '大マップ'], ['roll', '回避ロール'], ['dash', '走る'], ['shift', '影渡り'],
+  ];
+
   function init() {
     const cv = Game.canvas;
 
@@ -23,19 +43,20 @@ Game.Input = (function () {
       const tag = (e.target && e.target.tagName) || '';
       if (tag === 'INPUT' || tag === 'TEXTAREA') return; // フォーム入力中は無視
       const k = e.key.toLowerCase();
+      if (rebinding) { e.preventDefault(); applyRebind(k); return; } // リバインド捕捉中
       keys[k] = true;
       if (!Game.state) return; // ゲーム開始前は操作無効
       // ホットバー 1-9
       if (k >= '1' && k <= '9') Game.Inventory.setHotbar(parseInt(k, 10) - 1);
-      if (k === 'e') { Game.UI.toggleInventory(); }
-      if (k === 'f') { Game.World.shift(); }          // 世界シフト
+      if (k === B('inv')) { Game.UI.toggleInventory(); }
+      if (k === B('shift')) { Game.World.shift(); }          // 世界シフト
       if (k === 'm') { const on = Game.Audio.toggle(); Game.UI.toast(on ? 'サウンド ON' : 'サウンド OFF'); }
-      if (k === 'escape' || k === 'p') { Game.UI.toggleOptions(); }
-      if (k === 'n' || k === 'tab') { e.preventDefault(); Game.UI.toggleBigMap(); } // 大マップ
-      if (k === 'c') { Game.UI.toggleStats(); } // ステータス&スキル(再押下で閉じる)
-      if (k === 'k' || k === 'q') placeQueued = true; // facing設置
-      if (k === 'g') useQueued = true;   // 開く/使う(近隣のチェスト等)
-      if (k === 'r') rollQueued = true;  // 回避ロール
+      if (k === 'escape' || k === 'p') { Game.UI.toggleOptions(); } // 設定は固定(誤割当でロックしない)
+      if (k === B('map') || k === 'tab') { e.preventDefault(); Game.UI.toggleBigMap(); } // 大マップ
+      if (k === B('stats')) { Game.UI.toggleStats(); } // ステータス&スキル(再押下で閉じる)
+      if (k === B('place') || k === 'k') placeQueued = true; // facing設置
+      if (k === B('use')) useQueued = true;   // 開く/使う(近隣のチェスト等)
+      if (k === B('roll')) rollQueued = true;  // 回避ロール
       if (k === ' ') e.preventDefault();
     });
     window.addEventListener('keyup', function (e) { keys[e.key.toLowerCase()] = false; });
@@ -212,10 +233,10 @@ Game.Input = (function () {
 
   function poll() {
     let dx = 0, dy = 0;
-    if (keys['a'] || keys['arrowleft'] || touch.left) dx -= 1;
-    if (keys['d'] || keys['arrowright'] || touch.right) dx += 1;
-    if (keys['w'] || keys['arrowup'] || touch.up) dy -= 1;
-    if (keys['s'] || keys['arrowdown'] || touch.down) dy += 1;
+    if (keys[B('left')] || keys['arrowleft'] || touch.left) dx -= 1;
+    if (keys[B('right')] || keys['arrowright'] || touch.right) dx += 1;
+    if (keys[B('up')] || keys['arrowup'] || touch.up) dy -= 1;
+    if (keys[B('down')] || keys['arrowdown'] || touch.down) dy += 1;
     // フローティング仮想スティック（デッドゾーン0.22）
     if (joy.active && Math.hypot(joy.dx, joy.dy) > 0.22) { const sn = (Game.Settings ? Game.Settings.get('joySens') : 100) / 100; dx += joy.dx * sn; dy += joy.dy * sn; }
 
@@ -229,15 +250,16 @@ Game.Input = (function () {
 
     const usePointer = mouse.inside && mouse.moved && !('ontouchstart' in window && !mouse.down);
     intent.dx = dx; intent.dy = dy; intent.dir = lastDir;
-    intent.mine = mouse.down || touch.mine || !!keys[' '] || !!keys['j'] || tmp.mine;
+    intent.mine = mouse.down || touch.mine || !!keys[B('mine')] || !!keys['j'] || tmp.mine;
     intent.place = placeQueued; placeQueued = false;
     intent.use = useQueued; useQueued = false;
     intent.roll = rollQueued; rollQueued = false;
-    intent.dash = !!keys['shift'] || touch.dash || tmp.dash;
+    intent.dash = !!keys[B('dash')] || touch.dash || tmp.dash;
     intent.usePointer = usePointer;
     intent.mouseTile = usePointer ? Game.Camera.screenToTile(mouse.x, mouse.y) : null;
     return intent;
   }
 
-  return { init, poll, intent, cursor };
+  function resetBinds() { Game.Settings.set('keybinds', Object.assign({}, DEF_BINDS)); }
+  return { init, poll, intent, cursor, beginRebind, keyLabel, bindAt: B, BIND_ACTIONS, resetBinds };
 })();

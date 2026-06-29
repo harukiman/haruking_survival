@@ -664,6 +664,13 @@ Game.UI = (function () {
       toggle('ambient', '🌿 環境演出') +
       toggle('homeCompass', '🧭 帰路コンパス') +
       toggle('showFps', '📈 FPS表示') +
+      // ===== 操作キー設定(リバインド) =====
+      (Game.Input && Game.Input.BIND_ACTIONS ?
+        '<div class="opt-keybinds"><div class="opt-kb-head">⌨ 操作キー設定 <button id="kb-reset" class="map-btn">初期化</button></div>' +
+        Game.Input.BIND_ACTIONS.map(function (a) {
+          return '<div class="opt-row tg"><label>' + a[1] + '</label><button class="kb-btn" data-act="' + a[0] + '">' + Game.Input.keyLabel(Game.Input.bindAt(a[0])) + '</button></div>';
+        }).join('') + '<div class="hk" style="opacity:.7">変更したい操作を押し、割り当てたいキーを入力（Escで取消）</div></div>'
+        : '') +
       // ===== 操作ヘルプ(折りたたみ) =====
       '<div class="opt-help"><div class="opt-help-head" id="opt-help-head">' + (optHelpOpen ? '▼' : '▶') + ' ❔ 操作ヘルプ</div>' +
       (optHelpOpen ? '<div class="opt-help-body">' +
@@ -690,6 +697,16 @@ Game.UI = (function () {
         this.classList.toggle('on', v); this.textContent = v ? 'ON' : 'OFF';
       });
     });
+    c.querySelectorAll('.kb-btn[data-act]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        if (!Game.Input || !Game.Input.beginRebind) return;
+        c.querySelectorAll('.kb-btn').forEach(function (o) { o.classList.remove('listening'); });
+        btn.classList.add('listening'); btn.textContent = '…入力';
+        Game.Input.beginRebind(btn.getAttribute('data-act'), function () { renderOptions(); });
+      });
+    });
+    const kbr = document.getElementById('kb-reset');
+    if (kbr) kbr.addEventListener('click', function () { if (Game.Input && Game.Input.resetBinds) { Game.Input.resetBinds(); renderOptions(); } });
     const hh = document.getElementById('opt-help-head');
     if (hh) hh.addEventListener('click', function () { optHelpOpen = !optHelpOpen; renderOptions(); });
   }
