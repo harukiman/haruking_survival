@@ -68,6 +68,7 @@ Game.Mobs = (function () {
         Game.Cutscene.playBossIntro(type, function () { Game.state.paused = false; });
       }
     }
+    return m;
   }
 
   // 周辺の空き walkable タイルを探してスポーン
@@ -392,8 +393,14 @@ Game.Mobs = (function () {
           wander(m);
         }
       } else {
+        // 臆病(金喰い等): プレイヤーが近いと常に逃げ続ける
+        if (m.def.skittish && distP < 11 * TS) {
+          const jx = -dyp * (m.wobble % 2 ? 0.5 : -0.5); // 蛇行して捕まえにくく
+          moveMob(m, -dxp + jx, -dyp - jx * (dxp / (Math.abs(dxp) || 1)) * 0, m.def.speed * 1.25);
+          if (Game.state.tick % 30 === 0) Game.Render.spawnParticles(m.x, m.y, m.def.color || '#ffd24a', 2); // きらめきの足跡
+        }
         // 動物: 攻撃されたら逃走、それ以外は徘徊
-        if (m.fleeTimer > 0) {
+        else if (m.fleeTimer > 0) {
           m.fleeTimer--;
           moveMob(m, -dxp, -dyp, m.def.speed * 1.3);
         } else {

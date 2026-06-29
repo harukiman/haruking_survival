@@ -738,6 +738,7 @@ Game.DIFFICULTIES = {
 // モブ定義
 Game.MOBS = {
   rabbit:   { name:'うさぎ', hostile:false, hp:4,  speed:1.6, color:'#d8cfc0', size:7,  drops:[{item:'raw_meat',n:[1,1]},{item:'hide',n:[0,1]}], flee:true, xp:1 },
+  gold_thief:{ name:'金喰い', hostile:false, hp:46, speed:2.7, color:'#ffd24a', size:13, drops:[{item:'gold_bar',n:[3,6]},{item:'kokuhen',n:[0,1]}], skittish:true, shape:'beast', xp:30 },
   deer:     { name:'鹿', hostile:false, hp:8,  speed:1.4, color:'#a9762f', size:11, drops:[{item:'raw_meat',n:[1,3]},{item:'hide',n:[1,2]}], flee:true, xp:2 },
   sheep:    { name:'羊', hostile:false, hp:6,  speed:1.0, color:'#eee', size:10, drops:[{item:'raw_meat',n:[1,2]},{item:'hide',n:[1,2]}], flee:true, xp:1 },
   slime:    { name:'スライム', hostile:true, hp:6,  speed:1.1, color:'#5fc46b', size:10, drops:[{item:'slime_ball',n:[1,2]},{item:'shadow_shard',n:[0,1]}], dmg:2, hop:true, xp:2 },

@@ -29,12 +29,24 @@ Game.Events = (function () {
         else if (r < 0.04) startHorde();
         else cd = 30 * 10;
       } else {
-        if (Math.random() < 0.015) startSupply();
+        const r = Math.random();
+        if (r < 0.012) startGoldThief();
+        else if (r < 0.027) startSupply();
         else cd = 30 * 10;
       }
     } else {
       cd = 30 * 6;
     }
+  }
+
+  // ---- 金喰い: 宝を抱えて逃げる稀少モブ。追って仕留めれば大量の金塊 ----
+  function startGoldThief() {
+    const p = Game.state.player, TS = Game.CFG.TILE_SIZE;
+    const ang = Math.random() * Math.PI * 2, dist = 5 * TS;
+    Game.Mobs.spawnMob('gold_thief', p.x + Math.cos(ang) * dist, p.y + Math.sin(ang) * dist);
+    if (Game.UI) Game.UI.toast('✨ 金喰いが現れた！ 逃げる前に仕留めれば大量の金塊が手に入る');
+    if (Game.Audio) Game.Audio.play('relic_get');
+    cd = 30 * 25; // しばらく再発生させない
   }
 
   // ---- 魔物の侵攻 ----
