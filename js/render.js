@@ -84,6 +84,7 @@ Game.Render = (function () {
     drawFloaters(ctx);
     Game.Lighting.drawOverlay(ctx);
     drawNightSky(ctx);
+    Game.Events.draw(ctx);
     drawWeather(ctx);
     drawAmbient(ctx);
     drawBossVignette(ctx);

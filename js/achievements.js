@@ -46,6 +46,7 @@ Game.Achievements = (function () {
     visit_volcanic:{ name:'灼熱の地へ', desc:'火山地帯に足を踏み入れた' },
     biome_master:  { name:'全地踏破', desc:'草原・森・砂漠・雪原・沼地・火山を踏破した' },
     pack_rat:      { name:'大荷物', desc:'インベントリ上限を100まで拡張した' },
+    stargazer:     { name:'星を掴む者', desc:'流星群で星のかけらを手にした' },
     dual_relic:    { name:'二つの遺物', desc:'遺物を2つ同時に装備した' },
     elite_veteran: { name:'精鋭狩りの達人', desc:'精鋭個体を25体討伐した' },
     champion_master:{ name:'チャンピオンの覇者', desc:'チャンピオンを10体討伐した' },

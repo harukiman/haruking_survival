@@ -239,6 +239,7 @@ window.Game = window.Game || {};
     Game.Player.update(intent);
     Game.Survival.update();
     Game.DayNight.update();
+    Game.Events.update();
     Game.Mobs.update();
     Game.Projectiles.update();
     if (Game.state.tick % 30 === 0) Game.Farming.update();
