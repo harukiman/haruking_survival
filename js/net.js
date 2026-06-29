@@ -8,6 +8,7 @@ Game.Net = (function () {
   let pendingDeaths = [], pendingLaunch = false, pendingDiscovery = null;
   let isHost = false, connected = false, mobInterval = null;
   let myName = '旅人' + Math.floor(Math.random() * 9000 + 1000);
+  let selfId = null, hostId = null; // ホスト移譲(自動昇格)用
   const peers = {}; // id -> {x,y,dir,world,name}
 
   function available() { return !!window.__trystero; }
@@ -21,6 +22,8 @@ Game.Net = (function () {
     if (connected) leave();
     isHost = host;
     const T = window.__trystero;
+    selfId = (T && T.selfId) || null;
+    hostId = host ? selfId : null; // ホストは自分、参加者はworld受信時に確定
     try {
       room = T.joinRoom({ appId: 'haruking_survival_mp' }, code);
     } catch (e) { Game.UI.toast('接続に失敗しました'); return false; }
@@ -49,7 +52,7 @@ Game.Net = (function () {
 
     a1[1](function (d, id) { const p = peers[id] || (peers[id] = {}); if (p.x == null) { p.x = d.x; p.y = d.y; } p.tx = d.x; p.ty = d.y; p.dir = d.dir; p.world = d.world; });
     a3[1](function (d, id) { const p = peers[id] || (peers[id] = {}); p.name = d.name; });
-    a4[1](function (d) { if (!isHost) adoptWorld(d); });
+    a4[1](function (d, id) { if (id) hostId = id; if (!isHost) adoptWorld(d); }); // 送信元=現ホストを記録
     a2[1](function (d) { applyRemoteEdit(d.tx, d.ty, d.o, d.w); });
     a5[1](function (d, id) { Game.UI.toast((peers[id] && peers[id].name || '旅人') + ': ' + d.t); });
     a6[1](function (d) { // client: 敵スナップショット＋死亡ドロップ
@@ -62,32 +65,66 @@ Game.Net = (function () {
     a7[1](function (d) { if (isHost) Game.Mobs.applyRemoteHit(d.id, d.dmg, d.x, d.y); }); // host: 被ダメ要求
 
     room.onPeerJoin(function (id) {
+      peers[id] = peers[id] || {}; // 参加直後から在籍を把握(ホスト移譲の選出を確実に)
       sendHello({ name: myName }, id);
       if (isHost) sendWorld(worldSnapshot(), id);
       Game.UI.toast('プレイヤーが参加しました');
       Game.UI.refreshNet && Game.UI.refreshNet();
     });
-    room.onPeerLeave(function (id) { delete peers[id]; Game.UI.toast('プレイヤーが退出'); Game.UI.refreshNet && Game.UI.refreshNet(); });
+    room.onPeerLeave(function (id) {
+      const wasHost = (id === hostId);
+      delete peers[id];
+      Game.UI.toast(wasHost ? 'ホストが切断されました — ホストを引き継ぎます' : 'プレイヤーが退出');
+      Game.UI.refreshNet && Game.UI.refreshNet();
+      if (wasHost && !isHost) electHost(); // ホスト離脱 → 自動移譲
+    });
 
     connected = true;
     // ホストは敵スナップショットを定期配信（rAF非依存で堅牢）
-    if (isHost) {
-      mobInterval = setInterval(function () {
-        if (connected && isHost && Game.state && Game.Mobs) {
-          if (sendMobsA) sendMobsA({ m: Game.Mobs.buildSnapshot(), d: pendingDeaths.length ? pendingDeaths : undefined, launch: pendingLaunch ? 1 : undefined, disc: pendingDiscovery || undefined });
-          pendingDeaths = []; pendingLaunch = false; pendingDiscovery = null;
-        }
-      }, 150);
-    }
+    if (isHost) startHostLoop();
     Game.UI.toast(host ? ('ホスト開始 / ルーム: ' + code) : ('ルームに参加: ' + code));
     Game.UI.refreshNet && Game.UI.refreshNet();
     return true;
   }
 
+  // ホストの敵スナップショット配信ループ（昇格時にも再利用）
+  function startHostLoop() {
+    if (mobInterval) return;
+    mobInterval = setInterval(function () {
+      if (connected && isHost && Game.state && Game.Mobs) {
+        if (sendMobsA) sendMobsA({ m: Game.Mobs.buildSnapshot(), d: pendingDeaths.length ? pendingDeaths : undefined, launch: pendingLaunch ? 1 : undefined, disc: pendingDiscovery || undefined });
+        pendingDeaths = []; pendingLaunch = false; pendingDiscovery = null;
+      }
+    }, 150);
+  }
+
+  // ホスト離脱時の自動ホスト移譲。残存ピア全員が同じ集合から決定的に最小IDを選ぶ。
+  function electHost() {
+    if (!connected || isHost) return;
+    // 候補 = 自分 + 現在繋がっている残存ピア（ホストは既に削除済み）
+    const ids = [selfId];
+    for (const id in peers) ids.push(id);
+    ids.sort();
+    const elected = ids[0];
+    if (elected === selfId) promoteToHost();
+    else { hostId = elected; Game.UI.toast('ホスト移譲中… 新ホストに同期します'); }
+  }
+
+  function promoteToHost() {
+    if (isHost) return;
+    isHost = true; hostId = selfId;
+    startHostLoop();
+    // 全員へ自分の世界差分を再配信し、ズレを補正（みんなは既にseedを共有済み）
+    try { if (sendWorld) sendWorld(worldSnapshot()); } catch (e) {}
+    Game.UI.toast('★ あなたが新しいホストになりました（自動移譲）— 進行は途切れません');
+    Game.UI.refreshNet && Game.UI.refreshNet();
+    if (Game.Save) Game.Save.autosave('force'); // 昇格直後に保全
+  }
+
   function leave() {
     if (mobInterval) { clearInterval(mobInterval); mobInterval = null; }
     if (room) { try { room.leave(); } catch (e) {} }
-    room = null; connected = false; pendingDeaths = [];
+    room = null; connected = false; isHost = false; selfId = null; hostId = null; pendingDeaths = [];
     for (const k in peers) delete peers[k];
     Game.UI.refreshNet && Game.UI.refreshNet();
   }
