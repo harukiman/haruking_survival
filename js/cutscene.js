@@ -455,21 +455,60 @@ Game.Cutscene = (function () {
 
   // 物語ムービー: テーマ色＋象徴アイコン＋漂う光のシネマティック背景。textはrunScenesが描画
   function scStory(t, now, d) {
-    const cx = W / 2, cy = H / 2;
-    const g = ctx.createRadialGradient(cx, cy, 30, cx, cy, Math.max(W, H) * 0.72);
-    g.addColorStop(0, d.col || '#2a2440'); g.addColorStop(1, '#03040a');
+    const cx = W / 2, cy = H / 2, mn = Math.min(W, H), accent = d.col2 || '#cfe0ff';
+    // 奥行きのある背景グラデ
+    const g = ctx.createRadialGradient(cx, cy * 0.92, 20, cx, cy, Math.max(W, H) * 0.78);
+    g.addColorStop(0, d.col || '#2a2440'); g.addColorStop(0.6, shadeColCS(d.col || '#2a2440', -40)); g.addColorStop(1, '#03040a');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
     ctx.save();
-    if (d.icon) { ctx.globalAlpha = 0.10 + 0.05 * Math.sin(now * 0.003); ctx.font = 'bold ' + Math.floor(Math.min(W, H) * 0.46) + 'px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(d.icon, cx, cy - 24); }
-    ctx.globalAlpha = 1;
-    for (let i = 0; i < 46; i++) {
-      const a = now * 0.0002 + i * 0.7;
-      const rx = (cx + Math.cos(a + i) * (70 + i * 7) + W) % W;
-      const ry = (cy + Math.sin(a * 1.3 + i) * (50 + i * 5) + H) % H;
-      ctx.globalAlpha = 0.05 + 0.05 * (0.5 + 0.5 * Math.sin(now * 0.002 + i));
-      ctx.fillStyle = d.col2 || '#cfe0ff'; ctx.fillRect(rx, ry, 2, 2);
+    // 回転する光芒(ゆっくり回るライトレイ)
+    ctx.globalCompositeOperation = 'lighter';
+    const rays = 10, rot = now * 0.00012;
+    for (let i = 0; i < rays; i++) {
+      const ang = rot + i * (Math.PI * 2 / rays);
+      ctx.globalAlpha = 0.04 + 0.03 * Math.sin(now * 0.0015 + i);
+      ctx.fillStyle = accent;
+      ctx.beginPath(); ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + Math.cos(ang - 0.06) * mn, cy + Math.sin(ang - 0.06) * mn);
+      ctx.lineTo(cx + Math.cos(ang + 0.06) * mn, cy + Math.sin(ang + 0.06) * mn);
+      ctx.closePath(); ctx.fill();
     }
+    ctx.globalCompositeOperation = 'source-over';
+    // 中央の象徴: 入場でせり上がり、淡く脈動＋発光ハロー
+    if (d.icon) {
+      const rise = (1 - Math.min(1, t * 2.2)) * mn * 0.08; // 序盤せり上がり
+      const pulse = 1 + 0.04 * Math.sin(now * 0.003);
+      const iy = cy - 24 + rise;
+      ctx.globalAlpha = 0.16; ctx.fillStyle = accent;
+      ctx.beginPath(); ctx.arc(cx, iy, mn * 0.26 * pulse, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 0.14 + 0.05 * Math.sin(now * 0.003);
+      ctx.font = 'bold ' + Math.floor(mn * 0.46 * pulse) + 'px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#ffffff'; ctx.fillText(d.icon, cx, iy);
+    }
+    ctx.globalAlpha = 1;
+    // 2層パララックスの塵(奥=遅く小さい / 手前=速く大きい)
+    for (let layer = 0; layer < 2; layer++) {
+      const sp = layer ? 0.00045 : 0.0002, sz = layer ? 2.4 : 1.4, n = layer ? 26 : 40;
+      for (let i = 0; i < n; i++) {
+        const a = now * sp + i * 0.7 + layer * 3;
+        const rx = (cx + Math.cos(a + i) * (70 + i * 8) + W) % W;
+        const ry = (H - ((i * 53 + now * (layer ? 0.012 : 0.005)) % (H + 40))) ;
+        ctx.globalAlpha = (layer ? 0.10 : 0.06) * (0.5 + 0.5 * Math.sin(now * 0.002 + i));
+        ctx.fillStyle = accent; ctx.fillRect(rx, ry, sz, sz);
+      }
+    }
+    // 周辺減光ヴィネット(シネマ感)
+    const vg = ctx.createRadialGradient(cx, cy, mn * 0.35, cx, cy, Math.max(W, H) * 0.7);
+    vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,0.55)');
+    ctx.globalAlpha = 1; ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
     ctx.restore();
+  }
+  // 色を明暗(cutscene内ローカル)
+  function shadeColCS(hex, amt) {
+    if (typeof hex !== 'string' || hex[0] !== '#' || hex.length < 7) return hex;
+    const cl = function (v) { return v < 0 ? 0 : v > 255 ? 255 : v; };
+    const r = cl(parseInt(hex.slice(1, 3), 16) + amt), g = cl(parseInt(hex.slice(3, 5), 16) + amt), b = cl(parseInt(hex.slice(5, 7), 16) + amt);
+    return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
   }
   function playStory(frag, cb) {
     if (!frag || !frag.scenes || !frag.scenes.length) { if (cb) cb(); return; }
