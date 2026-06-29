@@ -9,6 +9,7 @@ Game.Events = (function () {
   const MAX_LAND = 6;
 
   const SUPPLY = ['bandage', 'cooked_meat', 'bread', 'torch', 'antidote'];
+  const HORDE_POOL = ['zombie', 'skeleton', 'spider', 'slime', 'leech', 'bat', 'gazer', 'harpy', 'viper'];
 
   let cd = 30 * 35;
   let active = null;
@@ -18,15 +19,53 @@ Game.Events = (function () {
 
   function update() {
     const s = Game.state; if (!s || s.paused) return;
-    if (active) { active.type === 'meteor' ? tickMeteor(s) : tickSupply(s); return; }
+    if (active) { active.type === 'meteor' ? tickMeteor(s) : active.type === 'supply' ? tickSupply(s) : tickHorde(s); return; }
     if (cd > 0) { cd--; return; }
     if (s.worldName === 'light' && !s.bloodMoon && Game.DayNight) {
       const night = Game.DayNight.isNight();
-      if (night && Math.random() < 0.02) startMeteor();
-      else if (!night && Math.random() < 0.015) startSupply();
-      else cd = 30 * 10;           // 不発なら少し待って再抽選
+      if (night) {
+        const r = Math.random();
+        if (r < 0.02) startMeteor();
+        else if (r < 0.04) startHorde();
+        else cd = 30 * 10;
+      } else {
+        if (Math.random() < 0.015) startSupply();
+        else cd = 30 * 10;
+      }
     } else {
       cd = 30 * 6;
+    }
+  }
+
+  // ---- 魔物の侵攻 ----
+  function startHorde() {
+    active = { type: 'horde', t: 30 * 26, spawned: 0, toSpawn: 8 + Math.floor(Math.random() * 5), sinceSpawn: 999 };
+    if (Game.UI) Game.UI.toast('⚔️ 魔物の侵攻だ！ 押し寄せる群れを退けろ');
+    if (Game.Audio) Game.Audio.play('shift');
+  }
+
+  function spawnHordeMob() {
+    const p = Game.state.player;
+    const ang = Math.random() * Math.PI * 2;
+    const dist = (8 + Math.random() * 4) * Game.CFG.TILE_SIZE;
+    const type = HORDE_POOL[Math.floor(Math.random() * HORDE_POOL.length)];
+    Game.Mobs.spawnMob(type, p.x + Math.cos(ang) * dist, p.y + Math.sin(ang) * dist);
+  }
+
+  function tickHorde(s) {
+    const a = active; a.t--; a.sinceSpawn++;
+    if (a.spawned < a.toSpawn && a.sinceSpawn >= 24) {
+      spawnHordeMob(); a.spawned++;
+      if (a.spawned < a.toSpawn && Math.random() < 0.5) { spawnHordeMob(); a.spawned++; }
+      a.sinceSpawn = 0;
+    }
+    if (a.t <= 0) {
+      if (Game.UI) Game.UI.toast('侵攻を退けた…');
+      const p = s.player;
+      if (Game.Player) Game.Player.gainXP(40);
+      for (let k = 0; k < 2 + Math.floor(Math.random() * 2); k++) s.drops.push({ id: 'gold_bar', count: 1, x: p.x + (Math.random() - 0.5) * 40, y: p.y + (Math.random() - 0.5) * 40 });
+      if (Game.Achievements) Game.Achievements.unlock('repel');
+      active = null; cd = COOLDOWN;
     }
   }
 
@@ -146,7 +185,7 @@ Game.Events = (function () {
         ctx.beginPath(); ctx.arc(head.x, head.y, m.land ? 3.5 : 2.2, 0, Math.PI * 2); ctx.fill();
         if (m.land) { ctx.fillStyle = 'rgba(255,220,120,0.25)'; ctx.beginPath(); ctx.arc(head.x, head.y, 7, 0, Math.PI * 2); ctx.fill(); }
       }
-    } else {
+    } else if (active.type === 'supply') {
       for (let i = 0; i < active.crates.length; i++) {
         const c = active.crates[i];
         const s = cam.worldToScreen(c.x, c.y);
@@ -162,15 +201,16 @@ Game.Events = (function () {
       }
     }
 
-    // 誘導マーカー: 報酬地点へ
+    // 誘導マーカー: 報酬地点へ(侵攻は群れ自体が目標なのでマーカー無し)
     const v = Game.view;
-    const gcol = active.type === 'meteor' ? '#ffe27a' : '#caa86a';
-    const targets = active.type === 'meteor' ? active.meteors.filter(function (m) { return m.land; }) : active.crates;
+    const gcol = active.type === 'meteor' ? '#ffe27a' : active.type === 'horde' ? '#ff6a5a' : '#caa86a';
+    const targets = active.type === 'meteor' ? active.meteors.filter(function (m) { return m.land; }) : active.type === 'supply' ? active.crates : [];
     for (let i = 0; i < targets.length; i++) drawGuide(ctx, cam, v, targets[i].lx, targets[i].ly, gcol);
 
     // 上部バナー: イベント名＋残り時間
     const secs = Math.max(0, Math.ceil(active.t / 30));
-    const label = (active.type === 'meteor' ? '☄️ 流星群' : '📦 物資投下') + '  残り ' + secs + 's';
+    const ename = active.type === 'meteor' ? '☄️ 流星群' : active.type === 'horde' ? '⚔️ 魔物の侵攻' : '📦 物資投下';
+    const label = ename + '  残り ' + secs + 's';
     ctx.font = 'bold 15px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     const tw = ctx.measureText(label).width; const bw = tw + 28, bx = v.w / 2 - bw / 2, by = 6;
     ctx.fillStyle = 'rgba(12,18,28,0.66)';
