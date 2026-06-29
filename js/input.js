@@ -176,6 +176,18 @@ Game.Input = (function () {
 
   // ゲームパッド（PS4/DualShock4 標準配置）
   const padPrev = [];
+  let padIdle = 0; // 右スティックを離してからの経過フレーム(自動照準切替用)
+  // ===== ゲームパッドのボタン割当(再割当可能・Settings保存) =====
+  const PAD_DEF = { mine: 0, fire: 7, place: 2, shift: 3, hotbarPrev: 4, hotbarNext: 5, dash: 6, inv: 9, map: 11 };
+  const PAD_ACTIONS = [
+    ['mine', '採掘/攻撃'], ['fire', '照準で攻撃'], ['place', '設置/対話'], ['shift', '影渡り'],
+    ['hotbarPrev', 'ホットバー←'], ['hotbarNext', 'ホットバー→'], ['dash', '走る'], ['inv', 'インベントリ'], ['map', '大マップ'],
+  ];
+  function PB(a) { const m = Game.Settings && Game.Settings.get && Game.Settings.get('padbinds'); return (m && m[a] != null) ? m[a] : PAD_DEF[a]; }
+  function padLabel(a) { const b = PB(a); return 'ボタン' + b; }
+  let padRebind = null; // {action, cb}
+  function beginPadRebind(action, cb) { padRebind = { action: action, cb: cb }; }
+  function resetPadBinds() { if (Game.Settings) Game.Settings.set('padbinds', Object.assign({}, PAD_DEF)); }
   function pollGamepad(out) {
     const pads = navigator.getGamepads ? navigator.getGamepads() : [];
     let gp = null;
@@ -183,6 +195,19 @@ Game.Input = (function () {
     if (!gp) return;
     const btn = function (i) { return gp.buttons[i] && gp.buttons[i].pressed; };
     const edge = function (i) { const p = btn(i); const e = p && !padPrev[i]; padPrev[i] = p; return e; };
+    // リバインド捕捉中: 最初に押されたボタンを割当て、ゲーム操作は処理しない
+    if (padRebind) {
+      for (let i = 0; i < gp.buttons.length; i++) {
+        if (gp.buttons[i] && gp.buttons[i].pressed && !padPrev[i]) {
+          const m = Object.assign({}, (Game.Settings.get('padbinds') || PAD_DEF)); m[padRebind.action] = i;
+          Game.Settings.set('padbinds', m);
+          const r = padRebind; padRebind = null; if (r.cb) r.cb(i);
+          break;
+        }
+      }
+      for (let i = 0; i < gp.buttons.length; i++) padPrev[i] = gp.buttons[i] && gp.buttons[i].pressed;
+      return;
+    }
 
     // 移動: 左スティック + 十字キー
     const ax = gp.axes[0] || 0, ay = gp.axes[1] || 0;
@@ -191,33 +216,39 @@ Game.Input = (function () {
     if (btn(14)) out.dx -= 1; if (btn(15)) out.dx += 1;   // dpad L/R
     if (btn(12)) out.dy -= 1; if (btn(13)) out.dy += 1;   // dpad U/D
 
-    // 右スティック=選択カーソル移動（マウス代替）
+    // 右スティック=選択カーソル移動（マウス代替）。動かしている間だけ表示し、
+    // 離せば自動でカーソルを消して「向いている方向」へ自動照準する(#18)
     const rx = gp.axes[2] || 0, ry = gp.axes[3] || 0;
+    const menuOpen = Game.state && Game.state.paused; // メニュー中はカーソルでボタン操作するため維持
     if (Math.abs(rx) > 0.18 || Math.abs(ry) > 0.18) {
-      cursor.active = true;
+      cursor.active = true; padIdle = 0;
       cursor.x = clamp(cursor.x + rx * 9, 0, Game.view ? Game.view.w : window.innerWidth);
       cursor.y = clamp(cursor.y + ry * 9, 0, Game.view ? Game.view.h : window.innerHeight);
       mouse.x = cursor.x; mouse.y = cursor.y; mouse.inside = true; mouse.moved = true;
+    } else if (cursor.active && !menuOpen) {
+      // スティックを離した: 数フレーム後にカーソルを消し、方向照準へ切替
+      padIdle++;
+      if (padIdle > 8) { cursor.active = false; mouse.inside = false; mouse.moved = false; }
     }
 
-    // ×(0)=採掘/攻撃(押しっぱ)
-    if (btn(0)) out.mine = true;
-    // R2(7)=クリック: メニュー上ならボタン押下、フィールドならカーソル位置を採掘/攻撃
-    if (cursor.active && btn(7)) { out.mine = true; mouse.x = cursor.x; mouse.y = cursor.y; mouse.inside = true; mouse.moved = true; }
-    if (edge(7)) clickAtCursor();
-    // □(2)/○(1)=設置/対話(エッジ)
-    if (edge(2) || edge(1)) placeQueued = true;
-    // △(3)=影渡り(エッジ)
-    if (edge(3)) Game.World.shift();
-    // L1(4)/R1(5)=ホットバー切替(エッジ)
-    if (edge(4)) { let n = Game.state.player.hotbarIndex - 1; if (n < 0) n = Game.HOTBAR_SIZE - 1; Game.Inventory.setHotbar(n); }
-    if (edge(5)) { let n = Game.state.player.hotbarIndex + 1; if (n >= Game.HOTBAR_SIZE) n = 0; Game.Inventory.setHotbar(n); }
-    // L2(6)=ダッシュ
-    if (btn(6)) out.dash = true;
-    // OPTIONS(9)=インベントリ(エッジ)
-    if (edge(9)) Game.UI.toggleInventory();
-    // R3(11)=大マップ開閉(エッジ)
-    if (edge(11)) Game.UI.toggleBigMap();
+    // 採掘/攻撃(押しっぱ)。カーソル非使用時は向いている方向へ
+    if (btn(PB('mine'))) out.mine = true;
+    // 照準で攻撃: メニュー上ならボタン押下、フィールドなら採掘/攻撃(カーソル位置 or 向き方向)
+    if (btn(PB('fire'))) { out.mine = true; if (cursor.active) { mouse.x = cursor.x; mouse.y = cursor.y; mouse.inside = true; mouse.moved = true; } }
+    if (edge(PB('fire'))) clickAtCursor();
+    // 設置/対話(エッジ)
+    if (edge(PB('place'))) placeQueued = true;
+    // 影渡り(エッジ)
+    if (edge(PB('shift'))) Game.World.shift();
+    // ホットバー切替(エッジ)
+    if (edge(PB('hotbarPrev'))) { let n = Game.state.player.hotbarIndex - 1; if (n < 0) n = Game.HOTBAR_SIZE - 1; Game.Inventory.setHotbar(n); }
+    if (edge(PB('hotbarNext'))) { let n = Game.state.player.hotbarIndex + 1; if (n >= Game.HOTBAR_SIZE) n = 0; Game.Inventory.setHotbar(n); }
+    // ダッシュ
+    if (btn(PB('dash'))) out.dash = true;
+    // インベントリ(エッジ)
+    if (edge(PB('inv'))) Game.UI.toggleInventory();
+    // 大マップ開閉(エッジ)
+    if (edge(PB('map'))) Game.UI.toggleBigMap();
     // 他ボタンのprev更新（エッジ漏れ防止）
     [8, 10, 16].forEach(function (i) { padPrev[i] = btn(i); });
   }
@@ -261,5 +292,6 @@ Game.Input = (function () {
   }
 
   function resetBinds() { Game.Settings.set('keybinds', Object.assign({}, DEF_BINDS)); }
-  return { init, poll, intent, cursor, beginRebind, keyLabel, bindAt: B, BIND_ACTIONS, resetBinds };
+  return { init, poll, intent, cursor, beginRebind, keyLabel, bindAt: B, BIND_ACTIONS, resetBinds,
+    beginPadRebind, padLabel, PAD_ACTIONS, resetPadBinds };
 })();

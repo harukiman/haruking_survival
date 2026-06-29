@@ -719,6 +719,13 @@ Game.UI = (function () {
           return '<div class="opt-row tg"><label>' + a[1] + '</label><button class="kb-btn" data-act="' + a[0] + '">' + Game.Input.keyLabel(Game.Input.bindAt(a[0])) + '</button></div>';
         }).join('') + '<div class="hk" style="opacity:.7">変更したい操作を押し、割り当てたいキーを入力（Escで取消）</div></div>'
         : '') +
+      // ===== コントローラのボタン設定(リバインド) =====
+      (Game.Input && Game.Input.PAD_ACTIONS ?
+        '<div class="opt-keybinds"><div class="opt-kb-head">🎮 コントローラ設定 <button id="pad-reset" class="map-btn">初期化</button></div>' +
+        Game.Input.PAD_ACTIONS.map(function (a) {
+          return '<div class="opt-row tg"><label>' + a[1] + '</label><button class="pad-btn" data-pad="' + a[0] + '">' + Game.Input.padLabel(a[0]) + '</button></div>';
+        }).join('') + '<div class="hk" style="opacity:.7">変更したい操作を押し、割り当てたいパッドのボタンを押す（移動=左スティック/照準=右スティックは固定）</div></div>'
+        : '') +
       // ===== 操作ヘルプ(折りたたみ) =====
       '<div class="opt-help"><div class="opt-help-head" id="opt-help-head">' + (optHelpOpen ? '▼' : '▶') + ' ❔ 操作ヘルプ</div>' +
       (optHelpOpen ? '<div class="opt-help-body">' +
@@ -755,6 +762,16 @@ Game.UI = (function () {
     });
     const kbr = document.getElementById('kb-reset');
     if (kbr) kbr.addEventListener('click', function () { if (Game.Input && Game.Input.resetBinds) { Game.Input.resetBinds(); renderOptions(); } });
+    c.querySelectorAll('.pad-btn[data-pad]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        if (!Game.Input || !Game.Input.beginPadRebind) return;
+        c.querySelectorAll('.pad-btn').forEach(function (o) { o.classList.remove('listening'); });
+        btn.classList.add('listening'); btn.textContent = '…ボタンを押す';
+        Game.Input.beginPadRebind(btn.getAttribute('data-pad'), function () { renderOptions(); });
+      });
+    });
+    const padr = document.getElementById('pad-reset');
+    if (padr) padr.addEventListener('click', function () { if (Game.Input && Game.Input.resetPadBinds) { Game.Input.resetPadBinds(); renderOptions(); } });
     const ostry = document.getElementById('opt-story');
     if (ostry) ostry.addEventListener('click', function () { toggleOptions(); openStory(); });
     const hh = document.getElementById('opt-help-head');

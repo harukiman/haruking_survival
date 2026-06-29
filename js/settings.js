@@ -8,6 +8,7 @@ Game.Settings = (function () {
     btnSize: 100, btnOpacity: 92, joySens: 100,
     leftHanded: false, dmgNumbers: true, showFps: false, screenShake: true, lowHpWarn: true, ambient: true, homeCompass: true,
     keybinds: { up: 'w', down: 's', left: 'a', right: 'd', mine: ' ', place: 'q', use: 'g', inv: 'e', stats: 'c', map: 'n', roll: 'r', dash: 'shift', shift: 'f' },
+    padbinds: { mine: 0, fire: 7, place: 2, shift: 3, hotbarPrev: 4, hotbarNext: 5, dash: 6, inv: 9, map: 11 },
   };
   let s = load();
   function load() {
