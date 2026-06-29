@@ -409,21 +409,32 @@ Game.Render = (function () {
     const s = Game.Camera.worldToScreen(px, py);
     // 乗り物
     if (p.vehicle) drawVehicle(ctx, s.x, s.y, p.vehicle, p.dir);
-    // 体
+    // 歩行の上下動(移動中のみ)
+    const moved = Math.hypot(p.x - p.prevX, p.y - p.prevY);
+    const bob = (!p.vehicle && moved > 0.25) ? Math.abs(Math.sin(Game.state.tick * 0.35)) * 2.5 : 0;
+    // 足元の影(モブと統一・乗り物中は描かない)
+    if (!p.vehicle) {
+      ctx.fillStyle = 'rgba(0,0,0,0.25)';
+      ctx.beginPath(); ctx.ellipse(s.x, s.y + 9, 9, 4, 0, 0, Math.PI * 2); ctx.fill();
+    }
+    const by = s.y - bob;
+    // 体(暗い輪郭で地形に対する視認性を確保)
     ctx.fillStyle = '#3a78d6';
-    ctx.beginPath(); ctx.arc(s.x, s.y, 10, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(s.x, by, 10, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = 'rgba(10,16,30,0.85)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(s.x, by, 10, 0, Math.PI * 2); ctx.stroke();
     ctx.fillStyle = '#f0c8a0';
-    ctx.beginPath(); ctx.arc(s.x, s.y - 3, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(s.x, by - 3, 5, 0, Math.PI * 2); ctx.fill();
     // 向きマーカー
     const dir = p.dir;
     let dx = 0, dy = 0;
     if (dir === 'up') dy = -1; else if (dir === 'down') dy = 1;
     else if (dir === 'left') dx = -1; else if (dir === 'right') dx = 1;
     ctx.fillStyle = '#fff';
-    ctx.fillRect(s.x + dx * 8 - 2, s.y + dy * 8 - 2, 4, 4);
+    ctx.fillRect(s.x + dx * 8 - 2, by + dy * 8 - 2, 4, 4);
     if (p.invuln > 0 && (Game.state.tick % 6) < 3) {
       ctx.strokeStyle = 'rgba(255,0,0,0.6)'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(s.x, s.y, 12, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(s.x, by, 12, 0, Math.PI * 2); ctx.stroke();
     }
   }
 
