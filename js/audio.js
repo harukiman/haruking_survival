@@ -214,6 +214,16 @@ Game.Audio = (function () {
   }
 
   // 16ステップのシーケンサ（main から毎フレーム呼ぶ）
+  function bgmHat(when) {
+    if (!ctx) return;
+    const len = Math.max(1, Math.floor(ctx.sampleRate * 0.03));
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate); const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+    const src = ctx.createBufferSource(); src.buffer = buf;
+    const f = ctx.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 7000;
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.028, when); g.gain.exponentialRampToValueAtTime(0.0001, when + 0.04);
+    src.connect(f); f.connect(g); g.connect(bgmGain); src.start(when); src.stop(when + 0.06);
+  }
   function tickBGM() {
     if (!enabled || !bgm.started || !ctx || !bgm.genre) return;
     const now = ctx.currentTime;
@@ -233,6 +243,18 @@ Game.Audio = (function () {
         const oct = (st % 8 < 4) ? 1 : 2;
         tone(G.root * oct * Math.pow(2, deg / 12), stepDur * 0.9, G.wave, G.noteVol, when);
       }
+      // パッド和音(半小節ごと): 温かみのある持続和音で厚みを出す
+      if (st === 0 || st === 8) {
+        const chord = [G.scale[0] || 0, G.scale[2] != null ? G.scale[2] : 4, G.scale[4] != null ? G.scale[4] : 7];
+        chord.forEach(function (semi) {
+          const o = ctx.createOscillator(), g = ctx.createGain();
+          o.type = 'sine'; o.frequency.value = G.root * Math.pow(2, semi / 12);
+          g.gain.setValueAtTime(0.0001, when); g.gain.linearRampToValueAtTime(0.016, when + 0.4); g.gain.exponentialRampToValueAtTime(0.0001, when + stepDur * 8);
+          o.connect(g); g.connect(bgm.filter); o.start(when); o.stop(when + stepDur * 8 + 0.05);
+        });
+      }
+      // ハイハット(キックのあるジャンルの裏拍)で躍動感
+      if (G.kick && st % 2 === 1) bgmHat(when);
       bgm.step = (st + 1) % 16;
       bgm.nextStep += stepDur;
     }
