@@ -1,6 +1,18 @@
 // main.js — 起動・固定タイムステップループ・セーブ連携
 window.Game = window.Game || {};
 
+// 防御的ハードニング: 負の半径での arc 例外(IndexSizeError)を根絶（描画は0扱いで継続）
+(function () {
+  const proto = window.CanvasRenderingContext2D && CanvasRenderingContext2D.prototype;
+  if (proto && !proto.__arcGuard) {
+    proto.__arcGuard = 1;
+    const oa = proto.arc;
+    proto.arc = function (x, y, r, a, b, c) { return oa.call(this, x, y, (typeof r === 'number' && r < 0) ? 0 : r, a, b, c); };
+    const oe = proto.ellipse;
+    if (oe) proto.ellipse = function (x, y, rx, ry, rot, a, b, c) { return oe.call(this, x, y, rx < 0 ? 0 : rx, ry < 0 ? 0 : ry, rot, a, b, c); };
+  }
+})();
+
 (function () {
   const CFG = Game.CFG;
   const STEP = 1000 / CFG.STEP_HZ;

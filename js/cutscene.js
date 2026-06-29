@@ -432,7 +432,7 @@ Game.Cutscene = (function () {
     starsBg(now, 120);
     drawRocket(W / 2, H * (0.55 - t * 0.1), 1.2 - t * 0.4, 1);
     // 地球が小さくなる
-    const er = 70 * (1 - t * 0.7); ctx.fillStyle = '#2f6fb0'; ctx.beginPath(); ctx.arc(W / 2, H + 120 - t * 80, er + 60, 0, 7); ctx.fill();
+    const er = Math.max(0, 70 * (1 - t * 0.7)); ctx.fillStyle = '#2f6fb0'; ctx.beginPath(); ctx.arc(W / 2, H + 120 - t * 80, er + 60, 0, 7); ctx.fill();
     ctx.fillStyle = '#3c9647'; ctx.globalAlpha = 0.6; ctx.beginPath(); ctx.arc(W / 2 - 20, H + 110 - t * 80, er, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
   }
   function lcReentry(t, now) {
