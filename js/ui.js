@@ -197,6 +197,26 @@ Game.UI = (function () {
     { id: 'ring_crit', n: 1, price: 10, rare: true }, { id: 'heart_regen', n: 1, price: 10, rare: true },
     { id: 'amulet_swift', n: 1, price: 10, rare: true }, { id: 'siege_pick', n: 1, price: 14, rare: true },
   ];
+  // バーツ商館の品揃え(常設・固定価格)
+  const SHOP_STOCK = [
+    { id: 'bandage', n: 5, price: 6 }, { id: 'antidote', n: 3, price: 6 },
+    { id: 'cooked_meat', n: 3, price: 5 }, { id: 'bread', n: 3, price: 4 }, { id: 'torch', n: 8, price: 5 },
+    { id: 'ammo_9mm', n: 24, price: 6 }, { id: 'ammo_762', n: 18, price: 8 },
+    { id: 'strength_potion', n: 1, price: 14 }, { id: 'swift_potion', n: 1, price: 14 }, { id: 'iron_potion', n: 1, price: 14 }, { id: 'regen_potion', n: 1, price: 14 },
+    { id: 'bomb', n: 3, price: 16 }, { id: 'frost_grenade', n: 3, price: 18 },
+    { id: 'carrot_seeds', n: 5, price: 6 }, { id: 'xp_orb', n: 1, price: 45 },
+    { id: 'expand_pouch', n: 1, price: 120 }, { id: 'wisdom_tome', n: 1, price: 150 },
+    { id: 'ring_crit', n: 1, price: 260 }, { id: 'amulet_swift', n: 1, price: 260 }, { id: 'heart_regen', n: 1, price: 260 },
+    { id: 'coin_charm', n: 1, price: 400 },
+    { rand: true, price: 90, label: '掘り出し物（ランダム装備）' },
+  ];
+  let shopMode = false; // true=バーツ商館 / false=金塊の旅商人
+  function openShop() {
+    const sc = document.getElementById('trade-screen'); if (!sc) return;
+    shopMode = true; sc.classList.remove('hidden'); Game.state.paused = true;
+    const title = sc.querySelector('h2'); if (title) title.textContent = '商館 🏪';
+    tradeStock = SHOP_STOCK.slice(); refreshTrade();
+  }
   let tradeStock = [];
   function rollTradeStock() {
     const pool = TRADE_POOL.slice();
@@ -206,19 +226,21 @@ Game.UI = (function () {
     tradeStock = TRADE_BASE.concat(picks);
     tradeStock.push({ rand: true, price: 4, label: '謎の装備（ランダム）' });
   }
-  function openTrade() { const sc = document.getElementById('trade-screen'); if (!sc) return; sc.classList.remove('hidden'); Game.state.paused = true; rollTradeStock(); refreshTrade(); }
-  function closeTrade() { const sc = document.getElementById('trade-screen'); if (sc) sc.classList.add('hidden'); Game.state.paused = false; }
+  function openTrade() { const sc = document.getElementById('trade-screen'); if (!sc) return; shopMode = false; const title = sc.querySelector('h2'); if (title) title.textContent = '旅の商人 🧳'; sc.classList.remove('hidden'); Game.state.paused = true; rollTradeStock(); refreshTrade(); }
+  function closeTrade() { const sc = document.getElementById('trade-screen'); if (sc) sc.classList.add('hidden'); Game.state.paused = false; shopMode = false; }
   function refreshTrade() {
     const body = document.getElementById('trade-body'); if (!body) return;
-    const gold = Game.Inventory.count('gold_bar');
-    let h = '<p class="hint">所持 金塊 <b style="color:#e8c54a">' + gold + '</b>　欲しい品を選べ。（品揃えは来訪ごとに変わる）</p><div class="trade-list">';
+    const cur = shopMode ? (Game.state.player.bts || 0) : Game.Inventory.count('gold_bar');
+    const curName = shopMode ? 'バーツ' : '金塊', curColor = shopMode ? '#ffd24a' : '#e8c54a', curIcon = shopMode ? '🪙' : '🟨';
+    const sub = shopMode ? '欲しい品を選べ。（バーツで購入）' : '欲しい品を選べ。（品揃えは来訪ごとに変わる）';
+    let h = '<p class="hint">所持 ' + curName + ' <b style="color:' + curColor + '">' + cur + '</b>　' + sub + '</p><div class="trade-list">';
     tradeStock.forEach(function (t, i) {
-      const can = gold >= t.price;
+      const can = cur >= t.price;
       const name = t.rand ? t.label : (Game.ITEMS[t.id].name + (t.n > 1 ? ' ×' + t.n : ''));
       const url = !t.rand && Game.Icons ? Game.Icons.dataURL(t.id, null) : null;
       h += '<button class="trade-row' + (can ? '' : ' disabled') + '" data-i="' + i + '"' + (can ? '' : ' disabled') + '>' +
         '<span class="tr-ic"' + (url ? ' style="background-image:url(' + url + ')"' : '') + '></span>' +
-        '<span class="tr-name">' + name + '</span><span class="tr-price">🟨' + t.price + '</span></button>';
+        '<span class="tr-name">' + name + '</span><span class="tr-price">' + curIcon + t.price + '</span></button>';
     });
     h += '</div>';
     body.innerHTML = h;
@@ -226,14 +248,17 @@ Game.UI = (function () {
   }
   function buyTrade(i) {
     const t = tradeStock[i]; if (!t) return;
-    if (Game.Inventory.count('gold_bar') < t.price) return;
-    Game.Inventory.remove('gold_bar', t.price);
+    if (shopMode) {
+      const pl = Game.state.player; if ((pl.bts || 0) < t.price) return; pl.bts -= t.price;
+    } else {
+      if (Game.Inventory.count('gold_bar') < t.price) return; Game.Inventory.remove('gold_bar', t.price);
+    }
     if (t.rand) {
       const pool = (Game.GEN_BY_TIER[3] || []).concat(Game.GEN_BY_TIER[2] || []);
       const id = pool[Math.floor(Math.random() * pool.length)];
       if (id) { Game.Inventory.addInstance({ id: id, roll: Game.Loot.roll(id, 0.1) }); toast('購入: ' + Game.ITEMS[id].name); }
     } else { Game.Inventory.add(t.id, t.n); toast('購入: ' + Game.ITEMS[t.id].name); }
-    Game.Audio.play('craft'); refreshTrade(); refreshHotbar();
+    Game.Audio.play('craft'); refreshTrade(); refreshHotbar(); refreshStats();
   }
 
   // ===== ステータス & スキル画面 =====
@@ -865,7 +890,7 @@ Game.UI = (function () {
     const btns = [];
     if (def.armor && def.slot) btns.push('<button id="inv-act" class="big-btn">装備する</button>');
     else if (def.relic) btns.push('<button id="inv-act" class="big-btn">遺物を装備</button>');
-    else if (def.food || def.cures || def.buff || def.skillTome || def.xpGain || def.invExpand || def.summonBoss) btns.push('<button id="inv-act" class="big-btn">' + (def.food ? '食べる' : def.skillTome ? '読む' : def.summonBoss ? '掲げる' : '使う') + '</button>');
+    else if (def.food || def.cures || def.buff || def.skillTome || def.xpGain || def.invExpand || def.summonBoss || def.opensShop) btns.push('<button id="inv-act" class="big-btn">' + (def.food ? '食べる' : def.skillTome ? '読む' : def.summonBoss ? '掲げる' : def.opensShop ? '鳴らす' : '使う') + '</button>');
     else if (Game.Loot.rollable(st.id) || def.tool) btns.push('<button id="inv-hot" class="big-btn alt">ホットバーへ装備</button>');
     if (Game.Net && Game.Net.isConnected()) btns.push('<button id="inv-give" class="big-btn alt">仲間に渡す</button>');
     btns.push('<button id="inv-drop" class="big-btn inv-discard">捨てる' + (st.count > 1 ? '（1個）' : '') + '</button>');
@@ -1253,6 +1278,6 @@ Game.UI = (function () {
     openChest, openSharedChest, closeChest, refreshChest, refreshWorld,
     showLore, closeLore, refreshQuest, openQuest, closeQuest, refreshBounty, showEnding, showDeath, showIntro, refreshNet, refreshStatus,
     toggleOptions, openEnchant, closeEnchant,
-    toggleBigMap, isBigMapOpen, updateBigMap, openStats, closeStats, toggleStats, renderStats, refreshBossBar, openTrade, closeTrade,
+    toggleBigMap, isBigMapOpen, updateBigMap, openStats, closeStats, toggleStats, renderStats, refreshBossBar, openTrade, closeTrade, openShop,
   };
 })();

@@ -115,6 +115,11 @@ Game.Inventory = (function () {
       Game.UI.toast(def.name + ' を掲げた — ' + ((Game.MOBS[def.summonBoss] && Game.MOBS[def.summonBoss].name) || '強敵') + ' が顕現する！');
       Game.UI.refreshAll(); return true;
     }
+    // 商館の呼び鈴: バーツ商館を開く（消費しない）
+    if (def && def.opensShop) {
+      if (Game.UI && Game.UI.openShop) { Game.UI.openShop(); Game.Audio.play('select'); }
+      return true;
+    }
     // 拡張のポーチ: インベントリ上限 +2〜5（最大100）
     if (def && def.invExpand) {
       const want = def.invExpand[0] + Math.floor(Math.random() * (def.invExpand[1] - def.invExpand[0] + 1));
