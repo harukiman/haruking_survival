@@ -8,7 +8,7 @@ Game.CHAMPION_NAMES = {
 };
 
 // 遺物(relic)アクセサリーのドロップ抽選用ID一覧
-Game.RELIC_IDS = ['ring_crit', 'amulet_swift', 'fang_vamp', 'heart_regen', 'eye_xp', 'band_power', 'crest_guard'];
+Game.RELIC_IDS = ['ring_crit', 'amulet_swift', 'fang_vamp', 'heart_regen', 'eye_xp', 'band_power', 'crest_guard', 'crest_aegis', 'core_titan', 'gauntlet_grit', 'fang_war'];
 
 // 精鋭(elite)個体の特殊変異アフィックス。spawn時に1つ抽選 → 名前接頭辞/オーラ色/固有効果。
 Game.ELITE_AFFIXES = {
@@ -471,6 +471,10 @@ Game.ITEMS = {
   fang_vamp:     { name:'吸血の牙', stack:1, color:'#c03050', relic:{lifesteal:0.06}, flavor:'影に堕ちかけた英雄の牙の首飾り。生命を啜る。吸血+6%。' },
   heart_regen:   { name:'再生の心臓', stack:1, color:'#ff7aa0', relic:{regen:0.4}, flavor:'不死と謳われた守人の心臓。絶えず脈打つ。HP自然回復+。' },
   eye_xp:        { name:'星霜の眼', stack:1, color:'#7fd0ff', relic:{xpBoost:0.15}, flavor:'時を見通した賢者の遺した瞳。獲得経験+15%。' },
+  crest_aegis:   { name:'鉄壁の紋章', stack:1, color:'#9fb6d0', relic:{armor:3}, flavor:'城を守り抜いた騎士団の紋章。鉄壁の加護。防御+3。' },
+  core_titan:    { name:'巨人の核', stack:1, color:'#e0844a', relic:{hp:28}, flavor:'倒れた巨人の鼓動を宿す核。最大HP+28。' },
+  gauntlet_grit: { name:'不屈の篭手', stack:1, color:'#c0a060', relic:{staminaMax:40}, flavor:'幾多の死線を越えた篭手。息切れを知らぬ。スタミナ上限+40。' },
+  fang_war:      { name:'戦神の牙', stack:1, color:'#e05a4a', relic:{atk:3}, flavor:'戦神に捧げられた牙。攻撃に重みが宿る。攻撃力+3。' },
   band_power:    { name:'力の腕輪', stack:1, color:'#ff8a4a', relic:{atk:4}, flavor:'大地を割った闘士の腕輪。膂力の残響が宿る。攻撃+4。' },
   crest_guard:   { name:'守護の紋章', stack:1, color:'#9fd8ff', relic:{armor:3, hp:10}, flavor:'最初の裂け目を食い止めた盾の紋章。防御+3・最大HP+10。' },
 };
