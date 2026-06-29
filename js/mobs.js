@@ -585,6 +585,7 @@ Game.Mobs = (function () {
       // 記憶回廊トリガー: 金喰い初討伐 / 図鑑が20種に到達
       if (Game.Story) {
         if (m.type === 'gold_thief' && !Game.Story.seen('goldthief')) Game.Story.unlock('goldthief', true);
+        if (m.type === 'shade_stalker' && !Game.Story.seen('shadewalk')) Game.Story.unlock('shadewalk', true);
         if (firstSeen && Object.keys(Game.state.bestiary).length >= 20 && !Game.Story.seen('bestiary')) Game.Story.unlock('bestiary', true);
       }
     }
