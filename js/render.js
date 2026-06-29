@@ -27,10 +27,40 @@ Game.Render = (function () {
           if (meta && meta.phantom) continue; // 幻影は動的描画（正気度依存）
           const oa = Game.Tiles.obj[o];
           if (oa) x.drawImage(oa, lx * TS, ly * TS);
+        } else if (wn !== 'space') {
+          decorateGround(x, g, (ch.cx * CS + lx), (ch.cy * CS + ly), lx * TS, ly * TS); // 空きタイルに地面装飾をベイク
         }
       }
     }
     ch.dirty = false;
+  }
+
+  // 地面の小装飾(花/小石/ひび/きらめき)を決定論的に描く。チャンクキャッシュに一度だけ焼く=毎フレーム負荷ゼロ
+  function decorateGround(x, g, wtx, wty, px, py) {
+    let h = (wtx * 73856093) ^ (wty * 19349663); h = (h ^ (h >>> 13)) >>> 0;
+    if ((h % 100) >= 14) return; // 約14%のタイルだけ装飾
+    const T = Game.TILE;
+    const ox = px + 5 + (h % 7) * 3, oy = py + 6 + ((h >> 3) % 7) * 3; // タイル内のばらつき
+    if (g === T.GRASS || g === T.FOREST || g === T.BLOOM) {
+      const variant = (h >> 6) % 5;
+      if (variant === 0 && g !== T.FOREST) { // 花
+        const cols = ['#e8d24a', '#e87a9a', '#d8d8e8', '#e0843c', '#b86ad0'];
+        x.fillStyle = '#3a6f2e'; x.fillRect(ox, oy, 1, 4); // 茎
+        x.fillStyle = cols[(h >> 9) % cols.length]; x.beginPath(); x.arc(ox + 0.5, oy, 2.1, 0, Math.PI * 2); x.fill();
+        x.fillStyle = '#fff3b0'; x.fillRect(ox, oy - 0.5, 1, 1);
+      } else { // 草の房
+        x.strokeStyle = g === T.FOREST ? '#2c6322' : '#3c7a30'; x.lineWidth = 1;
+        for (let k = -1; k <= 1; k++) { x.beginPath(); x.moveTo(ox + k * 2, oy + 4); x.lineTo(ox + k * 2 + k, oy); x.stroke(); }
+      }
+    } else if (g === T.SAND) { // 小石/砂紋
+      x.fillStyle = ((h >> 6) & 1) ? 'rgba(120,108,80,0.5)' : 'rgba(160,148,110,0.5)';
+      x.beginPath(); x.arc(ox, oy, 1.6, 0, Math.PI * 2); x.fill();
+    } else if (g === T.STONE || g === T.DIRT) { // ひび/小石
+      x.strokeStyle = g === T.STONE ? 'rgba(60,64,70,0.6)' : 'rgba(90,60,40,0.5)'; x.lineWidth = 1;
+      x.beginPath(); x.moveTo(ox - 2, oy - 1); x.lineTo(ox + 1, oy + 1); x.lineTo(ox + 3, oy); x.stroke();
+    } else if (g === T.SNOW) { // 氷のきらめき
+      x.fillStyle = 'rgba(255,255,255,0.85)'; x.fillRect(ox, oy, 1.4, 1.4); x.fillRect(ox + 2, oy + 2, 1, 1);
+    }
   }
 
   function draw(alpha) {
