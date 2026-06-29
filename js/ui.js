@@ -571,6 +571,7 @@ Game.UI = (function () {
   }
 
   // マイクラ風 設定一覧（音量/明るさ/ボタン/操作）
+  let optHelpOpen = false;
   function renderOptions() {
     const c = document.getElementById('opt-settings'); if (!c || !Game.Settings) return;
     const S = Game.Settings;
@@ -593,7 +594,21 @@ Game.UI = (function () {
       toggle('screenShake', '📳 画面のゆれ') +
       toggle('lowHpWarn', '🩸 低HP警告') +
       toggle('ambient', '🌿 環境演出') +
-      toggle('showFps', '📈 FPS表示');
+      toggle('showFps', '📈 FPS表示') +
+      // ===== 操作ヘルプ(折りたたみ) =====
+      '<div class="opt-help"><div class="opt-help-head" id="opt-help-head">' + (optHelpOpen ? '▼' : '▶') + ' ❔ 操作ヘルプ</div>' +
+      (optHelpOpen ? '<div class="opt-help-body">' +
+        '<div class="hk"><b>スマホ</b>: 画面左をなぞって移動／右下ボタンで 採掘・設置・開く・回避・走る・影渡り・袋。ミニマップで大マップ</div>' +
+        '<div class="hk"><b>移動</b> WASD / 矢印</div>' +
+        '<div class="hk"><b>採掘・攻撃</b> 左クリック / スペース</div>' +
+        '<div class="hk"><b>設置</b> 右クリック / Q・K</div>' +
+        '<div class="hk"><b>開く・対話・使う</b> G（近くのチェスト/掲示板/石碑）</div>' +
+        '<div class="hk"><b>回避ロール</b> R（無敵・スタミナ消費）</div>' +
+        '<div class="hk"><b>走る</b> Shift（スタミナ消費）</div>' +
+        '<div class="hk"><b>影渡り</b> F（影鏡が必要）</div>' +
+        '<div class="hk"><b>インベントリ</b> E　<b>ステ/スキル</b> C　<b>大マップ</b> N/Tab</div>' +
+        '<div class="hk"><b>ホットバー</b> 1-9　<b>サウンド</b> M　<b>設定</b> P/Esc</div>' +
+        '</div>' : '') + '</div>';
     c.querySelectorAll('.opt-slider').forEach(function (sl) {
       sl.addEventListener('input', function () {
         const k = this.dataset.k, v = parseInt(this.value, 10);
@@ -606,6 +621,8 @@ Game.UI = (function () {
         this.classList.toggle('on', v); this.textContent = v ? 'ON' : 'OFF';
       });
     });
+    const hh = document.getElementById('opt-help-head');
+    if (hh) hh.addEventListener('click', function () { optHelpOpen = !optHelpOpen; renderOptions(); });
   }
 
   // ===== エンチャント台 =====

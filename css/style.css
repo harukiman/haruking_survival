@@ -64,6 +64,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Segoe U
 /* 設定（オプション）UI */
 #brightness-ov { position: absolute; inset: 0; background: #000; pointer-events: none; z-index: 23; opacity: 0; }
 #opt-settings { margin-bottom: 10px; }
+.opt-help { margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px; }
+.opt-help-head { cursor: pointer; font-weight: 700; color: #cfe0f0; font-size: .88rem; padding: 6px 0; }
+.opt-help-body { display: flex; flex-direction: column; gap: 5px; padding: 4px 0 2px; }
+.opt-help-body .hk { font-size: .78rem; color: #aebccf; line-height: 1.4; }
+.opt-help-body .hk b { color: #ffe9a0; }
 .opt-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
 .opt-row label { flex: 1; font-size: .86rem; color: #cfe0f0; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .opt-val { color: #ffe9a0; font-weight: 700; }
