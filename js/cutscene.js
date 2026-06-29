@@ -11,8 +11,9 @@ Game.Cutscene = (function () {
     { d: 4600, draw: scenePrayers, text: '「永遠の昼」を願う者と、「安らぎの夜」を望む者。', onEnter: function () { Game.Audio.cue('choir'); } },
     { d: 2600, draw: sceneTension, text: 'ふたつの祈りは、譲らなかった——', shake: 0.35, onEnter: function () { Game.Audio.cue('riser'); } },
     { d: 4400, draw: sceneSplit, text: '相反する願いが、大地を引き裂いた。', shake: 1, onEnter: function () { Game.Audio.cue('impact'); Game.Audio.cue('crack'); } },
-    { d: 4200, draw: sceneDescend, text: 'いま、あなたは世界の狭間に降り立つ——', shake: 0.2, onEnter: function () { Game.Audio.cue('shimmer'); } },
-    { d: 4600, draw: sceneTitle, text: '', onEnter: function () { Game.Audio.cue('choir'); Game.Audio.cue('boom'); } },
+    { d: 4600, draw: sceneDescend, text: 'いま、あなたは世界の狭間に降り立つ——', shake: 0.2, onEnter: function () { Game.Audio.cue('shimmer'); } },
+    { d: 5200, draw: sceneArrival, text: '名も故郷も持たぬまま、ひとりの旅人が、裂けた大地に舞い降りた。', shake: 0.15, onEnter: function () { Game.Audio.cineStart('somber'); Game.Audio.cue('shimmer'); } },
+    { d: 5200, draw: sceneTitle, text: '', onEnter: function () { Game.Audio.cue('choir'); Game.Audio.cue('boom'); } },
   ];
   const TOTAL = SCENES.reduce(function (a, s) { return a + s.d; }, 0);
 
@@ -152,6 +153,39 @@ Game.Cutscene = (function () {
     // 中央に光が凝縮
     const g = ctx.createRadialGradient(W / 2, cy, 2, W / 2, cy, 30 + t * 70); g.addColorStop(0, 'rgba(255,255,255,' + (0.5 + t * 0.5) + ')'); g.addColorStop(1, 'rgba(255,255,255,0)');
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(W / 2, cy, 100, 0, 7); ctx.fill();
+  }
+
+  // 旅人の降臨: 裂けた世界へ、ひとりの旅人が光の柱に導かれて降り立つ
+  function sceneArrival(t, now) {
+    const horizon = H * 0.72;
+    // 夜明け前の空(深い藍→地平に微光)
+    const sky = ctx.createLinearGradient(0, 0, 0, horizon);
+    sky.addColorStop(0, '#0a1024'); sky.addColorStop(0.7, '#16203e'); sky.addColorStop(1, '#3a3050');
+    ctx.fillStyle = sky; ctx.fillRect(0, 0, W, horizon);
+    // 星
+    for (let i = 0; i < 50; i++) { const x = (i * 71) % W, y = (i * 37) % (horizon * 0.8); ctx.globalAlpha = 0.2 + Math.abs(Math.sin(now * 0.001 + i)) * 0.4; ctx.fillStyle = '#cfe0ff'; ctx.fillRect(x, y, 1.4, 1.4); }
+    ctx.globalAlpha = 1;
+    // 大地(光と影で二分)
+    ctx.fillStyle = '#27502c'; ctx.fillRect(0, horizon, W / 2, H - horizon);
+    ctx.fillStyle = '#241a38'; ctx.fillRect(W / 2, horizon, W / 2, H - horizon);
+    // 中央の裂け目(発光ライン)
+    ctx.strokeStyle = 'rgba(190,150,255,' + (0.5 + Math.sin(now * 0.005) * 0.3) + ')'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(W / 2, horizon); for (let y = horizon; y < H; y += 12) ctx.lineTo(W / 2 + Math.sin(y * 0.3) * 6, y); ctx.stroke();
+    // 天からの光の柱
+    const bx = W / 2, by = horizon - 6;
+    const beam = ctx.createLinearGradient(bx, 0, bx, by);
+    beam.addColorStop(0, 'rgba(255,245,210,0)'); beam.addColorStop(1, 'rgba(255,245,210,' + (0.22 + t * 0.18) + ')');
+    ctx.fillStyle = beam; ctx.beginPath(); ctx.moveTo(bx - 10, 0); ctx.lineTo(bx + 10, 0); ctx.lineTo(bx + 44, by); ctx.lineTo(bx - 44, by); ctx.closePath(); ctx.fill();
+    // 降下する旅人のシルエット
+    const land = Math.min(1, t / 0.8);
+    const py = -30 + land * (by + 24);
+    const glow = ctx.createRadialGradient(bx, py, 2, bx, py, 30); glow.addColorStop(0, 'rgba(255,250,230,0.9)'); glow.addColorStop(1, 'rgba(255,250,230,0)');
+    ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(bx, py, 30, 0, 7); ctx.fill();
+    ctx.fillStyle = '#10131e';
+    ctx.beginPath(); ctx.ellipse(bx, py, 7, 11, 0, 0, Math.PI * 2); ctx.fill(); // 体
+    ctx.beginPath(); ctx.arc(bx, py - 11, 4.5, 0, Math.PI * 2); ctx.fill(); // 頭
+    // 着地の塵
+    if (t > 0.8) { const k = (t - 0.8) / 0.2; for (let i = 0; i < 24; i++) { const a = i / 24 * Math.PI * 2; const rr = k * 60; ctx.globalAlpha = (1 - k) * 0.7; ctx.fillStyle = '#d8c89a'; ctx.fillRect(bx + Math.cos(a) * rr, by - 4 + Math.sin(a) * rr * 0.4, 2.5, 2.5); } ctx.globalAlpha = 1; }
   }
 
   function sceneTitle(t, now) {
