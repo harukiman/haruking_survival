@@ -113,6 +113,7 @@ Game.Render = (function () {
     drawBolts(ctx);
     drawImpacts(ctx);
     drawMuzzles(ctx);
+    drawLevelRings(ctx);
     drawFloaters(ctx);
     Game.Lighting.drawOverlay(ctx);
     drawNightSky(ctx);
@@ -652,6 +653,23 @@ Game.Render = (function () {
   // マズルフラッシュ(銃口の閃光)。FPS的な発砲手応えを補強
   const muzzles = [];
   function spawnMuzzle(wx, wy, ang, color, scale) { muzzles.push({ x: wx, y: wy, ang: ang, life: 5, max: 5, col: color || '#ffe06a', sc: scale || 1 }); }
+  // レベルアップの光輪(広がる金色のリング)
+  const lvRings = [];
+  function spawnLevelRing(wx, wy) { lvRings.push({ x: wx, y: wy, life: 26, max: 26 }); }
+  function drawLevelRings(ctx) {
+    if (!lvRings.length) return;
+    const z = Game.Camera.zoom();
+    for (let i = lvRings.length - 1; i >= 0; i--) {
+      const r = lvRings[i]; r.life--;
+      if (r.life <= 0) { lvRings.splice(i, 1); continue; }
+      const s = Game.Camera.worldToScreen(r.x, r.y); const k = 1 - r.life / r.max;
+      ctx.save(); ctx.globalAlpha = (1 - k) * 0.9; ctx.strokeStyle = '#ffe27a'; ctx.lineWidth = 3 * z * (1 - k * 0.5);
+      ctx.beginPath(); ctx.arc(s.x, s.y, (8 + k * 46) * z, 0, Math.PI * 2); ctx.stroke();
+      ctx.globalAlpha = (1 - k) * 0.5; ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5 * z;
+      ctx.beginPath(); ctx.arc(s.x, s.y, (4 + k * 30) * z, 0, Math.PI * 2); ctx.stroke();
+      ctx.restore(); ctx.globalAlpha = 1;
+    }
+  }
   // 着弾スパーク(弾が敵/壁に当たった瞬間の火花)
   const impacts = [];
   function spawnImpact(wx, wy, color) {
@@ -729,5 +747,5 @@ Game.Render = (function () {
     ctx.textAlign = 'left';
   }
 
-  return { draw, buildChunkCache, spawnParticles, spawnBlood, spawnSlash, spawnFloat, spawnLightning, spawnMuzzle, spawnImpact, flash, hurtFlash, shake };
+  return { draw, buildChunkCache, spawnParticles, spawnBlood, spawnSlash, spawnFloat, spawnLightning, spawnMuzzle, spawnImpact, spawnLevelRing, flash, hurtFlash, shake };
 })();

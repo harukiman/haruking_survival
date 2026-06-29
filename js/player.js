@@ -834,6 +834,10 @@ Game.Player = (function () {
       p.health = p.maxHealth;
       Game.Audio.play('levelup');
       if (Game.Render.spawnFloat) Game.Render.spawnFloat(p.x, p.y - 20, 'LEVEL UP!', '#6fd0ff', true);
+      // 祝祭の演出: 金色の粒子＋光輪＋フラッシュ
+      if (Game.Render.spawnParticles) { Game.Render.spawnParticles(p.x, p.y, '#ffe27a', 22); Game.Render.spawnParticles(p.x, p.y, '#ffffff', 10); }
+      if (Game.Render.spawnLevelRing) Game.Render.spawnLevelRing(p.x, p.y);
+      if (Game.Render.flash) Game.Render.flash('rgba(255,225,130,0.18)');
       Game.UI.toast('レベルアップ！ Lv.' + p.level + '（スキルP +2）');
       if (Game.Achievements) { if (p.level >= 5) Game.Achievements.unlock('level5'); if (p.level >= 20) Game.Achievements.unlock('level20'); if (p.level >= 50) Game.Achievements.unlock('level50'); }
       if (Game.Save) Game.Save.autosave('levelup'); // 節目イベント: レベルアップで自動保存(4秒スロットル)
