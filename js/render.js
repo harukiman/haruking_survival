@@ -506,10 +506,32 @@ Game.Render = (function () {
     const bodyCol = arm ? (Game.ITEMS[arm.id || arm] && Game.ITEMS[arm.id || arm].color) || '#5a6a8a' : '#3a78d6';
     const swing = moved > 0.25 ? Math.sin(Game.state.tick * 0.35) * 2 : 0; // 手足の振り
     drawCharacter(ctx, s.x, by, s.y, bodyCol, p.dir, p.vehicle ? 0 : swing, !p.vehicle, '#5a3f2a');
+    // 手に持つ武器/道具を簡易表示(向き or 照準方向へ)
+    if (!p.vehicle) drawHeldItem(ctx, s.x, by, p);
     if (p.invuln > 0 && (Game.state.tick % 6) < 3) {
       ctx.strokeStyle = 'rgba(255,80,80,0.7)'; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.arc(s.x, by - 1, 13, 0, Math.PI * 2); ctx.stroke();
     }
+  }
+  // 手に持つアイテムの簡易描画(銃=黒い銃身/剣=刃/道具=柄)。照準方向へ向ける
+  function drawHeldItem(ctx, sx, by, p) {
+    const sl = Game.Inventory.selectedSlot(); if (!sl) return;
+    const def = Game.ITEMS[sl.id]; if (!def) return;
+    const isGun = def.tool === 'gun', isMelee = def.attack != null, isStaff = def.tool === 'staff', isTool = def.tool === 'pickaxe' || def.tool === 'axe' || def.tool === 'hoe', isThrow = !!def.throw;
+    if (!(isGun || isMelee || isStaff || isTool || isThrow)) return;
+    // 角度: 銃/杖は照準方向、近接/道具は向きで左右
+    let ang;
+    if ((isGun || isStaff) && Game.Projectiles && Game.Projectiles.aimAngle) ang = Game.Projectiles.aimAngle();
+    else ang = p.dir === 'left' ? Math.PI : p.dir === 'up' ? -Math.PI / 2 : p.dir === 'down' ? Math.PI / 2 : 0;
+    const hx = sx + Math.cos(ang) * 6, hy = by + 1 + Math.sin(ang) * 3; // 手の位置
+    ctx.save(); ctx.translate(hx, hy); ctx.rotate(ang);
+    const col = def.color || '#888';
+    if (isGun) { ctx.fillStyle = '#1a1a1e'; ctx.fillRect(0, -2, 12, 4); ctx.fillStyle = col; ctx.fillRect(1, -1.5, 4, 3); }
+    else if (isMelee) { ctx.strokeStyle = col; ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(13, 0); ctx.stroke(); ctx.strokeStyle = '#6a4a2a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-3, 0); ctx.lineTo(0, 0); ctx.stroke(); }
+    else if (isStaff) { ctx.strokeStyle = '#6a4a2a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(11, 0); ctx.stroke(); ctx.fillStyle = col; ctx.beginPath(); ctx.arc(12, 0, 2.6, 0, Math.PI * 2); ctx.fill(); }
+    else if (isThrow) { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(7, 0, 3, 0, Math.PI * 2); ctx.fill(); }
+    else { ctx.strokeStyle = '#6a4a2a'; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(8, 0); ctx.stroke(); ctx.fillStyle = col; ctx.fillRect(7, -2.5, 4, 3); } // 道具
+    ctx.restore();
   }
   // 人型キャラ描画(プレイヤー/他プレイヤー共通)。脚はfootY基準、bodyは by 基準
   function drawCharacter(ctx, sx, by, footY, bodyCol, dir, swing, withLegs, hairCol) {
