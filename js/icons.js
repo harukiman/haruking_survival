@@ -94,15 +94,61 @@ Game.Icons = (function () {
         ctx.fillStyle = c.hi; ctx.fillRect(-0.8, -20, 1.4, 10); ctx.restore(); break;
       }
       case 'gun': {
-        // 黒ベースのスタイリッシュな銃。名前ハッシュで本体形状/アクセント差
-        const h = hash(id), longBarrel = (h % 3 !== 0);
-        ctx.fillStyle = '#161618';
-        // 本体
-        ctx.fillRect(8, 20, longBarrel ? 30 : 22, 8); ctx.strokeRect(8, 20, longBarrel ? 30 : 22, 8);
-        ctx.fillStyle = '#101012'; ctx.fillRect(12, 27, 7, 11); ctx.strokeRect(12, 27, 7, 11); // グリップ
-        ctx.fillStyle = '#222'; ctx.fillRect(10, 22, longBarrel ? 26 : 18, 2); // スライド光沢
-        ctx.fillStyle = c.accent; ctx.fillRect(30, 18, 5, 3); ctx.strokeRect(30, 18, 5, 3); // サイト/アクセント
-        if (h % 2 === 0) { ctx.fillStyle = '#3a2a18'; ctx.fillRect(12, 30, 7, 6); } // 木製グリップ個体差
+        // 銃種ごとに実銃に即したシルエットを描き分ける（同形を作らない）
+        const FORM = { pistol: 'pistol', glock17: 'pistol', mp5: 'smg', m4: 'rifle', ak47: 'ak', shadow_rifle: 'rifle', m870: 'shotgun', barrett: 'sniper', rpg7: 'rpg', star_cannon: 'rpg', laser_rifle: 'energy', railgun: 'energy' };
+        const form = FORM[id] || 'pistol';
+        const body = '#1a1a1e', dark = '#0e0e11', metal = '#3a3a42', wood = '#5a3a1e';
+        const R = function (x, y, w, hh, col) { ctx.fillStyle = col; ctx.fillRect(x, y, w, hh); ctx.strokeRect(x, y, w, hh); };
+        if (form === 'pistol') {
+          R(10, 19, 22, 8, body);            // スライド
+          R(13, 26, 8, 12, dark);            // グリップ
+          ctx.fillStyle = metal; ctx.fillRect(12, 21, 18, 2);
+          R(28, 26, 5, 4, dark);             // トリガーガード下
+          ctx.fillStyle = c.accent; ctx.fillRect(29, 18, 4, 2);
+        } else if (form === 'smg') {
+          R(8, 19, 26, 7, body);             // 本体
+          R(14, 25, 6, 13, dark);            // マガジン(下方)
+          R(12, 25, 5, 9, dark);             // グリップ
+          R(33, 20, 7, 4, body);             // 短い銃口
+          R(5, 20, 4, 5, metal);             // 折り畳みストック基部
+          ctx.fillStyle = c.accent; ctx.fillRect(20, 17, 8, 2); // レール
+        } else if (form === 'rifle' || form === 'ak') {
+          R(6, 20, 34, 7, body);             // 長い本体+バレル
+          R(40, 22, 5, 3, metal);            // マズル
+          R(2, 21, 6, 6, form === 'ak' ? wood : dark); // ストック
+          R(14, 26, 6, 9, dark);             // グリップ
+          if (form === 'ak') { // AKは湾曲マガジン
+            ctx.fillStyle = wood; ctx.beginPath(); ctx.moveTo(22, 26); ctx.quadraticCurveTo(24, 36, 30, 38); ctx.lineTo(33, 37); ctx.quadraticCurveTo(27, 34, 26, 26); ctx.closePath(); ctx.fill(); ctx.stroke();
+          } else { R(22, 26, 6, 11, dark); }  // M4は直線マガジン
+          ctx.fillStyle = c.accent; ctx.fillRect(16, 17, 12, 2); // キャリングハンドル/レール
+        } else if (form === 'shotgun') {
+          R(5, 20, 36, 6, body);             // 長く太いバレル
+          R(8, 26, 24, 4, metal);            // ポンプ(下)
+          R(2, 19, 5, 8, wood);              // ストック
+          R(13, 26, 5, 8, wood);             // グリップ
+        } else if (form === 'sniper') {
+          R(4, 22, 40, 5, body);             // 超長バレル
+          R(44, 23, 3, 3, metal);            // マズル
+          R(1, 20, 6, 8, dark);              // ストック
+          R(16, 16, 16, 4, metal);           // スコープ筒
+          R(19, 14, 3, 2, dark); R(28, 14, 3, 2, dark); // スコープマウント
+          R(15, 27, 5, 9, dark);             // グリップ
+          ctx.strokeStyle = '#000'; ctx.beginPath(); ctx.moveTo(30, 27); ctx.lineTo(34, 36); ctx.moveTo(34, 27); ctx.lineTo(30, 36); ctx.stroke(); // バイポッド
+          outline(ctx);
+        } else if (form === 'rpg') {
+          R(8, 21, 28, 8, body);             // 太い発射筒
+          ctx.fillStyle = c.accent;          // 円錐弾頭
+          ctx.beginPath(); ctx.moveTo(36, 21); ctx.lineTo(45, 25); ctx.lineTo(36, 29); ctx.closePath(); ctx.fill(); ctx.stroke();
+          R(4, 22, 5, 6, dark);              // 後方ノズル
+          R(16, 29, 5, 8, dark);             // グリップ
+          ctx.fillStyle = metal; ctx.fillRect(24, 18, 4, 3); // サイト
+        } else { // energy: SF的なエネルギー銃
+          R(8, 20, 26, 8, body);
+          ctx.fillStyle = c.accent; ctx.fillRect(32, 22, 9, 4); ctx.strokeRect(32, 22, 9, 4); // 発光エミッタ
+          ctx.fillStyle = mix(c.accent, '#ffffff', 0.4); ctx.fillRect(40, 23, 3, 2);
+          R(14, 26, 6, 11, dark);            // グリップ
+          ctx.fillStyle = c.accent; ctx.fillRect(12, 22, 4, 4); ctx.fillRect(20, 22, 3, 4); // エネルギーコイル
+        }
         break;
       }
       case 'staff': {

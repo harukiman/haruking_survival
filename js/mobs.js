@@ -204,10 +204,20 @@ Game.Mobs = (function () {
   }
 
   // 形が未指定のモブを、種ごとに安定して多彩な形へ(一辺倒の'round'を解消)
-  const SHAPE_POOL = ['blob', 'tall', 'spiky', 'round'];
+  const SHAPE_POOL = ['blob', 'tall', 'spiky', 'beast', 'humanoid', 'round'];
+  // 種ごとに実在生物/敵らしいシルエットへ割当
+  const TYPE_SHAPE = {
+    rabbit: 'beast', deer: 'beast', sheep: 'beast', boar: 'beast', ice_bear: 'beast', frost_wolf: 'beast', giant_toad: 'beast', troll: 'beast', charger: 'beast', golem: 'tall',
+    zombie: 'humanoid', skeleton: 'humanoid', bandit: 'humanoid', cursed_armor: 'humanoid', hex_caster: 'humanoid', dust_mage: 'humanoid', wanderer: 'humanoid',
+    bat: 'bat', harpy: 'bird',
+    viper: 'serpent', dune_serpent: 'serpent', astral_serpent: 'serpent', sand_wurm: 'serpent', salamander: 'serpent', mud_crawler: 'serpent', leech: 'serpent',
+    scorpion: 'spiky', frost_spider: 'spider', ember_imp: 'spiky', void_drone: 'orb', gazer: 'orb',
+    swamp_wisp: 'wisp', frost_wisp: 'wisp', bog_horror: 'blob', void_jelly: 'blob', mimic: 'blob',
+  };
   function defaultShape(type) {
     if (type === 'slime') return 'blob';
     if (type === 'spider') return 'spider';
+    if (TYPE_SHAPE[type]) return TYPE_SHAPE[type];
     let h = 0; for (let i = 0; i < type.length; i++) h = (h * 31 + type.charCodeAt(i)) >>> 0;
     return SHAPE_POOL[h % SHAPE_POOL.length];
   }
@@ -747,6 +757,39 @@ Game.Mobs = (function () {
         ctx.beginPath();
         for (let a = 0; a < 10; a++) { const ang = a / 10 * Math.PI * 2; const rr = a % 2 ? r * 0.55 : r * 1.15; const fn = a === 0 ? 'moveTo' : 'lineTo'; ctx[fn](Math.cos(ang) * rr, Math.sin(ang) * rr); }
         ctx.closePath(); ctx.fill();
+      } else if (shape === 'beast') {
+        // 四足獣: 横長胴体＋脚＋耳＋尻尾。向きで頭の左右
+        const fx = m.dir === 'left' ? -1 : 1;
+        ctx.fillRect(-r * 0.8, r * 0.2, r * 0.3, r * 0.7); ctx.fillRect(r * 0.5, r * 0.2, r * 0.3, r * 0.7); // 後ろ脚
+        ctx.fillRect(-r * 0.4, r * 0.3, r * 0.28, r * 0.6); ctx.fillRect(r * 0.15, r * 0.3, r * 0.28, r * 0.6); // 前脚
+        roundRect(ctx, -r, -r * 0.55, r * 2, r * 1.1, r * 0.5); ctx.fill(); // 胴
+        ctx.beginPath(); ctx.arc(fx * r * 0.85, -r * 0.35, r * 0.55, 0, Math.PI * 2); ctx.fill(); // 頭
+        ctx.beginPath(); ctx.moveTo(fx * r * 0.7, -r * 0.8); ctx.lineTo(fx * r * 0.55, -r * 1.25); ctx.lineTo(fx * r * 1.0, -r * 0.85); ctx.closePath(); ctx.fill(); // 耳
+        ctx.strokeStyle = bodyCol; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(-fx * r * 0.95, -r * 0.2); ctx.quadraticCurveTo(-fx * r * 1.5, -r * 0.4, -fx * r * 1.4, r * 0.2); ctx.stroke(); // 尻尾
+        eyeY = -r * 0.45; ctx.fillStyle = m.hurt > 0 ? '#fff' : bodyCol;
+      } else if (shape === 'humanoid') {
+        // 人型: 頭＋胴＋腕＋脚
+        ctx.fillRect(-r * 0.25, r * 0.35, r * 0.25, r * 0.7); ctx.fillRect(0, r * 0.35, r * 0.25, r * 0.7); // 脚
+        roundRect(ctx, -r * 0.5, -r * 0.5, r, r * 1.0, 3); ctx.fill(); // 胴
+        ctx.fillRect(-r * 0.75, -r * 0.4, r * 0.25, r * 0.85); ctx.fillRect(r * 0.5, -r * 0.4, r * 0.25, r * 0.85); // 腕
+        ctx.beginPath(); ctx.arc(0, -r * 0.8, r * 0.5, 0, Math.PI * 2); ctx.fill(); // 頭
+        eyeY = -r * 0.85;
+      } else if (shape === 'bird' || shape === 'bat') {
+        // 翼を広げた飛行体
+        const wf = shape === 'bat' ? 1.7 : 1.4, flap = Math.sin(m.hopPhase * 0.8) * r * 0.3;
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(-r * wf, -r * 0.5 - flap, -r * wf * 1.1, r * 0.2); ctx.quadraticCurveTo(-r * 0.6, r * 0.1, 0, r * 0.3); ctx.closePath(); ctx.fill(); // 左翼
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(r * wf, -r * 0.5 - flap, r * wf * 1.1, r * 0.2); ctx.quadraticCurveTo(r * 0.6, r * 0.1, 0, r * 0.3); ctx.closePath(); ctx.fill(); // 右翼
+        ctx.beginPath(); ctx.ellipse(0, 0, r * 0.5, r * 0.7, 0, 0, Math.PI * 2); ctx.fill(); // 胴
+        eyeY = -r * 0.25;
+      } else if (shape === 'serpent') {
+        // 蛇/芋虫: くねる胴体の連結
+        const segs = 5;
+        for (let sgi = segs; sgi >= 0; sgi--) {
+          const off = sgi / segs; const sx = -off * r * 1.8; const sy = Math.sin(m.hopPhase + sgi * 0.8) * r * 0.4;
+          ctx.beginPath(); ctx.arc(sx, sy, r * (0.85 - off * 0.45), 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.beginPath(); ctx.arc(r * 0.2, Math.sin(m.hopPhase) * r * 0.2, r * 0.6, 0, Math.PI * 2); ctx.fill(); // 頭
+        eyeY = -r * 0.2;
       } else {
         ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
       }
