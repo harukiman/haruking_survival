@@ -208,6 +208,7 @@ window.Game = window.Game || {};
     p.bts = sp.bts || 0;
     p.status = sp.status || {};
     p.str = sp.str || 0; p.vit = sp.vit || 0; p.dex = sp.dex || 0; p.skillPoints = sp.skillPoints || 0; p.skills = sp.skills || {};
+    p.mags = sp.mags || {}; // 銃のマガジン装填数を復元(リロードのやり直しを防ぐ)
     Game.state.ngLevel = data.ngLevel || 0;
     // インベントリ（拡張済みなら容量も復元）
     if (data.inventory) {
