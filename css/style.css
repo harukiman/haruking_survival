@@ -165,7 +165,8 @@ body.left-handed #action-btns { right: auto; left: calc(12px + env(safe-area-ins
 #stats { display: flex; flex-direction: column; gap: 6px; }
 .bar-wrap { display: flex; align-items: center; gap: 6px; }
 .bar-label { font-size: .9rem; width: 18px; text-align: center; }
-.bar { width: 150px; height: 14px; background: rgba(0,0,0,0.45); border: 1px solid #1a2436; border-radius: 7px; overflow: hidden; }
+.bar { width: 150px; height: 14px; background: rgba(0,0,0,0.45); border: 1px solid #1a2436; border-radius: 7px; overflow: hidden; position: relative; }
+.bar-val { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: .6rem; line-height: 1; color: #fff; font-weight: 700; letter-spacing: .2px; text-shadow: 0 1px 2px rgba(0,0,0,0.95); pointer-events: none; }
 .bar-fill { height: 100%; transition: width .2s; }
 .bar-fill.health { background: linear-gradient(90deg, #d33, #f66); }
 .bar-fill.hunger { background: linear-gradient(90deg, #b5772a, #e0a94a); }

@@ -13,6 +13,10 @@ Game.UI = (function () {
     el.hotbar = document.getElementById('hotbar');
     el.health = document.getElementById('health-bar');
     el.hunger = document.getElementById('hunger-bar');
+    el.healthVal = document.getElementById('health-val');
+    el.hungerVal = document.getElementById('hunger-val');
+    el.staminaVal = document.getElementById('stamina-val');
+    el.sanityVal = document.getElementById('sanity-val');
     el.clock = document.getElementById('clock-text');
     el.invScreen = document.getElementById('inv-screen');
     el.invGrid = document.getElementById('inv-grid');
@@ -76,7 +80,7 @@ Game.UI = (function () {
     if (clBtn) clBtn.addEventListener('click', function (e) { e.stopPropagation(); if (bigMapOpen) toggleBigMap(); });
     // ステータス画面: レベルバッジをタップで開く
     const lb = document.getElementById('level-badge');
-    if (lb) lb.addEventListener('click', openStats);
+    if (lb) lb.addEventListener('click', toggleStats);
     // デバッグ用チートコード（haruking でアイテム付与パネル解禁）
     const cheatIn = document.getElementById('cheat-input');
     if (cheatIn) cheatIn.addEventListener('input', function () {
@@ -237,6 +241,7 @@ Game.UI = (function () {
     sc.classList.remove('hidden'); Game.state.paused = true; renderStats();
   }
   function closeStats() { const sc = document.getElementById('stats-screen'); if (sc) sc.classList.add('hidden'); Game.state.paused = false; }
+  function toggleStats() { const sc = document.getElementById('stats-screen'); if (!sc) return; if (sc.classList.contains('hidden')) openStats(); else closeStats(); }
   const skOpen = {}; // スキル系統の開閉状態
   function renderStats() {
     const p = Game.state.player; const body = document.getElementById('stats-body'); if (!body || !p) return;
@@ -574,6 +579,10 @@ Game.UI = (function () {
     const p = Game.state.player;
     el.health.style.width = (p.health / p.maxHealth * 100) + '%';
     el.hunger.style.width = (p.hunger / p.maxHunger * 100) + '%';
+    if (el.healthVal) el.healthVal.textContent = Math.ceil(p.health) + '/' + p.maxHealth;
+    if (el.hungerVal) el.hungerVal.textContent = Math.ceil(p.hunger) + '/' + p.maxHunger;
+    if (el.staminaVal) el.staminaVal.textContent = Math.ceil(p.stamina) + '/' + p.maxStamina;
+    if (el.sanityVal) el.sanityVal.textContent = Math.ceil(Game.state.sanity) + '/' + Game.TUNE.SANITY_MAX;
     el.clock.textContent = Game.DayNight.clockText();
     if (el.level) {
       el.level.textContent = p.level;
@@ -1242,6 +1251,6 @@ Game.UI = (function () {
     openChest, openSharedChest, closeChest, refreshChest, refreshWorld,
     showLore, closeLore, refreshQuest, openQuest, closeQuest, refreshBounty, showEnding, showDeath, showIntro, refreshNet, refreshStatus,
     toggleOptions, openEnchant, closeEnchant,
-    toggleBigMap, isBigMapOpen, updateBigMap, openStats, closeStats, renderStats, refreshBossBar, openTrade, closeTrade,
+    toggleBigMap, isBigMapOpen, updateBigMap, openStats, closeStats, toggleStats, renderStats, refreshBossBar, openTrade, closeTrade,
   };
 })();

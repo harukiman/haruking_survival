@@ -32,7 +32,7 @@ Game.Input = (function () {
       if (k === 'm') { const on = Game.Audio.toggle(); Game.UI.toast(on ? 'サウンド ON' : 'サウンド OFF'); }
       if (k === 'escape' || k === 'p') { Game.UI.toggleOptions(); }
       if (k === 'n' || k === 'tab') { e.preventDefault(); Game.UI.toggleBigMap(); } // 大マップ
-      if (k === 'c') { Game.UI.openStats(); } // ステータス&スキル
+      if (k === 'c') { Game.UI.toggleStats(); } // ステータス&スキル(再押下で閉じる)
       if (k === 'k' || k === 'q') placeQueued = true; // facing設置
       if (k === 'g') useQueued = true;   // 開く/使う(近隣のチェスト等)
       if (k === 'r') rollQueued = true;  // 回避ロール
