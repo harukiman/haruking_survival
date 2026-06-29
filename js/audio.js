@@ -28,7 +28,13 @@ Game.Audio = (function () {
     if (!ctx) {
       try { ctx = new (window.AudioContext || window.webkitAudioContext)(); }
       catch (e) { enabled = false; return; }
-      master = ctx.createGain(); master.gain.value = 0.9; master.connect(ctx.destination);
+      master = ctx.createGain(); master.gain.value = 0.9;
+      // マスターにコンプレッサを挿入し全体を引き締め・パンチを出す(気持ちよさ向上)
+      try {
+        const comp = ctx.createDynamicsCompressor();
+        comp.threshold.value = -18; comp.knee.value = 26; comp.ratio.value = 3.2; comp.attack.value = 0.004; comp.release.value = 0.2;
+        master.connect(comp); comp.connect(ctx.destination);
+      } catch (e) { master.connect(ctx.destination); }
       sfxGain = ctx.createGain(); sfxGain.gain.value = 1.0; sfxGain.connect(master);
       bgmGain = ctx.createGain(); bgmGain.gain.value = enabled ? 0.32 : 0; bgmGain.connect(master);
     }
@@ -60,6 +66,15 @@ Game.Audio = (function () {
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
     osc.connect(g); g.connect(sfxGain);
     osc.start(t0); osc.stop(t0 + dur + 0.02);
+  }
+  // 重低音サブベース（ピッチが沈むサイン）。気持ちよい“ズン”を主要SFXに重ねる
+  function subThump(hz, low, dur, vol) {
+    if (!enabled) { return; } ensure(); if (!ctx) return;
+    const t = ctx.currentTime;
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(hz, t); o.frequency.exponentialRampToValueAtTime(Math.max(20, low), t + dur);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(sfxGain); o.start(t); o.stop(t + dur + 0.02);
   }
   // 整形ノイズ（sfxGain経由で音量設定を尊重）。decayPow を上げるほど立ち上がりが鋭い
   function noiseShape(t, dur, vol, filtType, cutoff, Q, decayPow) {
@@ -115,20 +130,20 @@ Game.Audio = (function () {
     if (!enabled) return;
     switch (name) {
       case 'mine':   if (throttled('mine', 0.09)) beep(180 + Math.random() * 40, 0.06, 'square', 0.05); break;
-      case 'break':  beep(120, 0.12, 'sawtooth', 0.1); beep(90, 0.16, 'triangle', 0.08); break;
-      case 'place':  beep(320, 0.08, 'square', 0.08); break;
+      case 'break':  beep(120, 0.12, 'sawtooth', 0.1); beep(90, 0.16, 'triangle', 0.08); subThump(150, 50, 0.16, 0.12); break;
+      case 'place':  beep(320, 0.08, 'square', 0.08); subThump(140, 60, 0.1, 0.1); break;
       case 'pickup': beep(660, 0.06, 'sine', 0.07); beep(880, 0.06, 'sine', 0.05); break;
-      case 'craft':  beep(520, 0.08, 'triangle', 0.1); beep(700, 0.1, 'triangle', 0.09); break;
+      case 'craft':  beep(520, 0.08, 'triangle', 0.1); beep(700, 0.1, 'triangle', 0.09); subThump(180, 70, 0.14, 0.09); break;
       case 'eat':    beep(280, 0.1, 'sine', 0.09); break;
       case 'hurt':   beep(150, 0.18, 'sawtooth', 0.12); break;
       case 'select': beep(440, 0.04, 'square', 0.05); break;
       case 'cursor': if (throttled('cursor', 0.03)) { beep(660, 0.022, 'triangle', 0.035); } break;
       case 'tab':    if (throttled('tab', 0.04)) { beep(520, 0.03, 'sine', 0.045); beep(720, 0.03, 'sine', 0.03); } break;
       case 'swing':  if (throttled('swing', 0.1)) beep(300, 0.05, 'triangle', 0.06); break;
-      case 'hit':    beep(220, 0.07, 'square', 0.09); beep(160, 0.09, 'sawtooth', 0.06); break;
-      case 'mobdie': beep(200, 0.12, 'sawtooth', 0.1); beep(120, 0.16, 'triangle', 0.08); break;
+      case 'hit':    beep(220, 0.07, 'square', 0.09); beep(160, 0.09, 'sawtooth', 0.06); subThump(120, 55, 0.1, 0.1); break;
+      case 'mobdie': beep(200, 0.12, 'sawtooth', 0.1); beep(120, 0.16, 'triangle', 0.08); subThump(140, 45, 0.18, 0.12); break;
       case 'equip':  beep(400, 0.06, 'square', 0.07); beep(560, 0.06, 'square', 0.06); break;
-      case 'levelup': beep(523, 0.1, 'triangle', 0.1); beep(659, 0.1, 'triangle', 0.1); beep(784, 0.14, 'triangle', 0.1); break;
+      case 'levelup': beep(523, 0.1, 'triangle', 0.1); beep(659, 0.1, 'triangle', 0.1); beep(784, 0.14, 'triangle', 0.1); subThump(220, 80, 0.25, 0.1); break;
       case 'shift':  beep(440, 0.25, 'sine', 0.12); beep(220, 0.35, 'sine', 0.1); beep(110, 0.45, 'triangle', 0.08); break;
       case 'event_meteor': sbeep(1200, 0.12, 'sine', 0.06, 0); sbeep(900, 0.14, 'sine', 0.06, 0.1); sbeep(1568, 0.1, 'triangle', 0.05, 0.2); sbeep(660, 0.32, 'sine', 0.05, 0.3); break;
       case 'event_supply': sbeep(392, 0.14, 'triangle', 0.08, 0); sbeep(523, 0.14, 'triangle', 0.08, 0.12); sbeep(659, 0.22, 'triangle', 0.09, 0.24); break;
