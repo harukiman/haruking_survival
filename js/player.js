@@ -239,6 +239,12 @@ Game.Player = (function () {
     const speed = (matched ? (1 + sel.tier) : 0.6) + skillBonus().mining;
     mining.progress += speed;
     if (Game.state.tick % 6 === 0) Game.Audio.play('mine');
+    // 採掘中の破片(対象タイルからチップが飛ぶ)＋進捗のひび
+    if (Game.state.tick % 4 === 0 && Game.Render.spawnParticles) {
+      const wx = t.tx * TS + TS / 2, wy = t.ty * TS + TS / 2;
+      const col = (meta.dust) || (Game.TILE_COLOR && Game.TILE_COLOR[obj]) || '#b0a890';
+      Game.Render.spawnParticles(wx, wy, col, 3);
+    }
     if (mining.progress >= meta.hp) { breakBlock(t.tx, t.ty, obj, meta); mining.active = false; mining.progress = 0; }
   }
 
@@ -264,7 +270,9 @@ Game.Player = (function () {
       }
     }
     const col = (Game.ITEMS[meta.drops && meta.drops[0] && meta.drops[0].item] || {}).color || '#999';
-    Game.Render.spawnParticles(wx, wy, col, 8);
+    Game.Render.spawnParticles(wx, wy, col, 14);
+    Game.Render.spawnParticles(wx, wy, '#ffffff', 4); // 砕けの白い飛沫
+    if (Game.Render.shake && meta.tier >= 2) Game.Render.shake(3); // 硬い鉱石は手応え
     if (meta.phantom && Game.Achievements) Game.Achievements.unlock('madness_sight');
     if (meta.resonator) Game.World.resonate(tx, ty);  // 共鳴核破壊→封印解除
     Game.Audio.play('break');
