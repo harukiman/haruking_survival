@@ -82,13 +82,19 @@ Game.UI = (function () {
     // ステータス画面: レベルバッジをタップで開く
     const lb = document.getElementById('level-badge');
     if (lb) lb.addEventListener('click', toggleStats);
-    // デバッグ用チートコード（haruking でアイテム付与パネル解禁）
+    // デバッグ用チートコード（haruking で解放→コマンド入力で敵召喚/アイテム付与）
     const cheatIn = document.getElementById('cheat-input');
-    if (cheatIn) cheatIn.addEventListener('input', function () {
-      const panel = document.getElementById('cheat-panel');
-      if (cheatIn.value.trim().toLowerCase() === 'haruking') { buildCheatPanel(panel); panel.classList.remove('hidden'); }
-      else panel.classList.add('hidden');
-    });
+    if (cheatIn) {
+      cheatIn.addEventListener('input', function () {
+        const panel = document.getElementById('cheat-panel');
+        if (cheatIn.value.trim().toLowerCase() === 'haruking') { cheatUnlocked = true; buildCheatPanel(panel); panel.classList.remove('hidden'); cheatIn.placeholder = 'コマンド: give<id>[n] / spawn<type>[n] / bts<n> / xp<n> / heal'; }
+      });
+      cheatIn.addEventListener('keydown', function (e) {
+        if (e.key !== 'Enter') return;
+        e.preventDefault(); e.stopPropagation();
+        const v = cheatIn.value; runCheat(v); cheatIn.value = '';
+      });
+    }
     const csb = document.getElementById('btn-close-stats');
     if (csb) csb.addEventListener('click', closeStats);
 
@@ -941,6 +947,33 @@ Game.UI = (function () {
   let craftCatFilter = 'all';
   let craftSearch = '';
   let craftCanOnly = false;
+
+  // デバッグコマンド: 任意の敵召喚・アイテム付与など
+  let cheatUnlocked = false;
+  function runCheat(raw) {
+    const s = (raw || '').trim(); if (!s) return;
+    const parts = s.split(/\s+/); const cmd = parts[0].toLowerCase();
+    if (cmd === 'haruking') { cheatUnlocked = true; const panel = document.getElementById('cheat-panel'); if (panel) { buildCheatPanel(panel); panel.classList.remove('hidden'); } toast('チート解放: give/spawn/bts/xp/heal'); return; }
+    if (!cheatUnlocked) { toast('まず haruking と入力して解放'); return; }
+    const p = Game.state.player;
+    if (cmd === 'give') {
+      const id = parts[1]; const n = Math.max(1, parseInt(parts[2] || '1', 10) || 1);
+      if (!id || !Game.ITEMS[id]) { toast('不明なアイテム: ' + id); return; }
+      const d = Game.ITEMS[id];
+      if ((d.attack != null || (d.armor != null && d.slot)) && Game.Loot) { for (let k = 0; k < n; k++) Game.Inventory.addInstance({ id: id, roll: Game.Loot.roll(id, 0.4) }); }
+      else Game.Inventory.add(id, n);
+      toast('付与: ' + d.name + ' ×' + n); refreshAll();
+    } else if (cmd === 'spawn') {
+      const t = parts[1]; const n = Math.min(30, Math.max(1, parseInt(parts[2] || '1', 10) || 1));
+      if (!t || !Game.MOBS[t]) { toast('不明な敵: ' + t); return; }
+      for (let k = 0; k < n; k++) Game.Mobs.spawnMob(t, p.x + (Math.random() - 0.5) * 140 + 50, p.y + (Math.random() - 0.5) * 140);
+      toast('召喚: ' + (Game.MOBS[t].name || t) + ' ×' + n);
+    } else if (cmd === 'bts') { const n = parseInt(parts[1] || '0', 10) || 0; p.bts = Math.max(0, (p.bts || 0) + n); toast('bts ' + (n >= 0 ? '+' : '') + n + ' → ' + p.bts); refreshStats(); }
+    else if (cmd === 'xp') { Game.Player.gainXP(Math.max(0, parseInt(parts[1] || '0', 10) || 0)); refreshAll(); toast('XP付与'); }
+    else if (cmd === 'heal') { p.health = p.maxHealth; p.hunger = p.maxHunger; if (Game.state.sanity != null && Game.TUNE) Game.state.sanity = Game.TUNE.SANITY_MAX; if (Game.Status) Game.Status.clearAll(); refreshAll(); toast('全回復'); }
+    else if (cmd === 'help') { toast('give<id>[n] / spawn<type>[n] / bts<n> / xp<n> / heal'); }
+    else { toast('不明: ' + cmd + '（help）'); }
+  }
 
   // チートパネル: 全アイテムをタップで付与
   let cheatBuilt = false;
