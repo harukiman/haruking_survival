@@ -278,6 +278,26 @@ Game.Mobs = (function () {
           const minion = m.def.summon || 'shadow_spawn';
           if (countType(minion) < 8) { for (let k = 0; k < 3; k++) spawnMob(minion, m.x + (Math.random() - 0.5) * 60, m.y + (Math.random() - 0.5) * 60); Game.Audio.play('shift'); }
         }
+        // ボスの溜め叩きつけ攻撃: テレグラフ(着弾予告)→範囲ダメージ。全ボスに戦闘の駆け引きを付与
+        if (m.def.boss) {
+          if (m.slam != null) {
+            m.slam--;
+            if (m.slam <= 0) {
+              const R = (m.slamR || 2.4) * TS;
+              if (distP <= R) {
+                Game.Survival.damage(Math.round((m.dmg || m.def.dmg) * 1.6), m.def.name || 'mob');
+                const kl = distP || 1; p.x += (dxp / kl) * 18; p.y += (dyp / kl) * 18;
+              }
+              Game.Render.spawnParticles(m.x, m.y, '#ff7a3c', 26);
+              if (Game.Render.shake) Game.Render.shake(10);
+              Game.Audio.play('boom_sfx');
+              m.slam = null; m.slamCd = 150;
+            }
+            m.hopPhase += 0.2; continue; // 溜め中は移動・他攻撃しない(回避猶予)
+          }
+          if ((m.slamCd || 0) > 0) m.slamCd--;
+          else if (distP < 6 * TS && Math.random() < 0.035) { m.slam = 18; m.slamR = (m.def.big ? 3 : 2.4); Game.Audio.play('whirl'); }
+        }
         const rg = m.def.ranged;
         // 遠距離魔法攻撃タイプ: 距離を取りつつ魔法弾を撃つ
         if (rg && distP < rg.range * TS && distP > (m.def.size * 0.5 + 14)) {
@@ -564,6 +584,18 @@ Game.Mobs = (function () {
       const s = Game.Camera.worldToScreen(x, y);
       // 画面外スキップ
       if (s.x < -40 || s.y < -40 || s.x > Game.view.w + 40 || s.y > Game.view.h + 40) continue;
+      // ボス溜め攻撃のテレグラフ(着弾予告リング・地面に表示)
+      if (m.slam != null && m.slamR) {
+        const z = Game.Camera.zoom ? Game.Camera.zoom() : 1;
+        const rr = m.slamR * Game.CFG.TILE_SIZE * z;
+        const prog = 1 - m.slam / 18;
+        ctx.save();
+        ctx.fillStyle = 'rgba(255,40,20,' + (0.1 + prog * 0.3).toFixed(3) + ')';
+        ctx.beginPath(); ctx.arc(s.x, s.y, rr, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = 'rgba(255,70,40,0.9)'; ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.arc(s.x, s.y, rr, 0, Math.PI * 2); ctx.stroke();
+        ctx.restore();
+      }
       const r = m.def.size * 0.5 * (m.champion ? 1.55 : m.elite ? 1.3 : 1);
       const hop = m.def.hop ? Math.abs(Math.sin(m.hopPhase)) * 5 : 0;
       ctx.save();
