@@ -82,6 +82,7 @@ Game.Render = (function () {
     drawBolts(ctx);
     drawFloaters(ctx);
     Game.Lighting.drawOverlay(ctx);
+    drawNightSky(ctx);
     drawWeather(ctx);
     drawAmbient(ctx);
     drawBossVignette(ctx);
@@ -208,6 +209,33 @@ Game.Render = (function () {
   }
 
   // 宇宙の星空（カメラに緩やかに連動）
+  // 地上の夜空: 上部に瞬く星＋稀に流れ星（光世界・夜・晴/霧のみ）
+  function drawNightSky(ctx) {
+    const s = Game.state; if (!s || s.paused || s.worldName !== 'light') return;
+    if (!Game.DayNight.isNight()) return;
+    const wt = s.weather && s.weather.type;
+    if (wt && wt !== 'clear' && wt !== 'fog') return; // 雨/雪/砂嵐/吹雪では非表示
+    const v = Game.view, w = v.w, h = v.h, t = s.tick;
+    const dark = (Game.Lighting && Game.Lighting.ambientDarkness) ? Game.Lighting.ambientDarkness() : 0.6;
+    const baseA = Math.min(0.85, Math.max(0, dark)) * (wt === 'fog' ? 0.4 : 1);
+    if (baseA < 0.05) return;
+    ctx.save();
+    for (let i = 0; i < 70; i++) {
+      const sx = (i * 149.3) % w;
+      const sy = (i * 73.1) % (h * 0.55);
+      const tw = 0.3 + Math.abs(Math.sin((t + i * 30) * 0.04)) * 0.7;
+      ctx.globalAlpha = baseA * tw * 0.7;
+      ctx.fillStyle = i % 6 === 0 ? '#cfe0ff' : '#ffffff';
+      const sz = i % 5 === 0 ? 2 : 1; ctx.fillRect(sx, sy, sz, sz);
+    }
+    const ph = t % 900; // 稀に流れ星
+    if (ph < 40) { const pr = ph / 40, sxs = w * 0.15 + pr * w * 0.7, sys = h * 0.08 + pr * h * 0.22;
+      ctx.globalAlpha = (1 - pr) * baseA * 0.9; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(sxs, sys); ctx.lineTo(sxs - 18, sys - 7); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
   function drawStars(ctx) {
     const v = Game.view, cx = Game.state.camera.x, cy = Game.state.camera.y;
     ctx.save();
