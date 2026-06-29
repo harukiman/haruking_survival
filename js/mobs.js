@@ -23,6 +23,11 @@ Game.Mobs = (function () {
       state: 'wander', stateTimer: 0, attackCd: 0,
       hurt: 0, fleeTimer: 0, hopPhase: Math.random() * 6,
       knockX: 0, knockY: 0,
+      // 個体差: 同じ種でも大きさ/色味/動き方を変えて一辺倒を避ける
+      sizeVar: 0.86 + Math.random() * 0.30,          // 0.86〜1.16
+      tint: Math.round((Math.random() - 0.5) * 38),  // 色の明暗揺らぎ -19〜+19
+      moveStyle: (function () { const r = Math.random(); return r < 0.5 ? 'direct' : r < 0.78 ? 'zigzag' : 'strafe'; })(),
+      wobble: Math.random() * 6,
     };
     // 精鋭(elite)抽選: 非ボスの敵対モブが低確率で精鋭化（HP/攻撃UP・発光オーラ・確定レアドロップ）
     if (!def.boss && def.hostile && Math.random() < (TUNE.ELITE_CHANCE || 0.04)) {
@@ -198,6 +203,16 @@ Game.Mobs = (function () {
     m.dot = m.dot || {}; m.dot[e[0]] = Math.max(m.dot[e[0]] || 0, e[1]);
   }
 
+  // 16進色を明暗シフト(個体差の色味)
+  function shadeHex(hex, amt) {
+    if (typeof hex !== 'string' || hex[0] !== '#' || hex.length < 7) return hex;
+    const cl = function (v) { return v < 0 ? 0 : v > 255 ? 255 : v; };
+    const r = cl(parseInt(hex.slice(1, 3), 16) + amt);
+    const g = cl(parseInt(hex.slice(3, 5), 16) + amt);
+    const b = cl(parseInt(hex.slice(5, 7), 16) + amt);
+    return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+  }
+
   function moveMob(m, dx, dy, speed) {
     const len = Math.hypot(dx, dy);
     if (len < 0.001) return;
@@ -325,8 +340,18 @@ Game.Mobs = (function () {
           else if (distP > rg.range * TS * 0.82) moveMob(m, dxp, dyp, m.def.speed * 0.8);  // 遠い→寄る
           m.dir = Math.abs(dxp) > Math.abs(dyp) ? (dxp < 0 ? 'left' : 'right') : (dyp < 0 ? 'up' : 'down');
         } else if (distP < aggro) {
-          // 敵対: プレイヤーを追跡（逃げ切れるよう追跡速度を抑制）
-          moveMob(m, dxp, dyp, m.def.speed * 0.82);
+          // 敵対: プレイヤーを追跡（個体ごとの動き方=直進/ジグザグ/回り込みで一辺倒を避ける）
+          let mvx = dxp, mvy = dyp;
+          const st = m.moveStyle;
+          if (st === 'zigzag') {
+            const px = -dyp, py = dxp, pl2 = Math.hypot(px, py) || 1, mag = Math.hypot(dxp, dyp);
+            const osc = Math.sin((Game.state.tick + m.wobble * 30) * 0.17) * 0.6;
+            mvx = dxp + (px / pl2) * mag * osc; mvy = dyp + (py / pl2) * mag * osc;
+          } else if (st === 'strafe' && distP < aggro * 0.62 && distP > m.def.size * 0.5 + 26) {
+            const px = -dyp, py = dxp; const dart = (Game.state.tick + m.wobble * 17) % 96 < 24;
+            mvx = px * 0.9 + dxp * (dart ? 0.85 : 0.12); mvy = py * 0.9 + dyp * (dart ? 0.85 : 0.12);
+          }
+          moveMob(m, mvx, mvy, m.def.speed * 0.82);
           // 接触攻撃
           if (distP < (m.def.size * 0.5 + 12) && m.attackCd <= 0) {
             Game.Survival.damage(m.dmg || m.def.dmg, m.def.name || 'mob');
@@ -642,7 +667,7 @@ Game.Mobs = (function () {
         ctx.beginPath(); ctx.arc(s.x + ax * 34 * z, s.y + ay * 34 * z, 4 * z, 0, Math.PI * 2); ctx.fill();
         ctx.restore();
       }
-      const r = m.def.size * 0.5 * (m.champion ? 1.55 : m.elite ? 1.3 : 1);
+      const r = m.def.size * 0.5 * (m.champion ? 1.55 : m.elite ? 1.3 : 1) * (m.sizeVar || 1);
       const hop = m.def.hop ? Math.abs(Math.sin(m.hopPhase)) * 5 : 0;
       ctx.save();
       // 精鋭オーラ: 脈動する金色の発光リング
@@ -664,8 +689,8 @@ Game.Mobs = (function () {
       // 影
       ctx.fillStyle = 'rgba(0,0,0,0.25)';
       ctx.beginPath(); ctx.ellipse(0, r + hop, r, r * 0.4, 0, 0, Math.PI * 2); ctx.fill();
-      // 本体（形状バリエーション）。状態異常で色味
-      let bodyCol = m.def.color;
+      // 本体（形状バリエーション）。状態異常で色味、個体差で明暗
+      let bodyCol = m.tint ? shadeHex(m.def.color, m.tint) : m.def.color;
       if (m.dot) {
         if (m.dot.burn > 0 && Game.state.tick % 6 < 3) bodyCol = '#ff7a3a';
         else if (m.dot.poison > 0 && Game.state.tick % 12 < 6) bodyCol = '#7ad04a';
