@@ -263,24 +263,32 @@ Game.Audio = (function () {
 
   // ===== シネマティック演出音（OP/発射/発見ムービー用・オーケストラ風）=====
   const cine = { on: false, nodes: [], master: null };
-  function cineStart() {
+  // ムード別のシネマ和音（根音Hz配列＋高弦の音）。場面に合うBGMを選ぶ
+  const CINE_MOODS = {
+    dramatic: { chord: [65.41, 77.78, 98.00, 130.81], hi: 523.25 },   // Cマイナー: 緊張・ドラマ
+    somber:   { chord: [55.00, 65.41, 82.41, 110.00], hi: 440.00 },   // Aマイナー: 物語・哀愁
+    heroic:   { chord: [65.41, 82.41, 98.00, 130.81], hi: 659.25 },   // Cメジャー: 勝利・高揚
+    mystic:   { chord: [61.74, 92.50, 110.00, 146.83], hi: 587.33 },  // 浮遊する神秘(sus)
+    tense:    { chord: [61.74, 73.42, 87.31, 123.47], hi: 493.88 },   // 減和音: 不穏・ボス登場
+  };
+  function cineStart(mood) {
     if (!enabled) return; ensure(); if (!ctx) return;
     cineStop();
     cine.on = true;
     const t = ctx.currentTime;
+    const M = CINE_MOODS[mood] || CINE_MOODS.dramatic;
     const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.16, t + 2.6);
     const filt = ctx.createBiquadFilter(); filt.type = 'lowpass'; filt.frequency.setValueAtTime(500, t); filt.frequency.linearRampToValueAtTime(1900, t + 16);
     g.connect(master); filt.connect(g);
     cine.master = g; cine.nodes = [];
-    // 低い持続コード（Cマイナー: ドラマ性）
-    const chord = [65.41, 77.78, 98.00, 130.81];
-    chord.forEach(function (f, i) {
+    // 低い持続コード（ムードで調を変える）
+    M.chord.forEach(function (f, i) {
       const o = ctx.createOscillator(); o.type = i < 2 ? 'sawtooth' : 'triangle'; o.frequency.value = f; o.detune.value = (i % 2 ? 6 : -6);
       const og = ctx.createGain(); og.gain.value = 0.22 / (i + 1);
       o.connect(og); og.connect(filt); o.start(t); cine.nodes.push(o, og);
     });
     // うねる高弦
-    const hi = ctx.createOscillator(); hi.type = 'sine'; hi.frequency.value = 523.25;
+    const hi = ctx.createOscillator(); hi.type = 'sine'; hi.frequency.value = M.hi;
     const hg = ctx.createGain(); hg.gain.setValueAtTime(0.0001, t); hg.gain.linearRampToValueAtTime(0.05, t + 8);
     const lfo = ctx.createOscillator(); lfo.frequency.value = 0.15; const lg = ctx.createGain(); lg.gain.value = 8;
     lfo.connect(lg); lg.connect(hi.frequency); hi.connect(hg); hg.connect(filt); hi.start(t); lfo.start(t);

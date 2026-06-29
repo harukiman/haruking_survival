@@ -256,11 +256,11 @@ Game.Cutscene = (function () {
   // ===== ロケット発射ムービー =====
   function playLaunch(toSpace, cb) {
     const scenes = toSpace ? [
-      { d: 2600, draw: lcCountdown, text: '発射シーケンス…', onEnter: function () { Game.Audio.cineStart(); Game.Audio.cue('boom'); } },
+      { d: 2600, draw: lcCountdown, text: '発射シーケンス…', onEnter: function () { Game.Audio.cineStart('heroic'); Game.Audio.cue('boom'); } },
       { d: 3200, draw: lcLiftoff, text: '点火——大地を蹴って、空へ', shake: 0.8, onEnter: function () { Game.Audio.cue('impact'); Game.Audio.cue('riser'); } },
       { d: 3400, draw: lcStars, text: '大気を抜け、星の海へ', onEnter: function () { Game.Audio.cue('shimmer'); Game.Audio.cue('swell'); } },
     ] : [
-      { d: 2600, draw: lcReentry, text: '帰還——青き世界へ降りてゆく', onEnter: function () { Game.Audio.cineStart(); Game.Audio.cue('swell'); } },
+      { d: 2600, draw: lcReentry, text: '帰還——青き世界へ降りてゆく', onEnter: function () { Game.Audio.cineStart('mystic'); Game.Audio.cue('swell'); } },
     ];
     runScenes(scenes, cb);
   }
@@ -368,14 +368,14 @@ Game.Cutscene = (function () {
   function playBossIntro(type, cb) {
     const d = BOSS[type] || BOSS.sovereign;
     runScenes([
-      { d: 2800, draw: function (t, n) { bossScene(t, n, d, 'rise'); }, text: d.intro[0], shake: 0.35, onEnter: function () { Game.Audio.cineStart(); Game.Audio.cue('boom'); } },
+      { d: 2800, draw: function (t, n) { bossScene(t, n, d, 'rise'); }, text: d.intro[0], shake: 0.35, onEnter: function () { Game.Audio.cineStart('tense'); Game.Audio.cue('boom'); } },
       { d: 3000, draw: function (t, n) { bossScene(t, n, d, 'name'); }, text: d.intro[1], shake: 0.15, onEnter: function () { Game.Audio.cue('riser'); } },
     ], cb);
   }
   function playBossOutro(type, cb) {
     const d = BOSS[type] || BOSS.sovereign;
     runScenes([
-      { d: 2600, draw: function (t, n) { bossScene(t, n, d, 'fall'); }, text: d.outro[0], shake: 0.6, onEnter: function () { Game.Audio.cineStart(); Game.Audio.cue('impact'); } },
+      { d: 2600, draw: function (t, n) { bossScene(t, n, d, 'fall'); }, text: d.outro[0], shake: 0.6, onEnter: function () { Game.Audio.cineStart('heroic'); Game.Audio.cue('impact'); } },
       { d: 2800, draw: function (t, n) { bossScene(t, n, d, 'win'); }, text: d.outro[1], onEnter: function () { Game.Audio.cue('choir'); Game.Audio.cue('shimmer'); } },
     ], cb);
   }
@@ -512,8 +512,10 @@ Game.Cutscene = (function () {
   }
   function playStory(frag, cb) {
     if (!frag || !frag.scenes || !frag.scenes.length) { if (cb) cb(); return; }
-    const scenes = frag.scenes.map(function (s) {
-      return { d: s.d || 4800, draw: function (t, now) { scStory(t, now, s); }, text: s.text, shake: 0.05, onEnter: function () { if (s.audio && Game.Audio.cue) Game.Audio.cue(s.audio); } };
+    // 章ごとに哀愁/神秘のBGMを選ぶ(再会・統合は高揚、終章は神秘)
+    const mood = (frag.id === 'reunion' || frag.id === 'endbringer') ? 'heroic' : (/star|abyss|phase|traveler|cycle/.test(frag.id || '') ? 'mystic' : 'somber');
+    const scenes = frag.scenes.map(function (s, i) {
+      return { d: s.d || 4800, draw: function (t, now) { scStory(t, now, s); }, text: s.text, shake: 0.05, onEnter: function () { if (i === 0 && Game.Audio.cineStart) Game.Audio.cineStart(mood); if (s.audio && Game.Audio.cue) Game.Audio.cue(s.audio); } };
     });
     runScenes(scenes, cb);
   }
