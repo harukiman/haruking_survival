@@ -400,10 +400,25 @@ Game.Audio = (function () {
     const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.03, t + dur * 0.4); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     src.connect(f); f.connect(g); g.connect(master); src.start(t); src.stop(t + dur);
   }
+  // 洞窟/ダンジョンの水滴(残響付き)。閉所の不気味さを演出
+  function caveDrip() {
+    if (!ctx) return; const t = ctx.currentTime, base = 900 + Math.random() * 500;
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(base, t); o.frequency.exponentialRampToValueAtTime(base * 0.5, t + 0.08);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.045, t + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+    // 残響(短いディレイ2発)
+    o.connect(g); g.connect(master); o.start(t); o.stop(t + 0.2);
+    for (let i = 1; i <= 2; i++) { const tt = t + i * 0.16; const o2 = ctx.createOscillator(), g2 = ctx.createGain(); o2.type = 'sine'; o2.frequency.value = base * 0.5; g2.gain.setValueAtTime(0.0001, tt); g2.gain.exponentialRampToValueAtTime(0.045 / (i + 1), tt + 0.008); g2.gain.exponentialRampToValueAtTime(0.0001, tt + 0.14); o2.connect(g2); g2.connect(master); o2.start(tt); o2.stop(tt + 0.16); }
+  }
   function ambientTick() {
     if (!enabled || !ctx) return;
     if (Game.Settings && Game.Settings.get('ambient') === false) return;
     if (!Game.state || Game.state.paused || Game.state.worldName === 'space') return;
+    // ダンジョン内: 鳥/虫の代わりに水滴の残響
+    if (Game.World && Game.World.groundAt && Game.Player && Game.Player.playerTile) {
+      const pt = Game.Player.playerTile();
+      if (Game.World.groundAt(pt.tx, pt.ty) === Game.TILE.DUNGEON_FLOOR) { if (Math.random() < 0.55) caveDrip(); return; }
+    }
     const night = Game.DayNight && Game.DayNight.isNight && Game.DayNight.isNight();
     const wet = Game.state.weather && (Game.state.weather.type === 'rain' || Game.state.weather.type === 'snow');
     const r = Math.random();
