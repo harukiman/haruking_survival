@@ -82,7 +82,42 @@ Game.Projectiles = (function () {
     Game.Audio.play('boom_sfx');
   }
 
+  // 流星召喚（流星の杖など）: 標的点の頭上から流星が落ち、着弾で範囲爆発
+  const strikes = [];
+  function callMeteor(tx, ty, dmg, radiusTiles) {
+    const dur = 22 + Math.floor(Math.random() * 8);
+    const sx = tx - (180 + Math.random() * 60), sy = ty - (440 + Math.random() * 80);
+    strikes.push({ lx: tx, ly: ty, x: sx, y: sy, vx: (tx - sx) / dur, vy: (ty - sy) / dur, life: dur, dmg: dmg, radius: radiusTiles || 2.2 });
+  }
+  function updateStrikes() {
+    for (let i = strikes.length - 1; i >= 0; i--) {
+      const m = strikes[i]; m.x += m.vx; m.y += m.vy; m.life--;
+      if (m.life <= 0) {
+        explode(m.lx, m.ly, m.radius, m.dmg, 'fire');
+        if (Game.Render.shake) Game.Render.shake(8);
+        strikes.splice(i, 1);
+      }
+    }
+  }
+  function drawStrikes(ctx) {
+    for (let i = 0; i < strikes.length; i++) {
+      const m = strikes[i];
+      const head = Game.Camera.worldToScreen(m.x, m.y);
+      const tail = Game.Camera.worldToScreen(m.x - m.vx * 6, m.y - m.vy * 6);
+      const tg = Game.Camera.worldToScreen(m.lx, m.ly);
+      // 着弾予告リング
+      ctx.strokeStyle = 'rgba(255,120,60,0.5)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(tg.x, tg.y, m.radius * TS, 0, Math.PI * 2); ctx.stroke();
+      // 流星本体＋尾
+      ctx.strokeStyle = 'rgba(255,180,90,0.7)'; ctx.lineWidth = 4; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(tail.x, tail.y); ctx.lineTo(head.x, head.y); ctx.stroke();
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(head.x, head.y, 4.5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(255,200,120,0.3)'; ctx.beginPath(); ctx.arc(head.x, head.y, 9, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
   function update() {
+    updateStrikes();
     const arr = Game.state.projectiles;
     if (!arr || !arr.length) return;
     const mobs = Game.state.mobs;
@@ -135,6 +170,7 @@ Game.Projectiles = (function () {
   }
 
   function draw(ctx) {
+    drawStrikes(ctx);
     const arr = Game.state.projectiles;
     if (!arr || !arr.length) return;
     for (let i = 0; i < arr.length; i++) {
@@ -175,5 +211,5 @@ Game.Projectiles = (function () {
     }
   }
 
-  return { spawn, fire, enemyShoot, update, draw };
+  return { spawn, fire, enemyShoot, update, draw, explode, callMeteor };
 })();

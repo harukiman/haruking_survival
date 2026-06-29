@@ -418,6 +418,7 @@ Game.ITEMS = {
   warp_staff:    { name:'ワープの杖', stack:1, color:'#b06ad0', tool:'warp', flavor:'空間を歪め、一瞬で間合いを詰める/離す。' },
   flame_staff:   { name:'炎の杖', stack:1, color:'#ff7a3c', tool:'staff', fireDmg:16, magic:'fire', flavor:'業火の弾を放つ。弾は要らぬ、己が魔力で。' },
   frost_staff:   { name:'氷結の杖', stack:1, color:'#9fd8ff', tool:'staff', fireDmg:12, magic:'frost', flavor:'凍てつく弾で敵を縛る。' },
+  meteor_staff:  { name:'流星の杖', stack:1, color:'#ffb24a', tool:'staff', strike:{ dmg:30, radius:2.4, range:9, cd:48 }, flavor:'天の破片を呼び、敵の頭上に落とす。星鋼に宿る空の記憶。' },
   flying_carpet: { name:'空飛ぶ絨毯', stack:1, color:'#c0407a', vehicle:'carpet', flavor:'古の魔法で織られた絨毯。空を自在に駆ける。' },
   shadow_altar:  { name:'影の祭壇', stack:4, color:'#3a2050', place:Game.OBJ.SHADOW_ALTAR },
   // ボス報酬
@@ -541,6 +542,7 @@ Game.RECIPES = [
   { out:{id:'star_aegis', n:1}, in:{star_core:1, star_metal:6}, station:'enchant_table' },
   { out:{id:'void_helm', n:1}, in:{shadow_core:1, shadow_steel:4}, station:'enchant_table' },
   { out:{id:'star_cannon', n:1}, in:{star_metal:4, lumen:5}, station:'crafting_table' },
+  { out:{id:'meteor_staff', n:1}, in:{star_metal:3, gold_bar:2, lumen:4}, station:'enchant_table' },
   { out:{id:'gravity_boots', n:1}, in:{star_metal:4}, station:'crafting_table' },
   // 家具・家作り
   { out:{id:'healing_totem', n:1}, in:{lumen:3, wood:4}, station:'crafting_table' },
@@ -843,7 +845,7 @@ Game.ITEM_GLYPH = {
   ammo_9mm:'🔸', ammo_556:'🔹', ammo_762:'🟤', shell_12g:'🔴', ammo_50:'🟠', rocket_ammo:'🧨',
   glock17:'🔫', mp5:'🔫', m4:'🔫', ak47:'🔫', m870:'🔫', barrett:'🎯', rpg7:'🚀',
   rocket:'🚀', star_metal:'🌟', star_core:'💫', cosmic_blade:'🌠', star_cannon:'🔫', gravity_boots:'👢',
-  warp_staff:'🪄', flame_staff:'🔥', frost_staff:'❄️', flying_carpet:'🧞',
+  warp_staff:'🪄', flame_staff:'🔥', frost_staff:'❄️', meteor_staff:'☄️', flying_carpet:'🧞',
   healing_totem:'⛲', street_lamp:'🪔', table:'🪑', chair:'🪑', bookshelf:'📚', glass:'🪟', rug:'🟥', banner:'🚩', brazier:'🔥', barrel:'🛢️', potted_plant:'🪴',
   chitin:'🦂', bone_club:'🦴', gold_sword:'⚔️', war_hammer:'🔨', crystal_blade:'⚔️', chitin_spear:'🔱',
   gold_helmet:'⛑️', gold_chest:'🛡️', crystal_helmet:'🪖', crystal_chest:'🛡️', star_helmet:'⛑️', chitin_armor:'🦺',

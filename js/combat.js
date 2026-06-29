@@ -12,6 +12,21 @@ Game.Combat = (function () {
     const rangePx = Game.TUNE.ATTACK_RANGE * TS;
     // 飛ぶ斬撃などの projectile 武器: 標的の有無に関わらず発射
     const _slot = Game.Inventory.selectedSlot(), _def = _slot && Game.ITEMS[_slot.id];
+    // 流星召喚武器（流星の杖）: 範囲内の最寄り敵の頭上へ流星を落とす。敵が居なければ向いた先へ
+    if (_def && _def.strike) {
+      const stk = _def.strike;
+      const reach = (stk.range || 9) * TS;
+      let bm = null, bd = Infinity;
+      for (let i = 0; i < mobs.length; i++) { const m = mobs[i]; if (m.def.friendly) continue; const d = Math.hypot(m.x - p.x, m.y - p.y); if (d <= reach && d < bd) { bd = d; bm = m; } }
+      let tx2, ty2;
+      if (bm) { tx2 = bm.x; ty2 = bm.y; }
+      else { let dx2 = 0, dy2 = 0; if (p.dir === 'up') dy2 = -1; else if (p.dir === 'down') dy2 = 1; else if (p.dir === 'left') dx2 = -1; else dx2 = 1; tx2 = p.x + dx2 * 4 * TS; ty2 = p.y + dy2 * 4 * TS; }
+      Game.Projectiles.callMeteor(tx2, ty2, Game.Player.effAttack(stk.dmg), stk.radius);
+      if (_def.wsfx) Game.Audio.play(_def.wsfx); else Game.Audio.play('swing');
+      Game.Render.spawnSlash(p.x, p.y, p.dir, '#ffb24a');
+      p.attackCd = stk.cd || Game.Player.attackCooldown();
+      return true;
+    }
     let projFired = false;
     if (_def && _def.proj) {
       const pj = _def.proj;
