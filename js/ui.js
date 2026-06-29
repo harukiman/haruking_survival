@@ -640,7 +640,9 @@ Game.UI = (function () {
         (document.getElementById('app') || document.body).appendChild(ammoEl);
       }
     }
-    if (!sel || sel.tool !== 'gun') { ammoEl.style.display = 'none'; return; }
+    // オーバーレイ(インベントリ/チェスト等)表示中・ポーズ中は隠す
+    const overlayOpen = (el.invScreen && !el.invScreen.classList.contains('hidden')) || (el.chestScreen && !el.chestScreen.classList.contains('hidden')) || Game.state.paused;
+    if (!sel || sel.tool !== 'gun' || overlayOpen) { ammoEl.style.display = 'none'; return; }
     const ammoName = Game.ITEMS[sel.ammo] ? Game.ITEMS[sel.ammo].name : sel.ammo;
     const reserve = Game.Inventory.count(sel.ammo);
     ammoEl.style.display = 'block';
@@ -1323,6 +1325,7 @@ Game.UI = (function () {
     el.invScreen.classList.toggle('hidden');
     Game.state.paused = !el.invScreen.classList.contains('hidden');
     if (!el.invScreen.classList.contains('hidden')) { invSelected = -1; refreshInventory(); }
+    refreshAmmo(); // オーバーレイ開閉で弾薬HUDの表示/非表示を即反映
   }
 
   // ===== 石碑（ロア） =====
