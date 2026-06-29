@@ -305,6 +305,8 @@ Game.ITEMS = {
   // 投擲武器（使用で前方へ投げて爆発/炎上, 1個消費）
   bomb:        { name:'爆弾', stack:16, color:'#2a2a30', throw:{kind:'rocket', dmg:30, explosive:2.4, speed:6}, flavor:'導火線に火を。投げて吹き飛ばせ。' },
   molotov:     { name:'火炎瓶', stack:16, color:'#c0502a', throw:{kind:'fire', dmg:18, explosive:1.8, speed:6}, flavor:'割れて燃え広がる炎の瓶。' },
+  poison_flask:{ name:'毒の小瓶', stack:16, color:'#9fe04a', throw:{kind:'venom', dmg:14, explosive:1.6, speed:6}, flavor:'割れて毒の霧を撒く小瓶。範囲の敵をむしばむ。' },
+  flash_bomb:  { name:'閃光玉', stack:16, color:'#ffe9a0', throw:{kind:'tracer', dmg:10, explosive:1.9, speed:6}, flavor:'硫黄を詰めた炸裂玉。眩い光と衝撃が範囲を焼く。' },
   // バフ薬（一時強化）
   strength_potion:{ name:'力の薬', stack:16, color:'#ff8a4a', buff:{type:'strength', dur:1800}, flavor:'飲めば一時、膂力がみなぎる。' },
   swift_potion:   { name:'俊足の薬', stack:16, color:'#7fe0a0', buff:{type:'swiftness', dur:1800}, flavor:'風のごとく駆ける。' },
@@ -564,6 +566,8 @@ Game.RECIPES = [
   { out:{id:'regen_potion', n:1}, in:{moonleaf:2, lumen:1}, station:'crafting_table' },
   { out:{id:'bomb', n:1}, in:{iron:2, coal:2}, station:'crafting_table' },
   { out:{id:'molotov', n:1}, in:{coal:1, string:1, hide:1}, station:'crafting_table' },
+  { out:{id:'poison_flask', n:2}, in:{glow_spore:2, string:1}, station:'crafting_table' },
+  { out:{id:'flash_bomb', n:2}, in:{sulfur:2, string:1}, station:'crafting_table' },
   { out:{id:'molotov', n:2}, in:{sulfur:2, string:1}, station:'crafting_table' },
   { out:{id:'obsidian_blade', n:1}, in:{obsidian:3, iron:1}, station:'crafting_table' },
   { out:{id:'fur_coat', n:1}, in:{hide:5}, station:'crafting_table' },
@@ -825,7 +829,7 @@ Game.ITEM_GLYPH = {
   wood_axe:'🪓', stone_axe:'🪓', iron_axe:'🪓', shadow_axe:'🪓', wood_hoe:'🌾', stone_hoe:'🌾',
   wood_sword:'🗡️', stone_sword:'🗡️', iron_sword:'⚔️', shadow_blade:'⚔️',
   leather_helmet:'🎩', iron_helmet:'⛑️', shadow_helmet:'🪖', leather_chest:'🦺', iron_chest:'🛡️', shadow_chest:'🛡️', fur_coat:'🧥', lumen_charm:'🔆', sanity_charm:'🔮',
-  bandage:'🩹', antidote:'🧪', strength_potion:'🧪', swift_potion:'🧪', iron_potion:'🧪', regen_potion:'🧪', bomb:'💣', molotov:'🍶',
+  bandage:'🩹', antidote:'🧪', strength_potion:'🧪', swift_potion:'🧪', iron_potion:'🧪', regen_potion:'🧪', bomb:'💣', molotov:'🍶', poison_flask:'⚗️', flash_bomb:'✨',
   torch:'🔥', campfire:'🔥', lantern:'🏮', lumen_lantern:'💡', crafting_table:'🛠️', furnace:'🔥', chest:'📦', bed:'🛏️', fence:'🚧', door:'🚪', wall:'🧱', window:'🪟', bridge:'🌉', sign:'🪧', bounty_board:'📜', wood_floor:'🟫', stone_floor:'⬜',
   shadow_shard:'🌑', shadow_mirror:'🪞', shadow_crystal:'🔮', lumen:'✨', shadow_steel:'⬛', shadow_core:'💜', unity_core:'⭐', void_heart:'💗', rift_anchor:'🕳️', enchant_table:'✦',
   bullet:'🔸', pistol:'🔫', shadow_rifle:'🔫', car:'🚗', boat:'🛶', plane:'✈️',
