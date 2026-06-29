@@ -112,6 +112,25 @@ Game.Events = (function () {
   }
 
   // ---- 描画 ----
+  // 報酬地点(着弾流星/クレート)へ誘導: 画面内=脈動リング, 画面外=端の矢印
+  function drawGuide(ctx, cam, v, wx, wy, color) {
+    const s = cam.worldToScreen(wx, wy);
+    const margin = 30;
+    if (s.x >= margin && s.x <= v.w - margin && s.y >= margin && s.y <= v.h - margin) {
+      const pulse = 3 + Math.sin(Game.state.tick * 0.2) * 2;
+      ctx.strokeStyle = color; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(s.x, s.y, 10 + pulse, 0, Math.PI * 2); ctx.stroke();
+    } else {
+      const cx = v.w / 2, cy = v.h / 2; const dx = s.x - cx, dy = s.y - cy;
+      const ex = v.w / 2 - margin, ey = v.h / 2 - margin;
+      const scale = Math.min(ex / Math.max(Math.abs(dx), 1), ey / Math.max(Math.abs(dy), 1));
+      const ax = cx + dx * scale, ay = cy + dy * scale; const ang = Math.atan2(dy, dx);
+      ctx.save(); ctx.translate(ax, ay); ctx.rotate(ang);
+      ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(11, 0); ctx.lineTo(-7, -8); ctx.lineTo(-7, 8); ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+  }
+
   function draw(ctx) {
     if (!active) return;
     const cam = Game.Camera;
@@ -142,6 +161,22 @@ Game.Events = (function () {
         ctx.beginPath(); ctx.moveTo(s.x - 7, s.y); ctx.lineTo(s.x + 7, s.y); ctx.moveTo(s.x, s.y - 7); ctx.lineTo(s.x, s.y + 7); ctx.stroke();
       }
     }
+
+    // 誘導マーカー: 報酬地点へ
+    const v = Game.view;
+    const gcol = active.type === 'meteor' ? '#ffe27a' : '#caa86a';
+    const targets = active.type === 'meteor' ? active.meteors.filter(function (m) { return m.land; }) : active.crates;
+    for (let i = 0; i < targets.length; i++) drawGuide(ctx, cam, v, targets[i].lx, targets[i].ly, gcol);
+
+    // 上部バナー: イベント名＋残り時間
+    const secs = Math.max(0, Math.ceil(active.t / 30));
+    const label = (active.type === 'meteor' ? '☄️ 流星群' : '📦 物資投下') + '  残り ' + secs + 's';
+    ctx.font = 'bold 15px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const tw = ctx.measureText(label).width; const bw = tw + 28, bx = v.w / 2 - bw / 2, by = 6;
+    ctx.fillStyle = 'rgba(12,18,28,0.66)';
+    if (ctx.roundRect) { ctx.beginPath(); ctx.roundRect(bx, by, bw, 26, 8); ctx.fill(); } else ctx.fillRect(bx, by, bw, 26);
+    ctx.fillStyle = gcol; ctx.fillText(label, v.w / 2, by + 13);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
     ctx.restore();
   }
 
