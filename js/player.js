@@ -16,7 +16,7 @@ Game.Player = (function () {
       hungerTimer: 0, regenTimer: 0,
       invuln: 0, hotbarIndex: 0,
       attackCd: 0,
-      xp: 0, level: 1, xpNext: 22, invSlots: 36,
+      xp: 0, level: 1, xpNext: 24, invSlots: 36,
       baseMaxHealth: 100,
       stamina: 100, maxStamina: 100,
       vehicle: null, // null|'car'|'boat'|'plane'
@@ -688,8 +688,9 @@ Game.Player = (function () {
     Game.UI.refreshAll();
   }
 
-  // レベル必要EXP曲線（序盤は緩やか・高レベルで急増。旧 5+level*3 より大幅に厳しく）
-  function xpForLevel(lv) { return Math.round(12 + lv * 9 + lv * lv * 1.7); }
+  // レベル必要EXP曲線（序盤は緩やか・レベルが上がるほど急峻に=cubic尾。最大Lv9999まで破綻しない）
+  // lv1≈24, lv10≈300, lv20≈1075, lv50≈7240, lv100≈35715 と上位ほど加速度的に重くなる
+  function xpForLevel(lv) { return Math.round(15 + lv * 7 + lv * lv * 2.0 + lv * lv * lv * 0.015); }
 
   function gainXP(n) {
     const p = Game.state.player;
