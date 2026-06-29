@@ -260,6 +260,7 @@ window.Game = window.Game || {};
     if (Game.state.tick % 6 === 0 && Game.UI.refreshBossBar) Game.UI.refreshBossBar();
     if (Game.state.tick % 30 === 0 && Game.UI.refreshBounty) Game.UI.refreshBounty();
     if (Game.state.tick % 30 === 0) Game.Audio.updateMood();
+    if (Game.state.tick % 80 === 0 && Game.Audio.ambientTick) Game.Audio.ambientTick(); // 環境音(鳥/虫/風)
     Game.state.tick++;
   }
 

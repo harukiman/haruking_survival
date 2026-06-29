@@ -382,6 +382,36 @@ Game.Audio = (function () {
   }
   function isEnabled() { return enabled; }
 
+  // ===== 環境音(昼=鳥/風, 夜=虫, 雨=ざわめき)。没入感を高める =====
+  function birdChirp() {
+    if (!ctx) return; const t = ctx.currentTime; const base = 2200 + Math.random() * 900;
+    for (let i = 0; i < 2 + (Math.random() * 2 | 0); i++) { const tt = t + i * 0.09; const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(base * (1 + i * 0.08), tt); o.frequency.exponentialRampToValueAtTime(base * 0.8, tt + 0.07); g.gain.setValueAtTime(0.0001, tt); g.gain.exponentialRampToValueAtTime(0.05, tt + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, tt + 0.09); o.connect(g); g.connect(master); o.start(tt); o.stop(tt + 0.11); }
+  }
+  function cricket() {
+    if (!ctx) return; const t = ctx.currentTime;
+    for (let i = 0; i < 3; i++) { const tt = t + i * 0.06; const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'square'; o.frequency.value = 4600; g.gain.setValueAtTime(0.0001, tt); g.gain.exponentialRampToValueAtTime(0.022, tt + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, tt + 0.03); o.connect(g); g.connect(master); o.start(tt); o.stop(tt + 0.04); }
+  }
+  function windGust() {
+    if (!ctx) return; const t = ctx.currentTime, dur = 1.4 + Math.random();
+    const len = Math.floor(ctx.sampleRate * dur); const buf = ctx.createBuffer(1, len, ctx.sampleRate); const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1);
+    const src = ctx.createBufferSource(); src.buffer = buf;
+    const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 500; f.Q.value = 0.8;
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.03, t + dur * 0.4); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(f); f.connect(g); g.connect(master); src.start(t); src.stop(t + dur);
+  }
+  function ambientTick() {
+    if (!enabled || !ctx) return;
+    if (Game.Settings && Game.Settings.get('ambient') === false) return;
+    if (!Game.state || Game.state.paused || Game.state.worldName === 'space') return;
+    const night = Game.DayNight && Game.DayNight.isNight && Game.DayNight.isNight();
+    const wet = Game.state.weather && (Game.state.weather.type === 'rain' || Game.state.weather.type === 'snow');
+    const r = Math.random();
+    if (Game.state.worldName === 'shadow') { if (r < 0.25) windGust(); return; } // 影=不穏な風のみ
+    if (night) { if (r < 0.5) cricket(); else if (r < 0.62) windGust(); }
+    else { if (r < 0.32) birdChirp(); else if (r < 0.5) windGust(); }
+    if (wet && Math.random() < 0.4) windGust();
+  }
   function eat(kind) { eatSound(kind); }
-  return { play, eat, ensure, toggle, isEnabled, startBGM, tickBGM, updateMood, setMood, cineStart, cineStop, cue, setVolumes };
+  return { play, eat, ambientTick, ensure, toggle, isEnabled, startBGM, tickBGM, updateMood, setMood, cineStart, cineStop, cue, setVolumes };
 })();
