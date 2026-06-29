@@ -253,6 +253,7 @@ window.Game = window.Game || {};
     const pt = Game.Player.playerTile();
     if (Game.state.tick % 10 === 0) Game.World.updateChunks(pt.tx, pt.ty);
     if (Game.state.tick % 20 === 0) { Game.UI.updateMinimap(); if (Game.UI.isBigMapOpen && Game.UI.isBigMapOpen()) Game.UI.updateBigMap(); }
+    if (Game.state.tick % 6 === 0 && Game.UI.refreshContext) Game.UI.refreshContext();
     if (Game.state.tick % 6 === 0 && Game.UI.refreshBossBar) Game.UI.refreshBossBar();
     if (Game.state.tick % 30 === 0 && Game.UI.refreshBounty) Game.UI.refreshBounty();
     if (Game.state.tick % 30 === 0) Game.Audio.updateMood();

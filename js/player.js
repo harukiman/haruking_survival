@@ -297,6 +297,25 @@ Game.Player = (function () {
     Game.UI.refreshAll();
   }
 
+  // 近接する対話対象とラベルを返す（文脈アクションボタン用。実行はしない）
+  function contextAction() {
+    if (!Game.state) return null;
+    const npc = Game.Mobs.nearbyNPC(2.2 * TS);
+    if (npc) return { label: '💬 話す' };
+    const O = Game.OBJ, p = Game.state.player;
+    const ptx = Math.floor(p.x / TS), pty = Math.floor(p.y / TS);
+    const off = [[0, 0], [0, 1], [0, -1], [1, 0], [-1, 0], [1, 1], [-1, 1], [1, -1], [-1, -1]];
+    const LAB = {};
+    LAB[O.CHEST] = '📦 開ける'; LAB[O.TREASURE_CHEST] = '💎 宝箱を開ける'; LAB[O.RIFT_ANCHOR] = '🧰 共有保管庫';
+    LAB[O.BOUNTY_BOARD] = '📜 賞金を見る'; LAB[O.STELA] = '🪧 石碑を読む'; LAB[O.WISH_ALTAR] = '🌟 祈る';
+    LAB[O.SHADOW_ALTAR] = '🩸 ボスを呼ぶ'; LAB[O.ENCHANT_TABLE] = '✨ 付呪'; LAB[O.BED] = '🛌 眠る';
+    for (let i = 0; i < off.length; i++) {
+      const o = Game.World.objAt(ptx + off[i][0], pty + off[i][1]);
+      if (LAB[o]) return { label: LAB[o] };
+    }
+    return null;
+  }
+
   function useNearby() {
     const npc = Game.Mobs.nearbyNPC(2.2 * TS);
     if (npc) { Game.Mobs.interactNPC(npc); return; }
@@ -801,6 +820,6 @@ Game.Player = (function () {
     interact, useNearby, gainXP, totalArmor, setBonus, sleep, equipSelectedArmor, equipFromInventory, equipRelic, unequipSlot, applyEquipStats, bossesDefeated, bossTitle,
     effAttack, attackCooldown, levelDmgBonus, levelArmorBonus, spendStat, unlockSkill, respec,
     skillBonus, skillFlag, canUnlock, currentWeaponAtk, equippedArmorAt, xpForLevel,
-    reloadCurrent, magLoaded, magCap, selGunId,
+    reloadCurrent, magLoaded, magCap, selGunId, contextAction,
   };
 })();

@@ -1448,6 +1448,27 @@ Game.UI = (function () {
     mmCtx.strokeRect(0, 0, size, size);
   }
 
+  // 文脈アクションボタン: チェスト等に近づくと「📦 開ける」等を表示しタップで実行(マイクラ式の開封導線)
+  let ctxBtn = null, ctxLabel = '';
+  function refreshContext() {
+    if (!Game.state || !Game.Player.contextAction) return;
+    if (!ctxBtn) {
+      ctxBtn = document.getElementById('context-action');
+      if (!ctxBtn) {
+        ctxBtn = document.createElement('button'); ctxBtn.id = 'context-action';
+        ctxBtn.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:150px;z-index:57;background:rgba(28,40,64,.94);border:1px solid #5a78a8;border-radius:11px;padding:10px 18px;font-size:1rem;color:#eaf2ff;font-weight:700;box-shadow:0 3px 12px rgba(0,0,0,.4);display:none;cursor:pointer';
+        (document.getElementById('app') || document.body).appendChild(ctxBtn);
+        ctxBtn.addEventListener('click', function (e) { e.stopPropagation(); Game.Audio.play('select'); Game.Player.useNearby(); });
+      }
+    }
+    // 各種オーバーレイが開いている間は隠す
+    const overlayOpen = (el.invScreen && !el.invScreen.classList.contains('hidden')) || (el.chestScreen && !el.chestScreen.classList.contains('hidden')) || Game.state.paused;
+    const ctx = overlayOpen ? null : Game.Player.contextAction();
+    if (!ctx) { if (ctxBtn.style.display !== 'none') ctxBtn.style.display = 'none'; ctxLabel = ''; return; }
+    if (ctx.label !== ctxLabel) { ctxBtn.textContent = ctx.label; ctxLabel = ctx.label; }
+    if (ctxBtn.style.display === 'none') ctxBtn.style.display = 'block';
+  }
+
   // ホットバー切替時のアイテム説明ポップアップ。単一要素＋単一タイマーで連続切替も重ならない
   let hbInfoEl = null, hbInfoTimer = null;
   function flashHotbarItem() {
@@ -1502,7 +1523,7 @@ Game.UI = (function () {
     refreshCraft, refreshAll, toggleInventory, toast, updateMinimap,
     openChest, openSharedChest, closeChest, refreshChest, refreshWorld,
     showLore, closeLore, refreshQuest, openQuest, closeQuest, refreshBounty, showEnding, showDeath, showIntro, refreshNet, refreshStatus,
-    toggleOptions, openEnchant, closeEnchant, flashSave, flashHotbarItem,
+    toggleOptions, openEnchant, closeEnchant, flashSave, flashHotbarItem, refreshContext,
     toggleBigMap, isBigMapOpen, updateBigMap, openStats, closeStats, toggleStats, renderStats, refreshBossBar, openTrade, closeTrade, openShop, openStory, closeStory,
   };
 })();
