@@ -489,6 +489,7 @@ Game.Player = (function () {
     const reserve = Game.Inventory.count(sel.ammo);
     if (reserve <= 0) { if (Game.state.tick % 30 === 0) Game.UI.toast('弾切れ — ' + (Game.ITEMS[sel.ammo] ? Game.ITEMS[sel.ammo].name : sel.ammo) + ' が必要'); return false; }
     p.reloadCd = sel.reloadTime || 48; // ~1.6秒 @30Hz
+    p.reloadMax = p.reloadCd; // 進捗バー用の総時間
     p.reloadInfo = { gid: gid, ammo: sel.ammo, need: cap - cur };
     Game.Audio.play('gun');
     Game.UI.toast('リロード中… 🔄');

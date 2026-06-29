@@ -255,6 +255,7 @@ window.Game = window.Game || {};
     if (Game.state.tick % 10 === 0) Game.World.updateChunks(pt.tx, pt.ty);
     if (Game.state.tick % 20 === 0) { Game.UI.updateMinimap(); if (Game.UI.isBigMapOpen && Game.UI.isBigMapOpen()) Game.UI.updateBigMap(); }
     if (Game.state.tick % 6 === 0 && Game.UI.refreshContext) Game.UI.refreshContext();
+    if (Game.state.player.reloadCd > 0 && Game.state.tick % 3 === 0 && Game.UI.refreshAmmo) Game.UI.refreshAmmo(); // リロード進捗バーを更新
     if (Game.state.tick % 6 === 0 && Game.UI.refreshBossBar) Game.UI.refreshBossBar();
     if (Game.state.tick % 30 === 0 && Game.UI.refreshBounty) Game.UI.refreshBounty();
     if (Game.state.tick % 30 === 0) Game.Audio.updateMood();

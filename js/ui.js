@@ -645,7 +645,8 @@ Game.UI = (function () {
     const reserve = Game.Inventory.count(sel.ammo);
     ammoEl.style.display = 'block';
     if (p.reloadCd > 0) {
-      ammoEl.innerHTML = '🔄 <b style="color:#ffd86b">リロード中…</b>　<span style="color:#9fb6d0">' + ammoName + ' 予備' + reserve + '</span>';
+      const prog = p.reloadMax ? Math.max(0, Math.min(1, 1 - p.reloadCd / p.reloadMax)) : 0;
+      ammoEl.innerHTML = '🔄 <b style="color:#ffd86b">リロード中</b> <span style="display:inline-block;vertical-align:middle;width:80px;height:7px;background:#22304a;border-radius:4px;overflow:hidden"><span style="display:block;height:100%;width:' + Math.round(prog * 100) + '%;background:linear-gradient(90deg,#ffb84a,#ffe06a)"></span></span> <span style="color:#9fb6d0">' + ammoName + ' 予備' + reserve + '</span>';
     } else {
       const loaded = Game.Player.magLoaded(sel), cap = Game.Player.magCap(sel);
       const col = loaded === 0 ? '#e0664a' : (loaded <= cap * 0.25 ? '#e0a84a' : '#7fe0a0');
@@ -1540,7 +1541,7 @@ Game.UI = (function () {
     refreshCraft, refreshAll, toggleInventory, toast, updateMinimap,
     openChest, openSharedChest, closeChest, refreshChest, refreshWorld,
     showLore, closeLore, refreshQuest, openQuest, closeQuest, refreshBounty, showEnding, showDeath, showIntro, refreshNet, refreshStatus,
-    toggleOptions, openEnchant, closeEnchant, flashSave, flashHotbarItem, refreshContext,
+    toggleOptions, openEnchant, closeEnchant, flashSave, flashHotbarItem, refreshContext, refreshAmmo,
     toggleBigMap, isBigMapOpen, updateBigMap, openStats, closeStats, toggleStats, renderStats, refreshBossBar, openTrade, closeTrade, openShop, openStory, closeStory,
   };
 })();
