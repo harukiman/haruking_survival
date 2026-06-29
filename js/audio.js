@@ -412,6 +412,14 @@ Game.Audio = (function () {
     else { if (r < 0.32) birdChirp(); else if (r < 0.5) windGust(); }
     if (wet && Math.random() < 0.4) windGust();
   }
+  // 地形連動の控えめな足音(繰り返し前提なので非常に小音量)。foot: 0/1で左右の微差
+  function footstep(kind, foot) {
+    if (!enabled || !ctx) return;
+    const t = ctx.currentTime, p = foot ? 1.06 : 0.94;
+    if (kind === 'stone') { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'square'; o.frequency.setValueAtTime(190 * p, t); o.frequency.exponentialRampToValueAtTime(90, t + 0.05); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.03, t + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.06); o.connect(g); g.connect(sfxGain); o.start(t); o.stop(t + 0.07); }
+    else if (kind === 'soft') { const len = Math.floor(ctx.sampleRate * 0.05); const buf = ctx.createBuffer(1, len, ctx.sampleRate); const d = buf.getChannelData(0); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len); const src = ctx.createBufferSource(); src.buffer = buf; const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 700 * p; const g = ctx.createGain(); g.gain.setValueAtTime(0.03, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05); src.connect(f); f.connect(g); g.connect(sfxGain); src.start(t); src.stop(t + 0.06); }
+    else { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'triangle'; o.frequency.setValueAtTime(135 * p, t); o.frequency.exponentialRampToValueAtTime(70, t + 0.05); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.022, t + 0.006); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.07); o.connect(g); g.connect(sfxGain); o.start(t); o.stop(t + 0.08); }
+  }
   function eat(kind) { eatSound(kind); }
-  return { play, eat, ambientTick, ensure, toggle, isEnabled, startBGM, tickBGM, updateMood, setMood, cineStart, cineStop, cue, setVolumes };
+  return { play, eat, footstep, ambientTick, ensure, toggle, isEnabled, startBGM, tickBGM, updateMood, setMood, cineStart, cineStop, cue, setVolumes };
 })();

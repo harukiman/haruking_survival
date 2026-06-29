@@ -118,6 +118,11 @@ Game.Player = (function () {
       } else p.stuckT = 0;
       if (dashing && Game.state.tick % 4 === 0) Game.Render.spawnParticles(p.x, p.y, '#cfe0ff', 1);
       if (onWater && Game.state.tick % 16 === 0) { Game.Audio.play('splash'); Game.Render.spawnParticles(p.x, p.y + 8, '#a8d0f0', 3); }
+      else if (!p.vehicle && !onWater && Game.Audio.footstep && Game.state.tick % (dashing ? 9 : 14) === 0) {
+        const pt = playerTile(), g = Game.World.groundAt(pt.tx, pt.ty), T = Game.TILE;
+        const kind = (g === T.STONE || g === T.DUNGEON_FLOOR || g === T.VOLCANIC) ? 'stone' : (g === T.SAND || g === T.SNOW || g === T.DIRT) ? 'soft' : 'grass';
+        Game.Audio.footstep(kind, Math.floor(Game.state.tick / 14) % 2);
+      }
       if (p.vehicle && Game.state.tick % 24 === 0) Game.Audio.play('engine');
     } else p.stuckT = 0;
 
