@@ -82,6 +82,9 @@ Game.Audio = (function () {
       case 'equip':  beep(400, 0.06, 'square', 0.07); beep(560, 0.06, 'square', 0.06); break;
       case 'levelup': beep(523, 0.1, 'triangle', 0.1); beep(659, 0.1, 'triangle', 0.1); beep(784, 0.14, 'triangle', 0.1); break;
       case 'shift':  beep(440, 0.25, 'sine', 0.12); beep(220, 0.35, 'sine', 0.1); beep(110, 0.45, 'triangle', 0.08); break;
+      case 'event_meteor': sbeep(1200, 0.12, 'sine', 0.06, 0); sbeep(900, 0.14, 'sine', 0.06, 0.1); sbeep(1568, 0.1, 'triangle', 0.05, 0.2); sbeep(660, 0.32, 'sine', 0.05, 0.3); break;
+      case 'event_supply': sbeep(392, 0.14, 'triangle', 0.08, 0); sbeep(523, 0.14, 'triangle', 0.08, 0.12); sbeep(659, 0.22, 'triangle', 0.09, 0.24); break;
+      case 'event_horde': sbeep(110, 0.35, 'sawtooth', 0.12, 0); sbeep(98, 0.4, 'sawtooth', 0.12, 0.18); sbeep(82, 0.5, 'triangle', 0.1, 0.4); if (ctx) noiseBurst(ctx.currentTime, 0.5, 0.1, 400); break;
       case 'enchant': beep(620, 0.1, 'sine', 0.09); beep(820, 0.12, 'sine', 0.08); beep(1040, 0.16, 'triangle', 0.07); break;
       case 'dash':   if (throttled('dash', 0.25)) beep(520, 0.07, 'sine', 0.05); break;
       case 'gun':    if (throttled('gun', 0.05)) { beep(900, 0.04, 'square', 0.08); beep(300, 0.08, 'sawtooth', 0.07); } break;

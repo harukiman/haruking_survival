@@ -41,7 +41,7 @@ Game.Events = (function () {
   function startHorde() {
     active = { type: 'horde', t: 30 * 26, spawned: 0, toSpawn: 8 + Math.floor(Math.random() * 5), sinceSpawn: 999 };
     if (Game.UI) Game.UI.toast('⚔️ 魔物の侵攻だ！ 押し寄せる群れを退けろ');
-    if (Game.Audio) Game.Audio.play('shift');
+    if (Game.Audio) Game.Audio.play('event_horde');
   }
 
   function spawnHordeMob() {
@@ -61,6 +61,7 @@ Game.Events = (function () {
     }
     if (a.t <= 0) {
       if (Game.UI) Game.UI.toast('侵攻を退けた…');
+      if (Game.Audio) Game.Audio.play('bounty_done');
       const p = s.player;
       if (Game.Player) Game.Player.gainXP(40);
       for (let k = 0; k < 2 + Math.floor(Math.random() * 2); k++) s.drops.push({ id: 'gold_bar', count: 1, x: p.x + (Math.random() - 0.5) * 40, y: p.y + (Math.random() - 0.5) * 40 });
@@ -73,7 +74,7 @@ Game.Events = (function () {
   function startMeteor() {
     active = { type: 'meteor', t: SHOWER_DUR, meteors: [], landed: 0, sinceLand: 0 };
     if (Game.UI) Game.UI.toast('☄️ 流星群だ！ 降り注ぐ星のかけらを集めよう');
-    if (Game.Audio) Game.Audio.play('shift');
+    if (Game.Audio) Game.Audio.play('event_meteor');
   }
 
   function spawnMeteor(land) {
@@ -115,7 +116,7 @@ Game.Events = (function () {
   function startSupply() {
     active = { type: 'supply', t: 30 * 14, crates: [], spawned: 0, toSpawn: 2 + Math.floor(Math.random() * 2), sinceSpawn: 999 };
     if (Game.UI) Game.UI.toast('📦 物資が投下された！ 落下地点へ急げ');
-    if (Game.Audio) Game.Audio.play('shift');
+    if (Game.Audio) Game.Audio.play('event_supply');
   }
 
   function spawnCrate() {
@@ -201,8 +202,16 @@ Game.Events = (function () {
       }
     }
 
-    // 誘導マーカー: 報酬地点へ(侵攻は群れ自体が目標なのでマーカー無し)
     const v = Game.view;
+    // 魔物の侵攻: 画面端に脈動する赤い危機ヴィネット(緊張感)
+    if (active.type === 'horde') {
+      const pulse = 0.16 + Math.sin(Game.state.tick * 0.12) * 0.08;
+      const g = ctx.createRadialGradient(v.w / 2, v.h / 2, Math.min(v.w, v.h) * 0.34, v.w / 2, v.h / 2, Math.max(v.w, v.h) * 0.62);
+      g.addColorStop(0, 'rgba(180,20,20,0)');
+      g.addColorStop(1, 'rgba(150,10,10,' + pulse.toFixed(3) + ')');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, v.w, v.h);
+    }
+    // 誘導マーカー: 報酬地点へ(侵攻は群れ自体が目標なのでマーカー無し)
     const gcol = active.type === 'meteor' ? '#ffe27a' : active.type === 'horde' ? '#ff6a5a' : '#caa86a';
     const targets = active.type === 'meteor' ? active.meteors.filter(function (m) { return m.land; }) : active.type === 'supply' ? active.crates : [];
     for (let i = 0; i < targets.length; i++) drawGuide(ctx, cam, v, targets[i].lx, targets[i].ly, gcol);
