@@ -383,6 +383,7 @@ Game.ITEMS = {
   wind_blade:  { name:'風斬りの剣', stack:1, color:'#bfe8d8', tool:'sword', tier:3, attack:9, proj:{kind:'slash', dmg:7, cd:14}, wsfx:'slash_air', flavor:'振るたび刃から斬撃が飛ぶ。間合いの外から斬れ。' },
   thunder_sword:{ name:'雷鳴剣', stack:1, color:'#ffe27a', tool:'sword', tier:4, attack:11, proj:{kind:'chain', dmg:9, chain:3, cd:18}, wsfx:'thunder', flavor:'放たれた雷は敵から敵へ飛び移る。' },
   boomerang_axe:{ name:'回帰の戦斧', stack:1, color:'#caa86a', tool:'sword', tier:3, attack:12, proj:{kind:'boomerang', dmg:13, cd:28}, wsfx:'whirl', flavor:'投げれば貫き、手元へ還る。' },
+  crescent_twinblade:{ name:'三日月の双刃', stack:1, color:'#9fe0d0', tool:'sword', tier:4, attack:13, proj:{kind:'slash', dmg:8, count:3, spread:0.5, cd:20}, wsfx:'slash_air', flavor:'一振りで三日月の斬撃が扇状に飛ぶ。群れを薙げ。' },
   laser_rifle: { name:'レーザーライフル', stack:1, color:'#141416', tool:'gun', mag:20, ammo:'energy_cell', fireDmg:14, cd:8, bkind:'laser', gunsfx:'beam', flavor:'敵を貫く収束光。' },
   railgun:     { name:'レールガン', stack:1, color:'#101014', tool:'gun', mag:5, ammo:'energy_cell', fireDmg:38, cd:40, bspeed:16, bkind:'pierce', gunsfx:'beam', flavor:'超電磁加速。直線上の全てを撃ち抜く。' },
   excalibur:   { name:'約束された勝利の剣', stack:1, color:'#ffe9a0', tool:'sword', tier:5, attack:22, proj:{kind:'slash', dmg:34, big:true, cd:40}, wsfx:'beam', flavor:'掲げれば光の砲撃となりて、邪悪を薙ぎ払う。' },
@@ -633,6 +634,7 @@ Game.RECIPES = [
   { out:{id:'wind_blade', n:1}, in:{iron:5, lumen:1}, station:'crafting_table' },
   { out:{id:'thunder_sword', n:1}, in:{iron:6, lumen:2, gold_bar:1}, station:'crafting_table' },
   { out:{id:'boomerang_axe', n:1}, in:{iron:5, wood:3}, station:'crafting_table' },
+  { out:{id:'crescent_twinblade', n:1}, in:{iron:6, lumen:2, shadow_shard:3}, station:'crafting_table' },
   { out:{id:'laser_rifle', n:1}, in:{iron:8, lumen:3, gold_bar:2}, station:'crafting_table' },
   { out:{id:'railgun', n:1}, in:{iron:12, star_metal:2, lumen:4}, station:'crafting_table' },
 ];
