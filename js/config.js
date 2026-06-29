@@ -313,6 +313,7 @@ Game.ITEMS = {
   // 治療・薬
   bandage:     { name:'包帯', stack:16, color:'#eee', heal:8, cures:['bleed'] },
   antidote:    { name:'解毒薬', stack:16, color:'#7fd0a0', cures:['poison','infection'] },
+  recall_scroll:{ name:'帰還の巻物', stack:8, color:'#c0a0e0', recall:true, flavor:'破ると光に包まれ、拠点(初期地点)へ還る。探索からの帰り道に。' },
   // 投擲武器（使用で前方へ投げて爆発/炎上, 1個消費）
   bomb:        { name:'爆弾', stack:16, color:'#2a2a30', throw:{kind:'rocket', dmg:30, explosive:2.4, speed:6}, flavor:'導火線に火を。投げて吹き飛ばせ。' },
   molotov:     { name:'火炎瓶', stack:16, color:'#c0502a', throw:{kind:'fire', dmg:18, explosive:1.8, speed:6}, flavor:'割れて燃え広がる炎の瓶。' },
@@ -587,6 +588,7 @@ Game.RECIPES = [
   // 治療・防寒
   { out:{id:'bandage', n:2}, in:{string:2}, station:null },
   { out:{id:'antidote', n:1}, in:{moonleaf:2, flower:1}, station:null },
+  { out:{id:'recall_scroll', n:1}, in:{string:1, lumen:1, shadow_shard:1}, station:'crafting_table' },
   { out:{id:'antidote', n:2}, in:{glow_spore:3, bone:1}, station:null },
   { out:{id:'strength_potion', n:1}, in:{flower:2, bone:1}, station:'crafting_table' },
   { out:{id:'swift_potion', n:1}, in:{flower:1, moonleaf:1}, station:'crafting_table' },

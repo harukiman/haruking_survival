@@ -1040,7 +1040,7 @@ Game.UI = (function () {
     const btns = [];
     if (def.armor && def.slot) btns.push('<button id="inv-act" class="big-btn">装備する</button>');
     else if (def.relic) btns.push('<button id="inv-act" class="big-btn">遺物を装備</button>');
-    else if (def.food || def.cures || def.buff || def.skillTome || def.xpGain || def.invExpand || def.summonBoss || def.opensShop) btns.push('<button id="inv-act" class="big-btn">' + (def.food ? '食べる' : def.skillTome ? '読む' : def.summonBoss ? '掲げる' : def.opensShop ? '鳴らす' : '使う') + '</button>');
+    else if (def.food || def.cures || def.buff || def.skillTome || def.xpGain || def.invExpand || def.summonBoss || def.opensShop || def.recall) btns.push('<button id="inv-act" class="big-btn">' + (def.food ? '食べる' : def.skillTome ? '読む' : def.summonBoss ? '掲げる' : def.opensShop ? '鳴らす' : '使う') + '</button>');
     else if (Game.Loot.rollable(st.id) || def.tool || def.throw) btns.push('<button id="inv-hot" class="big-btn alt">ホットバーへ装備</button>');
     if (Game.Net && Game.Net.isConnected()) btns.push('<button id="inv-give" class="big-btn alt">仲間に渡す</button>');
     btns.push('<button id="inv-drop" class="big-btn inv-discard">捨てる' + (st.count > 1 ? '（1個）' : '') + '</button>');

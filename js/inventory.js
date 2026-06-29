@@ -155,6 +155,18 @@ Game.Inventory = (function () {
       Game.UI.refreshAll(); return true;
     }
     // 知恵の書: スキルポイント+1
+    // 帰還の巻物: 拠点(初期地点)へ瞬間帰還。光の世界へ戻してから移動
+    if (def && def.recall) {
+      if (Game.state.worldName !== 'light' && Game.World.setActiveWorld) { Game.World.setActiveWorld('light'); Game.UI.refreshWorld && Game.UI.refreshWorld(); }
+      const sp = Game.state.spawn || { tx: 0, ty: 0 };
+      Game.Render.spawnParticles(p.x, p.y, '#d8b0ff', 16);
+      Game.Player.spawnAt(sp.tx, sp.ty);
+      const pt = Game.Player.playerTile(); Game.World.updateChunks(pt.tx, pt.ty);
+      Game.Render.spawnParticles(p.x, p.y, '#fff', 16);
+      if (Game.Render.flash) Game.Render.flash('rgba(216,176,255,0.3)');
+      remove(sl.id, 1); Game.Audio.play('shift');
+      Game.UI.toast('帰還の巻物 — 拠点へ還った'); Game.UI.refreshAll(); return true;
+    }
     if (def && def.skillTome) {
       p.skillPoints = (p.skillPoints || 0) + 1;
       remove(sl.id, 1); Game.Audio.play('levelup');
