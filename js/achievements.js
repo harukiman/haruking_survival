@@ -32,6 +32,7 @@ Game.Achievements = (function () {
     slay_twilight_colossus: { name:'黄昏を砕く', desc:'黄昏の巨像を打ち倒した' },
     slay_swamp_lord: { name:'澱みを断つ', desc:'沼の主を打ち倒した' },
     slay_lava_lord: { name:'灼熱を制す', desc:'溶岩の王を打ち倒した' },
+    slay_spore_queen: { name:'菌糸の終焉', desc:'胞子の女王を打ち倒した' },
     // マイルストーン
     level20:       { name:'熟達者', desc:'レベル20に到達' },
     level50:       { name:'達人', desc:'レベル50に到達' },
@@ -53,11 +54,11 @@ Game.Achievements = (function () {
     relic_hoarder: { name:'遺物収集家', desc:'遺物を手に入れた' },
   };
   // ボス種別→実績ID
-  Game.BOSS_ACH = { tomb_king:'slay_tomb_king', forge_titan:'slay_forge_titan', star_guardian:'slay_star_guardian', crystal_queen:'slay_crystal_queen', hunger_beast:'slay_hunger_beast', abyss_dragon:'slay_abyss_dragon', twilight_colossus:'slay_twilight_colossus', swamp_lord:'slay_swamp_lord', lava_lord:'slay_lava_lord' };
+  Game.BOSS_ACH = { tomb_king:'slay_tomb_king', forge_titan:'slay_forge_titan', star_guardian:'slay_star_guardian', crystal_queen:'slay_crystal_queen', hunger_beast:'slay_hunger_beast', abyss_dragon:'slay_abyss_dragon', twilight_colossus:'slay_twilight_colossus', swamp_lord:'slay_swamp_lord', lava_lord:'slay_lava_lord', spore_queen:'slay_spore_queen' };
 
   // 種別判定用（手に入れた時の実績）
   Game.MAGIC_ITEMS = ['warp_staff', 'flame_staff', 'frost_staff', 'flying_carpet'];
-  Game.LEGENDARY_ITEMS = ['sand_greatsword', 'magma_hammer', 'pharaoh_crown', 'cosmic_blade', 'star_cannon', 'excalibur', 'gae_bolg', 'gate_babylon', 'prism_blade', 'dragon_fang', 'colossus_blade', 'mire_scythe', 'magma_maul', 'starcore_greatsword', 'voidcore_blade'];
+  Game.LEGENDARY_ITEMS = ['sand_greatsword', 'magma_hammer', 'pharaoh_crown', 'cosmic_blade', 'star_cannon', 'excalibur', 'gae_bolg', 'gate_babylon', 'prism_blade', 'dragon_fang', 'colossus_blade', 'mire_scythe', 'magma_maul', 'starcore_greatsword', 'voidcore_blade', 'spore_scythe'];
 
   Game.ENDGAME_ITEMS = ['starcore_greatsword', 'voidcore_blade', 'star_aegis', 'void_helm'];
 

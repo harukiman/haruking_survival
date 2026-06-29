@@ -379,6 +379,7 @@ Game.ITEMS = {
   colossus_blade:{ name:'巨像の大剣', stack:1, color:'#d08a4a', tool:'sword', tier:5, attack:23, proj:{kind:'slash', dmg:22, big:true, cd:38}, wsfx:'beam', flavor:'黄昏の巨像の核より鍛えし剛剣。一振りで大地を断つ。' },
   mire_scythe: { name:'澱みの大鎌', stack:1, color:'#7a9a3a', tool:'sword', tier:5, attack:21, proj:{kind:'venom', dmg:18, count:2, spread:0.3, cd:34}, wsfx:'beam', flavor:'沼の主の骸より鍛えし大鎌。振るえば毒の刃が弧を描いて奔る。' },
   magma_maul:  { name:'溶岩の大槌', stack:1, color:'#d8521f', tool:'sword', tier:5, attack:25, aoe:true, proj:{kind:'fire', dmg:20, explosive:1.6, cd:40}, wsfx:'beam', flavor:'溶岩の王の核より鍛えし大槌。叩きつければ灼熱が炸裂する。' },
+  spore_scythe:{ name:'菌糸の大鎌', stack:1, color:'#9a6ad0', tool:'sword', tier:5, attack:22, proj:{kind:'venom', dmg:18, count:3, spread:0.4, cd:34}, wsfx:'beam', flavor:'胞子の女王より生まれた大鎌。振るえば毒胞子が三方へ舞う。' },
   // ===== エンドゲーム手作り装備(ボス素材) =====
   starcore_greatsword:{ name:'星核の大剣', stack:1, color:'#cfe0ff', tool:'sword', tier:5, attack:24, proj:{kind:'slash', dmg:24, big:true, cd:34}, wsfx:'beam', flavor:'星核を鍛え込んだ大剣。振るえば星屑の一閃が奔る。' },
   voidcore_blade:{ name:'虚無の刃', stack:1, color:'#c060ff', tool:'sword', tier:5, attack:22, proj:{kind:'hex', dmg:18, count:2, spread:0.35, pierce:true, cd:32}, wsfx:'beam', flavor:'影核と虚の心臓より生まれた刃。貫く闇の弾を放つ。' },
@@ -751,6 +752,8 @@ Game.MOBS = {
   swamp_lord:{ name:'沼の主', hostile:true, hp:300, speed:1.0, color:'#5a7a3a', size:30, drops:[{item:'mire_scythe',n:[1,1]},{item:'glow_spore',n:[4,8]},{item:'guts',n:[2,4]},{item:'gold_bar',n:[2,4]}], dmg:11, xp:78, boss:true, big:true, shape:'blob', summon:'leech', inflict:{poison:300, infection:300}, ranged:{dmg:8,range:7,cd:75,kind:'venom',status:{poison:240}} },
   // 溶岩の王: 火山地帯に稀に顕現する灼熱のボス
   lava_lord:{ name:'溶岩の王', hostile:true, hp:320, speed:1.05, color:'#d8521f', size:30, drops:[{item:'magma_maul',n:[1,1]},{item:'obsidian',n:[4,8]},{item:'sulfur',n:[3,6]},{item:'gold_bar',n:[2,4]}], dmg:12, xp:82, boss:true, big:true, shape:'tall', summon:'ember_imp', inflict:{burn:240}, ranged:{dmg:9,range:7,cd:70,kind:'fire'} },
+  // 胞子の女王: キノコの森に顕現する菌糸のボス
+  spore_queen:{ name:'胞子の女王', hostile:true, hp:300, speed:1.1, color:'#9a6ad0', size:28, drops:[{item:'spore_scythe',n:[1,1]},{item:'luminous_cap',n:[4,8]},{item:'glow_spore',n:[3,6]},{item:'gold_bar',n:[2,4]}], dmg:11, xp:80, boss:true, big:true, shape:'blob', summon:'swamp_wisp', inflict:{poison:240, infection:240}, ranged:{dmg:8,range:7,cd:72,kind:'venom',status:{poison:200}} },
   // 沼地/夜の新モブ3種
   swamp_wisp:{ name:'沼の鬼火', hostile:true, hp:12, speed:1.4, color:'#8fe06a', size:10, drops:[{item:'glow_spore',n:[0,1]},{item:'shadow_shard',n:[0,1]}], dmg:4, xp:4, ghost:true, shape:'wisp', ranged:{dmg:5,range:6,cd:80,kind:'venom',status:{poison:200}} },
   giant_toad:{ name:'大蛙', hostile:true, hp:22, speed:1.2, color:'#5a8a3a', size:13, drops:[{item:'frog_legs',n:[1,2]},{item:'guts',n:[0,1]}], dmg:5, xp:5, hop:true, shape:'blob', inflict:{poison:180} },
@@ -835,7 +838,7 @@ Game.ITEM_GLYPH = {
   gold_helmet:'⛑️', gold_chest:'🛡️', crystal_helmet:'🪖', crystal_chest:'🛡️', star_helmet:'⛑️', chitin_armor:'🦺',
   sand_greatsword:'⚔️', magma_hammer:'🔨', pharaoh_crown:'👑', mind_tome:'📖', wisdom_tome:'📗', xp_orb:'🔮', expand_pouch:'🎒',
   ring_crit:'💍', amulet_swift:'📿', fang_vamp:'🦷', heart_regen:'❤️‍🔥', eye_xp:'👁️', band_power:'💪', crest_guard:'🛡️',
-  energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️', prism_blade:'⚔️', dragon_fang:'⚔️', colossus_blade:'⚔️', mire_scythe:'⚔️', magma_maul:'🔨', starcore_greatsword:'⚔️', voidcore_blade:'⚔️', star_aegis:'🛡️', void_helm:'⛑️',
+  energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️', prism_blade:'⚔️', dragon_fang:'⚔️', colossus_blade:'⚔️', mire_scythe:'⚔️', magma_maul:'🔨', starcore_greatsword:'⚔️', voidcore_blade:'⚔️', spore_scythe:'⚔️', star_aegis:'🛡️', void_helm:'⛑️',
 };
 
 Game.INV_SIZE = 36;       // 先頭9 = ホットバー
