@@ -167,8 +167,21 @@ Game.Render = (function () {
     const night = Game.DayNight.isNight();
     ctx.save();
     if (world === 'shadow') {
-      ctx.fillStyle = '#b478e6';
-      for (let i = 0; i < 12; i++) { const x = (i * 97 + t * 0.3) % w; const y = h - ((i * 53 + t * 0.5) % h); ctx.globalAlpha = 0.14 + (i % 3) * 0.06; ctx.fillRect(x, y, 2, 2); }
+      // 漂う影のウィスプ(大小・ゆらめき・淡い光)
+      for (let i = 0; i < 16; i++) {
+        const ph = t * 0.012 + i * 0.9;
+        const x = ((i * 137 + Math.sin(ph) * 40) % (w + 60) + w + 60) % (w + 60) - 30;
+        const y = h - ((i * 53 + t * (0.3 + (i % 3) * 0.15)) % (h + 40));
+        const sz = 1.5 + (i % 4) * 0.8; const gl = 0.5 + Math.sin(t * 0.05 + i) * 0.5;
+        ctx.globalAlpha = (0.1 + gl * 0.12);
+        ctx.fillStyle = i % 3 === 0 ? '#c884f0' : '#7a4fb0';
+        ctx.beginPath(); ctx.arc(x, y, sz, 0, Math.PI * 2); ctx.fill();
+      }
+      // 不穏な脈動ヴィネット(画面の縁が影に侵される)
+      const vg = ctx.createRadialGradient(w / 2, h / 2, h * 0.28, w / 2, h / 2, h * 0.72);
+      const vp = 0.22 + Math.sin(t * 0.03) * 0.06;
+      vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(20,6,34,' + vp.toFixed(3) + ')');
+      ctx.globalAlpha = 1; ctx.fillStyle = vg; ctx.fillRect(0, 0, w, h);
     } else if (world !== 'space') {
       if (g === Game.TILE.SAND) {
         ctx.fillStyle = '#d2be8c';
