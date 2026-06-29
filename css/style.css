@@ -79,6 +79,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Segoe U
 .opt-kb-head { font-weight: 700; color: #cfe0ff; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
 .kb-btn { min-width: 72px; padding: 8px 10px; border-radius: 8px; border: 1px solid #33455e; background: #1a2436; color: #e8edf2; font-weight: 700; cursor: pointer; flex: 0 0 auto; }
 .kb-btn.listening { background: #c9a23a; color: #1a1408; border-color: #ffe27a; }
+.story-frag { background: rgba(40,36,64,0.5); border: 1px solid #3a3458; border-radius: 8px; padding: 8px 10px; margin: 6px 0; }
+.story-frag.locked { background: rgba(20,22,34,0.5); border-style: dashed; }
+.sf-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #cfc0ff; }
+.sf-text { font-size: .82rem; color: #cdd4e0; margin-top: 6px; line-height: 1.5; }
+.sf-play { flex: 0 0 auto; }
 .opt-toggle.on { background: #2f7a4a; border-color: #6fc46b; color: #fff; }
 #fps { position: absolute; top: 2px; right: 4px; z-index: 31; font-size: .7rem; color: #8fffa0; pointer-events: none; text-shadow: 0 1px 2px #000; }
 /* タッチUIのサイズ/透明度（設定で変更）・左利き反転 */

@@ -453,5 +453,30 @@ Game.Cutscene = (function () {
     ctx.restore();
   }
 
-  return { play, playLaunch, playDiscovery, playBossIntro, playBossOutro, isPlaying: function () { return playing; } };
+  // 物語ムービー: テーマ色＋象徴アイコン＋漂う光のシネマティック背景。textはrunScenesが描画
+  function scStory(t, now, d) {
+    const cx = W / 2, cy = H / 2;
+    const g = ctx.createRadialGradient(cx, cy, 30, cx, cy, Math.max(W, H) * 0.72);
+    g.addColorStop(0, d.col || '#2a2440'); g.addColorStop(1, '#03040a');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.save();
+    if (d.icon) { ctx.globalAlpha = 0.10 + 0.05 * Math.sin(now * 0.003); ctx.font = 'bold ' + Math.floor(Math.min(W, H) * 0.46) + 'px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(d.icon, cx, cy - 24); }
+    ctx.globalAlpha = 1;
+    for (let i = 0; i < 46; i++) {
+      const a = now * 0.0002 + i * 0.7;
+      const rx = (cx + Math.cos(a + i) * (70 + i * 7) + W) % W;
+      const ry = (cy + Math.sin(a * 1.3 + i) * (50 + i * 5) + H) % H;
+      ctx.globalAlpha = 0.05 + 0.05 * (0.5 + 0.5 * Math.sin(now * 0.002 + i));
+      ctx.fillStyle = d.col2 || '#cfe0ff'; ctx.fillRect(rx, ry, 2, 2);
+    }
+    ctx.restore();
+  }
+  function playStory(frag, cb) {
+    if (!frag || !frag.scenes || !frag.scenes.length) { if (cb) cb(); return; }
+    const scenes = frag.scenes.map(function (s) {
+      return { d: s.d || 4800, draw: function (t, now) { scStory(t, now, s); }, text: s.text, shake: 0.05, onEnter: function () { if (s.audio && Game.Audio.cue) Game.Audio.cue(s.audio); } };
+    });
+    runScenes(scenes, cb);
+  }
+  return { play, playLaunch, playDiscovery, playBossIntro, playBossOutro, playStory, isPlaying: function () { return playing; } };
 })();

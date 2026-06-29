@@ -114,6 +114,7 @@ Game.UI = (function () {
     { const sb = document.getElementById('btn-sort-inv'); if (sb) sb.addEventListener('click', function () { Game.Inventory.autoSort(); Game.Audio.play('select'); refreshInventory(); refreshHotbar(); }); }
     document.getElementById('btn-close-chest').addEventListener('click', closeChest);
     var ct = document.getElementById('btn-close-trade'); if (ct) ct.addEventListener('click', closeTrade);
+    var cst = document.getElementById('btn-close-story'); if (cst) cst.addEventListener('click', closeStory);
     var cm = document.getElementById('chest-multi'); if (cm) cm.addEventListener('click', toggleChestMulti);
     var cds = document.getElementById('chest-deposit-sel'); if (cds) cds.addEventListener('click', depositSelected);
     var cda = document.getElementById('chest-deposit-all'); if (cda) cda.addEventListener('click', depositAll);
@@ -234,6 +235,24 @@ Game.UI = (function () {
   }
   function openTrade() { const sc = document.getElementById('trade-screen'); if (!sc) return; shopMode = false; const title = sc.querySelector('h2'); if (title) title.textContent = '旅の商人 🧳'; sc.classList.remove('hidden'); Game.state.paused = true; rollTradeStock(); refreshTrade(); }
   function closeTrade() { const sc = document.getElementById('trade-screen'); if (sc) sc.classList.add('hidden'); Game.state.paused = false; shopMode = false; }
+
+  // 記憶回廊(物語ギャラリー)
+  function openStory() { const sc = document.getElementById('story-screen'); if (!sc) return; sc.classList.remove('hidden'); Game.state.paused = true; renderStory(); }
+  function closeStory() { const sc = document.getElementById('story-screen'); if (sc) sc.classList.add('hidden'); Game.state.paused = false; }
+  function renderStory() {
+    const body = document.getElementById('story-body'); if (!body || !Game.Story) return;
+    const list = Game.Story.list(); const seen = list.filter(function (f) { return f.seen; }).length;
+    let h = '<p class="hint">解放した物語 <b style="color:#bfa0ff">' + seen + ' / ' + list.length + '</b>　｜　刻片 🔮 <b>' + (Game.Inventory ? Game.Inventory.count('kokuhen') : 0) + '</b></p>';
+    list.forEach(function (f) {
+      if (f.seen) {
+        h += '<div class="story-frag"><div class="sf-head"><b>' + f.title + '</b><button class="sf-play map-btn" data-id="' + f.id + '">▶ 再生</button></div><div class="sf-text">' + f.text.replace(/\n/g, '<br>') + '</div></div>';
+      } else {
+        h += '<div class="story-frag locked"><div class="sf-head"><b>？？？</b></div><div class="sf-text" style="opacity:.55">解放条件: ' + f.trigger + '</div></div>';
+      }
+    });
+    body.innerHTML = h;
+    body.querySelectorAll('.sf-play[data-id]').forEach(function (btn) { btn.addEventListener('click', function () { closeStory(); Game.Story.play(btn.getAttribute('data-id')); }); });
+  }
   function refreshTrade() {
     const body = document.getElementById('trade-body'); if (!body) return;
     const cur = shopMode ? (Game.state.player.bts || 0) : Game.Inventory.count('gold_bar');
@@ -664,6 +683,7 @@ Game.UI = (function () {
       toggle('ambient', '🌿 環境演出') +
       toggle('homeCompass', '🧭 帰路コンパス') +
       toggle('showFps', '📈 FPS表示') +
+      '<div class="opt-row"><button id="opt-story" class="map-btn" style="width:100%">📖 記憶回廊（物語）を開く</button></div>' +
       // ===== 操作キー設定(リバインド) =====
       (Game.Input && Game.Input.BIND_ACTIONS ?
         '<div class="opt-keybinds"><div class="opt-kb-head">⌨ 操作キー設定 <button id="kb-reset" class="map-btn">初期化</button></div>' +
@@ -707,6 +727,8 @@ Game.UI = (function () {
     });
     const kbr = document.getElementById('kb-reset');
     if (kbr) kbr.addEventListener('click', function () { if (Game.Input && Game.Input.resetBinds) { Game.Input.resetBinds(); renderOptions(); } });
+    const ostry = document.getElementById('opt-story');
+    if (ostry) ostry.addEventListener('click', function () { toggleOptions(); openStory(); });
     const hh = document.getElementById('opt-help-head');
     if (hh) hh.addEventListener('click', function () { optHelpOpen = !optHelpOpen; renderOptions(); });
   }
@@ -1328,6 +1350,6 @@ Game.UI = (function () {
     openChest, openSharedChest, closeChest, refreshChest, refreshWorld,
     showLore, closeLore, refreshQuest, openQuest, closeQuest, refreshBounty, showEnding, showDeath, showIntro, refreshNet, refreshStatus,
     toggleOptions, openEnchant, closeEnchant,
-    toggleBigMap, isBigMapOpen, updateBigMap, openStats, closeStats, toggleStats, renderStats, refreshBossBar, openTrade, closeTrade, openShop,
+    toggleBigMap, isBigMapOpen, updateBigMap, openStats, closeStats, toggleStats, renderStats, refreshBossBar, openTrade, closeTrade, openShop, openStory, closeStory,
   };
 })();

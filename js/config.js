@@ -439,6 +439,7 @@ Game.ITEMS = {
   // ===== P25 コンテンツ拡張: 素材 =====
   gold_bar:      { name:'金塊', stack:99, color:'#e8c54a', flavor:'精錬された黄金。装飾にも、刃にも。' },
   coin_charm:    { name:'守銭の護符', stack:1, color:'#ffd24a', keepBts:true, flavor:'肌身離さず持つ者のバーツを、死してなお守る黄金の護符。所持していれば死亡してもバーツを失わない。' },
+  kokuhen:       { name:'刻片', stack:99, color:'#bfa0ff', flavor:'打ち倒した強敵の記憶が結晶した紫の欠片。記憶回廊に物語を呼び覚ます。' },
   shop_bell:     { name:'商館の呼び鈴', stack:1, color:'#d8b24a', opensShop:true, flavor:'鳴らせばどこからともなく商館がひらく。バーツで品を購える携帯式の呼び鈴。' },
   chitin:        { name:'甲殻', stack:99, color:'#b07030', flavor:'砂漠の蟲の硬い殻。軽く、しなやかな防具になる。' },
   // ===== P25: 武器 =====
@@ -854,7 +855,7 @@ Game.ITEM_GLYPH = {
   apple:'🍎', berry:'🫐', cactus:'🌵', raw_meat:'🥩', cooked_meat:'🍖', rotten_meat:'🤢', guts:'🩸', wheat:'🌾', wheat_seeds:'🌱', bread:'🍞', moonleaf:'🍃', fish:'🐟',
   frog_legs:'🐸', cooked_frog:'🍗', snake_meat:'🐍', cooked_snake:'🍢', swamp_stew:'🍲',
   carrot:'🥕', carrot_seeds:'🌱', pumpkin:'🎃', pumpkin_seeds:'🌱', tomato:'🍅', tomato_seeds:'🌱', veg_salad:'🥗', pumpkin_pie:'🥧', veg_stew:'🍲', hearty_stew:'🍲',
-  hide:'🟤', leather:'🟫', bone:'🦴', string:'🧵', slime_ball:'🟢', flower:'🌸', sapling:'🌱', glow_spore:'🍄', obsidian:'⬛', sulfur:'🟡', obsidian_blade:'🗡️', luminous_cap:'🍄', mushroom_soup:'🍲', mire_incense:'🕯️', lava_shard:'🔥', spore_sac:'🟣', flower_tea:'🍵', end_key:'🗝️', endblade:'⚔️', coin_charm:'🪙', shop_bell:'🔔',
+  hide:'🟤', leather:'🟫', bone:'🦴', string:'🧵', slime_ball:'🟢', flower:'🌸', sapling:'🌱', glow_spore:'🍄', obsidian:'⬛', sulfur:'🟡', obsidian_blade:'🗡️', luminous_cap:'🍄', mushroom_soup:'🍲', mire_incense:'🕯️', lava_shard:'🔥', spore_sac:'🟣', flower_tea:'🍵', end_key:'🗝️', endblade:'⚔️', coin_charm:'🪙', shop_bell:'🔔', kokuhen:'🔮',
   wood_pickaxe:'⛏️', stone_pickaxe:'⛏️', iron_pickaxe:'⛏️', shadow_pickaxe:'⛏️', siege_pick:'⛏️',
   wood_axe:'🪓', stone_axe:'🪓', iron_axe:'🪓', shadow_axe:'🪓', wood_hoe:'🌾', stone_hoe:'🌾',
   wood_sword:'🗡️', stone_sword:'🗡️', iron_sword:'⚔️', shadow_blade:'⚔️',

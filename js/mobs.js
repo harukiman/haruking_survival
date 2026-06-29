@@ -625,8 +625,15 @@ Game.Mobs = (function () {
           Game.UI.toast('強敵たちの力が集った——「終焉の鍵」を鍛えられる（付呪台: 影核3・星核2・虚の心臓1・金塊5）');
         }
       }
-      // 撃破アニメムービー（ローカル再生）
-      if (Game.Cutscene && Game.Cutscene.playBossOutro && !(Game.Net.isConnected() && !Game.Net.host)) {
+      // 刻片(記念の通貨的素材)をボス撃破で入手
+      if (Game.Inventory) Game.Inventory.add('kokuhen', 1);
+      // 物語ムービー: 節目のボスは初撃破で記憶回廊の章を解放＋シネマ再生(撃破outroの代わり)
+      const STORY_BOSS = { sovereign: 'shadow_king', hunger_beast: 'hunger', abyss_dragon: 'abyss', star_guardian: 'star', endbringer: 'endbringer' };
+      const sid = STORY_BOSS[m.type];
+      const playedStory = (sid && Game.Story && !Game.Story.seen(sid) && !(Game.Net.isConnected() && !Game.Net.host)) ? Game.Story.unlock(sid, true) : false;
+      if (sid && !playedStory && Game.Story) Game.Story.unlock(sid, false); // 既見でも記録は保証
+      // 撃破アニメムービー（物語を再生しない場合のみ通常outro）
+      if (!playedStory && Game.Cutscene && Game.Cutscene.playBossOutro && !(Game.Net.isConnected() && !Game.Net.host)) {
         Game.state.paused = true;
         const bt = m.type;
         Game.Cutscene.playBossOutro(bt, function () { Game.state.paused = false; });

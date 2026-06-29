@@ -56,6 +56,7 @@ Game.Quests = (function () {
     Game.state.reunified = true;
     Game.state.questDone['reunify'] = 1;
     if (Game.Achievements) Game.Achievements.unlock('reunified');
+    if (Game.Story) Game.Story.unlock('reunion', true); // 第六章 ― 還る世界
     Game.Render.flash('#ffffff');
     Game.Audio.play('levelup');
     const stats = {

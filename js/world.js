@@ -142,6 +142,7 @@ Game.World = (function () {
     Game.UI.refreshWorld();
     Game.UI.updateMinimap();
     if (Game.Achievements) Game.Achievements.unlock(target === 'shadow' ? 'first_shift' : null);
+    if (target === 'shadow' && Game.Story) Game.Story.unlock('sundering', true); // 初の影渡りで第一章
     return true;
   }
 

@@ -106,6 +106,7 @@ window.Game = window.Game || {};
     // スターターアイテム
     Game.STARTER_ITEMS.forEach(function (it) { Game.Inventory.add(it.id, it.count); });
     startWorld();
+    if (Game.Story) Game.Story.unlock('prologue', false); // 序章を記憶回廊に登録(導入は別途オープニングで再生)
     // 初回ソロは アニメーション・オープニングを再生
     if (!ngLevel && !opts.net && Game.Cutscene) {
       Game.state.paused = true;
@@ -164,6 +165,7 @@ window.Game = window.Game || {};
     Game.state.discovered = data.discovered || {};
     Game.state.bossSeen = data.bossSeen || {};
     Game.state.bestiary = data.bestiary || {};
+    Game.state.storySeen = data.storySeen || {};
     Game.state.eliteKills = data.eliteKills || 0;
     Game.state.championKills = data.championKills || 0;
     Game.state.bounty = data.bounty || null;

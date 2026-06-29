@@ -34,6 +34,7 @@ Game.Save = (function () {
       discovered: s.discovered || {},
       bossSeen: s.bossSeen || {},
       bestiary: s.bestiary || {},
+      storySeen: s.storySeen || {},
       eliteKills: s.eliteKills || 0,
       championKills: s.championKills || 0,
       bounty: s.bounty || null,
