@@ -813,6 +813,11 @@ Game.Player = (function () {
       const d = drops[i];
       const dx = p.x - d.x, dy = p.y - d.y;
       const dist = Math.hypot(dx, dy);
+      // インベントリに空きが無い品は引き寄せず拾わない（地面に残す）
+      if (!Game.Inventory.hasRoomFor(d.id, !!d.roll)) {
+        if (dist < 22 && Game.state.tick % 60 === 0) Game.UI.toast('インベントリがいっぱい！');
+        continue;
+      }
       if (dist < PR * 2.2) { d.x += dx * 0.18; d.y += dy * 0.18; }
       if (dist < 16) {
         if (d.roll) {

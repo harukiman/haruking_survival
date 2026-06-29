@@ -1228,6 +1228,7 @@ Game.UI = (function () {
     Game.state.paused = true;
     el.chestScreen.classList.remove('hidden');
     Game.Audio.play('select');
+    showChestInfo(null);
     refreshChest();
   }
   // 裂け目の楔: 両世界共通の保管庫（どの楔からでも同じ中身）
@@ -1264,7 +1265,7 @@ Game.UI = (function () {
     chest.forEach(function (st, i) {
       const cell = document.createElement('div');
       cell.className = 'slot'; cell.innerHTML = slotHTML(st);
-      cell.addEventListener('click', function () { chestToInv(i); });
+      cell.addEventListener('click', function () { if (st) showChestInfo(st); chestToInv(i); });
       el.chestGrid.appendChild(cell);
     });
     el.chestInvGrid.innerHTML = '';
@@ -1273,10 +1274,21 @@ Game.UI = (function () {
       cell.className = 'slot' + (chestMulti && chestSel[i] ? ' multi-sel' : ''); cell.innerHTML = slotHTML(st);
       cell.addEventListener('click', function () {
         if (chestMulti) { if (!st) return; chestSel[i] = !chestSel[i]; refreshChest(); }
-        else invToChest(i);
+        else { if (st) showChestInfo(st); invToChest(i); }
       });
       el.chestInvGrid.appendChild(cell);
     });
+    setupTooltip(el.chestGrid); setupTooltip(el.chestInvGrid); // PCホバーで中身を確認
+  }
+  // チェスト/インベントリのスロット内容を下部に表示(タップで何かわかる)
+  function showChestInfo(st) {
+    const box = document.getElementById('chest-info'); if (!box) return;
+    if (!st) { box.innerHTML = '<span class="hint">タップで移動／アイテムをタップすると名前が出ます</span>'; return; }
+    const def = Game.ITEMS[st.id]; if (!def) return;
+    const name = st.roll ? Game.Loot.displayName(st) : def.name;
+    const col = st.roll ? Game.Loot.rarityColor(st) : (def.color || '#fff');
+    let sub = def.tool === 'gun' ? '🔫 銃' : def.throw ? '💥 投擲' : def.attack != null ? ('🗡 攻撃 ' + def.attack) : def.armor != null ? ('🛡 防御 ' + def.armor) : def.food ? ('🍖 空腹+' + def.food) : def.place !== undefined ? '🧱 設置可' : (def.flavor || '素材');
+    box.innerHTML = '<b style="color:' + col + '">' + name + (st.count > 1 ? ' ×' + st.count : '') + '</b> <span style="color:#9fb6d0;font-size:.8rem">' + sub + '</span>';
   }
   let chestMulti = false; const chestSel = {};
   function toggleChestMulti() {

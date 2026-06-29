@@ -55,6 +55,17 @@ Game.Inventory = (function () {
     if (Game.ENDGAME_ITEMS && Game.ENDGAME_ITEMS.indexOf(id) >= 0) Game.Achievements.unlock('endgame_smith');
   }
 
+  // そのアイテムを少しでも追加できる余地があるか（満杯判定用）
+  // roll(装備等)は空きスロット必須。通常品は空きスロット or 同IDの未満スタックがあれば可
+  function hasRoomFor(id, isInstance) {
+    const s = slots();
+    for (let i = 0; i < s.length; i++) if (!s[i]) return true; // 空きがあれば常に可
+    if (isInstance) return false; // 装備は空き必須
+    const def = Game.ITEMS[id]; const max = (def && def.stack) || 99;
+    for (let i = 0; i < s.length; i++) if (s[i] && s[i].id === id && s[i].count < max) return true; // 同IDの空き
+    return false;
+  }
+
   // rolled装備など個別インスタンスを空きスロットへ（スタックしない）。成功でtrue
   function addInstance(slot) {
     const s = slots();
@@ -232,5 +243,5 @@ Game.Inventory = (function () {
     for (let i = 0; i < s.length; i++) s[i] = i < list.length ? list[i] : null;
   }
 
-  return { makeEmpty, slots, count, add, addInstance, remove, selectedSlot, selectedItemDef, setHotbar, useSelected, autoSort, expand };
+  return { makeEmpty, slots, count, add, addInstance, hasRoomFor, remove, selectedSlot, selectedItemDef, setHotbar, useSelected, autoSort, expand };
 })();

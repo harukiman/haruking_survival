@@ -240,6 +240,7 @@ window.Game = window.Game || {};
 
   function update() {
     const intent = Game.Input.poll();
+    if (Game.UI.refreshContext) Game.UI.refreshContext(); // ポーズ/オーバーレイ中も評価し文脈ボタンを確実に隠す
     if (Game.state.paused) return;
     if (Game.state.shiftCd > 0) Game.state.shiftCd--;
     Game.Player.update(intent);
@@ -254,7 +255,6 @@ window.Game = window.Game || {};
     const pt = Game.Player.playerTile();
     if (Game.state.tick % 10 === 0) Game.World.updateChunks(pt.tx, pt.ty);
     if (Game.state.tick % 20 === 0) { Game.UI.updateMinimap(); if (Game.UI.isBigMapOpen && Game.UI.isBigMapOpen()) Game.UI.updateBigMap(); }
-    if (Game.state.tick % 6 === 0 && Game.UI.refreshContext) Game.UI.refreshContext();
     if (Game.state.player.reloadCd > 0 && Game.state.tick % 3 === 0 && Game.UI.refreshAmmo) Game.UI.refreshAmmo(); // リロード進捗バーを更新
     if (Game.state.tick % 6 === 0 && Game.UI.refreshBossBar) Game.UI.refreshBossBar();
     if (Game.state.tick % 30 === 0 && Game.UI.refreshBounty) Game.UI.refreshBounty();
