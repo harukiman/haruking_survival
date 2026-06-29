@@ -50,6 +50,15 @@ Game.Tiles = (function () {
       x.globalAlpha = 1; x.fillStyle = '#9fb0ff';
       for (let i = 0; i < 4; i++) circle(x, 3 + Math.floor(rnd() * (TS - 6)), 3 + Math.floor(rnd() * (TS - 6)), 1.2);
     }
+    // 花の野: 色とりどりの花の点描
+    if (id === Game.TILE.BLOOM) {
+      const cols = ['#ff7ab0', '#ffd24a', '#ffffff', '#b06ad0', '#ff8a4a'];
+      for (let i = 0; i < 7; i++) {
+        x.fillStyle = cols[Math.floor(rnd() * cols.length)];
+        const px = 2 + Math.floor(rnd() * (TS - 4)), py = 2 + Math.floor(rnd() * (TS - 4));
+        circle(x, px, py, 1.4);
+      }
+    }
     // 沼地は淀んだ水たまり＋気泡
     if (id === Game.TILE.SWAMP) {
       x.fillStyle = shade(base, -22);

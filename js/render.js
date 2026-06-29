@@ -168,6 +168,15 @@ Game.Render = (function () {
           ctx.fillStyle = i % 2 === 0 ? '#9fb0ff' : '#a6f0e0';
           ctx.beginPath(); ctx.arc(x, y, 1.8, 0, Math.PI * 2); ctx.fill();
         }
+      } else if (g === Game.TILE.BLOOM) {
+        // 舞う花びら（横に流れ、ふわり上下）
+        const cols = ['#ff9ec4', '#ffe07a', '#ffffff', '#c79ae6'];
+        for (let i = 0; i < 8; i++) {
+          const x = ((i * 141 + t * 0.9) % (w + 30)) - 15;
+          const y = ((i * 83) % h + Math.sin(t * 0.03 + i) * 16 + h) % h;
+          ctx.globalAlpha = 0.5; ctx.fillStyle = cols[i % cols.length];
+          ctx.fillRect(x, y, 3, 2);
+        }
       }
     }
     ctx.globalAlpha = 1; ctx.restore();

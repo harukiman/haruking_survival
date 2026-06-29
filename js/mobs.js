@@ -113,7 +113,7 @@ Game.Mobs = (function () {
       } else {
         // 昼: 動物＋環境ごとの敵（砂漠=サソリ/呪術師, 雪原=白熊, 森=稀に猪/トロル/旅人）
         const diffH = diff.spawnHostiles;
-        if (g === Game.TILE.GRASS || g === Game.TILE.FOREST) {
+        if (g === Game.TILE.GRASS || g === Game.TILE.FOREST || g === Game.TILE.BLOOM) {
           if (Math.random() < 0.04 && countType('wanderer') === 0) type = 'wanderer';
           else if (diffH && g === Game.TILE.FOREST && Math.random() < 0.05) type = 'troll';
           else if (diffH && g === Game.TILE.FOREST && Math.random() < 0.12) type = 'mud_crawler';

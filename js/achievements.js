@@ -51,6 +51,7 @@ Game.Achievements = (function () {
     repel:         { name:'迎撃者', desc:'魔物の侵攻を退けた' },
     blessed:       { name:'祝福されし者', desc:'古の祭壇から祝福を授かった' },
     mimic_bait:    { name:'罠だった', desc:'ミミックに噛みつかれた' },
+    visit_bloom:   { name:'花の野へ', desc:'花の野に足を踏み入れた' },
     dual_relic:    { name:'二つの遺物', desc:'遺物を2つ同時に装備した' },
     elite_veteran: { name:'精鋭狩りの達人', desc:'精鋭個体を25体討伐した' },
     champion_master:{ name:'チャンピオンの覇者', desc:'チャンピオンを10体討伐した' },
@@ -83,13 +84,14 @@ Game.Achievements = (function () {
   // バイオーム到達の記録＋実績
   function visitBiome(tile) {
     if (!Game.state) return; const T = Game.TILE;
-    const map = {}; map[T.GRASS] = 'grass'; map[T.FOREST] = 'forest'; map[T.SAND] = 'sand'; map[T.SNOW] = 'snow'; map[T.SWAMP] = 'swamp'; map[T.VOLCANIC] = 'volcanic';
+    const map = {}; map[T.GRASS] = 'grass'; map[T.FOREST] = 'forest'; map[T.SAND] = 'sand'; map[T.SNOW] = 'snow'; map[T.SWAMP] = 'swamp'; map[T.VOLCANIC] = 'volcanic'; map[T.BLOOM] = 'bloom';
     const key = map[tile]; if (!key) return;
     const vb = Game.state.visitedBiomes || (Game.state.visitedBiomes = {});
     if (vb[key]) return;
     vb[key] = 1;
     if (key === 'swamp') unlock('visit_swamp');
     if (key === 'volcanic') unlock('visit_volcanic');
+    if (key === 'bloom') unlock('visit_bloom');
     if (['grass', 'forest', 'sand', 'snow', 'swamp', 'volcanic'].every(function (k) { return vb[k]; })) unlock('biome_master');
   }
 

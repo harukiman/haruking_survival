@@ -33,7 +33,7 @@ Game.CFG = {
 };
 
 // 地面レイヤー
-Game.TILE = { DEEP_WATER:0, WATER:1, SAND:2, GRASS:3, FOREST:4, DIRT:5, STONE:6, SNOW:7, DUNGEON_FLOOR:8, SWAMP:9, VOLCANIC:10, MUSHROOM:11 };
+Game.TILE = { DEEP_WATER:0, WATER:1, SAND:2, GRASS:3, FOREST:4, DIRT:5, STONE:6, SNOW:7, DUNGEON_FLOOR:8, SWAMP:9, VOLCANIC:10, MUSHROOM:11, BLOOM:12 };
 
 // オブジェクトレイヤー（0=なし、50番台=影世界固有、100番台=プレイヤー設置物）
 Game.OBJ = {
@@ -79,6 +79,7 @@ Game.TILE_COLOR = {
   [Game.TILE.SWAMP]:      '#3d4a2c',
   [Game.TILE.VOLCANIC]:   '#2a1812',
   [Game.TILE.MUSHROOM]:   '#3a2c4a',
+  [Game.TILE.BLOOM]:      '#6cbf46',
 };
 
 // 影世界の地面パレット（同じTILE idを別色で描画）
@@ -95,6 +96,7 @@ Game.SHADOW_TILE_COLOR = {
   [Game.TILE.SWAMP]:      '#26233a',
   [Game.TILE.VOLCANIC]:   '#1a1020',
   [Game.TILE.MUSHROOM]:   '#241a36',
+  [Game.TILE.BLOOM]:      '#352a52',
 };
 
 // 宇宙の地面パレット（虚空＝ほぼ黒、小惑星＝灰）
@@ -111,6 +113,7 @@ Game.SPACE_TILE_COLOR = {
   [Game.TILE.SWAMP]:      '#44443a',
   [Game.TILE.VOLCANIC]:   '#3a342e',
   [Game.TILE.MUSHROOM]:   '#3e3a48',
+  [Game.TILE.BLOOM]:      '#5e5a52',
 };
 
 Game.SOLID_TILE = {
