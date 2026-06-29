@@ -531,6 +531,8 @@ Game.Player = (function () {
       Game.Render.spawnMuzzle(p.x + Math.cos(ang) * 16, p.y + Math.sin(ang) * 16, ang, mcol, msc);
     }
     Game.Render.spawnParticles(p.x, p.y, '#ffe9a0', 2);
+    // 重火器は反動で画面が揺れる(スナイパー/ロケット/ショットガン=高cdや爆発)
+    if (Game.Render.shake) { const recoil = sel.explosive ? 7 : sel.pellets ? 5 : (sel.cd >= 30 ? 6 : 0); if (recoil) Game.Render.shake(recoil); }
     Game.Audio.play(sel.gunsfx || 'gun');
     if (p.mags[gid] <= 0 && Game.Inventory.count(sel.ammo) > 0) startReload(sel, gid); // 0になったら自動リロード
     Game.UI.refreshHotbar();

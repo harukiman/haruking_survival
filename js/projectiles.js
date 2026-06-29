@@ -79,6 +79,7 @@ Game.Projectiles = (function () {
     Game.Render.spawnParticles(x, y, '#ff8a3c', 24);
     Game.Render.spawnParticles(x, y, '#ffe27a', 16);
     if (Game.Render.flash) Game.Render.flash('rgba(255,160,80,0.35)');
+    if (Game.Render.shake) Game.Render.shake(Math.min(12, 5 + radiusTiles * 2)); // 爆発で画面が揺れる
     Game.Audio.play('boom_sfx');
   }
 
