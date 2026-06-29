@@ -250,6 +250,7 @@ Game.ITEMS = {
   mire_incense:{ name:'澱みの香', stack:8, color:'#5a7a3a', summonBoss:'swamp_lord', flavor:'焚けば沼の主を呼び覚ます瘴気の香。再戦の証。' },
   lava_shard:  { name:'溶岩の核片', stack:8, color:'#d8521f', summonBoss:'lava_lord', flavor:'砕けば溶岩の王を再び燃え上がらせる核の欠片。' },
   spore_sac:   { name:'胞子嚢', stack:8, color:'#9a6ad0', summonBoss:'spore_queen', flavor:'潰せば胞子の女王が森より舞い戻る菌糸の嚢。' },
+  end_key:     { name:'終焉の鍵', stack:4, color:'#ff5a7a', summonBoss:'endbringer', flavor:'打ち倒した強敵たちの力を束ね鍛えた鍵。地上で掲げれば終焉の王が顕現する。' },
   wood_pickaxe:{ name:'木のツルハシ', stack:1, color:'#9c6b3f', tool:'pickaxe', tier:1 },
   stone_pickaxe:{ name:'石のツルハシ', stack:1, color:'#888d91', tool:'pickaxe', tier:2 },
   iron_pickaxe:{ name:'鉄のツルハシ', stack:1, color:'#d8d8dc', tool:'pickaxe', tier:3 },
@@ -389,6 +390,7 @@ Game.ITEMS = {
   gate_babylon:{ name:'王の財宝', stack:1, color:'#e8c54a', tool:'sword', tier:5, attack:16, proj:{kind:'slash', dmg:11, count:5, spread:0.7, cd:34}, wsfx:'slash_air', flavor:'無数の宝具を雨と降らせる、王の蔵。' },
   prism_blade: { name:'プリズムの刃', stack:1, color:'#c884f0', tool:'sword', tier:5, attack:19, proj:{kind:'slash', dmg:16, count:3, spread:0.4, cd:30}, wsfx:'beam', flavor:'水晶の女王の刃。光を七色に砕き、三閃となって奔る。' },
   dragon_fang: { name:'竜牙の大剣', stack:1, color:'#8a2fb0', tool:'sword', tier:5, attack:24, proj:{kind:'slash', dmg:28, big:true, cd:36}, wsfx:'beam', flavor:'深淵の竜の牙より鍛えし大剣。振るえば闇を裂く咆哮が奔る。' },
+  endblade:    { name:'終焉の剣', stack:1, color:'#ff5a7a', tool:'sword', tier:5, attack:26, aoe:true, proj:{kind:'slash', dmg:32, big:true, cd:32}, wsfx:'beam', flavor:'全ての強敵を退けし者に託される、終焉と再生の剣。一閃が世界の罅を薙ぐ。' },
   colossus_blade:{ name:'巨像の大剣', stack:1, color:'#d08a4a', tool:'sword', tier:5, attack:23, proj:{kind:'slash', dmg:22, big:true, cd:38}, wsfx:'beam', flavor:'黄昏の巨像の核より鍛えし剛剣。一振りで大地を断つ。' },
   mire_scythe: { name:'澱みの大鎌', stack:1, color:'#7a9a3a', tool:'sword', tier:5, attack:21, proj:{kind:'venom', dmg:18, count:2, spread:0.3, cd:34}, wsfx:'beam', flavor:'沼の主の骸より鍛えし大鎌。振るえば毒の刃が弧を描いて奔る。' },
   magma_maul:  { name:'溶岩の大槌', stack:1, color:'#d8521f', tool:'sword', tier:5, attack:25, aoe:true, proj:{kind:'fire', dmg:20, explosive:1.6, cd:40}, wsfx:'beam', flavor:'溶岩の王の核より鍛えし大槌。叩きつければ灼熱が炸裂する。' },
@@ -553,6 +555,7 @@ Game.RECIPES = [
   { out:{id:'star_cannon', n:1}, in:{star_metal:4, lumen:5}, station:'crafting_table' },
   { out:{id:'meteor_staff', n:1}, in:{star_metal:3, gold_bar:2, lumen:4}, station:'enchant_table' },
   { out:{id:'vortex_staff', n:1}, in:{shadow_core:2, shadow_crystal:5, lumen:4}, station:'enchant_table' },
+  { out:{id:'end_key', n:1}, in:{shadow_core:3, star_core:2, void_heart:1, gold_bar:5}, station:'enchant_table' },
   { out:{id:'gravity_boots', n:1}, in:{star_metal:4}, station:'crafting_table' },
   // 家具・家作り
   { out:{id:'healing_totem', n:1}, in:{lumen:3, wood:4}, station:'crafting_table' },
@@ -772,6 +775,7 @@ Game.MOBS = {
   crystal_queen:{ name:'水晶の女王', hostile:true, hp:300, speed:1.2, color:'#c884f0', size:28, drops:[{item:'prism_blade',n:[1,1]},{item:'shadow_crystal',n:[4,8]},{item:'lumen',n:[3,6]},{item:'star_core',n:[0,1]}], dmg:11, xp:70, boss:true, big:true, summon:'frost_wisp', shape:'tall', ranged:{dmg:8,range:7,cd:70,kind:'frost',status:{cold:200}} },
   twilight_colossus:{ name:'黄昏の巨像', hostile:true, hp:340, speed:1.05, color:'#d08a4a', size:34, drops:[{item:'colossus_blade',n:[1,1]},{item:'gold_bar',n:[3,6]},{item:'iron',n:[4,8]},{item:'mind_tome',n:[0,1]}], dmg:13, xp:90, boss:true, big:true, shape:'tall', summon:'cursed_armor' },
   abyss_dragon:{ name:'深淵の竜', hostile:true, hp:380, speed:1.35, color:'#6a1f8a', size:34, drops:[{item:'dragon_fang',n:[1,1]},{item:'shadow_core',n:[3,6]},{item:'shadow_crystal',n:[6,12]},{item:'lumen',n:[4,8]},{item:'mind_tome',n:[0,1]}], dmg:14, xp:120, boss:true, big:true, shadow:true, shape:'tall', summon:'abyss_stalker', ranged:{dmg:10,range:8,cd:60,kind:'hex'} },
+  endbringer:  { name:'終焉の王', hostile:true, hp:520, speed:1.3, color:'#d04a6a', size:36, drops:[{item:'endblade',n:[1,1]},{item:'star_core',n:[2,4]},{item:'shadow_core',n:[3,6]},{item:'lumen',n:[6,12]},{item:'gold_bar',n:[4,8]}], dmg:15, xp:160, boss:true, big:true, shape:'tall', summon:'abyss_stalker', ranged:{dmg:12,range:9,cd:55,kind:'hex'} },
   // 賞金首の大物(legendary wanted): 掲示板の特別依頼で出現するボス級の無法者
   wanted_boss:{ name:'賞金首の大物', hostile:true, hp:260, speed:1.55, color:'#d84a4a', size:26, drops:[{item:'gold_bar',n:[4,8]},{item:'iron',n:[3,6]}], dmg:11, xp:65, boss:true, big:true, shape:'tall', summon:'bandit' },
   // 沼の主: 夜の毒の沼地に稀に顕現する瘴気のボス
@@ -846,7 +850,7 @@ Game.ITEM_GLYPH = {
   apple:'🍎', berry:'🫐', cactus:'🌵', raw_meat:'🥩', cooked_meat:'🍖', rotten_meat:'🤢', guts:'🩸', wheat:'🌾', wheat_seeds:'🌱', bread:'🍞', moonleaf:'🍃', fish:'🐟',
   frog_legs:'🐸', cooked_frog:'🍗', snake_meat:'🐍', cooked_snake:'🍢', swamp_stew:'🍲',
   carrot:'🥕', carrot_seeds:'🌱', pumpkin:'🎃', pumpkin_seeds:'🌱', tomato:'🍅', tomato_seeds:'🌱', veg_salad:'🥗', pumpkin_pie:'🥧', veg_stew:'🍲', hearty_stew:'🍲',
-  hide:'🟤', leather:'🟫', bone:'🦴', string:'🧵', slime_ball:'🟢', flower:'🌸', sapling:'🌱', glow_spore:'🍄', obsidian:'⬛', sulfur:'🟡', obsidian_blade:'🗡️', luminous_cap:'🍄', mushroom_soup:'🍲', mire_incense:'🕯️', lava_shard:'🔥', spore_sac:'🟣', flower_tea:'🍵',
+  hide:'🟤', leather:'🟫', bone:'🦴', string:'🧵', slime_ball:'🟢', flower:'🌸', sapling:'🌱', glow_spore:'🍄', obsidian:'⬛', sulfur:'🟡', obsidian_blade:'🗡️', luminous_cap:'🍄', mushroom_soup:'🍲', mire_incense:'🕯️', lava_shard:'🔥', spore_sac:'🟣', flower_tea:'🍵', end_key:'🗝️', endblade:'⚔️',
   wood_pickaxe:'⛏️', stone_pickaxe:'⛏️', iron_pickaxe:'⛏️', shadow_pickaxe:'⛏️', siege_pick:'⛏️',
   wood_axe:'🪓', stone_axe:'🪓', iron_axe:'🪓', shadow_axe:'🪓', wood_hoe:'🌾', stone_hoe:'🌾',
   wood_sword:'🗡️', stone_sword:'🗡️', iron_sword:'⚔️', shadow_blade:'⚔️',

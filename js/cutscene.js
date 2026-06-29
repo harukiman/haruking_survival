@@ -312,6 +312,7 @@ Game.Cutscene = (function () {
     swamp_lord:  { name: '沼の主', col: '#5a7a3a', sil: 'beast', intro: ['澱んだ沼が泡立ち、瘴気の巨躯がせり上がる', '「この沼に踏み入る者よ……朽ちて、肥やしとなれ」'], outro: ['主は泥へと還り、澱みに澄んだ水が戻った', '— 澱みの大鎌、その手に —'] },
     lava_lord:   { name: '溶岩の王', col: '#d8521f', sil: 'tall', intro: ['溶岩湖が沸き立ち、灼熱の王が立ち上がる', '「我が炉に挑むか。ならば灰も残すまい」'], outro: ['王は冷えて黒曜となり、静寂が戻った', '— 溶岩の大槌、ここに —'] },
     spore_queen: { name: '胞子の女王', col: '#9a6ad0', sil: 'beast', intro: ['菌糸の森がざわめき、胞子の女王が舞い降りる', '「この森に還りなさい……養分となって」'], outro: ['女王は胞子となって散り、森に静けさが戻った', '— 菌糸の大鎌、その手に —'] },
+    endbringer:  { name: '終焉の王', col: '#d04a6a', sil: 'tall', intro: ['世界の罅という罅から、終焉が形を成す', '「裂けた世界よ、我が手で終わらせてやろう——」'], outro: ['終焉の王は光と影に還り、世界に静寂が訪れた', '— 終焉の剣を継ぐ者、それは新たな始まり —'] },
   };
   function drawBossSilhouette(d, cx, cy, sc, mode) {
     ctx.save(); ctx.translate(cx, cy); ctx.scale(sc, sc);
