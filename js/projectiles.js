@@ -257,5 +257,5 @@ Game.Projectiles = (function () {
     }
   }
 
-  return { spawn, fire, enemyShoot, update, draw, explode, callMeteor, callVortex };
+  return { spawn, fire, enemyShoot, update, draw, explode, callMeteor, callVortex, aimAngle: aimDir };
 })();

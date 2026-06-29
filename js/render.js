@@ -81,6 +81,7 @@ Game.Render = (function () {
     Game.Projectiles.draw(ctx);
     drawParticles(ctx);
     drawBolts(ctx);
+    drawMuzzles(ctx);
     drawFloaters(ctx);
     Game.Lighting.drawOverlay(ctx);
     drawNightSky(ctx);
@@ -574,6 +575,29 @@ Game.Render = (function () {
   // 連鎖雷（chain武器）
   const bolts = [];
   function spawnLightning(x1, y1, x2, y2) { bolts.push({ x1: x1, y1: y1, x2: x2, y2: y2, life: 8 }); }
+  // マズルフラッシュ(銃口の閃光)。FPS的な発砲手応えを補強
+  const muzzles = [];
+  function spawnMuzzle(wx, wy, ang, color, scale) { muzzles.push({ x: wx, y: wy, ang: ang, life: 5, max: 5, col: color || '#ffe06a', sc: scale || 1 }); }
+  function drawMuzzles(ctx) {
+    if (!muzzles.length) return;
+    const z = Game.Camera.zoom();
+    for (let i = muzzles.length - 1; i >= 0; i--) {
+      const m = muzzles[i]; m.life--;
+      if (m.life <= 0) { muzzles.splice(i, 1); continue; }
+      const s = Game.Camera.worldToScreen(m.x, m.y);
+      const a = m.life / m.max, len = (10 + (1 - a) * 8) * z * m.sc, w = 5 * z * m.sc * a;
+      ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(m.ang); ctx.globalAlpha = a;
+      // 中心グロー
+      const g = ctx.createRadialGradient(0, 0, 0, 0, 0, len);
+      g.addColorStop(0, '#fff'); g.addColorStop(0.4, m.col); g.addColorStop(1, 'rgba(255,160,40,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, len * 0.7, 0, Math.PI * 2); ctx.fill();
+      // 星形の閃光
+      ctx.fillStyle = m.col; ctx.beginPath();
+      for (let k = 0; k < 8; k++) { const ka = k / 8 * Math.PI * 2; const rr = (k % 2 ? len * 0.35 : len) ; ctx[k ? 'lineTo' : 'moveTo'](Math.cos(ka) * rr, Math.sin(ka) * rr * 0.6); }
+      ctx.closePath(); ctx.fill();
+      ctx.restore(); ctx.globalAlpha = 1;
+    }
+  }
   function drawBolts(ctx) {
     if (!bolts.length) return;
     for (let i = bolts.length - 1; i >= 0; i--) {
@@ -610,5 +634,5 @@ Game.Render = (function () {
     ctx.textAlign = 'left';
   }
 
-  return { draw, buildChunkCache, spawnParticles, spawnBlood, spawnSlash, spawnFloat, spawnLightning, flash, hurtFlash, shake };
+  return { draw, buildChunkCache, spawnParticles, spawnBlood, spawnSlash, spawnFloat, spawnLightning, spawnMuzzle, flash, hurtFlash, shake };
 })();

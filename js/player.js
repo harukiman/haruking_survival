@@ -522,6 +522,13 @@ Game.Player = (function () {
       Game.Projectiles.fire(dmg, kind, { spread: spr, explosive: sel.explosive || 0, speed: sel.bspeed });
     }
     p.attackCd = sel.cd || 12;
+    // マズルフラッシュ(銃口の閃光)。銃種で色/大きさを変える
+    if (Game.Render.spawnMuzzle && Game.Projectiles.aimAngle) {
+      const ang = Game.Projectiles.aimAngle();
+      const mcol = sel.bkind === 'laser' || sel.bkind === 'pierce' ? (sel.color || '#9fd8ff') : (sel.bkind === 'rocket' ? '#ff9a3c' : '#ffe06a');
+      const msc = sel.pellets ? 1.5 : (sel.explosive ? 1.6 : (sel.cd <= 6 ? 0.8 : 1));
+      Game.Render.spawnMuzzle(p.x + Math.cos(ang) * 16, p.y + Math.sin(ang) * 16, ang, mcol, msc);
+    }
     Game.Render.spawnParticles(p.x, p.y, '#ffe9a0', 2);
     Game.Audio.play(sel.gunsfx || 'gun');
     if (p.mags[gid] <= 0 && Game.Inventory.count(sel.ammo) > 0) startReload(sel, gid); // 0になったら自動リロード
