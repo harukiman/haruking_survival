@@ -68,6 +68,7 @@ Game.Render = (function () {
       }
     }
 
+    drawWaterShimmer(ctx);
     Game.Farming.drawCrops(ctx);
     drawPhantoms(ctx);
     drawTargetHighlight(ctx);
@@ -288,6 +289,29 @@ Game.Render = (function () {
   }
 
   // 幻影鉱脈: 正気度が低いほどはっきり見える（狂気の視界）
+  // 水面のきらめき: 可視範囲の水タイルにゆらめく波線(間引き＋上限で低負荷)
+  function drawWaterShimmer(ctx) {
+    const s = Game.state; if (!s || s.paused || s.worldName === 'space') return;
+    if (Game.Settings && Game.Settings.get('ambient') === false) return;
+    const range = Game.Camera.visibleTileRange(), t = s.tick, z = Game.Camera.zoom();
+    ctx.save(); ctx.strokeStyle = '#dff0ff'; ctx.lineWidth = Math.max(1, z);
+    let drawn = 0;
+    for (let ty = range.ty0; ty <= range.ty1 && drawn < 60; ty++) {
+      for (let tx = range.tx0; tx <= range.tx1 && drawn < 60; tx++) {
+        if (((tx * 7 + ty * 13) & 3) !== 0) continue; // 1/4のタイルのみ
+        const g = Game.World.groundAt(tx, ty);
+        if (g !== Game.TILE.WATER && g !== Game.TILE.DEEP_WATER) continue;
+        const ph = t * 0.05 + tx * 0.7 + ty * 0.5;
+        ctx.globalAlpha = 0.1 + Math.abs(Math.sin(ph)) * 0.18;
+        const sc = Game.Camera.worldToScreen(tx * TS, ty * TS);
+        const yy = sc.y + (TS * 0.5 + Math.sin(ph) * 3) * z;
+        ctx.beginPath(); ctx.moveTo(sc.x + 4 * z, yy); ctx.lineTo(sc.x + (TS - 4) * z, yy); ctx.stroke();
+        drawn++;
+      }
+    }
+    ctx.restore();
+  }
+
   function drawPhantoms(ctx) {
     const sanity = Game.state.sanity;
     if (sanity >= 40) return;
