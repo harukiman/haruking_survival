@@ -1448,6 +1448,41 @@ Game.UI = (function () {
     mmCtx.strokeRect(0, 0, size, size);
   }
 
+  // ホットバー切替時のアイテム説明ポップアップ。単一要素＋単一タイマーで連続切替も重ならない
+  let hbInfoEl = null, hbInfoTimer = null;
+  function flashHotbarItem() {
+    const p = Game.state && Game.state.player; if (!p) return;
+    const st = Game.Inventory.slots()[p.hotbarIndex];
+    if (!hbInfoEl) {
+      hbInfoEl = document.getElementById('hb-iteminfo');
+      if (!hbInfoEl) {
+        hbInfoEl = document.createElement('div'); hbInfoEl.id = 'hb-iteminfo';
+        hbInfoEl.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:118px;z-index:56;background:rgba(14,20,36,.9);border:1px solid #3a4c66;border-radius:10px;padding:6px 13px;max-width:86vw;text-align:center;pointer-events:none;opacity:0;transition:opacity .2s;backdrop-filter:blur(2px)';
+        (document.getElementById('app') || document.body).appendChild(hbInfoEl);
+      }
+    }
+    if (!st) { hbInfoEl.style.opacity = '0'; return; } // 空きスロットは非表示
+    const def = Game.ITEMS[st.id]; if (!def) { hbInfoEl.style.opacity = '0'; return; }
+    const name = st.roll ? Game.Loot.displayName(st) : def.name;
+    const col = st.roll ? Game.Loot.rarityColor(st) : (def.color || '#fff');
+    // 種別に応じた短い説明
+    let sub = '';
+    if (def.tool === 'gun') sub = '🔫 銃 — 弾:' + (Game.ITEMS[def.ammo] ? Game.ITEMS[def.ammo].name : def.ammo) + ' / 攻撃で発射';
+    else if (def.throw) sub = '💥 投擲 — 攻撃で投げる';
+    else if (def.attack != null) sub = '🗡 武器 — 攻撃力 ' + Game.Player.effAttack(Game.Loot.stats(st).atk);
+    else if (def.tool) sub = '⛏ ' + def.tool + ' — ' + (def.place !== undefined ? '採掘/設置' : '採掘') + (def.tier ? ' Lv' + def.tier : '');
+    else if (def.armor != null) sub = '🛡 防具 — タップで装備';
+    else if (def.relic) sub = '💠 遺物 — タップで装備';
+    else if (def.food) sub = '🍖 食料 — 空腹+' + def.food + ' / 使うで食べる';
+    else if (def.buff || def.cures) sub = '🧪 薬 — 使うで効果';
+    else if (def.place !== undefined) sub = '🧱 設置できる';
+    else if (def.flavor) sub = def.flavor;
+    hbInfoEl.innerHTML = '<div style="color:' + col + ';font-weight:700;font-size:.94rem">' + name + (st.count > 1 ? ' ×' + st.count : '') + '</div>' + (sub ? '<div style="color:#9fb6d0;font-size:.74rem;margin-top:1px">' + sub + '</div>' : '');
+    hbInfoEl.style.opacity = '1';
+    if (hbInfoTimer) clearTimeout(hbInfoTimer);
+    hbInfoTimer = setTimeout(function () { if (hbInfoEl) hbInfoEl.style.opacity = '0'; }, 1500);
+  }
+
   // 控えめなオートセーブ表示(右下に一瞬フェード)。proactive-UX原則: 邪魔しない
   let saveEl = null, saveTimer = null;
   function flashSave(reason) {
@@ -1467,7 +1502,7 @@ Game.UI = (function () {
     refreshCraft, refreshAll, toggleInventory, toast, updateMinimap,
     openChest, openSharedChest, closeChest, refreshChest, refreshWorld,
     showLore, closeLore, refreshQuest, openQuest, closeQuest, refreshBounty, showEnding, showDeath, showIntro, refreshNet, refreshStatus,
-    toggleOptions, openEnchant, closeEnchant, flashSave,
+    toggleOptions, openEnchant, closeEnchant, flashSave, flashHotbarItem,
     toggleBigMap, isBigMapOpen, updateBigMap, openStats, closeStats, toggleStats, renderStats, refreshBossBar, openTrade, closeTrade, openShop, openStory, closeStory,
   };
 })();

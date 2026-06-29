@@ -88,7 +88,7 @@ Game.Inventory = (function () {
     if (!Game.state) return;
     const prev = Game.state.player.hotbarIndex;
     Game.state.player.hotbarIndex = Game.Utils.clamp(i, 0, Game.HOTBAR_SIZE - 1);
-    if (Game.state.player.hotbarIndex !== prev && Game.Audio) Game.Audio.play('cursor'); // 切替カーソル音
+    if (Game.state.player.hotbarIndex !== prev) { if (Game.Audio) Game.Audio.play('cursor'); if (Game.UI && Game.UI.flashHotbarItem) Game.UI.flashHotbarItem(); } // 切替: カーソル音＋アイテム説明
     if (Game.UI) Game.UI.refreshHotbar();
   }
 
