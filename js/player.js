@@ -16,7 +16,7 @@ Game.Player = (function () {
       hungerTimer: 0, regenTimer: 0,
       invuln: 0, hotbarIndex: 0,
       attackCd: 0,
-      xp: 0, level: 1, xpNext: 24, invSlots: 36,
+      xp: 0, level: 1, xpNext: 24, invSlots: 36, bts: 0,
       baseMaxHealth: 100,
       stamina: 100, maxStamina: 100,
       vehicle: null, // null|'car'|'boat'|'plane'
@@ -751,6 +751,6 @@ Game.Player = (function () {
     makeDefault, spawnAt, update, targetTile, mining, playerTile, breakBlock,
     interact, useNearby, gainXP, totalArmor, setBonus, sleep, equipSelectedArmor, equipFromInventory, equipRelic, unequipSlot, applyEquipStats, bossesDefeated, bossTitle,
     effAttack, attackCooldown, levelDmgBonus, levelArmorBonus, spendStat, unlockSkill, respec,
-    skillBonus, skillFlag, canUnlock, currentWeaponAtk, equippedArmorAt,
+    skillBonus, skillFlag, canUnlock, currentWeaponAtk, equippedArmorAt, xpForLevel,
   };
 })();

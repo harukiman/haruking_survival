@@ -438,6 +438,7 @@ Game.ITEMS = {
   unity_core:    { name:'統合の核', stack:1, color:'#ffffff', ending:true, flavor:'光と影、ふたつの祈りを束ねる核。掲げれば、割れた世界はひとつに還る。' },
   // ===== P25 コンテンツ拡張: 素材 =====
   gold_bar:      { name:'金塊', stack:99, color:'#e8c54a', flavor:'精錬された黄金。装飾にも、刃にも。' },
+  coin_charm:    { name:'守銭の護符', stack:1, color:'#ffd24a', keepBts:true, flavor:'肌身離さず持つ者のバーツを、死してなお守る黄金の護符。所持していれば死亡してもバーツを失わない。' },
   chitin:        { name:'甲殻', stack:99, color:'#b07030', flavor:'砂漠の蟲の硬い殻。軽く、しなやかな防具になる。' },
   // ===== P25: 武器 =====
   bone_club:     { name:'骨の棍棒', stack:1, color:'#dcdcd0', tool:'sword', tier:1, attack:4, flavor:'打ち倒した者の骨で。原始の暴力。' },
@@ -556,6 +557,7 @@ Game.RECIPES = [
   { out:{id:'meteor_staff', n:1}, in:{star_metal:3, gold_bar:2, lumen:4}, station:'enchant_table' },
   { out:{id:'vortex_staff', n:1}, in:{shadow_core:2, shadow_crystal:5, lumen:4}, station:'enchant_table' },
   { out:{id:'end_key', n:1}, in:{shadow_core:3, star_core:2, void_heart:1, gold_bar:5}, station:'enchant_table' },
+  { out:{id:'coin_charm', n:1}, in:{gold_bar:10, star_metal:2, lumen:5}, station:'enchant_table' },
   { out:{id:'gravity_boots', n:1}, in:{star_metal:4}, station:'crafting_table' },
   // 家具・家作り
   { out:{id:'healing_totem', n:1}, in:{lumen:3, wood:4}, station:'crafting_table' },
@@ -850,7 +852,7 @@ Game.ITEM_GLYPH = {
   apple:'🍎', berry:'🫐', cactus:'🌵', raw_meat:'🥩', cooked_meat:'🍖', rotten_meat:'🤢', guts:'🩸', wheat:'🌾', wheat_seeds:'🌱', bread:'🍞', moonleaf:'🍃', fish:'🐟',
   frog_legs:'🐸', cooked_frog:'🍗', snake_meat:'🐍', cooked_snake:'🍢', swamp_stew:'🍲',
   carrot:'🥕', carrot_seeds:'🌱', pumpkin:'🎃', pumpkin_seeds:'🌱', tomato:'🍅', tomato_seeds:'🌱', veg_salad:'🥗', pumpkin_pie:'🥧', veg_stew:'🍲', hearty_stew:'🍲',
-  hide:'🟤', leather:'🟫', bone:'🦴', string:'🧵', slime_ball:'🟢', flower:'🌸', sapling:'🌱', glow_spore:'🍄', obsidian:'⬛', sulfur:'🟡', obsidian_blade:'🗡️', luminous_cap:'🍄', mushroom_soup:'🍲', mire_incense:'🕯️', lava_shard:'🔥', spore_sac:'🟣', flower_tea:'🍵', end_key:'🗝️', endblade:'⚔️',
+  hide:'🟤', leather:'🟫', bone:'🦴', string:'🧵', slime_ball:'🟢', flower:'🌸', sapling:'🌱', glow_spore:'🍄', obsidian:'⬛', sulfur:'🟡', obsidian_blade:'🗡️', luminous_cap:'🍄', mushroom_soup:'🍲', mire_incense:'🕯️', lava_shard:'🔥', spore_sac:'🟣', flower_tea:'🍵', end_key:'🗝️', endblade:'⚔️', coin_charm:'🪙',
   wood_pickaxe:'⛏️', stone_pickaxe:'⛏️', iron_pickaxe:'⛏️', shadow_pickaxe:'⛏️', siege_pick:'⛏️',
   wood_axe:'🪓', stone_axe:'🪓', iron_axe:'🪓', shadow_axe:'🪓', wood_hoe:'🌾', stone_hoe:'🌾',
   wood_sword:'🗡️', stone_sword:'🗡️', iron_sword:'⚔️', shadow_blade:'⚔️',

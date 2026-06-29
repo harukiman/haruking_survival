@@ -138,6 +138,17 @@ Game.Survival = (function () {
   }
 
   const CAUSE_LABEL = { starve: '餓死', sanity: '正気の崩壊', status: '状態異常', thorns: '棘の反射', mob: '魔物の襲撃' };
+  // 死亡時にバーツを守る手段(守銭の護符)を所持/装備しているか
+  function hasBtsGuard() {
+    const p = Game.state.player;
+    const ID = Game.ITEMS;
+    if (p.accessory && ID[p.accessory.id] && ID[p.accessory.id].keepBts) return true;
+    if (p.accessory2 && ID[p.accessory2.id] && ID[p.accessory2.id].keepBts) return true;
+    const s = Game.Inventory.slots();
+    for (let i = 0; i < s.length; i++) { if (s[i] && ID[s[i].id] && ID[s[i].id].keepBts) return true; }
+    return false;
+  }
+
   function die() {
     const p = Game.state.player;
     if (Game.state.deathPending) return; // 二重発火防止
@@ -171,12 +182,13 @@ Game.Survival = (function () {
     Game.state.paused = false;
     const p = Game.state.player;
     p.lifeStart = Game.state.tick;
+    const btsGuarded = hasBtsGuard(); // ドロップ前に判定(護符が落ちても今回の死は守られる)
     Game.UI.toast('力尽きた…リスポーンします');
-    // 所持品の一部をその場にドロップ
+    // 所持品の一部をその場にドロップ（守銭の護符など keepBts 品は落とさない）
     const TS = Game.CFG.TILE_SIZE;
     const s = Game.Inventory.slots();
     for (let i = 0; i < s.length; i++) {
-      if (s[i] && Math.random() < 0.5) {
+      if (s[i] && !(Game.ITEMS[s[i].id] && Game.ITEMS[s[i].id].keepBts) && Math.random() < 0.5) {
         Game.state.drops.push({ id: s[i].id, count: s[i].count, roll: s[i].roll || null, x: p.x + (Math.random() - 0.5) * 30, y: p.y + (Math.random() - 0.5) * 30 });
         s[i] = null;
       }
@@ -187,9 +199,18 @@ Game.Survival = (function () {
     if (lost > 0) {
       p.level = Math.max(1, p.level - lost);
       p.baseMaxHealth = 100 + (p.level - 1) * 2;
-      p.xp = 0; p.xpNext = 5 + p.level * 3;
+      p.xp = 0; p.xpNext = Game.Player.xpForLevel(p.level);
       Game.Player.applyEquipStats();
       Game.UI.toast('力尽きた… レベルが ' + lost + ' 失われた（Lv.' + p.level + '）');
+    }
+    // バーツ(通貨): 死亡で半分を失う。守銭の護符を持っていれば失わない
+    if ((p.bts || 0) > 0) {
+      if (btsGuarded) {
+        Game.UI.toast('守銭の護符が輝いた — バーツ ' + p.bts + ' bts は失われない');
+      } else {
+        const before = p.bts; p.bts = Math.floor(p.bts / 2);
+        Game.UI.toast('バーツを落とした… ' + before + ' → ' + p.bts + ' bts');
+      }
     }
     p.health = p.maxHealth; p.hunger = Math.max(40, p.hunger);
     p.invuln = 60;

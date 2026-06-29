@@ -201,6 +201,7 @@ window.Game = window.Game || {};
     p.armor = sp.armor || { head: null, chest: null };
     p.accessory = sp.accessory || null;
     p.accessory2 = sp.accessory2 || null;
+    p.bts = sp.bts || 0;
     p.status = sp.status || {};
     p.str = sp.str || 0; p.vit = sp.vit || 0; p.dex = sp.dex || 0; p.skillPoints = sp.skillPoints || 0; p.skills = sp.skills || {};
     Game.state.ngLevel = data.ngLevel || 0;

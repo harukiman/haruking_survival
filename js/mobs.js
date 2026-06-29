@@ -523,6 +523,14 @@ Game.Mobs = (function () {
     // 撃破ヒットストップ風: 軽いシェイク(ボス/大型ほど強め)
     if (Game.Render.shake) Game.Render.shake(m.def.boss ? 8 : m.def.big ? 5 : 3);
     Game.Player.gainXP(Math.round((m.def.xp || 1) * (1 + (Game.state.ngLevel || 0) * 0.2)) * (m.elite ? 3 : 1)); // 強い敵(NG)・精鋭ほど経験値増
+    // バーツ(通貨)獲得: 敵の格に応じて。精鋭/チャンピオン/ボスほど多い
+    if (m.def.hostile) {
+      const pl = Game.state.player;
+      let bts = Math.max(1, Math.round((m.def.xp || 1) * 0.6 * (m.def.boss ? 1.6 : 1)));
+      if (m.elite) bts *= 2; if (m.champion) bts *= 2;
+      pl.bts = (pl.bts || 0) + bts;
+      if (Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - (m.def.size || 12) * 0.5, '+' + bts + ' bts', '#ffd24a');
+    }
     if (Game.Achievements && m.def.hostile) Game.Achievements.unlock('first_night');
     // 精鋭撃破演出＆実績
     if (m.elite) {

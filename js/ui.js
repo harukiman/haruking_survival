@@ -57,6 +57,7 @@ Game.UI = (function () {
     el.minimap = document.getElementById('minimap');
     el.level = document.getElementById('level-text');
     el.armor = document.getElementById('armor-text');
+    el.bts = document.getElementById('bts-text');
     el.xp = document.getElementById('xp-bar');
     el.sanity = document.getElementById('sanity-bar');
     el.sanityWrap = document.getElementById('sanity-wrap');
@@ -587,6 +588,7 @@ Game.UI = (function () {
     if (el.level) {
       el.level.textContent = p.level;
       el.armor.textContent = Game.Player.totalArmor();
+      if (el.bts) el.bts.textContent = p.bts || 0;
       el.xp.style.width = (p.xp / p.xpNext * 100) + '%';
     }
     if (el.sanity) {
