@@ -338,6 +338,7 @@ body.shadow-mode #app::after {
 #btn-place { background: rgba(47,90,143,0.85); border-color: #5a8fd6; }
 .abtn.small { width: 62px; height: 42px; font-size: .76rem; background: rgba(60,70,90,0.85); border-color: #6a7894; }
 .abtn.dash { background: rgba(200,160,60,0.82); border-color: #ffe27a; }
+.abtn.roll { background: rgba(90,150,200,0.82); border-color: #8fd0ff; }
 /* コントローラ接続中はタッチUIを隠す */
 body.has-pad #touch-controls { display: none !important; }
 

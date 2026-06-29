@@ -56,6 +56,15 @@ Game.Player = (function () {
     // ダッシュ（スタミナ消費）
     const moving = len > 0;
     const dashing = intent.dash && moving && p.stamina > 0;
+    // 回避ロール: 専用入力で短距離の素早い回避＋無敵フレーム
+    if (p.rollCd > 0) p.rollCd--;
+    if (intent.roll && (p.rollCd || 0) <= 0 && (p.rolling || 0) <= 0 && p.stamina >= 20 && !p.vehicle) {
+      let rx = dx, ry = dy;
+      if (len < 0.01) { rx = p.dir === 'left' ? -1 : p.dir === 'right' ? 1 : 0; ry = p.dir === 'up' ? -1 : p.dir === 'down' ? 1 : 0; }
+      const rl = Math.hypot(rx, ry) || 1; p.rollDX = rx / rl; p.rollDY = ry / rl;
+      p.rolling = 12; p.rollCd = 45; p.invuln = Math.max(p.invuln || 0, 18); p.stamina = Math.max(0, p.stamina - 20);
+      Game.Audio.play('dash');
+    }
     if (dashing) { p.stamina = Math.max(0, p.stamina - 1.1); }
     else if (p.stamina < p.maxStamina) { p.stamina = Math.min(p.maxStamina, p.stamina + (moving ? 0.3 : 0.7)); }
     let spd = p.speed * (dashing ? 1.85 : 1);
@@ -81,7 +90,15 @@ Game.Player = (function () {
     const wt = Game.state.weather && Game.state.weather.type;
     if ((wt === 'sandstorm' || wt === 'blizzard') && p.vehicle !== 'plane' && p.vehicle !== 'carpet') spd *= 0.7;
     if (!p.vehicle) spd *= (1 + skillBonus().moveSpd + (Game.Status ? Game.Status.buffSum().spd : 0)); // スキル健脚＋俊足の薬
-    if (moving) {
+    if ((p.rolling || 0) > 0) {
+      // 回避ロール中: 固定方向へ高速移動（壁は通常同様に停止）＋砂煙
+      p.rolling--;
+      const rspd = p.speed * 3.2 * (1 + skillBonus().moveSpd * 0.5);
+      p.dir = Math.abs(p.rollDX) > Math.abs(p.rollDY) ? (p.rollDX < 0 ? 'left' : 'right') : (p.rollDY < 0 ? 'up' : 'down');
+      const rnx = p.x + p.rollDX * rspd; if (!blocked(rnx, p.y)) p.x = rnx;
+      const rny = p.y + p.rollDY * rspd; if (!blocked(p.x, rny)) p.y = rny;
+      if (Game.state.tick % 2 === 0) Game.Render.spawnParticles(p.x, p.y, '#cfe0ff', 2);
+    } else if (moving) {
       dx /= len; dy /= len;
       p.dir = intent.dir || p.dir;
       const ox = p.x, oy = p.y;
