@@ -230,6 +230,10 @@ body.left-handed #action-btns { right: auto; left: calc(12px + env(safe-area-ins
 #boss-bar.champion #boss-bar-name::before { content: '★ '; color: #ffd86b; }
 #boss-bar.champion #boss-bar-track { border-color: #a040a0; box-shadow: 0 0 10px rgba(255,90,200,0.45); }
 #boss-bar.champion #boss-bar-fill { background: linear-gradient(90deg, #6a1060, #c040b0 55%, #ffb0e8); }
+#boss-bar.enraged #boss-bar-fill { background: linear-gradient(90deg, #8a0a0a, #ff2a2a 55%, #ff7a5a); animation: enragePulse 0.6s ease-in-out infinite alternate; }
+#boss-bar.enraged #boss-bar-track { border-color: #ff4a4a; box-shadow: 0 0 14px rgba(255,40,40,0.6); }
+#boss-bar.enraged #boss-bar-name { color: #ff8a7a; text-shadow: 0 2px 4px #000, 0 0 10px rgba(255,40,40,0.8); }
+@keyframes enragePulse { from { filter: brightness(1); } to { filter: brightness(1.4); } }
 #quest-tracker { position: absolute; bottom: 66px; left: 50%; transform: translateX(-50%); z-index: 18;
   background: rgba(8,12,20,0.7); border: 1px solid #3a4a64; color: #ffe9a0; font-size: .8rem;
   padding: 5px 14px; border-radius: 20px; max-width: 64vw; white-space: nowrap; overflow: hidden;

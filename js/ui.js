@@ -179,9 +179,12 @@ Game.UI = (function () {
     bbEl.classList.remove('hidden');
     const isChamp = !boss.def.boss || boss.bountyBoss;
     bbEl.classList.toggle('champion', isChamp);
-    const nm = boss.championName || (isChamp ? 'チャンピオン' : boss.def.name);
+    const pct = Math.max(0, boss.hp / boss.maxHp * 100);
+    const nm = (boss.enraged ? '⚠ ' : '') + (boss.championName || (isChamp ? 'チャンピオン' : boss.def.name)) + '　' + Math.ceil(pct) + '%';
     if (bbName.textContent !== nm) bbName.textContent = nm;
-    bbFill.style.width = Math.max(0, boss.hp / boss.maxHp * 100) + '%';
+    bbFill.style.width = pct + '%';
+    // 激昂で赤化(フェーズ2を一目で把握)
+    bbEl.classList.toggle('enraged', !!boss.enraged);
   }
 
   // ===== 旅商人トレード =====
