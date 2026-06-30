@@ -21,6 +21,9 @@ Game.Survival = (function () {
       p.hungerTimer = 0;
       if (p.hunger > 0) { p.hunger--; Game.UI.refreshStats(); }
     }
+    // 空腹の危機警告(20を下回ったら一度・回復で再武装)。餓死前に気づける
+    if (p.hunger <= 20 && !p._hungerWarned) { p._hungerWarned = true; Game.UI.toast('🍖 お腹が空いた… 何か食べないと餓死する！'); if (Game.Audio) Game.Audio.play('lowhp'); }
+    else if (p.hunger > 35 && p._hungerWarned) { p._hungerWarned = false; }
 
     // 回復 or 餓死
     p.regenTimer++;
