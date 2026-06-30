@@ -439,6 +439,14 @@ Game.Mobs = (function () {
         }
       }
       m.hopPhase += 0.2;
+      // 属性別のアイドル粒子(識別性＋雰囲気)。火=残り火/氷=冷気/毒=胞子/影=紫塵
+      if (Game.Render.spawnParticles && (Game.state.tick + (m.wobble || 0)) % 14 === 0) {
+        const t = m.type, col = /salamander|ember|lava|forge|magma/.test(t) ? '#ff7a3c'
+          : /frost|ice_bear|crystal|snow/.test(t) ? '#bfe8ff'
+          : /spore|swamp|bog|venom|viper|toad|mud/.test(t) ? '#9fe04a'
+          : (m.def.shadow || m.def.ghost) ? '#b06ad0' : null;
+        if (col) Game.Render.spawnParticles(m.x + (Math.random() - 0.5) * 8, m.y - m.def.size * 0.4, col, 1);
+      }
     }
   }
 
