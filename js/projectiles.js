@@ -53,6 +53,17 @@ Game.Projectiles = (function () {
     }
   }
 
+  // 遠距離攻撃でオブジェクトに蓄積ダメージ。HPに達したら破壊(ドロップ)
+  function damageObject(tx, ty, o, meta, dmg, wx, wy) {
+    if (!Game.state.objDmg) Game.state.objDmg = {};
+    const key = tx + ',' + ty, rec = Game.state.objDmg[key];
+    const acc = (rec && rec.o === o ? rec.dmg : 0) + dmg;
+    const col = (Game.ITEMS[meta.drops && meta.drops[0] && meta.drops[0].item] || {}).color || '#caa86a';
+    Game.Render.spawnParticles(wx, wy, col, 4); // 削れる破片
+    if (acc >= meta.hp) { delete Game.state.objDmg[key]; if (Game.Player.breakBlock) Game.Player.breakBlock(tx, ty, o, meta); }
+    else Game.state.objDmg[key] = { o: o, dmg: acc };
+  }
+
   // 連鎖（雷）: 命中点から近傍の敵へ飛び移ってダメージ
   function chainTo(x, y, dmg, jumps, hitSet) {
     const mobs = Game.state.mobs; let fx = x, fy = y, left = jumps;
@@ -182,7 +193,14 @@ Game.Projectiles = (function () {
       // 壁（solid）に当たれば消滅（貫通/ブーメランは壁を無視）
       const tx = Math.floor(pr.x / TS), ty = Math.floor(pr.y / TS);
       const o = Game.World.objAt(tx, ty), meta = Game.OBJ_META[o];
-      if (meta && meta.solid && !pr.pierce && !pr.boomerang) { if (pr.explosive) explode(pr.x, pr.y, pr.explosive, pr.dmg, pr.kind); else { Game.Render.spawnParticles(pr.x, pr.y, '#caa86a', 3); if (Game.Render.spawnImpact && !pr.hostile) Game.Render.spawnImpact(pr.x, pr.y, '#c9cdd6'); } arr.splice(i, 1); continue; }
+      if (meta && meta.solid && !pr.pierce && !pr.boomerang) {
+        if (pr.explosive) explode(pr.x, pr.y, pr.explosive, pr.dmg, pr.kind);
+        // 遠距離攻撃で自然オブジェクト(木/石/鉱石など)を破壊できる。設置物/チェストは誤破壊しない
+        const breakable = !pr.hostile && meta.mineable && meta.hp != null && o < 100 && o !== Game.OBJ.CHEST && o !== Game.OBJ.TREASURE_CHEST && o !== Game.OBJ.SEAL_WALL;
+        if (breakable) damageObject(tx, ty, o, meta, pr.explosive ? pr.dmg * 3 : pr.dmg, pr.x, pr.y);
+        else { Game.Render.spawnParticles(pr.x, pr.y, '#caa86a', 3); if (Game.Render.spawnImpact && !pr.hostile) Game.Render.spawnImpact(pr.x, pr.y, '#c9cdd6'); }
+        arr.splice(i, 1); continue;
+      }
       let hit = false;
       if (pr.hostile) {
         if (Math.hypot(pl.x - pr.x, pl.y - pr.y) < 13) {
