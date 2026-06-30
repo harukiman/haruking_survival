@@ -180,7 +180,9 @@ Game.UI = (function () {
     const isChamp = !boss.def.boss || boss.bountyBoss;
     bbEl.classList.toggle('champion', isChamp);
     const pct = Math.max(0, boss.hp / boss.maxHp * 100);
-    const nm = (boss.enraged ? '⚠ ' : '') + (boss.championName || (isChamp ? 'チャンピオン' : boss.def.name)) + '　' + Math.ceil(pct) + '%';
+    const TIER = { 1: '試練級', 2: '強敵級', 3: '厄災級', 4: '終焉級' };
+    const tierLbl = (!isChamp && boss.def.tier) ? '【' + TIER[boss.def.tier] + '】' : '';
+    const nm = (boss.enraged ? '⚠ ' : '') + tierLbl + (boss.championName || (isChamp ? 'チャンピオン' : boss.def.name)) + '　' + Math.ceil(pct) + '%';
     if (bbName.textContent !== nm) bbName.textContent = nm;
     bbFill.style.width = pct + '%';
     // 激昂で赤化(フェーズ2を一目で把握)
