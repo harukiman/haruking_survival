@@ -322,8 +322,8 @@ Game.Mobs = (function () {
             m.blinkCd = m.def.blink.cd;
           }
         }
-        // ボスは手下を召喚
-        if (m.def.boss && m.attackCd <= 0 && Game.state.tick % 200 === 0) {
+        // ボスは手下を召喚(激昂中は倍速で召喚)
+        if (m.def.boss && m.attackCd <= 0 && Game.state.tick % (m.enraged ? 120 : 200) === 0) {
           const minion = m.def.summon || 'shadow_spawn';
           if (countType(minion) < 8) { for (let k = 0; k < 3; k++) spawnMob(minion, m.x + (Math.random() - 0.5) * 60, m.y + (Math.random() - 0.5) * 60); Game.Audio.play('shift'); }
         }
@@ -340,12 +340,12 @@ Game.Mobs = (function () {
               Game.Render.spawnParticles(m.x, m.y, '#ff7a3c', 26);
               if (Game.Render.shake) Game.Render.shake(10);
               Game.Audio.play('boom_sfx');
-              m.slam = null; m.slamCd = 150;
+              m.slam = null; m.slamCd = m.enraged ? 90 : 150;
             }
             m.hopPhase += 0.2; continue; // 溜め中は移動・他攻撃しない(回避猶予)
           }
           if ((m.slamCd || 0) > 0) m.slamCd--;
-          else if (distP < 6 * TS && Math.random() < 0.035) { m.slam = 18; m.slamR = (m.def.big ? 3 : 2.4); Game.Audio.play('whirl'); }
+          else if (distP < 6 * TS && Math.random() < (m.enraged ? 0.06 : 0.035)) { m.slam = m.enraged ? 14 : 18; m.slamR = (m.def.big ? 3 : 2.4); Game.Audio.play('whirl'); }
         }
         // 重量級の溜め叩きつけ(非ボス): ボスslamのテレグラフ描画を流用。回避ゲーで攻撃に幅
         if (m.def.pound && !m.def.boss) {
@@ -564,6 +564,14 @@ Game.Mobs = (function () {
   function damageMob(m, dmg, fromX, fromY, crit) {
     m.hp -= dmg;
     m.hurt = crit ? 13 : 8; // クリは白フラッシュを長めに
+    // ボスの激昂: HP30%以下で第二段階。攻撃が激化し赤く染まる(劇的な決着フェーズ)
+    if (m.def.boss && !m.enraged && m.hp > 0 && m.hp <= m.maxHp * 0.3) {
+      m.enraged = true; m.auraRGB = [255, 60, 60];
+      if (Game.Render.flash) Game.Render.flash('rgba(200,30,30,0.22)');
+      if (Game.Render.shake) Game.Render.shake(9);
+      Game.Audio.play('event_horde'); Game.Audio.play('thunder');
+      if (Game.UI && Game.UI.toast) Game.UI.toast('⚠ ' + (m.def.name || 'ボス') + ' が激昂した！');
+    }
     // 棘鎧アフィックス: 被ダメの一定割合を反射
     if (hasAffix(m, 'thorns') && m.hp > 0) {
       const refl = Math.max(1, Math.round(dmg * Game.ELITE_AFFIXES.thorns.thorns));
