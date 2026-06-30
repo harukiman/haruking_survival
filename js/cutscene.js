@@ -316,9 +316,17 @@ Game.Cutscene = (function () {
   function scDiscovery(t, now, d) {
     ctx.fillStyle = '#05060c'; ctx.fillRect(0, 0, W, H);
     const cx = W / 2, cy = H * 0.40;
+    // 星屑の背景(瞬く)
+    for (let i = 0; i < 60; i++) { const x = (i * 71) % W, y = (i * 53) % H; ctx.globalAlpha = 0.1 + Math.abs(Math.sin(now * 0.001 + i)) * 0.4; ctx.fillStyle = i % 4 ? '#cfe0ff' : d.col; ctx.fillRect(x, y, 1.4, 1.4); }
+    ctx.globalAlpha = 1;
+    // 立ち昇るきらめき(中央から)
+    for (let i = 0; i < 18; i++) { const ph = (t * 1.2 + i * 0.13) % 1; const ang = i * 2.39996; const rad = ph * 150; const x = cx + Math.cos(ang) * rad * 0.7, y = cy + 30 - ph * 130 + Math.sin(ang) * 14; ctx.globalAlpha = (1 - ph) * 0.8; ctx.fillStyle = i % 2 ? '#fff' : d.col; ctx.fillRect(x, y, 2.2, 2.2); }
+    ctx.globalAlpha = 1;
     // 広がる光輪
     for (let r = 0; r < 3; r++) { const rr = ((t * 1.4 + r * 0.33) % 1); ctx.strokeStyle = d.col; ctx.globalAlpha = (1 - rr) * 0.5; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(cx, cy, rr * Math.max(W, H) * 0.6, 0, 7); ctx.stroke(); }
     ctx.globalAlpha = 1;
+    // 出現の閃光(序盤)
+    if (t < 0.2) { ctx.globalAlpha = (0.2 - t) / 0.2 * 0.6; ctx.fillStyle = d.col; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }
     // 中央グロー
     const g = ctx.createRadialGradient(cx, cy, 4, cx, cy, 130); g.addColorStop(0, d.col); g.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.globalAlpha = 0.45 + Math.sin(now * 0.006) * 0.2; ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, 130, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
