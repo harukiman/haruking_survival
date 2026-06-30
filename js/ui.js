@@ -286,6 +286,7 @@ Game.UI = (function () {
       if (id) { Game.Inventory.addInstance({ id: id, roll: Game.Loot.roll(id, 0.1) }); toast('購入: ' + Game.ITEMS[id].name); }
     } else { Game.Inventory.add(t.id, t.n); toast('購入: ' + Game.ITEMS[t.id].name); }
     Game.Audio.play('craft'); refreshTrade(); refreshHotbar(); refreshStats();
+    if (!shopMode && Game.Story && !Game.Story.seen('merchant')) Game.Story.unlock('merchant', true); // 旅商人と初取引で記憶回廊
   }
 
   // ===== ステータス & スキル画面 =====
