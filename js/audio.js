@@ -137,6 +137,7 @@ Game.Audio = (function () {
       case 'eat':    beep(280, 0.1, 'sine', 0.09); break;
       case 'hurt':   beep(150, 0.18, 'sawtooth', 0.12); break;
       case 'select': beep(440, 0.04, 'square', 0.05); break;
+      case 'dodge_just': if (throttled('dj', 0.1) && ctx) { noiseBurst(ctx.currentTime, 0.14, 0.1, 2600, true); beep(1320, 0.05, 'sine', 0.08); beep(1760, 0.08, 'triangle', 0.07); } break; // ジャスト回避: 受け流しの一閃
       case 'cursor': if (throttled('cursor', 0.03)) { beep(660, 0.022, 'triangle', 0.035); } break;
       case 'tab':    if (throttled('tab', 0.04)) { beep(520, 0.03, 'sine', 0.045); beep(720, 0.03, 'sine', 0.03); } break;
       case 'swing':  if (throttled('swing', 0.1)) beep(300, 0.05, 'triangle', 0.06); break;

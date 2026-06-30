@@ -133,7 +133,7 @@ Game.Survival = (function () {
         p.stamina = Math.min(p.maxStamina, p.stamina + 10); // スタミナ還元
         if (Game.Render.spawnFloat) Game.Render.spawnFloat(p.x, p.y - 24, 'JUST!', '#7fe0ff', true);
         if (Game.Render.spawnParticles) Game.Render.spawnParticles(p.x, p.y, '#bfe8ff', 10);
-        Game.Audio.play('crit');
+        Game.Audio.play('dodge_just');
       }
       return;
     }
