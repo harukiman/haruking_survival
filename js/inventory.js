@@ -23,6 +23,7 @@ Game.Inventory = (function () {
     if (!def) return n;
     // 影晶をはじめて手にしたとき、記憶回廊「傷の結晶」を解放
     if (id === 'shadow_crystal' && Game.Story && !Game.Story.seen('shadowcrystal')) Game.Story.unlock('shadowcrystal', true);
+    if (id === 'lumen' && Game.Story && !Game.Story.seen('lumen')) Game.Story.unlock('lumen', true);
     const max = def.stack || 99;
     const s = slots();
     // 既存スタックに詰める
