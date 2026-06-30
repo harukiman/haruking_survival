@@ -435,6 +435,19 @@ Game.Audio = (function () {
     else if (kind === 'soft') { const len = Math.floor(ctx.sampleRate * 0.05); const buf = ctx.createBuffer(1, len, ctx.sampleRate); const d = buf.getChannelData(0); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len); const src = ctx.createBufferSource(); src.buffer = buf; const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 700 * p; const g = ctx.createGain(); g.gain.setValueAtTime(0.03, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05); src.connect(f); f.connect(g); g.connect(sfxGain); src.start(t); src.stop(t + 0.06); }
     else { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'triangle'; o.frequency.setValueAtTime(135 * p, t); o.frequency.exponentialRampToValueAtTime(70, t + 0.05); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.022, t + 0.006); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.07); o.connect(g); g.connect(sfxGain); o.start(t); o.stop(t + 0.08); }
   }
+  // コンボ音: 連数で音程が上がる心地よいピップ。節目(10連ごと)は上昇アルペジオ
+  function comboSound(n) {
+    if (!enabled) return; ensure(); if (!ctx) return;
+    const t = ctx.currentTime;
+    if (n % 10 === 0) { // 節目: 明るい上昇アルペジオ
+      [0, 4, 7, 12].forEach(function (semi, i) { const tt = t + i * 0.05; const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'triangle'; o.frequency.value = 523.25 * Math.pow(2, semi / 12); g.gain.setValueAtTime(0.0001, tt); g.gain.exponentialRampToValueAtTime(0.08, tt + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, tt + 0.16); o.connect(g); g.connect(sfxGain); o.start(tt); o.stop(tt + 0.18); });
+    } else { // 通常: 連数で半音ずつ上がる短いピップ(2オクターブで循環)
+      const semi = (n - 1) % 24; const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'triangle'; o.frequency.value = 440 * Math.pow(2, semi / 12);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.05, t + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.1);
+      o.connect(g); g.connect(sfxGain); o.start(t); o.stop(t + 0.12);
+    }
+  }
   function eat(kind) { eatSound(kind); }
-  return { play, eat, footstep, ambientTick, ensure, toggle, isEnabled, startBGM, tickBGM, updateMood, setMood, cineStart, cineStop, cue, setVolumes };
+  return { play, eat, footstep, comboSound, ambientTick, ensure, toggle, isEnabled, startBGM, tickBGM, updateMood, setMood, cineStart, cineStop, cue, setVolumes };
 })();

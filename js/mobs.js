@@ -739,9 +739,9 @@ Game.Mobs = (function () {
     if (m.def.hostile && !m.def.npc) {
       const s = Game.state;
       s.combo = (s.combo || 0) + 1; s.comboT = 90; // 3秒以内に次を倒せば継続
-      if (s.combo >= 3 && Game.UI.flashCombo) Game.UI.flashCombo(s.combo);
+      if (s.combo >= 3) { if (Game.UI.flashCombo) Game.UI.flashCombo(s.combo); if (Game.Audio.comboSound) Game.Audio.comboSound(s.combo); }
       if (s.combo > 0 && s.combo % 10 === 0) { // 10連ごとにボーナス
-        Game.Player.gainXP(Math.min(50, s.combo)); if (Game.Render.flash) Game.Render.flash('rgba(255,210,120,0.16)'); Game.Audio.play('crit');
+        Game.Player.gainXP(Math.min(50, s.combo)); if (Game.Render.flash) Game.Render.flash('rgba(255,210,120,0.16)');
       }
     }
     Game.Audio.play('mobdie');
