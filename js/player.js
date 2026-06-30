@@ -853,6 +853,7 @@ Game.Player = (function () {
       if (Game.Render.flash) Game.Render.flash('rgba(255,225,130,0.18)');
       Game.UI.toast('レベルアップ！ Lv.' + p.level + '（スキルP +2）');
       if (Game.Achievements) { if (p.level >= 5) Game.Achievements.unlock('level5'); if (p.level >= 20) Game.Achievements.unlock('level20'); if (p.level >= 50) Game.Achievements.unlock('level50'); }
+      if (p.level >= 10 && Game.Story && !Game.Story.seen('dawn')) Game.Story.unlock('dawn', true); // 一人前になった証として記憶回廊「黎明」
       if (Game.Save) Game.Save.autosave('levelup'); // 節目イベント: レベルアップで自動保存(4秒スロットル)
     }
     Game.UI.refreshStats();
