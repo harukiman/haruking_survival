@@ -41,7 +41,7 @@ Game.Quests = (function () {
         Game.state.questDone[q.id] = 1;
         Game.state.questIndex = (Game.state.questIndex || 0) + 1;
         Game.UI.toast('🎯 目標達成: ' + q.name);
-        Game.Audio.play('craft');
+        Game.Audio.play('quest_done');
         advanced = true;
       } else break;
     }

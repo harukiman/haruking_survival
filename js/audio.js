@@ -173,6 +173,7 @@ Game.Audio = (function () {
       case 'champion_die': sbeep(523, 0.12, 'triangle', 0.1, 0); sbeep(392, 0.14, 'triangle', 0.1, 0.07); sbeep(261, 0.2, 'triangle', 0.09, 0.15); if (ctx) noiseBurst(ctx.currentTime, 0.3, 0.14, 700); break;
       // 賞金達成: ファンファーレ風 上昇アルペジオ
       case 'bounty_done': sbeep(523, 0.1, 'triangle', 0.09, 0); sbeep(659, 0.1, 'triangle', 0.09, 0.09); sbeep(784, 0.12, 'triangle', 0.09, 0.18); sbeep(1046, 0.2, 'triangle', 0.1, 0.27); break;
+      case 'quest_done': sbeep(587, 0.1, 'triangle', 0.08, 0); sbeep(740, 0.1, 'triangle', 0.08, 0.1); sbeep(880, 0.1, 'triangle', 0.08, 0.2); sbeep(1175, 0.22, 'sine', 0.09, 0.3); break; // 目標達成のファンファーレ(D-F#-A-D)
       // 遺物入手: きらめき
       case 'relic_get': sbeep(880, 0.09, 'sine', 0.07, 0); sbeep(1175, 0.09, 'sine', 0.06, 0.06); sbeep(1568, 0.14, 'triangle', 0.06, 0.12); break;
       // 低HP警告: 鈍い鼓動(長めスロットル)
