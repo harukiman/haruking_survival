@@ -822,6 +822,11 @@ Game.MOBS = {
   frost_wolf:{ name:'雪狼', hostile:true, hp:16, speed:2.1, color:'#cfe0ee', size:11, drops:[{item:'hide',n:[1,2]},{item:'raw_meat',n:[0,1]}], dmg:5, xp:4, inflict:{cold:200} },
   mud_crawler:{ name:'沼の這う者', hostile:true, hp:18, speed:0.85, color:'#6a5a3a', size:12, drops:[{item:'guts',n:[0,1]},{item:'string',n:[0,1]}], dmg:4, xp:4, shape:'blob', inflict:{infection:260} },
   void_jelly:{ name:'虚空クラゲ', hostile:true, hp:14, speed:1.3, color:'#8fb0ff', size:12, drops:[{item:'star_metal',n:[0,1]},{item:'lumen',n:[0,1]}], dmg:5, xp:5, space:true, ghost:true, shape:'orb', ranged:{dmg:5,range:6,cd:75,kind:'frost'} },
+  // ===== 中ボス(ランクD): そこそこ硬い強雑魚。HPバー表示＋良いドロップ =====
+  dire_alpha:  { name:'荒野の長狼', hostile:true, hp:80, speed:1.7, color:'#5a5048', size:15, drops:[{item:'raw_meat',n:[2,4]},{item:'hide',n:[2,4]},{item:'iron_ore',n:[1,2]}], dmg:9, xp:14, midboss:true, shape:'beast', charge:{dashSpeed:5.5,dashTicks:14,windup:22,cd:150,dmg:12} },
+  shadow_knight:{ name:'影の騎士', hostile:true, hp:110, speed:1.1, color:'#4a3f6a', size:14, drops:[{item:'shadow_crystal',n:[1,2]},{item:'shadow_core',n:[0,1]},{item:'iron_ore',n:[1,3]}], dmg:10, xp:16, midboss:true, shadow:true, shape:'humanoid', pound:{r:1.7,cd:120} },
+  stone_warden:{ name:'石の番人', hostile:true, hp:150, speed:0.6, color:'#7a7d82', size:18, drops:[{item:'stone',n:[4,8]},{item:'iron_ore',n:[2,4]},{item:'gold_ore',n:[1,2]}], dmg:11, xp:16, midboss:true, big:true, shape:'tall', pound:{r:2.1,cd:110} },
+  broodmother: { name:'毒の母蟲', hostile:true, hp:95, speed:1.2, color:'#7a9a3a', size:15, drops:[{item:'chitin',n:[2,4]},{item:'string',n:[2,4]},{item:'glow_spore',n:[1,2]}], dmg:8, xp:15, midboss:true, shape:'spider', summon:'spider', ranged:{dmg:6,range:6,cd:90,kind:'venom',status:{poison:240}}, inflict:{poison:180} },
 };
 
 // 防具スロット

@@ -59,6 +59,11 @@ Game.Mobs = (function () {
       }
     }
     Game.state.mobs.push(m);
+    // 中ボス(ランクD)の出現通知＋効果音
+    if (def.midboss && Game.UI && Game.UI.toast && !(Game.Net.isConnected() && !Game.Net.host)) {
+      Game.UI.toast('⚔ ランクD 中ボス「' + (def.name || type) + '」が現れた！');
+      Game.Audio.play('event_horde'); if (Game.Render.shake) Game.Render.shake(5);
+    }
     // ボス登場アニメムービー（種別ごと初回・ローカル再生）
     if (def.boss && Game.Cutscene && Game.Cutscene.playBossIntro && !(Game.Net.isConnected() && !Game.Net.host)) {
       if (!Game.state.bossSeen) Game.state.bossSeen = {};
@@ -94,6 +99,7 @@ Game.Mobs = (function () {
         const deep = Game.World.inDepths();
         if (deep && Math.random() < 0.02 && countType('abyss_dragon') === 0) { type = 'abyss_dragon'; } // 深淵の竜(エンドゲーム)
         else if (deep && Math.random() < 0.04 && countType('hunger_beast') === 0) { type = 'hunger_beast'; }
+        else if (Math.random() < 0.025 && !hasMidboss()) { type = 'shadow_knight'; } // 影の騎士(中ボスD)が稀出現
         const pool = deep
           ? ['wraith', 'watcher', 'abyss_stalker', 'abyss_stalker', 'spider', 'hex_caster', 'shade_stalker']
           : ['wraith', 'wraith', 'watcher', 'spider', 'hex_caster', 'gazer', 'shade_stalker'];
@@ -110,6 +116,10 @@ Game.Mobs = (function () {
           type = 'lava_lord'; // 火山地帯に溶岩の王が稀出現
         } else if (g === Game.TILE.MUSHROOM && Game.state.worldName === 'light' && Math.random() < 0.02 && countType('spore_queen') === 0) {
           type = 'spore_queen'; // キノコの森に胞子の女王が稀出現
+        } else if (Math.random() < (Game.state.bloodMoon ? 0.03 : 0.015) && !hasMidboss()) {
+          // 中ボス(ランクD)が夜に稀出現。1体まで
+          const mb = ['dire_alpha', 'stone_warden', 'broodmother'];
+          type = mb[Math.floor(Math.random() * mb.length)];
         } else {
           const pool = Game.state.bloodMoon
             ? ['zombie', 'zombie', 'skeleton', 'spider', 'leech', 'bandit', 'bat', 'gazer', 'troll', 'harpy', 'viper', 'charger']
@@ -322,10 +332,11 @@ Game.Mobs = (function () {
             m.blinkCd = m.def.blink.cd;
           }
         }
-        // ボスは手下を召喚(激昂中は倍速で召喚)
-        if (m.def.boss && m.attackCd <= 0 && Game.state.tick % (m.enraged ? 120 : 200) === 0) {
+        // ボス/召喚持ち中ボスは手下を召喚(激昂中は倍速で召喚)
+        if ((m.def.boss || (m.def.midboss && m.def.summon)) && m.attackCd <= 0 && Game.state.tick % (m.enraged ? 120 : 200) === 0) {
           const minion = m.def.summon || 'shadow_spawn';
-          if (countType(minion) < 8) { for (let k = 0; k < 3; k++) spawnMob(minion, m.x + (Math.random() - 0.5) * 60, m.y + (Math.random() - 0.5) * 60); Game.Audio.play('shift'); }
+          const cap = m.def.boss ? 8 : 4, n = m.def.boss ? 3 : 2;
+          if (countType(minion) < cap) { for (let k = 0; k < n; k++) spawnMob(minion, m.x + (Math.random() - 0.5) * 60, m.y + (Math.random() - 0.5) * 60); Game.Audio.play('shift'); }
         }
         // ボスの溜め叩きつけ攻撃: テレグラフ(着弾予告)→範囲ダメージ。全ボスに戦闘の駆け引きを付与
         if (m.def.boss) {
@@ -539,6 +550,7 @@ Game.Mobs = (function () {
     for (let i = 0; i < mobs.length; i++) if (mobs[i].type === type) n++;
     return n;
   }
+  function hasMidboss() { const mobs = Game.state.mobs; for (let i = 0; i < mobs.length; i++) if (mobs[i].def && mobs[i].def.midboss) return true; return false; }
 
   // 影の祭壇からボス召喚
   function summonBoss(tx, ty) {

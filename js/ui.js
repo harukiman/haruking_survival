@@ -173,16 +173,18 @@ Game.UI = (function () {
     if (!bbEl || !Game.state) return;
     const mobs = Game.state.mobs; let boss = null;
     for (let i = 0; i < mobs.length; i++) { const m = mobs[i]; if (m.def && m.def.boss) { if (!boss || m.maxHp > boss.maxHp) boss = m; } }
-    // ボスが居なければチャンピオン(ネームド精鋭)をバー表示
-    if (!boss) { for (let i = 0; i < mobs.length; i++) { const m = mobs[i]; if (m.champion) { if (!boss || m.maxHp > boss.maxHp) boss = m; } } }
+    // ボスが居なければ チャンピオン or 中ボス をバー表示
+    if (!boss) { for (let i = 0; i < mobs.length; i++) { const m = mobs[i]; if (m.champion || (m.def && m.def.midboss)) { if (!boss || m.maxHp > boss.maxHp) boss = m; } } }
     if (!boss) { if (!bbEl.classList.contains('hidden')) bbEl.classList.add('hidden'); bbEl.classList.remove('champion'); return; }
     bbEl.classList.remove('hidden');
-    const isChamp = !boss.def.boss || boss.bountyBoss;
+    const isChamp = (!boss.def.boss && !boss.def.midboss) || boss.bountyBoss;
     bbEl.classList.toggle('champion', isChamp);
     const pct = Math.max(0, boss.hp / boss.maxHp * 100);
-    const TIER = { 1: '試練級', 2: '強敵級', 3: '厄災級', 4: '終焉級' };
-    const tierLbl = (!isChamp && boss.def.tier) ? '【' + TIER[boss.def.tier] + '】' : '';
-    const nm = (boss.enraged ? '⚠ ' : '') + tierLbl + (boss.championName || (isChamp ? 'チャンピオン' : boss.def.name)) + '　' + Math.ceil(pct) + '%';
+    // 強さの格付け: ボスは tier(4=S〜1=C)、中ボスは D
+    const TIER = { 4: 'S', 3: 'A', 2: 'B', 1: 'C' };
+    const rank = boss.def.boss ? TIER[boss.def.tier || 1] : (boss.def.midboss ? 'D' : '');
+    const rankLbl = rank ? '【' + rank + '】' : '';
+    const nm = (boss.enraged ? '⚠ ' : '') + rankLbl + (boss.championName || (isChamp ? 'チャンピオン' : boss.def.name)) + '　' + Math.ceil(pct) + '%';
     if (bbName.textContent !== nm) bbName.textContent = nm;
     bbFill.style.width = pct + '%';
     // 激昂で赤化(フェーズ2を一目で把握)
