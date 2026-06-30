@@ -347,6 +347,22 @@ Game.Mobs = (function () {
           if ((m.slamCd || 0) > 0) m.slamCd--;
           else if (distP < 6 * TS && Math.random() < 0.035) { m.slam = 18; m.slamR = (m.def.big ? 3 : 2.4); Game.Audio.play('whirl'); }
         }
+        // 重量級の溜め叩きつけ(非ボス): ボスslamのテレグラフ描画を流用。回避ゲーで攻撃に幅
+        if (m.def.pound && !m.def.boss) {
+          if (m.slam != null) {
+            m.slam--;
+            if (m.slam <= 0) {
+              const R = (m.def.pound.r || 1.8) * TS;
+              if (distP <= R) { Game.Survival.damage(Math.round((m.dmg || m.def.dmg) * 1.4), m.def.name || 'mob'); const kl = distP || 1; p.x += (dxp / kl) * 12; p.y += (dyp / kl) * 12; if (Game.Render.spawnHitDir) Game.Render.spawnHitDir(m.x, m.y); }
+              Game.Render.spawnParticles(m.x, m.y, '#ff9a4a', 16);
+              if (Game.Render.shake) Game.Render.shake(6); Game.Audio.play('boom_sfx');
+              m.slam = null; m.slamCd = m.def.pound.cd || 130;
+            }
+            m.hopPhase += 0.2; continue;
+          }
+          if ((m.slamCd || 0) > 0) m.slamCd--;
+          else if (distP < 4.5 * TS && Math.random() < 0.03) { m.slam = 16; m.slamR = m.def.pound.r || 1.8; Game.Audio.play('whirl'); }
+        }
         // 突進する敵: 溜め(テレグラフ)→高速ダッシュで突っ込む。溜め中に避ければ回避可能
         if (m.def.charge) {
           const ch = m.def.charge;

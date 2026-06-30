@@ -782,9 +782,9 @@ Game.MOBS = {
   bandit:   { name:'山賊', hostile:true, hp:22, speed:1.6, color:'#7a5a3a', size:11, drops:[{item:'gold_bar',n:[0,2]},{item:'iron',n:[0,2]},{item:'bone',n:[0,1]}], dmg:6, xp:6 },
   mimic:    { name:'ミミック', hostile:true, hp:55, speed:1.15, color:'#9c6b3f', size:14, drops:[{item:'gold_bar',n:[2,4]},{item:'lumen',n:[1,3]},{item:'shadow_crystal',n:[1,3]},{item:'iron_sword',n:[0,1]},{item:'gold_ore',n:[2,5]}], dmg:9, xp:16, shape:'blob' },
   charger:  { name:'猛襲獣', hostile:true, hp:42, speed:0.82, color:'#a85432', size:15, drops:[{item:'hide',n:[1,3]},{item:'raw_meat',n:[1,3]},{item:'bone',n:[1,2]}], dmg:7, xp:11, shape:'tall', charge:{ range:4, windup:16, dashTicks:22, dashSpeed:5.2, dmg:15, cd:150 } },
-  golem:    { name:'岩ゴーレム', hostile:true, hp:48, speed:0.7, color:'#8a8d91', size:15, drops:[{item:'stone',n:[2,5]},{item:'iron_ore',n:[1,2]},{item:'gold_ore',n:[0,1]}], dmg:8, xp:9, big:true },
+  golem:    { name:'岩ゴーレム', hostile:true, hp:48, speed:0.7, color:'#8a8d91', size:15, drops:[{item:'stone',n:[2,5]},{item:'iron_ore',n:[1,2]},{item:'gold_ore',n:[0,1]}], dmg:8, xp:9, big:true, pound:{r:1.9,cd:120} },
   scorpion: { name:'サソリ', hostile:true, hp:14, speed:1.9, color:'#b07030', size:9, drops:[{item:'chitin',n:[1,2]}], dmg:4, xp:4, inflict:{poison:240} },
-  ice_bear: { name:'白熊', hostile:true, hp:40, speed:1.4, color:'#e8eef2', size:16, drops:[{item:'raw_meat',n:[2,4]},{item:'hide',n:[2,3]}], dmg:7, xp:8, inflict:{cold:240}, big:true },
+  ice_bear: { name:'白熊', hostile:true, hp:40, speed:1.4, color:'#e8eef2', size:16, drops:[{item:'raw_meat',n:[2,4]},{item:'hide',n:[2,3]}], dmg:7, xp:8, inflict:{cold:240}, big:true, pound:{r:1.8,cd:130} },
   astral_serpent:{ name:'宇宙の大蛇', hostile:true, hp:60, speed:2.0, color:'#b0a0ff', size:16, drops:[{item:'star_metal',n:[1,3]},{item:'star_core',n:[0,1]}], dmg:8, xp:14, space:true, ghost:true, big:true },
   // ===== P27 ダンジョンボス（大型ダンジョンの巣から稀に出現）=====
   tomb_king:  { name:'墳墓の王', hostile:true, hp:200, speed:1.3, color:'#d8b048', size:26, drops:[{item:'sand_greatsword',n:[1,1]},{item:'pharaoh_crown',n:[0,1]},{item:'gold_bar',n:[3,6]},{item:'chitin',n:[2,4]},{item:'gae_bolg',n:[0,1]}], dmg:9, xp:45, boss:true, big:true, summon:'scorpion', inflict:{poison:240} },
@@ -814,7 +814,7 @@ Game.MOBS = {
   gazer:    { name:'浮遊する眼', hostile:true, hp:14, speed:1.3, color:'#6a3a6a', size:11, drops:[{item:'shadow_shard',n:[1,2]}], dmg:4, xp:4, ghost:true, shape:'orb', ranged:{dmg:5,range:6,cd:70,kind:'hex'} },
   dust_mage:{ name:'砂の呪術師', hostile:true, hp:16, speed:1.1, color:'#d8a050', size:10, drops:[{item:'chitin',n:[0,1]},{item:'gold_ore',n:[0,1]}], dmg:4, xp:5, shape:'wisp', ranged:{dmg:5,range:6,cd:90,kind:'venom',status:{poison:200}} },
   ember_imp:{ name:'灰の小鬼', hostile:true, hp:12, speed:1.5, color:'#e06030', size:8, drops:[{item:'coal',n:[1,2]},{item:'iron_ore',n:[0,1]}], dmg:4, xp:4, shape:'spiky', ranged:{dmg:5,range:5,cd:70,kind:'fire'} },
-  troll:    { name:'森のトロル', hostile:true, hp:70, speed:0.85, color:'#6a8a4a', size:30, drops:[{item:'raw_meat',n:[2,4]},{item:'hide',n:[1,3]},{item:'bone',n:[1,2]}], dmg:11, xp:12, big:true, shape:'tall' },
+  troll:    { name:'森のトロル', hostile:true, hp:70, speed:0.85, color:'#6a8a4a', size:30, drops:[{item:'raw_meat',n:[2,4]},{item:'hide',n:[1,3]},{item:'bone',n:[1,2]}], dmg:11, xp:12, big:true, shape:'tall', pound:{r:2.2,cd:110} },
   bog_horror:{ name:'沼の怪異', hostile:true, hp:50, speed:0.9, color:'#5a6a3a', size:22, drops:[{item:'guts',n:[1,3]},{item:'string',n:[0,1]}], dmg:8, xp:9, shape:'blob', inflict:{infection:300}, deathBurst:{r:2.2,dmg:7,status:{poison:240}} },
   // ===== P40 バイオーム多様化: 新通常モブ =====
   harpy:    { name:'ハーピー', hostile:true, hp:12, speed:2.4, color:'#a06a9a', size:10, drops:[{item:'string',n:[0,1]},{item:'bone',n:[0,1]}], dmg:4, xp:4, ghost:true, shape:'wisp', ranged:{dmg:5,range:6,cd:80,kind:'hex'} },
