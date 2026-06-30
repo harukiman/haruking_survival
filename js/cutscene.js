@@ -536,10 +536,21 @@ Game.Cutscene = (function () {
   }
   function lcStars(t, now) {
     starsBg(now, 120);
+    // 星雲のたなびき(紫～青のグラデ帯)で宇宙の幻想性
+    for (let i = 0; i < 3; i++) {
+      const ny = H * (0.2 + i * 0.22) + Math.sin(now * 0.0004 + i) * 20;
+      const ng = ctx.createRadialGradient(W * (0.3 + i * 0.25), ny, 10, W * (0.3 + i * 0.25), ny, 180);
+      ng.addColorStop(0, i % 2 ? 'rgba(150,90,220,0.16)' : 'rgba(90,140,230,0.14)'); ng.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = ng; ctx.beginPath(); ctx.arc(W * (0.3 + i * 0.25), ny, 180, 0, 7); ctx.fill();
+    }
     drawRocket(W / 2, H * (0.55 - t * 0.1), 1.2 - t * 0.4, 1);
-    // 地球が小さくなる
-    const er = Math.max(0, 70 * (1 - t * 0.7)); ctx.fillStyle = '#2f6fb0'; ctx.beginPath(); ctx.arc(W / 2, H + 120 - t * 80, er + 60, 0, 7); ctx.fill();
-    ctx.fillStyle = '#3c9647'; ctx.globalAlpha = 0.6; ctx.beginPath(); ctx.arc(W / 2 - 20, H + 110 - t * 80, er, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
+    // 惑星が小さくなる＋大気のグロー
+    const cyE = H + 120 - t * 80, er = Math.max(0, 70 * (1 - t * 0.7));
+    const atmo = ctx.createRadialGradient(W / 2, cyE, er + 50, W / 2, cyE, er + 78);
+    atmo.addColorStop(0, 'rgba(120,200,255,0.4)'); atmo.addColorStop(1, 'rgba(120,200,255,0)');
+    ctx.fillStyle = atmo; ctx.beginPath(); ctx.arc(W / 2, cyE, er + 78, 0, 7); ctx.fill();
+    ctx.fillStyle = '#2f6fb0'; ctx.beginPath(); ctx.arc(W / 2, cyE, er + 60, 0, 7); ctx.fill();
+    ctx.fillStyle = '#3c9647'; ctx.globalAlpha = 0.6; ctx.beginPath(); ctx.arc(W / 2 - 20, cyE - 10, er, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
   }
   function lcReentry(t, now) {
     starsBg(now, 60);
