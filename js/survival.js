@@ -123,7 +123,17 @@ Game.Survival = (function () {
   function damage(amount, source) {
     const p = Game.state.player;
     const physical = source !== 'starve' && source !== 'sanity' && source !== 'status';
-    if (p.invuln > 0 && physical) return;
+    if (p.invuln > 0 && physical) {
+      // ジャスト回避: ロール無敵中に攻撃を受け流したら報酬(1ロール1回)
+      if ((p.rolling || 0) > 0 && !p.rollRewarded) {
+        p.rollRewarded = true;
+        p.stamina = Math.min(p.maxStamina, p.stamina + 10); // スタミナ還元
+        if (Game.Render.spawnFloat) Game.Render.spawnFloat(p.x, p.y - 24, 'JUST!', '#7fe0ff', true);
+        if (Game.Render.spawnParticles) Game.Render.spawnParticles(p.x, p.y, '#bfe8ff', 10);
+        Game.Audio.play('crit');
+      }
+      return;
+    }
     // 防具で軽減（飢餓・正気崩壊は無視）
     if (physical) {
       const armor = Game.Player.totalArmor();

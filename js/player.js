@@ -63,7 +63,7 @@ Game.Player = (function () {
       let rx = dx, ry = dy;
       if (len < 0.01) { rx = p.dir === 'left' ? -1 : p.dir === 'right' ? 1 : 0; ry = p.dir === 'up' ? -1 : p.dir === 'down' ? 1 : 0; }
       const rl = Math.hypot(rx, ry) || 1; p.rollDX = rx / rl; p.rollDY = ry / rl;
-      p.rolling = 12; p.rollCd = 45; p.invuln = Math.max(p.invuln || 0, 18); p.stamina = Math.max(0, p.stamina - 20);
+      p.rolling = 12; p.rollCd = 45; p.invuln = Math.max(p.invuln || 0, 18); p.stamina = Math.max(0, p.stamina - 20); p.rollRewarded = false;
       Game.Audio.play('dash');
     }
     if (dashing) { p.stamina = Math.max(0, p.stamina - 1.1); }
