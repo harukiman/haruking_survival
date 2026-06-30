@@ -761,8 +761,16 @@ Game.Mobs = (function () {
       const s = Game.state;
       s.combo = (s.combo || 0) + 1; s.comboT = 90; // 3秒以内に次を倒せば継続
       if (s.combo >= 3) { if (Game.UI.flashCombo) Game.UI.flashCombo(s.combo); if (Game.Audio.comboSound) Game.Audio.comboSound(s.combo); }
-      if (s.combo > 0 && s.combo % 10 === 0) { // 10連ごとにボーナス
-        Game.Player.gainXP(Math.min(50, s.combo)); if (Game.Render.flash) Game.Render.flash('rgba(255,210,120,0.16)');
+      if (s.combo > 0 && s.combo % 10 === 0) { // 10連ごとにボーナス(高連ほど豪華)
+        Game.Player.gainXP(Math.min(80, s.combo * 1.5));
+        const big = s.combo >= 20;
+        if (Game.Render.flash) Game.Render.flash(big ? 'rgba(255,180,80,0.28)' : 'rgba(255,210,120,0.16)');
+        if (big) { // 20連以上は豪華な払い出し
+          if (Game.Render.shake) Game.Render.shake(6);
+          if (Game.Render.spawnLevelRing) Game.Render.spawnLevelRing(Game.state.player.x, Game.state.player.y);
+          Game.Audio.play('quest_done');
+          Game.state.comboT = 110; // 高連はやや猶予延長で繋ぎやすく
+        }
       }
     }
     Game.Audio.play('mobdie');
