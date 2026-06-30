@@ -78,7 +78,7 @@ Game.Player = (function () {
     if (Game.Achievements && Game.Achievements.visitBiome && Game.state.worldName === 'light') Game.Achievements.visitBiome(gUnder);
     // ダンジョン侵入時に自動セーブ(進入のたび一度)。床がダンジョンに変わった瞬間を検出
     const inDun = gUnder === Game.TILE.DUNGEON_FLOOR;
-    if (inDun && !p._inDungeon) { p._inDungeon = true; if (Game.Save) Game.Save.autosave('dungeon'); }
+    if (inDun && !p._inDungeon) { p._inDungeon = true; if (Game.Save) Game.Save.autosave('dungeon'); if (Game.Story && !Game.Story.seen('depths')) Game.Story.unlock('depths', true); }
     else if (!inDun && p._inDungeon) { p._inDungeon = false; }
     const onWater = !p.vehicle && gUnder === Game.TILE.WATER;
     if (onWater) spd *= 0.5;
