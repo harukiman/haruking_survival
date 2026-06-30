@@ -447,6 +447,11 @@ Game.Mobs = (function () {
           : (m.def.shadow || m.def.ghost) ? '#b06ad0' : null;
         if (col) Game.Render.spawnParticles(m.x + (Math.random() - 0.5) * 8, m.y - m.def.size * 0.4, col, 1);
       }
+      // 激昂ボスは立ち昇る赤い炎を常時まとい、第二段階を視覚的に劇化
+      if (m.enraged && Game.Render.spawnParticles && Game.state.tick % 4 === 0) {
+        const sz = m.def.size * 0.5;
+        Game.Render.spawnParticles(m.x + (Math.random() - 0.5) * sz * 1.6, m.y + (Math.random() - 0.5) * sz, Math.random() < 0.5 ? '#ff3a2a' : '#ff8a3c', 1);
+      }
     }
   }
 
