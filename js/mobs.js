@@ -257,6 +257,8 @@ Game.Mobs = (function () {
   }
 
   function update() {
+    // コンボ継続タイマー: 時間切れでリセット
+    if (Game.state.comboT > 0) { Game.state.comboT--; if (Game.state.comboT === 0) Game.state.combo = 0; }
     // マルチ: クライアントは敵を simulate せずホストの配信を描画＋自分への接触判定
     if (Game.Net.isConnected() && !Game.Net.host) { clientUpdate(); return; }
 
@@ -714,6 +716,15 @@ Game.Mobs = (function () {
         Game.state.paused = true;
         const bt = m.type;
         Game.Cutscene.playBossOutro(bt, function () { Game.state.paused = false; });
+      }
+    }
+    // 連続撃破コンボ: 敵対モブを短時間で続けて倒すとカウント。節目でボーナス＋演出
+    if (m.def.hostile && !m.def.npc) {
+      const s = Game.state;
+      s.combo = (s.combo || 0) + 1; s.comboT = 90; // 3秒以内に次を倒せば継続
+      if (s.combo >= 3 && Game.UI.flashCombo) Game.UI.flashCombo(s.combo);
+      if (s.combo > 0 && s.combo % 10 === 0) { // 10連ごとにボーナス
+        Game.Player.gainXP(Math.min(50, s.combo)); if (Game.Render.flash) Game.Render.flash('rgba(255,210,120,0.16)'); Game.Audio.play('crit');
       }
     }
     Game.Audio.play('mobdie');

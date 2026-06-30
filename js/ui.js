@@ -1582,6 +1582,22 @@ Game.UI = (function () {
     hbInfoTimer = setTimeout(function () { if (hbInfoEl) hbInfoEl.style.opacity = '0'; }, 1500);
   }
 
+  // 連続撃破コンボ表示(中央上にエスカレートして点滅)
+  let comboEl = null, comboTimer = null;
+  function flashCombo(n) {
+    if (!comboEl) {
+      comboEl = document.createElement('div'); comboEl.id = 'combo-hud';
+      comboEl.style.cssText = 'position:fixed;left:50%;top:18%;transform:translateX(-50%);z-index:58;font-weight:900;pointer-events:none;opacity:0;transition:opacity .25s;text-shadow:0 2px 8px rgba(0,0,0,.6);white-space:nowrap';
+      (document.getElementById('app') || document.body).appendChild(comboEl);
+    }
+    const tier = n >= 30 ? '#ff4a6a' : n >= 20 ? '#ff8a3c' : n >= 10 ? '#ffd24a' : '#9fe0a0';
+    const sz = Math.min(2.4, 1.2 + n * 0.03);
+    comboEl.innerHTML = '<span style="color:' + tier + ';font-size:' + sz + 'rem">' + n + ' COMBO</span>' + (n % 10 === 0 ? '<div style="color:#ffe9a0;font-size:.8rem;text-align:center">★ ボーナス！</div>' : '');
+    comboEl.style.opacity = '1';
+    if (comboTimer) clearTimeout(comboTimer);
+    comboTimer = setTimeout(function () { if (comboEl) comboEl.style.opacity = '0'; }, 1200);
+  }
+
   // 控えめなオートセーブ表示(右下に一瞬フェード)。proactive-UX原則: 邪魔しない
   let saveEl = null, saveTimer = null;
   function flashSave(reason) {
@@ -1601,7 +1617,7 @@ Game.UI = (function () {
     refreshCraft, refreshAll, toggleInventory, toast, updateMinimap,
     openChest, openSharedChest, closeChest, refreshChest, refreshWorld,
     showLore, closeLore, refreshQuest, openQuest, closeQuest, refreshBounty, showEnding, showDeath, showIntro, refreshNet, refreshStatus,
-    toggleOptions, openEnchant, closeEnchant, flashSave, flashHotbarItem, refreshContext, refreshAmmo,
+    toggleOptions, openEnchant, closeEnchant, flashSave, flashHotbarItem, flashCombo, refreshContext, refreshAmmo,
     toggleBigMap, isBigMapOpen, updateBigMap, openStats, closeStats, toggleStats, renderStats, refreshBossBar, openTrade, closeTrade, openShop, openStory, closeStory,
   };
 })();
