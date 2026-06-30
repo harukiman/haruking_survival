@@ -188,6 +188,7 @@ Game.Projectiles = (function () {
         if (Math.hypot(pl.x - pr.x, pl.y - pr.y) < 13) {
           Game.Survival.damage(pr.dmg, 'mob');
           if (pr.status && Game.Status) for (const k in pr.status) Game.Status.add(k, pr.status[k]);
+          if (Game.Render.spawnHitDir) Game.Render.spawnHitDir(pr.prevX, pr.prevY); // 飛来方向を表示
           Game.Render.spawnBlood(pl.x, pl.y, 4); hit = true;
         }
       } else if (pr.pierce) {

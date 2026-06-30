@@ -123,6 +123,7 @@ Game.Render = (function () {
     drawBossVignette(ctx);
     drawCursor(ctx);
     drawDanger(ctx);
+    drawHitDir(ctx);
     drawHomeCompass(ctx);
     drawFlash(ctx);
   }
@@ -242,6 +243,26 @@ Game.Render = (function () {
   // 低HP危険ヴィネット＋被弾フィードバック
   let hurtT = 0;
   function hurtFlash() { hurtT = 12; }
+  // 被ダメージ方向インジケータ: 攻撃元へ向かう赤い弧を画面端に出し、画面外の脅威を知らせる
+  const hitDirs = [];
+  function spawnHitDir(wx, wy) {
+    const p = Game.state.player; if (!p) return;
+    hitDirs.push({ ang: Math.atan2(wy - p.y, wx - p.x), life: 26, max: 26 });
+    if (hitDirs.length > 6) hitDirs.shift();
+  }
+  function drawHitDir(ctx) {
+    if (!hitDirs.length) return;
+    const cx = Game.view.w / 2, cy = Game.view.h / 2, rad = Math.min(cx, cy) * 0.82;
+    for (let i = hitDirs.length - 1; i >= 0; i--) {
+      const d = hitDirs[i]; d.life--;
+      if (d.life <= 0) { hitDirs.splice(i, 1); continue; }
+      const a = d.life / d.max;
+      ctx.save(); ctx.globalAlpha = a * 0.7; ctx.strokeStyle = '#ff3a3a'; ctx.lineWidth = 6;
+      ctx.beginPath(); ctx.arc(cx, cy, rad, d.ang - 0.34, d.ang + 0.34); ctx.stroke();
+      ctx.globalAlpha = a * 0.35; ctx.lineWidth = 14; ctx.beginPath(); ctx.arc(cx, cy, rad, d.ang - 0.28, d.ang + 0.28); ctx.stroke();
+      ctx.restore(); ctx.globalAlpha = 1;
+    }
+  }
   function drawDanger(ctx) {
     const s = Game.state; if (!s || s.paused) return;
     const p = s.player; if (!p) return;
@@ -782,5 +803,5 @@ Game.Render = (function () {
     ctx.textAlign = 'left';
   }
 
-  return { draw, buildChunkCache, spawnParticles, spawnBlood, spawnSlash, spawnFloat, spawnLightning, spawnMuzzle, spawnImpact, spawnLevelRing, flash, hurtFlash, shake };
+  return { draw, buildChunkCache, spawnParticles, spawnBlood, spawnSlash, spawnFloat, spawnLightning, spawnMuzzle, spawnImpact, spawnLevelRing, spawnHitDir, flash, hurtFlash, shake };
 })();
