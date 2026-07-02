@@ -365,8 +365,7 @@ Game.Mobs = (function () {
             m.slam--;
             if (m.slam <= 0) {
               const R = (m.slamR || 2.4) * TS;
-              if (distP <= R) {
-                Game.Survival.damage(Math.round((m.dmg || m.def.dmg) * 1.6), m.def.name || 'mob');
+              if (distP <= R && Game.Survival.damage(Math.round((m.dmg || m.def.dmg) * 1.6), m.def.name || 'mob') !== false) {
                 const kl = distP || 1; p.x += (dxp / kl) * 18; p.y += (dyp / kl) * 18;
               }
               Game.Render.spawnParticles(m.x, m.y, '#ff7a3c', 26);
@@ -385,7 +384,7 @@ Game.Mobs = (function () {
             m.slam--;
             if (m.slam <= 0) {
               const R = (m.def.pound.r || 1.8) * TS;
-              if (distP <= R) { Game.Survival.damage(Math.round((m.dmg || m.def.dmg) * 1.4), m.def.name || 'mob'); const kl = distP || 1; p.x += (dxp / kl) * 12; p.y += (dyp / kl) * 12; if (Game.Render.spawnHitDir) Game.Render.spawnHitDir(m.x, m.y); }
+              if (distP <= R && Game.Survival.damage(Math.round((m.dmg || m.def.dmg) * 1.4), m.def.name || 'mob') !== false) { const kl = distP || 1; p.x += (dxp / kl) * 12; p.y += (dyp / kl) * 12; if (Game.Render.spawnHitDir) Game.Render.spawnHitDir(m.x, m.y); }
               Game.Render.spawnParticles(m.x, m.y, '#ff9a4a', 16);
               if (Game.Render.shake) Game.Render.shake(6); Game.Audio.play('boom_sfx');
               m.slam = null; m.slamCd = m.def.pound.cd || 130;
@@ -406,7 +405,7 @@ Game.Mobs = (function () {
             } else {
               m.charge.t--;
               moveMob(m, m.charge.vx, m.charge.vy, ch.dashSpeed);
-              if (distP < (m.def.size * 0.5 + 14)) { Game.Survival.damage(ch.dmg, m.def.name || 'mob'); const kl = distP || 1; p.x += (dxp / kl) * 16; p.y += (dyp / kl) * 16; m.charge = null; m.chargeCd = ch.cd; }
+              if (distP < (m.def.size * 0.5 + 14)) { if (Game.Survival.damage(ch.dmg, m.def.name || 'mob') !== false) { const kl = distP || 1; p.x += (dxp / kl) * 16; p.y += (dyp / kl) * 16; } m.charge = null; m.chargeCd = ch.cd; }
               else if (m.charge.t <= 0) { m.charge = null; m.chargeCd = ch.cd; }
               m.hopPhase += 0.2; continue;
             }
@@ -535,8 +534,9 @@ Game.Mobs = (function () {
       if (m.def.hostile && m.attackCd <= 0) {
         const d = Math.hypot(p.x - m.x, p.y - m.y);
         if (d < m.def.size * 0.5 + 12) {
-          Game.Survival.damage(m.def.dmg, m.def.name || 'mob');
-          if (m.def.inflict) for (const k in m.def.inflict) Game.Status.add(k, m.def.inflict[k]);
+          if (Game.Survival.damage(m.def.dmg, m.def.name || 'mob') !== false) {
+            if (m.def.inflict) for (const k in m.def.inflict) Game.Status.add(k, m.def.inflict[k]);
+          }
           m.attackCd = 42;
         }
       }
@@ -665,8 +665,10 @@ Game.Mobs = (function () {
       Game.Render.spawnParticles(m.x, m.y, m.def.color || '#9fe04a', 18);
       if (Game.Render.flash) Game.Render.flash('rgba(140,220,120,0.12)');
       if (Math.hypot(p.x - m.x, p.y - m.y) <= db.r * TS) {
-        Game.Survival.damage(db.dmg, m.def.name || 'mob');
-        if (db.status && Game.Status) for (const k in db.status) Game.Status.add(k, db.status[k]);
+        // 無敵(ロール等)中はダメージ不成立: 状態異常も付与しない(damage契約)
+        if (Game.Survival.damage(db.dmg, m.def.name || 'mob') !== false) {
+          if (db.status && Game.Status) for (const k in db.status) Game.Status.add(k, db.status[k]);
+        }
       }
       Game.Audio.play('hit');
     }
