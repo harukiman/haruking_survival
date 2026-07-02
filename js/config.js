@@ -871,6 +871,52 @@ Game.TUNE = {
   NG_SANITY_PER: 0.2,         // NG+1ごとの正気消費倍率増
 };
 
+// ===== エリア危険度(DANGER ZONE)バンド定義 =====
+// 既存地理(初期スポーンアンカーからの距離・バイオーム・世界・ダンジョンテーマ)から決定論的に導出する。
+// アンカーは seed から再計算(WorldGen.spawnAnchor)されベッド移動やセーブ状態に依らない。
+// worldgen のレイアウト/閾値は一切変更しない(セーブ互換維持)。参照API: Game.World.dangerBandAt(tx, ty)
+// | band | 名称   | アンカーからの距離(タイル, チェビシェフ) | 内容 |
+// |  0   | 安全圏 | 0-39    | 弱敵のみ・夜も湧き半減・昼は敵なし・精鋭なし(血の月のみ例外) |
+// |  1   | 開拓圏 | 40-89   | 従来の標準プール(既存エンカウント不変) |
+// |  2   | 辺境   | 90-159  | 強敵混成プール・精鋭2倍・ステータス+12% |
+// |  3   | 深域   | 160+    | 最強プール・精鋭3倍/チャンピオン2倍・+24%・初期装備ではほぼ突破不能 |
+// |  4   | 深域+  | 補正による上限帯 | 精鋭4倍・+36%(上限=基礎の1.36倍、帯スケールは2倍を大きく下回る) |
+// 補正: 雪原/砂漠/火山 +1帯(安全圏0では適用しない) / キノコの森は夜のみ+1 / 影世界 +1(深層の既存強化は別枠で維持) / 宇宙=3固定
+// ダンジョン明示ティア: 遺跡=1, 氷窟/墳墓=2, 工房/水晶洞=3, 影世界のダンジョン(影神殿)=4
+Game.DANGER = {
+  RADII: [40, 90, 160],                       // band 0/1/2 の外縁(タイル)。160+ が band3
+  NAMES: ['安全圏', '開拓圏', '辺境', '深域', '深域+'],
+  COLORS: ['#7fd0a0', '#cfd6e0', '#ffd24a', '#ff8a4a', '#ff4a6a'], // UI/描画の可視化用
+  STAT_PER: 0.12,                             // band1超過1段ごとの hp/dmg 上昇率(非ボス敵対のみ)
+  STAT_MAX: 0.36,                             // 上限(帯4でも基礎の1.36倍 — インフレ防止)
+  XP_PER: 0.25,                               // band1超過1段ごとの XP/バーツ増加率
+  ELITE_MULT: [0, 1, 2, 3, 4],                // 精鋭率の帯別倍率(安全圏は精鋭なし)
+  CHAMP_MULT: [0, 1, 1, 2, 2],                // チャンピオン率の帯別倍率
+  DUNGEON_TIER: { ruin: 1, ice: 2, tomb: 2, forge: 3, crystal: 3 },
+  DUNGEON_BOSS: { tomb: 'tomb_king', forge: 'forge_titan', crystal: 'crystal_queen', ice: 'crystal_queen' },
+  DUNGEON_POOLS: {
+    ruin:    ['zombie', 'zombie', 'skeleton', 'spider', 'slime'],
+    ice:     ['frost_wisp', 'frost_wisp', 'frost_spider', 'cursed_armor', 'ice_bear'],
+    tomb:    ['scorpion', 'scorpion', 'dust_mage', 'sand_wurm', 'cursed_armor'],
+    forge:   ['ember_imp', 'salamander', 'golem', 'cursed_armor', 'golem'],
+    crystal: ['frost_wisp', 'frost_spider', 'cursed_armor', 'golem', 'gazer'],
+    shadow:  ['wraith', 'watcher', 'hex_caster', 'shade_stalker', 'gazer', 'abyss_stalker'],
+  },
+  // 夜の帯別プール(band1 は mobs.js 内の従来プールを維持)
+  POOL_NIGHT: {
+    0: ['slime', 'slime', 'zombie', 'skeleton', 'bat'],
+    2: ['zombie', 'skeleton', 'spider', 'leech', 'bat', 'gazer', 'harpy', 'viper', 'charger', 'troll', 'cursed_armor', 'bog_horror'],
+    3: ['troll', 'troll', 'charger', 'charger', 'golem', 'cursed_armor', 'mimic', 'bog_horror', 'gazer', 'harpy'],
+  },
+  POOL_DAY3: ['troll', 'charger', 'golem'],   // 深域は昼でも強敵が徘徊
+  TOASTS: [null,
+    'ここから開拓圏 — 敵が現れる。装備を整えよう',
+    '⚠ この先は辺境 — 敵が目に見えて強くなる',
+    '⚠⚠ 深域に踏み込んだ — 生半可な装備では生き残れない',
+    '☠ 深域の最奥 — 精鋭がひしめく死地。引き返すのも勇気',
+  ],
+};
+
 // 起動時に付与する初期アイテム（チュートリアル簡略化のため最低限）
 Game.STARTER_ITEMS = [
   { id:'apple', count:3 },

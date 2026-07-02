@@ -27,8 +27,9 @@ Game.WorldGen = (function () {
     return { ground: T.STONE, obj: o };
   }
 
-  function genTile(wx, wy, seed) {
-    if (Game.state && Game.state.worldName === 'space') return genSpace(wx, wy, seed);
+  // 標高/湿度→自然地形(バイオーム)。genTile と dungeonThemeAt で共有(閾値は従来のまま=決定論/セーブ互換維持)
+  const TERRA = { ground: 0, e: 0, m: 0 }; // 使い回しスクラッチ(チャンク生成時のGC回避)。呼出直後に読み取ること
+  function terrainAt(wx, wy, seed) {
     const e = N.fbm(wx * 0.0085, wy * 0.0085, seed, 5);        // 標高（低周波=大陸/バイオームを広大に）
     const m = N.fbm(wx * 0.014 + 911, wy * 0.014 + 911, seed ^ 0x9e37, 4); // 湿度
 
@@ -45,6 +46,34 @@ Game.WorldGen = (function () {
     else if (m > 0.58) ground = T.FOREST;
     else if (m < 0.30 && e < 0.55) ground = T.SAND;  // 乾燥帯
     else ground = T.GRASS;
+    TERRA.ground = ground; TERRA.e = e; TERRA.m = m;
+    return TERRA;
+  }
+
+  // ダンジョンテーマ判定(タイル座標)。genTile のダンジョン生成条件と同一ロジックで
+  // 「そのタイルがダンジョン内なら壁テーマ」を返す(なければ null)。危険度バンド/巣の湧きプールが参照。
+  // 戻り値: 'ruin'(遺跡) | 'ice'(氷窟) | 'crystal'(水晶洞) | 'tomb'(砂の墳墓) | 'forge'(溶岩工房)
+  function dungeonThemeAt(wx, wy, seed) {
+    if (Game.state && Game.state.worldName === 'space') return null;
+    const g0 = terrainAt(wx, wy, seed).ground; // 自然地形(ダンジョン床で上書きされる前)
+    if (g0 === T.DEEP_WATER || g0 === T.WATER) return null;
+    const DG = 74;
+    const ax = Math.round(wx / DG) * DG, ay = Math.round(wy / DG) * DG;
+    if (U.hash3(ax, ay, seed + 8888) >= 0.085) return null;
+    const big = U.hash3(ax, ay, seed + 1212) < 0.34;
+    const hw = big ? 8 : 5, hh = big ? 6 : 4;
+    if (Math.abs(wx - ax) > hw || Math.abs(wy - ay) > hh) return null;
+    if (g0 === T.SNOW) return (U.hash3(ax, ay, seed + 222) < 0.5) ? 'crystal' : 'ice';
+    if (g0 === T.SAND) return 'tomb';
+    if (g0 === T.STONE) return 'forge';
+    return 'ruin';
+  }
+
+  function genTile(wx, wy, seed) {
+    if (Game.state && Game.state.worldName === 'space') return genSpace(wx, wy, seed);
+    const tr = terrainAt(wx, wy, seed);
+    let ground = tr.ground;
+    const e = tr.e; // サボテン配置(乾燥帯判定)で使用
 
     let obj = O.NONE;
     const h = U.hash3(wx, wy, seed + 777);  // 配置用 0..1
@@ -253,5 +282,28 @@ Game.WorldGen = (function () {
     return { tx: 0, ty: 0 };
   }
 
-  return { genTile, generateChunk, findSpawn };
+  // 危険度バンドの基準点(seed から決定論再計算・worldName 非依存)。findSpawn と同一の螺旋探索順だが
+  // オブジェクトの有無を見ない(影世界でも同じ点になる)ため、実スポーンとほぼ同地点の安定アンカーになる。
+  // 海洋シードでは螺旋走査が重いため seed 毎にメモ化(決定論なので安全)
+  let anchorMemo = null, anchorMemoSeed = null;
+  function spawnAnchor(seed) {
+    if (anchorMemoSeed === seed && anchorMemo) return anchorMemo;
+    anchorMemoSeed = seed;
+    anchorMemo = scanAnchor(seed);
+    return anchorMemo;
+  }
+  function scanAnchor(seed) {
+    for (let r = 0; r < 400; r++) {
+      for (let a = 0; a < Math.max(1, r * 6); a++) {
+        const ang = (a / Math.max(1, r * 6)) * Math.PI * 2;
+        const tx = Math.round(Math.cos(ang) * r);
+        const ty = Math.round(Math.sin(ang) * r);
+        const g = terrainAt(tx, ty, seed).ground;
+        if (g === T.GRASS || g === T.SAND || g === T.FOREST || g === T.DIRT) return { tx, ty };
+      }
+    }
+    return { tx: 0, ty: 0 };
+  }
+
+  return { genTile, generateChunk, findSpawn, dungeonThemeAt, spawnAnchor };
 })();

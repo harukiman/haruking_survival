@@ -63,6 +63,7 @@ Game.UI = (function () {
     el.sanity = document.getElementById('sanity-bar');
     el.sanityWrap = document.getElementById('sanity-wrap');
     el.statusRow = document.getElementById('status-row');
+    if (el.statusRow) el.statusRow.addEventListener('click', toggleStatusHelp); // 状態異常アイコン行タップで平易ヘルプ
     el.world = document.getElementById('world-label');
     el.chestScreen = document.getElementById('chest-screen');
     el.chestGrid = document.getElementById('chest-grid');
@@ -143,6 +144,7 @@ Game.UI = (function () {
     if (el.sound) el.sound.classList.remove('hidden');
     const ob = document.getElementById('btn-options'); if (ob) ob.classList.remove('hidden');
     if (el.btnMap) el.btnMap.classList.remove('hidden');
+    startHints(); // 初回セーブのみのマイクロガイド(案内済みフラグで再表示しない)
   }
 
   // ===== 大マップ（半透明オーバーレイ・操作継続）=====
@@ -314,6 +316,23 @@ Game.UI = (function () {
     if (!s.length) return def.flavor || '';
     return s.join(' / ');
   }
+  // ===== 上位近接武器の特殊効果(config ITEMS[].special)の平易な説明 =====
+  const DOT_NAMES = { fire: '炎上', frost: '凍え', venom: '毒' };
+  function specialDesc(sp) {
+    const sec = sp.cd ? (Math.round(sp.cd / 3) / 10) : 0; // 30tick = 1秒
+    const pct = sp.pct ? Math.round(sp.pct * 100) : 0;
+    if (sp.type === 'thunder') return '斬ると天から雷が落ち、近くの敵 最大' + (sp.count || 2) + '体に攻撃力の' + pct + '%のダメージ（約' + sec + '秒に1回）';
+    if (sp.type === 'shock') return '斬撃と同時に周囲へ衝撃波を放つ（攻撃力の' + pct + '%' + (sp.dot ? '・' + (DOT_NAMES[sp.dot] || sp.dot) + '付与' : '') + '、約' + sec + '秒に1回）';
+    if (sp.type === 'echo') return '一閃の後、残光が' + (sp.hits || 2) + '回追い斬る（各 攻撃力の' + pct + '%、約' + sec + '秒に1回）';
+    if (sp.type === 'reap') return '敵を倒すと最大HPの' + Math.round((sp.healPct || 0.03) * 100) + '%回復（連続発動は約' + sec + '秒に1回）';
+    if (sp.type === 'brand') return '斬った敵に' + (DOT_NAMES[sp.dot] || sp.dot) + 'を付与する（毎回発動・待ち時間なし）';
+    return '特殊な力が宿っている';
+  }
+  function specialBlock(sp) {
+    const col = sp.color || '#ffe27a';
+    return '<div class="sp-effect" style="border-left-color:' + col + '"><span class="sp-name" style="color:' + col + '">✦ 特殊効果「' + sp.name + '」</span><span class="sp-desc">' + specialDesc(sp) + '</span></div>';
+  }
+
   // 商館のカテゴリ分け（表示のみ・在庫データは不変）
   const SHOP_CAT_ORDER = ['回復・治療', '食料', '弾薬', '強化薬', '投擲・爆薬', '農耕の種', '設置・道具', '成長の秘宝', '遺物・護符', '素材・その他', '掘り出し物'];
   function shopCategory(t) {
@@ -508,8 +527,9 @@ Game.UI = (function () {
             const owned = p.skills && p.skills[n.id];
             const can = Game.Player.canUnlock(n.id);
             const cls = owned ? 'owned' : can ? 'can' : 'locked';
+            const isPassive = n.id.indexOf('p_') === 0; // T5パッシブ: 習得すれば常時/条件で勝手に働く
             h += '<button class="sk-node ' + cls + '" data-skill="' + n.id + '" title="' + n.desc + '">' +
-              '<b>' + n.name + '</b><span class="sk-cost">' + (owned ? '習得済' : n.cost + 'P') + '</span><span class="sk-desc">' + n.desc + '</span></button>';
+              '<b>' + n.name + '</b>' + (isPassive ? '<span class="sk-auto">自動発動</span>' : '') + '<span class="sk-cost">' + (owned ? '習得済' : n.cost + 'P') + '</span><span class="sk-desc">' + n.desc + '</span></button>';
           });
           h += '</div>';
         }
@@ -726,6 +746,7 @@ Game.UI = (function () {
     const def = Game.ITEMS[stack.id]; if (!def) return null;
     let html = '<div class="tt-name" style="color:' + (stack.roll ? Game.Loot.rarityColor(stack) : (def.color || '#fff')) + '">' + (stack.roll ? Game.Loot.displayName(stack) : def.name) + '</div>';
     if (Game.Loot.rollable(stack.id)) html += '<div class="tt-stat">' + Game.Loot.statText(stack) + '</div>';
+    if (def.special) html += '<div class="tt-stat" style="color:' + (def.special.color || '#ffe27a') + '">✦ ' + def.special.name + ' — ' + specialDesc(def.special) + '</div>';
     // 装備比較（武器=手持ち比 / 防具=装備中比）
     if (Game.Player.currentWeaponAtk) {
       if (def.attack != null) { const eff = Game.Player.effAttack(Game.Loot.stats(stack).atk); html += '<div class="tt-stat">攻撃 ' + eff + ' ' + cmpDelta(eff - Game.Player.currentWeaponAtk()) + '</div>'; }
@@ -743,6 +764,7 @@ Game.UI = (function () {
   }
   function showTip(cell, container, i) {
     if (!el.tooltip) return;
+    if (Date.now() - lastTouchT < 700) return; // タッチ直後の擬似mouseenterでは出さない(スマホで残留するため)
     const arr = container === el.hotbar ? Game.Inventory.slots() : null;
     // どのスロット配列か特定（hotbar/inv/chest/enchant 共通: data-index or order）
     const slots = Game.Inventory.slots();
@@ -769,8 +791,9 @@ Game.UI = (function () {
   }
   function hideTip() { if (el.tooltip) el.tooltip.style.display = 'none'; }
   // タッチ環境では mouseleave が発火せずツールチップが残るため、画面タッチで強制的に消す
+  let lastTouchT = 0;
   if (typeof document !== 'undefined') {
-    document.addEventListener('touchstart', function () { hideTip(); }, { passive: true });
+    document.addEventListener('touchstart', function () { lastTouchT = Date.now(); hideTip(); }, { passive: true });
   }
 
   function refreshHotbar() {
@@ -993,12 +1016,121 @@ Game.UI = (function () {
     refreshEnchant(); refreshHotbar();
   }
 
+  // 状態異常の「何が起きているか＋対処」平易ヘルプ(アイコン行タップで表示)
+  const STATUS_HELP = {
+    bleed:      { what: 'HPがじわじわ減っている', fix: '包帯で止血できる' },
+    poison:     { what: 'HPが減り続けている', fix: '解毒薬で治る' },
+    infection:  { what: '放置すると悪化して出血も併発する', fix: '早めに解毒薬で治療しよう' },
+    cold:       { what: '体が凍えてHPが減っている', fix: '焚き火など火のそばへ・防寒装備を着よう' },
+    burn:       { what: '炎に焼かれHPが速く減っている', fix: '時間経過で鎮火する。回復を惜しまずに' },
+    wellfed:    { what: '満腹でHPが自然回復している(良い状態)', fix: '' },
+    strength:   { what: '薬の力で攻撃力が上がっている', fix: '' },
+    swiftness:  { what: '薬の力で足が速くなっている', fix: '' },
+    ironskin:   { what: '薬の力で守りが固くなっている', fix: '' },
+    regen_buff: { what: '薬の力でHPが回復し続けている', fix: '' },
+  };
+  let statusPop = null, statusPopTimer = null;
+  function hideStatusHelp() { if (statusPop) statusPop.classList.remove('show'); clearTimeout(statusPopTimer); }
+  function toggleStatusHelp() {
+    if (!Game.Status) return;
+    if (statusPop && statusPop.classList.contains('show')) { hideStatusHelp(); return; }
+    const list = Game.Status.activeList();
+    if (!list.length) return;
+    if (!statusPop) {
+      statusPop = document.createElement('div'); statusPop.id = 'status-pop';
+      statusPop.addEventListener('click', hideStatusHelp);
+      (document.getElementById('app') || document.body).appendChild(statusPop);
+    }
+    let h = '';
+    list.forEach(function (s) {
+      const hp = STATUS_HELP[s.key] || { what: '', fix: '' };
+      h += '<div class="sp-row"><span class="sp-i" style="border-color:' + s.color + '">' + s.icon + '</span><div><b style="color:' + s.color + '">' + s.name + '</b> <span class="sp-w">' + hp.what + '</span>' + (hp.fix ? '<br><span class="sp-f">▶ ' + hp.fix + '</span>' : '') + '</div></div>';
+    });
+    statusPop.innerHTML = h;
+    statusPop.classList.add('show');
+    Game.Audio.play('cursor');
+    clearTimeout(statusPopTimer);
+    statusPopTimer = setTimeout(hideStatusHelp, 6000);
+  }
+  let statusTicks = 0;
   function refreshStatus() {
     if (!el.statusRow || !Game.Status) return;
     const list = Game.Status.activeList();
     el.statusRow.innerHTML = list.map(function (s) {
       return '<span class="st-chip" style="border-color:' + s.color + '" title="' + s.name + '">' + s.icon + '</span>';
     }).join('');
+    if (!list.length) hideStatusHelp();
+    // 低頻度の見守り処理をここに相乗り(0.5秒周期・非ポーズ時のみ呼ばれる)
+    statusTicks++;
+    hintTick();
+    if (statusTicks % 4 === 0) craftableTick(); // 約2秒ごと
+  }
+
+  // ===== 初回セッション マイクロガイド =====
+  // 非モーダルの小ピルを1件ずつ表示(タップで次へ/条件達成で自動前進)。
+  // 達成フラグは save.js のホワイトリスト外のため Game.state には持たせず、
+  // ui.js 管轄の localStorage キー(シード毎)で永続化する。
+  const HINT_STEPS = [
+    { icon: '🕹', text: '画面の左半分をなぞると移動できる', life: 20, done: function () { const p = Game.state.player, sp = Game.state.spawn, TS = Game.CFG.TILE_SIZE; if (!sp || sp.tx == null) return false; return Math.hypot(p.x - (sp.tx + 0.5) * TS, p.y - (sp.ty + 0.5) * TS) > 140; } },
+    { icon: '⛏', text: '「採掘」ボタンで木や石を集めよう', life: 40, done: function () { return Game.Inventory.count('wood') > 0 || Game.Inventory.count('stone') > 0; } },
+    { icon: '🔨', text: '「袋」を開いてクラフトで道具を作ろう', life: 45, done: function () { return Game.Achievements && Game.Achievements.has('first_craft'); } },
+    { icon: '🌙', text: '夜は敵が強くなる。松明と武器を備えよう', life: 25, done: function () { return Game.Inventory.count('torch') > 0; } },
+    { icon: '💾', text: '進行は自動保存される。⚙からも保存できる', life: 12, done: function () { return false; } },
+  ];
+  let hintPill = null, hintIdx = -1, hintShownAt = 0, hintsActive = false, hintKey = null, hintStartTick = 0;
+  function hintsDoneFlag() { try { return localStorage.getItem(hintKey) === '1'; } catch (e) { return false; } }
+  function markHintsDone() { hintsActive = false; if (hintPill) hintPill.classList.remove('in'); try { localStorage.setItem(hintKey, '1'); } catch (e) {} }
+  function startHints() {
+    if (!Game.state) return;
+    hintKey = 'hk_hints:' + (Game.state.seed || 0);
+    if (hintsDoneFlag()) return; // このセーブでは案内済み
+    if (Game.state.player && Game.state.player.level >= 3) { markHintsDone(); return; } // 既に基本を知っている進行度
+    hintsActive = true; hintIdx = -1; hintStartTick = Game.state.tick;
+    advanceHint();
+  }
+  function advanceHint() {
+    hintIdx++;
+    // 既に達成済みの段階は読み飛ばす(ロード再開時など)
+    while (hintIdx < HINT_STEPS.length) {
+      let d = false; try { d = HINT_STEPS[hintIdx].done(); } catch (e) {}
+      if (!d) break; hintIdx++;
+    }
+    if (hintIdx >= HINT_STEPS.length) { markHintsDone(); return; }
+    if (!hintPill) {
+      hintPill = document.createElement('button'); hintPill.id = 'hint-pill'; hintPill.type = 'button';
+      hintPill.addEventListener('click', function () { Game.Audio.play('select'); advanceHint(); });
+      (document.getElementById('app') || document.body).appendChild(hintPill);
+    }
+    const st = HINT_STEPS[hintIdx];
+    hintPill.innerHTML = '<span class="hp-ic">' + st.icon + '</span><span class="hp-tx">' + st.text + '</span><span class="hp-x">✕</span>';
+    hintPill.classList.add('in');
+    hintShownAt = Game.state.tick;
+  }
+  function hintTick() {
+    if (!hintsActive || hintIdx < 0 || !Game.state) return;
+    if (Game.state.tick - hintStartTick > 9000) { markHintsDone(); return; } // ガイドは開始から約5分間だけ
+    const st = HINT_STEPS[hintIdx];
+    let ok = false; try { ok = st.done(); } catch (e) {}
+    if (ok || (Game.state.tick - hintShownAt) > st.life * 30) advanceHint();
+  }
+
+  // ===== 「作れるようになった!」ウォッチャー =====
+  // 素材/作業台の変化で新たに作成可能になったレシピを検知し、まとめて1トースト＋袋ボタンに光バッジ
+  let craftKnown = null;
+  function craftableTick() {
+    if (!Game.Crafting || !Game.RECIPES || !Game.state) return;
+    const list = Game.Crafting.availableList();
+    if (!craftKnown) { craftKnown = {}; list.forEach(function (e, i) { if (e.can) craftKnown[i] = 1; }); return; } // 初回は基準登録のみ
+    const freshNames = [], seenNm = {};
+    list.forEach(function (e, i) {
+      if (!e.can || craftKnown[i]) return;
+      craftKnown[i] = 1;
+      const d = Game.ITEMS[e.recipe.out.id]; const nm = d ? d.name : e.recipe.out.id;
+      if (!seenNm[nm]) { seenNm[nm] = 1; freshNames.push(nm); }
+    });
+    if (!freshNames.length) return;
+    const bi = document.getElementById('btn-inv'); if (bi) bi.classList.add('craft-new');
+    richToast('🔨 <b style="color:#ffd86b">作れるようになった!</b> <span style="color:#cfe0f0">' + esc(freshNames.slice(0, 2).join('、')) + (freshNames.length > 2 ? ' ほか' + (freshNames.length - 2) + '種' : '') + '</span>', 'tst-craft', 2100);
   }
 
   function refreshNet() {
@@ -1176,6 +1308,7 @@ Game.UI = (function () {
       const eff = Game.Player.effAttack(Game.Loot.stats(st).atk);
       h += '<div class="ench-stat">' + (def.aoe ? '🌀 範囲攻撃' : '🗡 単体攻撃') + '　実効攻撃力 <b style="color:#ffd86b">' + eff + '</b> ' + cmpDelta(eff - Game.Player.currentWeaponAtk()) + '<span style="color:#7a8494;font-size:.78rem">（手持ち比）</span></div>';
     }
+    if (def.special) h += specialBlock(def.special); // 上位武器: 効果名+発動条件を平易に
     if (def.armor != null) { const av = Game.Loot.stats(st).armor; h += '<div class="ench-stat">🛡 防御 <b style="color:#9fd8ff">' + av + '</b> ' + cmpDelta(av - Game.Player.equippedArmorAt(def.slot)) + '<span style="color:#7a8494;font-size:.78rem">（装備中比）</span></div>'; }
     if (def.relic) {
       const RL = { atk: '攻撃', armor: '防御', hp: '最大HP', crit: '会心率', moveSpd: '移動速度', lifesteal: '吸血', regen: 'HP回復', xpBoost: '経験', staminaMax: 'スタミナ' };
@@ -1541,7 +1674,10 @@ Game.UI = (function () {
   function toggleInventory() {
     el.invScreen.classList.toggle('hidden');
     Game.state.paused = !el.invScreen.classList.contains('hidden');
-    if (!el.invScreen.classList.contains('hidden')) { invSelected = -1; refreshInventory(); }
+    if (!el.invScreen.classList.contains('hidden')) {
+      invSelected = -1; refreshInventory();
+      const bi = document.getElementById('btn-inv'); if (bi) bi.classList.remove('craft-new'); // クラフト解禁バッジは開いたら消灯
+    }
     refreshAmmo(); // オーバーレイ開閉で弾薬HUDの表示/非表示を即反映
   }
 
@@ -1616,6 +1752,14 @@ Game.UI = (function () {
   }
 
   // ===== 死亡サマリー =====
+  // 死因ごとの一行対策ヒント(次の一手をその場で学べる)
+  const DEATH_HINTS = {
+    '餓死': '食料を持ち歩き、空腹バーが減り切る前に食べよう',
+    '正気の崩壊': '影の世界に長居は禁物。松明や焚き火のそばで正気は戻る',
+    '状態異常': '包帯・解毒薬を常備しよう。左上の状態アイコンをタップすると対処法が見られる',
+    '棘の反射': '棘を持つ敵には弓・銃・投擲など遠くからの攻撃が安全',
+    '魔物の襲撃': '防具を整え、回避ロール(無敵時間)を使おう。夜は明かりの近くが安全',
+  };
   function showDeath(s) {
     const box = document.getElementById('death-stats'); if (!box) return;
     box.innerHTML =
@@ -1624,15 +1768,111 @@ Game.UI = (function () {
       '<div>レベル　　<b>' + s.level + '</b></div>' +
       '<div>撃破ボス　<b style="color:#ffd86b">' + s.bosses + '</b> 体</div>' +
       '<div>討伐総数　<b>' + s.kills + '</b></div>' +
-      '<div>所持金塊　<b style="color:#e8c54a">' + s.gold + '</b></div>';
+      '<div>所持金塊　<b style="color:#e8c54a">' + s.gold + '</b></div>' +
+      '<div class="death-hint">💡 ' + (DEATH_HINTS[s.cause] || '回復アイテムと回避ロールを忘れずに。装備の更新が生存の鍵') + '</div>';
     document.getElementById('death-screen').classList.remove('hidden');
   }
 
-  function toast(msg) {
+  // ===== トースト & 祝祭バナー =====
+  // 既存の toast() 呼び出し(mobs/player/achievements 等)をメッセージ内容で振り分け、
+  // 節目イベント(レベルアップ/ボス討伐/実績/レジェンダリー入手)はバナー演出へ昇格する。
+  const RM = (typeof window.matchMedia === 'function') && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function plainToast(msg) {
+    el.toast.className = ''; // 前回のレアリティ装飾等を解除
     el.toast.textContent = msg;
     el.toast.classList.add('show');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(function () { el.toast.classList.remove('show'); }, 1600);
+  }
+  function richToast(html, cls, ms) {
+    el.toast.className = cls || '';
+    el.toast.innerHTML = html;
+    el.toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.toast.classList.remove('show'); }, ms || 1800);
+  }
+  // 単一バナー＋キュー(最大3)。ゲームを止めず上部に流す
+  let bannerEl = null, bannerTimer = null;
+  const bannerQ = [];
+  function showBanner(icon, titleHtml, subHtml, cls, ms) {
+    if (!bannerEl) {
+      bannerEl = document.createElement('div'); bannerEl.id = 'event-banner';
+      bannerEl.innerHTML = '<div class="eb-inner"><span class="eb-ic"></span><div class="eb-tx"><b class="eb-title"></b><span class="eb-sub"></span></div></div>';
+      (document.getElementById('app') || document.body).appendChild(bannerEl);
+    }
+    if (bannerTimer) { if (bannerQ.length < 3) bannerQ.push([icon, titleHtml, subHtml, cls, ms]); return; }
+    bannerEl.className = 'eb-show' + (cls ? ' ' + cls : '');
+    bannerEl.querySelector('.eb-ic').textContent = icon || '';
+    bannerEl.querySelector('.eb-title').innerHTML = titleHtml || '';
+    const sub = bannerEl.querySelector('.eb-sub');
+    sub.innerHTML = subHtml || ''; sub.style.display = subHtml ? '' : 'none';
+    bannerTimer = setTimeout(function () {
+      bannerEl.className = ''; bannerTimer = null;
+      const nx = bannerQ.shift();
+      if (nx) setTimeout(function () { showBanner(nx[0], nx[1], nx[2], nx[3], nx[4]); }, 240);
+    }, ms || 2200);
+  }
+  // レベルアップ祝祭: セッション初回は盛大(金バースト大+バナー)、以降は控えめトースト
+  let lvlUps = 0, burstEl = null;
+  function goldBurst(big) {
+    if (RM) return; // 動きを抑える設定を尊重
+    if (!burstEl) { burstEl = document.createElement('div'); burstEl.id = 'lvl-burst'; (document.getElementById('app') || document.body).appendChild(burstEl); }
+    burstEl.className = ''; void burstEl.offsetWidth;
+    burstEl.className = big ? 'go big' : 'go';
+  }
+  function celebrateLevelUp(msg) {
+    const m = msg.match(/Lv\.(\d+)/); const lv = m ? m[1] : '?';
+    lvlUps++;
+    goldBurst(lvlUps === 1);
+    if (lvlUps === 1) {
+      showBanner('✨', 'LEVEL UP！ <em>Lv.' + lv + '</em>', '最大HP+2・スキルP+2 — 左上のLvバッジから強化しよう', 'eb-lvl eb-big', 3000);
+    } else {
+      richToast('<b style="color:#ffe27a">▲ LEVEL UP — Lv.' + lv + '</b> <span style="color:#cfe0f0">スキルP+2</span>', 'tst-lvl', 1700);
+    }
+  }
+  // レア以上の入手: レアリティ色＋アイテムアイコン。レジェンダリーは初回のみバナー(名前ごと)
+  const legendSeen = {};
+  function pickupToast(msg) {
+    const m = msg.match(/^入手: (.+)（(.+)）$/);
+    if (!m) return false;
+    const name = m[1], rname = m[2];
+    let idx = -1;
+    Game.Loot.RARITY.forEach(function (r, i) { if (r.name === rname) idx = i; });
+    if (idx < 1) return false; // コモンは通常トーストのまま(繰り返しは控えめに)
+    const col = Game.Loot.RARITY[idx].color;
+    // 表示名は affix接頭辞+基礎名 のため、末尾一致(最長)で元アイテムを推定しアイコン取得
+    let baseId = null, bl = 0;
+    for (const id in Game.ITEMS) { const d = Game.ITEMS[id]; if (d.name && name.length >= d.name.length && name.slice(-d.name.length) === d.name && d.name.length > bl) { baseId = id; bl = d.name.length; } }
+    let url = null; try { url = baseId && Game.Icons ? Game.Icons.dataURL(baseId, null) : null; } catch (e) {}
+    if (idx === 3 && !legendSeen[name]) {
+      legendSeen[name] = 1;
+      showBanner('🌟', '<em style="color:' + col + '">' + esc(name) + '</em>', 'レジェンダリーを手に入れた！', 'eb-leg eb-big', 2600);
+      return true;
+    }
+    const ic = url ? '<span class="tst-ic" style="background-image:url(' + url + ')"></span>' : '';
+    richToast(ic + '<b style="color:' + col + '">' + esc(name) + '</b><span class="tst-r" style="color:' + col + '">' + esc(rname) + '</span>', 'tst-rare r' + idx, 1900);
+    return true;
+  }
+  function toast(msg) {
+    msg = String(msg == null ? '' : msg);
+    try {
+      if (msg.indexOf('レベルアップ！') === 0) { celebrateLevelUp(msg); return; }
+      if (msg.indexOf('実績: ') >= 0 && msg.indexOf('🏆') === 0) { // achievements.js: '🏆 実績: NAME — DESC'
+        const body = msg.split('実績: ')[1] || '';
+        const sp = body.split(' — ');
+        showBanner('🏆', esc(sp[0] || '実績解除'), esc(sp[1] || '実績を解除した'), 'eb-ach', 2400);
+        return;
+      }
+      const bk = msg.indexOf('を打ち倒した！'); // mobs.js のボス撃破文言のみ(雑魚討伐は含まれない)
+      if (bk > 0) {
+        const rest = msg.slice(bk + 'を打ち倒した！'.length).trim();
+        showBanner('👑', esc(msg.slice(0, bk)) + '<em class="eb-slay">討伐</em>', esc(rest), 'eb-boss eb-big', 3000);
+        return;
+      }
+      if (msg.indexOf('入手: ') === 0 && pickupToast(msg)) return;
+    } catch (e) { /* 演出に失敗しても通常トーストで内容は必ず届ける */ }
+    plainToast(msg);
   }
 
   // ミニマップ（周辺地形をダウンサンプル）
@@ -1729,7 +1969,7 @@ Game.UI = (function () {
     let sub = '';
     if (def.tool === 'gun') sub = '🔫 銃 — 弾:' + (Game.ITEMS[def.ammo] ? Game.ITEMS[def.ammo].name : def.ammo) + ' / 攻撃で発射';
     else if (def.throw) sub = '💥 投擲 — 攻撃で投げる';
-    else if (def.attack != null) sub = '🗡 武器 — 攻撃力 ' + Game.Player.effAttack(Game.Loot.stats(st).atk);
+    else if (def.attack != null) sub = '🗡 武器 — 攻撃力 ' + Game.Player.effAttack(Game.Loot.stats(st).atk) + (def.special ? '　✦' + def.special.name : '');
     else if (def.tool) sub = '⛏ ' + def.tool + ' — ' + (def.place !== undefined ? '採掘/設置' : '採掘') + (def.tier ? ' Lv' + def.tier : '');
     else if (def.armor != null) sub = '🛡 防具 — タップで装備';
     else if (def.relic) sub = '💠 遺物 — タップで装備';

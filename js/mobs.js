@@ -12,8 +12,14 @@ Game.Mobs = (function () {
     if (!def) return;
     const diff = Game.DIFFICULTIES[Game.state.difficulty] || Game.DIFFICULTIES.normal;
     const mult = 1 + (Game.state.ngLevel || 0) * Game.TUNE.NG_HP_PER;
-    const hp = Math.round(def.hp * mult);
-    const dmgMult = mult * (diff.dmgMult != null ? diff.dmgMult : 1);
+    // エリア危険度バンド(Game.DANGER/Game.World.dangerBandAt): 出現地点の帯で控えめに補強。
+    // 非ボス敵対のみ・帯4でも+36%上限(既存ネームドボスのステータスは不変)。XP/バーツも帯で上昇
+    const DZ = Game.DANGER;
+    const band = (DZ && Game.World.dangerBandAt) ? Game.World.dangerBandAt(Math.floor(wx / TS), Math.floor(wy / TS)) : 1;
+    const bandOver = Math.max(0, band - 1);
+    const bandMult = (DZ && def.hostile && !def.boss) ? 1 + Math.min(DZ.STAT_MAX, DZ.STAT_PER * bandOver) : 1;
+    const hp = Math.round(def.hp * mult * bandMult);
+    const dmgMult = mult * bandMult * (diff.dmgMult != null ? diff.dmgMult : 1);
     Game.state._mobId = (Game.state._mobId || 0) + 1;
     const m = {
       id: Game.state._mobId, type: type, def: def,
@@ -28,9 +34,13 @@ Game.Mobs = (function () {
       tint: Math.round((Math.random() - 0.5) * 38),  // 色の明暗揺らぎ -19〜+19
       moveStyle: pickMoveStyle(type, def),
       wobble: Math.random() * 6,
+      band: band,
+      xpMult: (DZ && def.hostile) ? 1 + DZ.XP_PER * bandOver : 1,
     };
     // 精鋭(elite)抽選: 非ボスの敵対モブが低確率で精鋭化（HP/攻撃UP・発光オーラ・確定レアドロップ）
-    if (!def.boss && def.hostile && Math.random() < (TUNE.ELITE_CHANCE || 0.04)) {
+    // 帯別倍率: 安全圏0=精鋭なし / 辺境2倍 / 深域3倍 / 深域+4倍 → 奥地ほど戦利品厳選が捗る
+    const eliteMult = (DZ && DZ.ELITE_MULT[band] != null) ? DZ.ELITE_MULT[band] : 1;
+    if (!def.boss && def.hostile && Math.random() < (TUNE.ELITE_CHANCE || 0.04) * eliteMult) {
       m.elite = true;
       m.maxHp = m.hp = Math.round(m.maxHp * (TUNE.ELITE_HP_MULT || 2.2));
       m.dmg = Math.round(m.dmg * (TUNE.ELITE_DMG_MULT || 1.5));
@@ -43,8 +53,9 @@ Game.Mobs = (function () {
         if (af.speed) m.eliteSpeedMult = af.speed;
         m.auraRGB = hexToRgb(af.aura);
       }
-      // チャンピオン: 精鋭の上位レア。2つ目のアフィックス＋固有名＋追加強化＋専用カラー
-      if (ak.length && Math.random() < (TUNE.CHAMPION_CHANCE || 0.08)) {
+      // チャンピオン: 精鋭の上位レア。2つ目のアフィックス＋固有名＋追加強化＋専用カラー(深域では2倍)
+      const champMult = (DZ && DZ.CHAMP_MULT[band] != null) ? DZ.CHAMP_MULT[band] : 1;
+      if (ak.length && Math.random() < (TUNE.CHAMPION_CHANCE || 0.08) * champMult) {
         m.champion = true;
         m.maxHp = m.hp = Math.round(m.maxHp * (TUNE.CHAMPION_HP_MULT || 1.6));
         m.dmg = Math.round(m.dmg * (TUNE.CHAMPION_DMG_MULT || 1.2));
@@ -92,6 +103,9 @@ Game.Mobs = (function () {
       if (!Game.World.isWalkable(tx, ty)) continue;
       const g = Game.World.groundAt(tx, ty);
       const diff = Game.DIFFICULTIES[Game.state.difficulty] || Game.DIFFICULTIES.normal;
+      // エリア危険度バンド: 湧き地点の帯で「どの種が出るか」を選別(ステータス乗算より種選別を優先)
+      const DZ = Game.DANGER;
+      const band = (DZ && Game.World.dangerBandAt) ? Game.World.dangerBandAt(tx, ty) : 1;
       let type = null;
       if (shadowWorld) {
         if (!diff.spawnHostiles) continue; // のんびり: 影世界でも敵なし
@@ -106,30 +120,43 @@ Game.Mobs = (function () {
         if (!type)
         type = pool[Math.floor(Math.random() * pool.length)];
       } else if (night && diff.spawnHostiles) {
-        // 夜は敵対モブ（のんびりは出ない）。血の月は強敵寄り
+        // 夜は敵対モブ（のんびりは出ない）。血の月は強敵寄りで帯制限も無視する唯一の例外
         // 血の月の夜は地上ボス「黄昏の巨像」が稀出現(1体まで)
         if (Game.state.bloodMoon && Game.state.worldName === 'light' && Math.random() < 0.02 && countType('twilight_colossus') === 0) {
           type = 'twilight_colossus';
-        } else if (g === Game.TILE.SWAMP && Game.state.worldName === 'light' && Math.random() < 0.02 && countType('swamp_lord') === 0) {
+        } else if (g === Game.TILE.SWAMP && Game.state.worldName === 'light' && band >= 1 && Math.random() < 0.02 && countType('swamp_lord') === 0) {
           type = 'swamp_lord'; // 夜の毒の沼地に沼の主が稀出現
-        } else if (g === Game.TILE.VOLCANIC && Game.state.worldName === 'light' && Math.random() < 0.02 && countType('lava_lord') === 0) {
+        } else if (g === Game.TILE.VOLCANIC && Game.state.worldName === 'light' && band >= 1 && Math.random() < 0.02 && countType('lava_lord') === 0) {
           type = 'lava_lord'; // 火山地帯に溶岩の王が稀出現
-        } else if (g === Game.TILE.MUSHROOM && Game.state.worldName === 'light' && Math.random() < 0.02 && countType('spore_queen') === 0) {
+        } else if (g === Game.TILE.MUSHROOM && Game.state.worldName === 'light' && band >= 1 && Math.random() < 0.02 && countType('spore_queen') === 0) {
           type = 'spore_queen'; // キノコの森に胞子の女王が稀出現
-        } else if (Math.random() < (Game.state.bloodMoon ? 0.03 : 0.015) && !hasMidboss()) {
-          // 中ボス(ランクD)が夜に稀出現。1体まで
+        } else if ((band >= 1 || Game.state.bloodMoon) && Math.random() < (Game.state.bloodMoon ? 0.03 : 0.015) * (band >= 3 ? 2 : 1) && !hasMidboss()) {
+          // 中ボス(ランクD)が夜に稀出現。1体まで。安全圏では血の月以外出ない・深域は率2倍
           const mb = ['dire_alpha', 'stone_warden', 'broodmother'];
           type = mb[Math.floor(Math.random() * mb.length)];
         } else {
-          const pool = Game.state.bloodMoon
-            ? ['zombie', 'zombie', 'skeleton', 'spider', 'leech', 'bandit', 'bat', 'gazer', 'troll', 'harpy', 'viper', 'charger']
-            : ['zombie', 'skeleton', 'spider', 'slime', 'leech', 'bat', 'gazer', 'harpy', 'viper', 'charger'];
+          // 帯別プール: 安全圏=弱敵のみ＋湧き半減 / 開拓圏=従来 / 辺境・深域=強敵混成(config.js の DANGER 表)
+          let pool;
+          if (Game.state.bloodMoon) {
+            pool = ['zombie', 'zombie', 'skeleton', 'spider', 'leech', 'bandit', 'bat', 'gazer', 'troll', 'harpy', 'viper', 'charger'];
+          } else if (band === 0) {
+            if (Math.random() < 0.5) continue; // 安全圏: 夜も湧きを半減して序盤の理不尽死を防ぐ
+            pool = (DZ && DZ.POOL_NIGHT[0]) || ['slime', 'zombie', 'skeleton'];
+          } else if (band >= 2 && DZ && DZ.POOL_NIGHT[Math.min(band, 3)]) {
+            pool = DZ.POOL_NIGHT[Math.min(band, 3)];
+          } else {
+            pool = ['zombie', 'skeleton', 'spider', 'slime', 'leech', 'bat', 'gazer', 'harpy', 'viper', 'charger'];
+          }
           type = pool[Math.floor(Math.random() * pool.length)];
         }
       } else {
         // 昼: 動物＋環境ごとの敵（砂漠=サソリ/呪術師, 雪原=白熊, 森=稀に猪/トロル/旅人）
-        const diffH = diff.spawnHostiles;
-        if (g === Game.TILE.GRASS || g === Game.TILE.FOREST || g === Game.TILE.BLOOM) {
+        // 安全圏(band0)の昼は敵対を湧かせない(オンボーディング保護)。深域は昼でも強敵が徘徊
+        const diffH = diff.spawnHostiles && band >= 1;
+        if (band >= 3 && diffH && Math.random() < 0.18) {
+          const dp = (DZ && DZ.POOL_DAY3) || ['troll', 'charger', 'golem'];
+          type = dp[Math.floor(Math.random() * dp.length)];
+        } else if (g === Game.TILE.GRASS || g === Game.TILE.FOREST || g === Game.TILE.BLOOM) {
           if (Math.random() < 0.04 && countType('wanderer') === 0) type = 'wanderer';
           else if (diffH && g === Game.TILE.FOREST && Math.random() < 0.05) type = 'troll';
           else if (diffH && g === Game.TILE.FOREST && Math.random() < 0.12) type = 'mud_crawler';
@@ -142,8 +169,8 @@ Game.Mobs = (function () {
         } else if (g === Game.TILE.SNOW && diffH && Math.random() < 0.4) {
           const r2 = Math.random();
           type = r2 < 0.4 ? 'frost_wolf' : r2 < 0.7 ? 'frost_spider' : 'ice_bear';
-        } else if (g === Game.TILE.STONE && Math.random() < 0.3) {
-          type = 'slime';
+        } else if (g === Game.TILE.STONE && diffH && Math.random() < 0.3) {
+          type = 'slime'; // 敵対のためのんびり/安全圏では出さない(帯ゲート追加)
         } else if (g === Game.TILE.SWAMP && diffH && Math.random() < 0.55) {
           // 毒の沼地: 沼特有の敵が出やすい
           const sp = ['bog_horror', 'mud_crawler', 'leech', 'swamp_wisp', 'swamp_wisp', 'giant_toad', 'giant_toad', 'viper'];
@@ -170,19 +197,24 @@ Game.Mobs = (function () {
         if (Math.random() > 0.32) continue;
         const stx = ptx + dx, sty = pty + dy;
         const g = Game.World.groundAt(stx, sty);
+        // ダンジョンテーマ判定: 巣タイルの ground はダンジョン床(DUNGEON_FLOOR)になるため、
+        // 自然地形から復元する WorldGen.dungeonThemeAt でテーマ湧きを正しく決める(旧: g 判定は床で常に不成立だった)
+        const DZ = Game.DANGER;
+        const theme = (Game.WorldGen.dungeonThemeAt && Game.state.worldName !== 'space')
+          ? Game.WorldGen.dungeonThemeAt(stx, sty, Game.state.seed) : null;
         let pool;
         if (spObj === Game.OBJ.BANDIT_SPAWNER) { pool = ['bandit', 'bandit', 'bandit', 'skeleton']; } // 略奪者の野営地
         else if (Game.state.worldName === 'space') { pool = (Math.random() < 0.04 && countType('star_guardian') === 0) ? ['star_guardian'] : ['void_drone', 'void_drone', 'astral_serpent', 'void_jelly']; }
-        else if (Game.state.worldName === 'shadow') pool = ['wraith', 'watcher', 'hex_caster', 'gazer'];
+        else if (Game.state.worldName === 'shadow') pool = (theme && DZ && DZ.DUNGEON_POOLS.shadow) ? DZ.DUNGEON_POOLS.shadow : ['wraith', 'watcher', 'hex_caster', 'gazer']; // 影神殿=最高危険帯
+        else if (theme && DZ && DZ.DUNGEON_POOLS[theme]) pool = DZ.DUNGEON_POOLS[theme]; // 遺跡=低/氷窟・墳墓=中/工房・水晶洞=高
         else if (g === Game.TILE.SNOW) pool = ['frost_wisp', 'frost_wisp', 'cursed_armor', 'ice_bear'];
         else if (g === Game.TILE.SAND) pool = ['scorpion', 'scorpion', 'dust_mage', 'cursed_armor', 'golem'];
         else pool = ['zombie', 'skeleton', 'spider', 'cursed_armor', 'golem', 'ember_imp', 'bog_horror'];
         // テーマ別ダンジョンボス（稀・1体まで）
         let type = null;
-        if (Game.state.worldName === 'light' && spObj !== Game.OBJ.BANDIT_SPAWNER) {
-          if (g === Game.TILE.SAND && Math.random() < 0.03 && countType('tomb_king') === 0) type = 'tomb_king';
-          else if (g === Game.TILE.STONE && Math.random() < 0.03 && countType('forge_titan') === 0) type = 'forge_titan';
-          else if (g === Game.TILE.SNOW && Math.random() < 0.03 && countType('crystal_queen') === 0) type = 'crystal_queen';
+        if (Game.state.worldName === 'light' && spObj !== Game.OBJ.BANDIT_SPAWNER && theme && DZ && DZ.DUNGEON_BOSS[theme]) {
+          const tb = DZ.DUNGEON_BOSS[theme];
+          if (Math.random() < 0.03 && countType(tb) === 0) type = tb;
         }
         if (!type) type = pool[Math.floor(Math.random() * pool.length)];
         // 近傍の歩ける床へ
@@ -284,9 +316,43 @@ Game.Mobs = (function () {
     return true;
   }
 
+  // ===== 危険度バンド越え警告(ローカル・セッション毎1回・ヒステリシス付き) =====
+  // 状態は Game.state 直下(_bandWatch)に置く: serialize() の許可リスト外なので保存されず、
+  // リロード/ニューゲームで再アーム(=セッション毎)。境界振動対策として同一帯を連続2回(約1秒)観測で確定
+  function watchDangerBand() {
+    if (!Game.World.dangerBandAt || !Game.state.player || Game.state.paused) return;
+    if (Game.state.tick % 15 !== 0) return;
+    let W = Game.state._bandWatch;
+    if (!W) W = Game.state._bandWatch = { seen: {}, cur: 0, pend: -1, n: 0 };
+    const p = Game.state.player;
+    const b = Game.World.dangerBandAt(Math.floor(p.x / TS), Math.floor(p.y / TS));
+    if (b === W.cur) { W.pend = -1; W.n = 0; return; }
+    if (b !== W.pend) { W.pend = b; W.n = 1; return; }
+    W.n++;
+    if (W.n < 2) return;
+    W.cur = b; W.pend = -1; W.n = 0;
+    if (b >= 1 && !W.seen[b]) {
+      W.seen[b] = 1;
+      const DZ = Game.DANGER;
+      const msg = DZ && DZ.TOASTS && DZ.TOASTS[b];
+      if (msg && Game.UI && Game.UI.toast) Game.UI.toast(msg);
+      if (b >= 3) { // 深域: 強めの警告演出(赤フラッシュ＋ライザー＋微シェイク)
+        if (Game.Audio.cue) Game.Audio.cue('riser');
+        if (Game.Render.flash) Game.Render.flash('rgba(200,40,60,0.18)');
+        if (Game.Render.shake) Game.Render.shake(4);
+      } else if (b === 2) {
+        if (Game.Audio.cue) Game.Audio.cue('swell');
+      } else {
+        Game.Audio.play('select');
+      }
+    }
+  }
+
   function update() {
     // コンボ継続タイマー: 時間切れでリセット
     if (Game.state.comboT > 0) { Game.state.comboT--; if (Game.state.comboT === 0) Game.state.combo = 0; }
+    // バンド越え警告はローカル(各プレイヤー画面)で判定 — クライアントでもホスト依存なしで動く
+    watchDangerBand();
     // マルチ: クライアントは敵を simulate せずホストの配信を描画＋自分への接触判定
     if (Game.Net.isConnected() && !Game.Net.host) { clientUpdate(); return; }
 
@@ -724,11 +790,11 @@ Game.Mobs = (function () {
     // 撃破ヒットストップ＋軽いシェイク(格の高い敵ほど長く/強く)
     Game.state.hitstop = Math.max(Game.state.hitstop || 0, (m.def.boss || m.champion) ? 4 : m.elite ? 3 : 2);
     if (Game.Render.shake) Game.Render.shake(m.def.boss ? 8 : m.def.big ? 5 : 3);
-    Game.Player.gainXP(Math.round((m.def.xp || 1) * (1 + (Game.state.ngLevel || 0) * 0.2)) * (m.elite ? 3 : 1)); // 強い敵(NG)・精鋭ほど経験値増
-    // バーツ(通貨)獲得: 敵の格に応じて。精鋭/チャンピオン/ボスほど多い
+    Game.Player.gainXP(Math.round((m.def.xp || 1) * (m.xpMult || 1) * (1 + (Game.state.ngLevel || 0) * 0.2)) * (m.elite ? 3 : 1)); // 強い敵(NG)・精鋭・危険帯ほど経験値増
+    // バーツ(通貨)獲得: 敵の格に応じて。精鋭/チャンピオン/ボス/危険帯ほど多い
     if (m.def.hostile) {
       const pl = Game.state.player;
-      let bts = Math.max(1, Math.round((m.def.xp || 1) * 0.6 * (m.def.boss ? 1.6 : 1)));
+      let bts = Math.max(1, Math.round((m.def.xp || 1) * (m.xpMult || 1) * 0.6 * (m.def.boss ? 1.6 : 1)));
       if (m.elite) bts *= 2; if (m.champion) bts *= 2;
       pl.bts = (pl.bts || 0) + bts;
       if (Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - (m.def.size || 12) * 0.5, '+' + bts + ' bts', '#ffd24a');

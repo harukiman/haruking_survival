@@ -219,6 +219,44 @@ Game.World = (function () {
     return Game.state.worldName === 'shadow' && depthOf() >= Game.TUNE.DEEP_THRESHOLD;
   }
 
+  // ===== エリア危険度バンド =====
+  // 既存地理からの決定論的な純導出(worldgen レイアウト不変・セーブ互換)。定義表は Game.DANGER (config.js) 参照。
+  // band: 0=安全圏(〜40タイル) 1=開拓圏(〜90) 2=辺境(〜160) 3=深域(160+) 4=深域+(補正上限)
+  // 補正: ダンジョンは明示ティア(遺跡=1 氷窟/墳墓=2 工房/水晶洞=3 影神殿=4) /
+  //       雪原/砂漠/火山 +1(安全圏では不適用) / キノコの森は夜+1 / 影世界 +1 / 宇宙=3固定
+  // 距離は「初期スポーンの決定論アンカー」基準(seed から再計算・ベッド移動やセーブに依らず不変)。
+  // UI/描画からの可視化にも使える公開API。引数はタイル座標。
+  let bandAnchor = null, bandAnchorSeed = null;
+  function dangerBandAt(tx, ty) {
+    const D = Game.DANGER;
+    if (!D) return 1;
+    if (Game.state.worldName === 'space') return 3;
+    if (bandAnchorSeed !== Game.state.seed) {
+      bandAnchor = Game.WorldGen.spawnAnchor ? Game.WorldGen.spawnAnchor(Game.state.seed) : { tx: 0, ty: 0 };
+      bandAnchorSeed = Game.state.seed;
+    }
+    const dist = Math.max(Math.abs(tx - bandAnchor.tx), Math.abs(ty - bandAnchor.ty)); // チェビシェフ(depthOf と同系)
+    let band = dist < D.RADII[0] ? 0 : dist < D.RADII[1] ? 1 : dist < D.RADII[2] ? 2 : 3;
+    // ダンジョン: テーマ別の明示ティア。影世界のダンジョン(影神殿)は最高危険帯
+    const theme = Game.WorldGen.dungeonThemeAt ? Game.WorldGen.dungeonThemeAt(tx, ty, Game.state.seed) : null;
+    if (theme) {
+      band = Math.max(band, D.DUNGEON_TIER[theme] || 1);
+      if (Game.state.worldName === 'shadow') band = 4;
+    }
+    // バイオーム補正(安全圏0では適用しない: 序盤導線の保護)
+    if (band >= 1) {
+      const g = groundAt(tx, ty);
+      if (g === Game.TILE.SNOW || g === Game.TILE.SAND || g === Game.TILE.VOLCANIC) band += 1;
+      else if (g === Game.TILE.MUSHROOM && Game.Lighting && Game.Lighting.ambientDarkness() > 0.4) band += 1;
+    }
+    if (Game.state.worldName === 'shadow') band += 1; // 影世界は常時+1(深層の既存強化はそのまま別枠)
+    return band > 4 ? 4 : band;
+  }
+  function dangerBandName(band) {
+    const D = Game.DANGER;
+    return (D && D.NAMES[Math.max(0, Math.min(4, band | 0))]) || '';
+  }
+
   // 共鳴: 影で核を壊すと両世界の該当遺跡を再生成（光の封印が解け宝が出現）
   function resonate(tx, ty) {
     const key = tx + ',' + ty;
@@ -239,5 +277,6 @@ Game.World = (function () {
     getTileData, setTileData, clearTileData,
     isWalkable, updateChunks, toChunkCoord, rescueStuck: nudgeToWalkable,
     setActiveWorld, shift, setObjBothWorlds, resonate, depthOf, inDepths, travelTo,
+    dangerBandAt, dangerBandName,
   };
 })();

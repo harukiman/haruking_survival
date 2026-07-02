@@ -626,3 +626,82 @@ body.has-pad #touch-controls { display: none !important; }
     animation: none !important; transition-duration: 0s !important;
   }
 }
+
+/* ===== わかりやすさ&ワクワク強化 (item special/自動発動/バナー/ヒント/状態ヘルプ) ===== */
+/* 武器特殊効果の説明カード */
+.sp-effect { display: flex; flex-direction: column; gap: 2px; margin: 6px 0; padding: 7px 10px;
+  border-left: 3px solid #ffe27a; background: rgba(44,38,18,0.42); border-radius: 8px; }
+.sp-effect .sp-name { font-weight: 800; font-size: .88rem; }
+.sp-effect .sp-desc { color: #cfd6e0; font-size: .78rem; line-height: 1.5; }
+/* スキル: 自動発動パッシブのバッジ */
+.sk-auto { display: inline-block; margin-left: 5px; padding: 1px 6px; border-radius: 8px;
+  background: #1d3a2a; border: 1px solid #3f9a5a; color: #8fe0a8; font-size: .6rem; font-weight: 700; vertical-align: 2px; }
+/* イベントバナー(討伐/実績/レベルアップ/レジェンダリー) */
+#event-banner { position: fixed; top: 19%; left: 50%; transform: translate(-50%, -8px); z-index: 85;
+  pointer-events: none; opacity: 0; transition: opacity .25s, transform .25s; max-width: 92vw; }
+#event-banner.eb-show { opacity: 1; transform: translate(-50%, 0); }
+#event-banner .eb-inner { position: relative; overflow: hidden; display: flex; align-items: center; gap: 10px;
+  padding: 10px 18px; border-radius: 14px; background: rgba(10,14,24,0.92); border: 1px solid #6a5a2a;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.5), 0 0 22px rgba(255,215,110,0.18); }
+#event-banner .eb-ic { font-size: 1.5rem; flex: none; }
+#event-banner .eb-title { display: block; color: #ffe9a0; font-size: 1.02rem; line-height: 1.3; }
+#event-banner .eb-title em { font-style: normal; color: #fff; }
+#event-banner .eb-sub { display: block; color: #b8c4d8; font-size: .74rem; margin-top: 1px; line-height: 1.4; }
+#event-banner.eb-big .eb-title { font-size: 1.16rem; }
+#event-banner.eb-boss .eb-inner { border-color: #a03a4a; box-shadow: 0 4px 18px rgba(0,0,0,0.5), 0 0 26px rgba(255,90,110,0.28); }
+#event-banner .eb-slay { font-style: normal; color: #ffd24a; margin-left: 6px; }
+#event-banner.eb-show .eb-inner::after { content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(115deg, transparent 30%, rgba(255,232,150,0.30) 50%, transparent 70%);
+  transform: translateX(-110%); animation: ebSweep .9s ease .12s forwards; }
+@keyframes ebSweep { to { transform: translateX(110%); } }
+/* レベルアップ金色バースト(画面安全・短時間) */
+#lvl-burst { position: fixed; inset: 0; z-index: 80; pointer-events: none; opacity: 0;
+  background: radial-gradient(circle at 50% 58%, rgba(255,222,110,0.34), rgba(255,222,110,0.12) 34%, transparent 62%); }
+#lvl-burst.go { animation: lvlBurst .55s ease-out; }
+#lvl-burst.go.big { animation: lvlBurst 1s ease-out; }
+@keyframes lvlBurst { 0% { opacity: 0; } 18% { opacity: 1; } 100% { opacity: 0; } }
+/* トースト装飾: レア入手/レベル/クラフト解禁 */
+#toast .tst-ic { display: inline-block; width: 22px; height: 22px; vertical-align: -6px; margin-right: 7px;
+  background-size: contain; background-repeat: no-repeat; background-position: center; }
+#toast .tst-r { font-size: .72rem; margin-left: 6px; }
+#toast.tst-rare.r1 { border-color: #5a9fe0; box-shadow: 0 0 12px rgba(90,159,224,0.35); }
+#toast.tst-rare.r2 { border-color: #b060e8; box-shadow: 0 0 12px rgba(176,96,232,0.4); }
+#toast.tst-rare.r3 { border-color: #ff9a3c; box-shadow: 0 0 14px rgba(255,154,60,0.45); }
+#toast.tst-lvl { border-color: #c8a84a; box-shadow: 0 0 12px rgba(255,215,110,0.3); }
+#toast.tst-craft { border-color: #7a6a34; }
+/* 状態異常ヘルプ(アイコン行タップ) */
+#status-row { pointer-events: auto; cursor: pointer; padding: 5px 12px 7px 2px; margin: -3px -12px -7px -2px; }
+.st-chip { width: 24px; height: 24px; font-size: .82rem; }
+#status-pop { position: fixed; top: 118px; left: calc(8px + env(safe-area-inset-left)); z-index: 86; max-width: 80vw;
+  background: rgba(10,14,24,0.95); border: 1px solid #3a4c66; border-radius: 12px; padding: 9px 12px;
+  opacity: 0; pointer-events: none; transform: translateY(-4px); transition: opacity .2s, transform .2s; }
+#status-pop.show { opacity: 1; pointer-events: auto; transform: none; }
+.sp-row { display: flex; gap: 8px; align-items: flex-start; padding: 4px 0; font-size: .78rem; color: #cfd6e0; line-height: 1.45; }
+.sp-row + .sp-row { border-top: 1px solid rgba(255,255,255,0.07); }
+.sp-row .sp-i { flex: none; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid #666; border-radius: 6px; background: rgba(0,0,0,0.4); }
+.sp-row .sp-w { color: #9fb6d0; }
+.sp-row .sp-f { color: #8fe0a8; font-size: .72rem; }
+/* 死因対策ヒント */
+.death-hint { margin-top: 10px; padding: 8px 12px; border-radius: 10px; background: rgba(40,30,16,0.55);
+  border: 1px solid #6a5224; color: #ffd86b; font-size: .8rem; line-height: 1.55; text-align: left; }
+/* 初回マイクロガイド ピル(非モーダル・タップで次へ) */
+#hint-pill { position: fixed; left: calc(8px + env(safe-area-inset-left)); bottom: calc(126px + env(safe-area-inset-bottom));
+  z-index: 19; display: flex; align-items: center; gap: 7px; min-height: 44px; max-width: 64vw; padding: 8px 12px;
+  border-radius: 22px; background: rgba(12,20,34,0.9); border: 1px solid #4a6a8e; color: #dfeaf8; font-size: .78rem;
+  text-align: left; opacity: 0; transform: translateY(6px); transition: opacity .3s, transform .3s; pointer-events: none; cursor: pointer; }
+#hint-pill.in { opacity: 1; transform: none; pointer-events: auto; }
+#hint-pill .hp-ic { font-size: 1.05rem; flex: none; }
+#hint-pill .hp-tx { line-height: 1.35; }
+#hint-pill .hp-x { flex: none; width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%; background: rgba(255,255,255,0.08); color: #9fb6d0; font-size: .8rem; }
+/* クラフト解禁バッジ(袋ボタンが淡く光る) */
+#btn-inv.craft-new { position: relative; border-color: #c8a84a !important; box-shadow: 0 0 10px rgba(255,215,110,0.55); }
+#btn-inv.craft-new::after { content: ''; position: absolute; top: -3px; right: -3px; width: 12px; height: 12px;
+  border-radius: 50%; background: #ffd24a; box-shadow: 0 0 6px rgba(255,210,74,0.85); animation: craftDot 1.1s ease-in-out infinite alternate; }
+@keyframes craftDot { from { transform: scale(1); } to { transform: scale(1.35); } }
+/* 動きを抑える設定: 追加演出も静的表示にする */
+@media (prefers-reduced-motion: reduce) {
+  #event-banner, #hint-pill, #status-pop, #toast { transition-duration: 0s !important; }
+  #event-banner.eb-show .eb-inner::after, #lvl-burst.go, #btn-inv.craft-new::after { animation: none !important; }
+}
