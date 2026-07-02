@@ -251,6 +251,18 @@ Game.Cutscene = (function () {
     const grad = ctx.createLinearGradient(-W / 2, 0, W / 2, 0); grad.addColorStop(0, '#ffe9a8'); grad.addColorStop(0.5, '#ffffff'); grad.addColorStop(1, '#bfa6ff');
     ctx.fillStyle = grad; ctx.fillText('HARUKING', 0, -8); ctx.fillText('SURVIVAL', 0, big * 0.92 - 8);
     ctx.shadowBlur = 0; ctx.restore();
+    // ロゴ確定の一拍: 一条の光がロゴ面を撫で、細い光輪がひとつ広がる
+    const swp = (t - 0.30) / 0.26;
+    if (swp > 0 && swp < 1) {
+      const sx2 = -W * 0.35 + swp * W * 1.7;
+      const sg2 = ctx.createLinearGradient(sx2 - 70, 0, sx2 + 70, 0);
+      sg2.addColorStop(0, 'rgba(255,255,255,0)'); sg2.addColorStop(0.5, 'rgba(255,255,255,0.20)'); sg2.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      ctx.fillStyle = sg2; ctx.fillRect(sx2 - 70, cy - big * 1.5, 140, big * 2.8);
+      ctx.restore();
+    }
+    const rng = (t - 0.28) / 0.5;
+    if (rng > 0 && rng < 1) { ctx.strokeStyle = 'rgba(200,215,255,' + ((1 - rng) * 0.35).toFixed(3) + ')'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(W / 2, cy, 40 + rng * Math.min(W, H) * 0.55, 0, 7); ctx.stroke(); }
     // サブタイトル
     ctx.globalAlpha = Math.max(0, Math.min(1, (t - 0.35) / 0.3));
     ctx.fillStyle = '#cfd6ee'; ctx.font = (W < 460 ? 14 : 19) + 'px -apple-system,"Hiragino Sans",sans-serif'; ctx.textAlign = 'center';
@@ -881,14 +893,393 @@ Game.Cutscene = (function () {
     }
     ctx.globalAlpha = 1;
   }
+  // ===== 断章「最初の影渡り」専用シーン(色彩設計: 過露出の白緑→鏡面の翠と墨→裏返りの深紫→無彩スレート) =====
+  // 横向きに立ち、境へ腕を伸ばす人影。dir=向き(1右/-1左)、reach=腕の持ち上げ0-1
+  function drawReacher(x, y, s, col, dir, reach, now) {
+    ctx.save(); ctx.translate(x, y); ctx.scale(s * dir, s);
+    ctx.fillStyle = col; ctx.strokeStyle = col; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.ellipse(0, -22, 9, 16, 0.06, 0, Math.PI * 2); ctx.fill(); // 胴
+    ctx.beginPath(); ctx.arc(3, -42, 6, 0, Math.PI * 2); ctx.fill(); // 頭(やや前傾)
+    ctx.lineWidth = 4.5;
+    ctx.beginPath(); ctx.moveTo(-2, -8); ctx.lineTo(-7, 0); ctx.stroke(); // 後脚
+    ctx.beginPath(); ctx.moveTo(2, -8); ctx.lineTo(7, 0); ctx.stroke(); // 前脚
+    ctx.lineWidth = 4;
+    const ax = 8 + reach * 21, ay = -28 + reach * -7 + Math.sin(now * 0.002) * 1.5;
+    ctx.beginPath(); ctx.moveTo(2, -28); ctx.lineTo(ax, ay); ctx.stroke(); // 境へ伸ばす腕
+    ctx.restore();
+  }
+  // 歩く人影(dir=進行方向)。step で脚を振る
+  function drawWalkerFig(x, y, s, col, dir, step) {
+    ctx.save(); ctx.translate(x, y); ctx.scale(s * dir, s);
+    ctx.fillStyle = col; ctx.strokeStyle = col; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.ellipse(0, -24, 8, 14, 0.12, 0, Math.PI * 2); ctx.fill(); // 前傾の胴
+    ctx.beginPath(); ctx.arc(4, -42, 5.5, 0, Math.PI * 2); ctx.fill(); // 頭
+    ctx.lineWidth = 4.2;
+    ctx.beginPath(); ctx.moveTo(-1, -12); ctx.lineTo(-4 - step, 0); ctx.stroke(); // 脚(振り)
+    ctx.beginPath(); ctx.moveTo(3, -12); ctx.lineTo(6 + step, 0); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(1, -30); ctx.lineTo(7 + step * 0.4, -20); ctx.stroke(); // 腕
+    ctx.restore();
+  }
+  function scSwMeadow(t, now) {
+    const hz = H * 0.66, k = easeInOutCubic(t);
+    // 過露出ぎみの光相の空(冷たい白緑) — セピアの追憶とは対極の明るさ
+    const sky = ctx.createLinearGradient(0, 0, 0, hz);
+    sky.addColorStop(0, '#9fc8b0'); sky.addColorStop(0.7, '#d4ecd8'); sky.addColorStop(1, '#f0f7e8');
+    ctx.fillStyle = sky; ctx.fillRect(0, 0, W, hz);
+    // 高い白陽
+    const sxx = W * 0.28, syy = H * 0.16;
+    const sg = ctx.createRadialGradient(sxx, syy, 4, sxx, syy, 110);
+    sg.addColorStop(0, 'rgba(255,255,248,0.9)'); sg.addColorStop(1, 'rgba(255,255,248,0)');
+    ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(sxx, syy, 110, 0, 7); ctx.fill();
+    // 草原(下ほど沈めて台詞の地にする)
+    const gnd = ctx.createLinearGradient(0, hz, 0, H);
+    gnd.addColorStop(0, '#8fbe8a'); gnd.addColorStop(0.5, '#4c8050'); gnd.addColorStop(1, '#203e28');
+    ctx.fillStyle = gnd; ctx.fillRect(0, hz, W, H - hz);
+    // 遠くに立つ「境」— 呼吸する翠青の縫い目
+    const bx = W * 0.76, puls = 0.5 + Math.sin(now * 0.0035) * 0.5;
+    const bg2 = ctx.createRadialGradient(bx, hz - 40, 4, bx, hz - 40, 120);
+    bg2.addColorStop(0, 'rgba(160,240,220,' + (0.16 + puls * 0.10) + ')'); bg2.addColorStop(1, 'rgba(160,240,220,0)');
+    ctx.fillStyle = bg2; ctx.beginPath(); ctx.arc(bx, hz - 40, 120, 0, 7); ctx.fill();
+    ctx.strokeStyle = 'rgba(170,244,224,' + (0.45 + puls * 0.4) + ')'; ctx.lineWidth = 2.5;
+    ctx.shadowColor = '#a0f0dc'; ctx.shadowBlur = 10;
+    ctx.beginPath(); ctx.moveTo(bx, H * 0.10);
+    for (let y = H * 0.10; y <= hz + 34; y += 14) ctx.lineTo(bx + Math.sin(y * 0.05 + now * 0.001) * 4, y);
+    ctx.stroke(); ctx.shadowBlur = 0;
+    // 渡り手: 境へ歩む(足元に淡い長影)
+    const px = W * 0.16 + (bx - 64 - W * 0.16) * k, gy = hz + 30;
+    const step = Math.sin(now * 0.011) * 4;
+    ctx.fillStyle = 'rgba(20,30,26,0.22)'; ctx.beginPath(); ctx.ellipse(px - 24, gy + 2, 34, 6, 0, 0, 7); ctx.fill();
+    drawWalkerFig(px, gy, 1.7, '#152019', 1, step);
+    // 漂う綿毛(白い種)
+    for (let i = 0; i < pn(24); i++) {
+      const x = (i * 103 + now * 0.02 * (1 + i % 3)) % (W + 16) - 8;
+      const y = H * 0.18 + ((i * 67) % (hz - H * 0.14)) + Math.sin(now * 0.0012 + i) * 10;
+      ctx.globalAlpha = 0.25 + 0.3 * Math.abs(Math.sin(now * 0.001 + i * 1.9));
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(x, y, 2, 2);
+    }
+    ctx.globalAlpha = 1;
+  }
+  function scSwMirror(t, now) {
+    const cx = W / 2, my = H * 0.44;
+    // 左=光の岸(翠白) / 右=裏の岸(墨紫) — 一枚布の表と裏
+    const lg = ctx.createLinearGradient(0, 0, 0, H); lg.addColorStop(0, '#c4e0c8'); lg.addColorStop(1, '#42654a');
+    ctx.fillStyle = lg; ctx.fillRect(0, 0, cx, H);
+    const rg2 = ctx.createLinearGradient(0, 0, 0, H); rg2.addColorStop(0, '#171028'); rg2.addColorStop(1, '#090612');
+    ctx.fillStyle = rg2; ctx.fillRect(cx, 0, W - cx, H);
+    // 裏の岸にだけ星が出ている
+    for (let i = 0; i < pn(26); i++) { const x = cx + 14 + (i * 61) % (W - cx - 20), y = (i * 47) % (H * 0.8); ctx.globalAlpha = 0.2 + Math.abs(Math.sin(now * 0.0012 + i)) * 0.5; ctx.fillStyle = '#cfd8ff'; ctx.fillRect(x, y, 1.4, 1.4); }
+    ctx.globalAlpha = 1;
+    // 境の縫い目(鏡面)
+    const puls = 0.5 + Math.sin(now * 0.004) * 0.5;
+    const smg = ctx.createLinearGradient(cx - 26, 0, cx + 26, 0);
+    smg.addColorStop(0, 'rgba(160,232,224,0)'); smg.addColorStop(0.5, 'rgba(200,255,244,' + (0.16 + puls * 0.10) + ')'); smg.addColorStop(1, 'rgba(160,232,224,0)');
+    ctx.fillStyle = smg; ctx.fillRect(cx - 26, 0, 52, H);
+    ctx.strokeStyle = 'rgba(190,255,238,' + (0.5 + puls * 0.35) + ')'; ctx.lineWidth = 2;
+    ctx.shadowColor = '#a0f0dc'; ctx.shadowBlur = 12;
+    ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, H); ctx.stroke(); ctx.shadowBlur = 0;
+    // ふたつの人影: こちらの黒い影と、向こうの白い「同じ指」
+    const reach = easeOutCubic(clamp01(t * 1.5)), gy = H * 0.62;
+    ctx.fillStyle = 'rgba(10,16,12,0.25)'; ctx.beginPath(); ctx.ellipse(cx - 62, gy + 2, 26, 5, 0, 0, 7); ctx.fill();
+    drawReacher(cx - 62, gy, 2.0, '#101a14', 1, reach, now); // 指先が縫い目でほぼ触れ合う距離
+    drawReacher(cx + 62, gy, 2.0, '#d8e8e0', -1, reach, now);
+    // 触れた刹那: 指先の波紋と小さな閃き
+    const touch = clamp01((t - 0.62) / 0.38);
+    if (touch > 0) {
+      const ty = gy - 70;
+      for (let r = 0; r < 3; r++) {
+        const ph = (touch * 1.3 + r * 0.3) % 1;
+        ctx.strokeStyle = r % 2 ? 'rgba(200,255,240,' + (1 - ph) * 0.5 + ')' : 'rgba(190,170,255,' + (1 - ph) * 0.4 + ')';
+        ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, ty, 6 + ph * 130, 0, 7); ctx.stroke();
+      }
+      if (touch < 0.14) { ctx.fillStyle = 'rgba(240,255,250,' + (1 - touch / 0.14) * 0.5 + ')'; ctx.fillRect(0, 0, W, H); }
+    }
+  }
+  function scSwCross(t, now) {
+    // 裏返った直後の世界(深い紫墨)。左端に光の岸が細く残る
+    ctx.fillStyle = '#100822'; ctx.fillRect(0, 0, W, H);
+    const seamX = W * 0.26, hz = H * 0.70, k = easeInOutCubic(t);
+    const lg = ctx.createLinearGradient(0, 0, 0, H); lg.addColorStop(0, '#b2d4b8'); lg.addColorStop(1, '#3c6048');
+    ctx.globalAlpha = 0.9 - t * 0.35; ctx.fillStyle = lg; ctx.fillRect(0, 0, seamX, H); ctx.globalAlpha = 1;
+    // 境
+    const puls = 0.5 + Math.sin(now * 0.004) * 0.5;
+    ctx.strokeStyle = 'rgba(190,255,238,' + (0.4 + puls * 0.3) + ')'; ctx.lineWidth = 2;
+    ctx.shadowColor = '#a0f0dc'; ctx.shadowBlur = 10;
+    ctx.beginPath(); ctx.moveTo(seamX, 0); ctx.lineTo(seamX, H); ctx.stroke(); ctx.shadowBlur = 0;
+    // 裏世界の空と、鏡めいた地面
+    for (let i = 0; i < pn(28); i++) { const x = seamX + 10 + (i * 71) % (W - seamX - 16), y = (i * 43) % (hz * 0.85); ctx.globalAlpha = 0.16 + Math.abs(Math.sin(now * 0.001 + i)) * 0.4; ctx.fillStyle = '#c8c0ff'; ctx.fillRect(x, y, 1.4, 1.4); }
+    ctx.globalAlpha = 1;
+    const gnd = ctx.createLinearGradient(0, hz, 0, H); gnd.addColorStop(0, '#1c1132'); gnd.addColorStop(1, '#0a0616');
+    ctx.fillStyle = gnd; ctx.fillRect(seamX, hz, W - seamX, H - hz);
+    // 残された半身: 光の岸に立ち尽くす淡い影(輪郭が薄れてゆく)
+    const gx = seamX * 0.52, gy = hz + 22;
+    ctx.globalAlpha = 0.85 - t * 0.45;
+    drawWalkerFig(gx, gy, 1.7, '#e8f2e4', 1, 0);
+    ctx.globalAlpha = 1;
+    // 半身から渡り手へ、境を越えて流れる光の糸
+    const px = seamX + 46 + (W * 0.70 - seamX - 46) * k;
+    for (let i = 0; i < pn(16); i++) {
+      const ph = ((now * 0.00022 + i * 0.09) % 1);
+      const mx = gx + (px - gx) * ph, myy = gy - 30 - Math.sin(ph * Math.PI) * 46;
+      ctx.globalAlpha = (1 - Math.abs(ph - 0.5) * 1.4) * 0.55;
+      ctx.fillStyle = ph < 0.5 ? '#d8f0dc' : '#c0b0ff'; ctx.fillRect(mx, myy, 2, 2);
+    }
+    ctx.globalAlpha = 1;
+    // 渡り手は闇を歩み去る——淡い紫の逆光でシルエットを浮かべ、足元の鏡面に逆さの己を映して
+    const step = Math.sin(now * 0.011) * 4;
+    const wg2 = ctx.createRadialGradient(px, gy - 44, 4, px, gy - 44, 88);
+    wg2.addColorStop(0, 'rgba(140,110,220,0.26)'); wg2.addColorStop(1, 'rgba(140,110,220,0)');
+    ctx.fillStyle = wg2; ctx.beginPath(); ctx.arc(px, gy - 44, 88, 0, 7); ctx.fill();
+    ctx.save(); ctx.translate(px, gy); ctx.scale(1, -1); ctx.globalAlpha = 0.16;
+    drawWalkerFig(0, 0, 1.9, '#b0a0e0', 1, step); ctx.restore(); ctx.globalAlpha = 1;
+    drawWalkerFig(px, gy, 1.9, '#0c0a14', 1, step);
+    ctx.strokeStyle = 'rgba(150,220,255,0.35)'; ctx.lineWidth = 1.5; // 頭部に微かな翠青のリムライト
+    ctx.beginPath(); ctx.arc(px + 7.6, gy - 80, 12, -2.6, -0.7); ctx.stroke();
+  }
+  function scSwPrice(t, now) {
+    // ほぼ無彩のスレート — 代償の静けさ
+    const hz = H * 0.64;
+    const sky = ctx.createLinearGradient(0, 0, 0, hz);
+    sky.addColorStop(0, '#1c1a24'); sky.addColorStop(1, '#2e2c3a');
+    ctx.fillStyle = sky; ctx.fillRect(0, 0, W, hz);
+    const gnd = ctx.createLinearGradient(0, hz, 0, H); gnd.addColorStop(0, '#141220'); gnd.addColorStop(1, '#0a0910');
+    ctx.fillStyle = gnd; ctx.fillRect(0, hz, W, H - hz);
+    // 地平の彼方: 境の残光と、解けてゆく半身
+    const fxx = W * 0.80;
+    ctx.strokeStyle = 'rgba(160,220,210,' + (0.22 + Math.sin(now * 0.003) * 0.08) + ')'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(fxx, hz - 90); ctx.lineTo(fxx, hz + 8); ctx.stroke();
+    ctx.globalAlpha = 0.5 * (1 - t * 0.8);
+    drawWalkerFig(fxx - 16, hz + 6, 1.0, '#cfd8d4', -1, 0);
+    ctx.globalAlpha = 1;
+    for (let i = 0; i < pn(14); i++) { // 半身は光の粒になって空へ
+      const x = fxx - 16 + Math.sin(i * 2.1 + now * 0.001) * 14;
+      const y = hz - ((i * 31 + now * 0.03) % (H * 0.4));
+      ctx.globalAlpha = 0.12 + 0.2 * Math.abs(Math.sin(now * 0.0015 + i));
+      ctx.fillStyle = '#d8e8e0'; ctx.fillRect(x, y, 1.8, 1.8);
+    }
+    ctx.globalAlpha = 1;
+    // 渡り手は立ち止まる
+    const px = W * 0.32, gy = hz + 40;
+    drawWalkerFig(px, gy, 2.0, '#0e0c14', 1, 0);
+    // 影は右へ長く伸び——その頭だけが、こちらを見上げている
+    ctx.save(); ctx.translate(px, gy); ctx.transform(1, 0, -1.9, 0.32, 0, 0); ctx.globalAlpha = 0.5;
+    drawWalkerFig(0, 0, 2.0, '#04040a', 1, 0); ctx.restore(); ctx.globalAlpha = 1;
+    const shx = px + 82, shy = gy + 15; // 影の頭(体の向きと逆に、わずかに起きている)
+    ctx.fillStyle = 'rgba(4,4,10,0.6)'; ctx.beginPath(); ctx.ellipse(shx, shy, 9, 6, -0.5, 0, 7); ctx.fill();
+    if (t > 0.45) { // 影の眼(ごく淡く)
+      const blink = 0.14 + 0.12 * Math.abs(Math.sin(now * 0.0012));
+      ctx.fillStyle = 'rgba(160,220,214,' + blink + ')'; ctx.fillRect(shx - 4, shy - 2, 2.4, 1.6); ctx.fillRect(shx + 2, shy - 2, 2.4, 1.6);
+    }
+    // 一粒だけ色が残る——翠青の残り火
+    const ey = gy - 62 + Math.sin(now * 0.0016) * 8, ex = px + 26;
+    const eg = ctx.createRadialGradient(ex, ey, 1, ex, ey, 26);
+    eg.addColorStop(0, 'rgba(150,230,220,0.7)'); eg.addColorStop(1, 'rgba(150,230,220,0)');
+    ctx.fillStyle = eg; ctx.beginPath(); ctx.arc(ex, ey, 26, 0, 7); ctx.fill();
+    ctx.fillStyle = '#d0f4ea'; ctx.fillRect(ex - 1.5, ey - 1.5, 3, 3);
+    // 無彩の塵
+    for (let i = 0; i < pn(18); i++) {
+      const x = (i * 97 + now * 0.008) % W, y = (i * 59) % H;
+      ctx.globalAlpha = 0.05 + 0.06 * Math.abs(Math.sin(now * 0.001 + i));
+      ctx.fillStyle = '#c8c8d4'; ctx.fillRect(x, y, 1.6, 1.6);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // ===== 断章「二人の祈り手」専用シーン(色彩設計: 灰紅の余燼→金と藍の対峙→白の縫合→緑青の薄明) =====
+  // 膝をつき、手を組んで祈る人影
+  function drawPrayerFig(x, y, s, dir, col, sway) {
+    ctx.save(); ctx.translate(x, y); ctx.scale(s * dir, s); ctx.rotate(sway || 0);
+    ctx.fillStyle = col; ctx.strokeStyle = col; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.ellipse(0, 6, 10, 7, 0, 0, Math.PI * 2); ctx.fill(); // 畳んだ脚
+    ctx.beginPath(); ctx.ellipse(1, -10, 8, 13, 0.16, 0, Math.PI * 2); ctx.fill(); // 前傾の胴
+    ctx.beginPath(); ctx.arc(6, -24, 5.5, 0, Math.PI * 2); ctx.fill(); // 俯く頭
+    ctx.lineWidth = 3.6; ctx.beginPath(); ctx.moveTo(3, -14); ctx.lineTo(11, -18); ctx.stroke(); // 組んだ手
+    ctx.restore();
+  }
+  function scPrAsh(t, now) {
+    const hz = H * 0.68;
+    // 残照の灰紅
+    const sky = ctx.createLinearGradient(0, 0, 0, hz);
+    sky.addColorStop(0, '#221a1e'); sky.addColorStop(0.7, '#38282a'); sky.addColorStop(1, '#553630');
+    ctx.fillStyle = sky; ctx.fillRect(0, 0, W, hz);
+    const gnd = ctx.createLinearGradient(0, hz, 0, H); gnd.addColorStop(0, '#191214'); gnd.addColorStop(1, '#0d090b');
+    ctx.fillStyle = gnd; ctx.fillRect(0, hz, W, H - hz);
+    // 灰の起伏
+    ctx.fillStyle = '#150f11';
+    for (let i = 0; i < 6; i++) { const x = (i + 0.5) * W / 6; ctx.beginPath(); ctx.arc(x, hz + 12, 20 + (i % 3) * 8, 0, Math.PI); ctx.fill(); }
+    // 王の斃れた浅い窪み(微かな熾)
+    const cxx = W / 2;
+    const cg = ctx.createRadialGradient(cxx, hz + 16, 4, cxx, hz + 16, 90);
+    cg.addColorStop(0, 'rgba(200,110,90,0.14)'); cg.addColorStop(1, 'rgba(200,110,90,0)');
+    ctx.fillStyle = cg; ctx.beginPath(); ctx.ellipse(cxx, hz + 16, 90, 30, 0, 0, 7); ctx.fill();
+    // 降りしきる灰
+    for (let i = 0; i < pn(34); i++) {
+      const x = (i * 89 + Math.sin(now * 0.0006 + i) * 24 + W) % W;
+      const y = ((i * 53 + now * 0.028 * (1 + i % 3)) % (H + 20)) - 10;
+      ctx.globalAlpha = 0.12 + (i % 3) * 0.08;
+      ctx.fillStyle = i % 5 ? '#b8b0ac' : '#d8a090'; ctx.fillRect(x, y, 1.8, 1.8);
+    }
+    ctx.globalAlpha = 1;
+    // ふたつの小さな灯: 金と藍、互い違いに脈打ちながら寄り添う
+    const bob = Math.sin(now * 0.0016) * 6;
+    const p1 = 0.5 + Math.sin(now * 0.002) * 0.4, p2 = 0.5 + Math.sin(now * 0.002 + Math.PI) * 0.4;
+    const y1 = hz - 8 + bob, y2 = hz - 8 - bob;
+    const g1 = ctx.createRadialGradient(cxx - 34, y1, 2, cxx - 34, y1, 44);
+    g1.addColorStop(0, 'rgba(255,216,140,' + (0.35 + p1 * 0.3) + ')'); g1.addColorStop(1, 'rgba(255,216,140,0)');
+    ctx.fillStyle = g1; ctx.beginPath(); ctx.arc(cxx - 34, y1, 44, 0, 7); ctx.fill();
+    ctx.fillStyle = '#ffe2a0'; ctx.fillRect(cxx - 36, y1 - 2, 4, 4);
+    const g2 = ctx.createRadialGradient(cxx + 34, y2, 2, cxx + 34, y2, 44);
+    g2.addColorStop(0, 'rgba(150,170,255,' + (0.35 + p2 * 0.3) + ')'); g2.addColorStop(1, 'rgba(150,170,255,0)');
+    ctx.fillStyle = g2; ctx.beginPath(); ctx.arc(cxx + 34, y2, 44, 0, 7); ctx.fill();
+    ctx.fillStyle = '#c0ccff'; ctx.fillRect(cxx + 32, y2 - 2, 4, 4);
+    // 灯の下の照り返し
+    ctx.globalAlpha = 0.10; ctx.fillStyle = '#ffd890'; ctx.beginPath(); ctx.ellipse(cxx - 34, hz + 18, 30, 6, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = '#9fb0ff'; ctx.beginPath(); ctx.ellipse(cxx + 34, hz + 18, 30, 6, 0, 0, 7); ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+  function scPrTwo(t, now) {
+    const cx = W / 2;
+    // ひとつの空が、すでに割れかけている——左は最後の金昏、右は先んじる藍夜
+    const warm = ctx.createLinearGradient(0, 0, 0, H * 0.72);
+    warm.addColorStop(0, '#3a2a1c'); warm.addColorStop(0.6, '#7a4a26'); warm.addColorStop(1, '#cc8848');
+    ctx.fillStyle = warm; ctx.fillRect(0, 0, W, H * 0.72);
+    const cool = ctx.createLinearGradient(cx - 90, 0, cx + 90, 0);
+    cool.addColorStop(0, 'rgba(14,16,50,0)'); cool.addColorStop(1, 'rgba(14,16,50,0.94)');
+    ctx.fillStyle = cool; ctx.fillRect(cx - 90, 0, W - cx + 90, H * 0.72);
+    // 右の空にだけ星
+    for (let i = 0; i < pn(24); i++) { const x = cx + 50 + (i * 67) % (W - cx - 56), y = (i * 41) % (H * 0.5); ctx.globalAlpha = 0.25 + Math.abs(Math.sin(now * 0.0012 + i)) * 0.5; ctx.fillStyle = '#cfd8ff'; ctx.fillRect(x, y, 1.5, 1.5); }
+    ctx.globalAlpha = 1;
+    // 左の低い夕陽 / 右の細い月
+    const sg = ctx.createRadialGradient(W * 0.14, H * 0.56, 4, W * 0.14, H * 0.56, 110);
+    sg.addColorStop(0, 'rgba(255,214,140,0.75)'); sg.addColorStop(1, 'rgba(255,190,110,0)');
+    ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(W * 0.14, H * 0.56, 110, 0, 7); ctx.fill();
+    ctx.fillStyle = '#dce6ff'; ctx.beginPath(); ctx.arc(W * 0.86, H * 0.16, 12, 0, 7); ctx.fill();
+    ctx.fillStyle = '#0f1234'; ctx.beginPath(); ctx.arc(W * 0.86 + 5, H * 0.16 - 4, 10.5, 0, 7); ctx.fill();
+    // 丘
+    ctx.fillStyle = '#150f0c';
+    ctx.beginPath(); ctx.moveTo(0, H * 0.74);
+    ctx.quadraticCurveTo(cx, H * 0.44, W, H * 0.74); ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath(); ctx.fill();
+    // 背中合わせの祈り手(ゆっくり息づく)
+    const sway = Math.sin(now * 0.0018) * 0.03, top = H * 0.585;
+    drawPrayerFig(cx - 15, top, 2.0, -1, '#0c0906', sway);
+    drawPrayerFig(cx + 15, top, 2.0, 1, '#0c0906', -sway);
+    // 縁光(左は金、右は藍)
+    ctx.lineWidth = 2; ctx.lineCap = 'round';
+    ctx.strokeStyle = 'rgba(255,206,130,0.5)'; ctx.beginPath(); ctx.arc(cx - 27, top - 48, 12, 1.8, 3.6); ctx.stroke();
+    ctx.strokeStyle = 'rgba(150,170,255,0.5)'; ctx.beginPath(); ctx.arc(cx + 27, top - 48, 12, -0.5, 1.3); ctx.stroke();
+    // それぞれの祈りが、細い光片となって昇る
+    for (let i = 0; i < pn(12); i++) {
+      const side = i % 2 ? 1 : -1, ph = ((now * 0.00018 + i * 0.17) % 1);
+      const x = cx + side * (26 + (i % 4) * 8) + Math.sin(ph * 6 + i) * 6;
+      const y = top - 40 - ph * H * 0.34;
+      ctx.globalAlpha = (1 - ph) * 0.55;
+      ctx.fillStyle = side > 0 ? '#b0c0ff' : '#ffd9a0'; ctx.fillRect(x, y, 2, 2);
+    }
+    ctx.globalAlpha = 1;
+  }
+  function scPrOne(t, now) {
+    // 無明の空間 — ふたつの残像が歩み寄り、ひとつに重なる
+    const cx = W / 2, cy = H * 0.46;
+    const bg = ctx.createRadialGradient(cx, cy, 20, cx, cy, Math.max(W, H) * 0.75);
+    bg.addColorStop(0, '#241c30'); bg.addColorStop(1, '#080610');
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+    const k = easeInOutCubic(clamp01(t * 1.25)), off = (1 - k) * W * 0.22;
+    const merge = clamp01((t - 0.62) / 0.38);
+    // 左右の色の帳(重なるほど退いてゆく)
+    ctx.globalAlpha = 0.14 * (1 - k); ctx.fillStyle = '#ffca80'; ctx.fillRect(0, 0, cx, H);
+    ctx.fillStyle = '#8090ff'; ctx.fillRect(cx, 0, W - cx, H); ctx.globalAlpha = 1;
+    // 双方から中心へ吸い寄せられる光片
+    for (let i = 0; i < pn(20); i++) {
+      const side = i % 2 ? 1 : -1, ph = ((now * 0.00028 + i * 0.11) % 1);
+      const x = cx + side * (W * 0.42) * (1 - ph), y = cy + Math.sin(i * 2.7) * H * 0.24 * (1 - ph);
+      ctx.globalAlpha = ph * 0.5;
+      ctx.fillStyle = side > 0 ? '#b0c0ff' : '#ffd9a0'; ctx.fillRect(x, y, 2, 2);
+    }
+    ctx.globalAlpha = 1;
+    // 金の祈り手と藍の祈り手(加算合成で、重なった処が白へ)
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = 0.85 - merge * 0.6;
+    drawPrayerFig(cx - off - 8, cy + 44, 2.4, -1, 'rgba(255,190,110,0.75)', Math.sin(now * 0.0018) * 0.02);
+    drawPrayerFig(cx + off + 8, cy + 44, 2.4, 1, 'rgba(120,140,255,0.75)', -Math.sin(now * 0.0018) * 0.02);
+    ctx.restore(); ctx.globalAlpha = 1;
+    // 重なった刹那——ひとりの祈り手と、体を貫く白の縫い目
+    if (merge > 0) {
+      const hg = ctx.createRadialGradient(cx, cy + 10, 4, cx, cy + 10, 130 + merge * 60);
+      hg.addColorStop(0, 'rgba(255,248,230,' + (0.20 + merge * 0.25) + ')'); hg.addColorStop(1, 'rgba(255,248,230,0)');
+      ctx.fillStyle = hg; ctx.beginPath(); ctx.arc(cx, cy + 10, 200, 0, 7); ctx.fill();
+      ctx.globalAlpha = merge * 0.95;
+      drawPrayerFig(cx - 1, cy + 44, 2.4, -1, '#efe8da', 0);
+      drawPrayerFig(cx + 1, cy + 44, 2.4, 1, '#efe8da', 0);
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = 'rgba(255,255,246,' + (0.5 + Math.sin(now * 0.006) * 0.2) + ')'; ctx.lineWidth = 2;
+      ctx.shadowColor = '#fff6d8'; ctx.shadowBlur = 12;
+      ctx.beginPath(); ctx.moveTo(cx, cy - 78); ctx.lineTo(cx, cy + 66); ctx.stroke(); ctx.shadowBlur = 0;
+      const ring = (merge * 1.1) % 1;
+      ctx.strokeStyle = 'rgba(255,244,210,' + (1 - ring) * 0.35 + ')'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(cx, cy + 6, 20 + ring * 170, 0, 7); ctx.stroke();
+    }
+  }
+  function scPrQuiet(t, now) {
+    const hz = H * 0.70, k = easeInOutCubic(t);
+    // 緑青の薄明 — 灰の野に、最初の色が還る
+    const sky = ctx.createLinearGradient(0, 0, 0, hz);
+    sky.addColorStop(0, '#0c211e'); sky.addColorStop(0.6, '#26504a'); sky.addColorStop(1, '#6f9c80');
+    ctx.fillStyle = sky; ctx.fillRect(0, 0, W, hz);
+    const dg = ctx.createRadialGradient(W * 0.55, hz, 6, W * 0.55, hz, 160);
+    dg.addColorStop(0, 'rgba(200,240,210,0.30)'); dg.addColorStop(1, 'rgba(200,240,210,0)');
+    ctx.fillStyle = dg; ctx.beginPath(); ctx.arc(W * 0.55, hz, 160, 0, 7); ctx.fill();
+    const gnd = ctx.createLinearGradient(0, hz, 0, H); gnd.addColorStop(0, '#16211b'); gnd.addColorStop(1, '#0a0f0b');
+    ctx.fillStyle = gnd; ctx.fillRect(0, hz, W, H - hz);
+    // 灰の野に、小さな芽の煌めき
+    for (let i = 0; i < pn(20); i++) {
+      const x = (i * 83) % W, y = hz + 8 + (i * 29) % (H - hz - 16);
+      ctx.globalAlpha = 0.15 + 0.35 * Math.abs(Math.sin(now * 0.0014 + i * 1.7));
+      ctx.fillStyle = i % 3 ? '#9fd8b0' : '#e8ffe0'; ctx.fillRect(x, y, 1.8, 1.8);
+    }
+    ctx.globalAlpha = 1;
+    // ふたつの灯が螺旋を描いて昇り、高みでひとつに
+    const cxx = W * 0.55, y0 = hz - 6, rise = k * H * 0.52;
+    const sep = (1 - k) * 42 + 5, ang = now * 0.003;
+    const yA = y0 - rise, xA = cxx + Math.cos(ang) * sep, xB = cxx - Math.cos(ang) * sep;
+    const mg2 = clamp01((t - 0.78) / 0.22);
+    if (mg2 < 1) {
+      const ga = ctx.createRadialGradient(xA, yA, 2, xA, yA, 30);
+      ga.addColorStop(0, 'rgba(255,216,140,' + (0.6 - mg2 * 0.4) + ')'); ga.addColorStop(1, 'rgba(255,216,140,0)');
+      ctx.fillStyle = ga; ctx.beginPath(); ctx.arc(xA, yA, 30, 0, 7); ctx.fill();
+      const gb = ctx.createRadialGradient(xB, yA + 8, 2, xB, yA + 8, 30);
+      gb.addColorStop(0, 'rgba(150,170,255,' + (0.6 - mg2 * 0.4) + ')'); gb.addColorStop(1, 'rgba(150,170,255,0)');
+      ctx.fillStyle = gb; ctx.beginPath(); ctx.arc(xB, yA + 8, 30, 0, 7); ctx.fill();
+    }
+    if (mg2 > 0) { // 合一の白緑のひかり
+      const gm = ctx.createRadialGradient(cxx, yA, 2, cxx, yA, 46 + mg2 * 24);
+      gm.addColorStop(0, 'rgba(230,255,238,' + (0.5 + mg2 * 0.35) + ')'); gm.addColorStop(1, 'rgba(230,255,238,0)');
+      ctx.fillStyle = gm; ctx.beginPath(); ctx.arc(cxx, yA, 70, 0, 7); ctx.fill();
+      ctx.strokeStyle = 'rgba(230,255,238,' + (1 - mg2) * 0.4 + ')'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(cxx, yA, 8 + mg2 * 90, 0, 7); ctx.stroke();
+    }
+    // 昇った跡に残る光の尾
+    for (let i = 0; i < pn(14); i++) {
+      const ph = i / 14, ty = y0 - rise * ph, sp = (1 - k * ph) * 42 + 5;
+      const tx = cxx + Math.cos(ang - ph * 2.2) * sp * (i % 2 ? 1 : -1);
+      ctx.globalAlpha = 0.10 + ph * 0.18;
+      ctx.fillStyle = i % 2 ? '#b0c0ff' : '#ffd9a0'; ctx.fillRect(tx, ty, 1.8, 1.8);
+    }
+    ctx.globalAlpha = 1;
+    // 見送る旅人(左下、静かに)
+    drawWalkerFig(W * 0.18, hz + 34, 1.8, '#0b120d', 1, 0);
+  }
+
   // 断章データ(story.js)の fx キー → 専用描画。汎用章は scStory
-  const STORYFX = { chr_dusk: scChrDusk, chr_carve: scChrCarve, chr_stones: scChrStones, chr_dawn: scChrDawn };
+  const STORYFX = {
+    chr_dusk: scChrDusk, chr_carve: scChrCarve, chr_stones: scChrStones, chr_dawn: scChrDawn,
+    sw_meadow: scSwMeadow, sw_mirror: scSwMirror, sw_cross: scSwCross, sw_price: scSwPrice,
+    pr_ash: scPrAsh, pr_two: scPrTwo, pr_one: scPrOne, pr_quiet: scPrQuiet,
+  };
 
   function playStory(frag, cb, opts) {
     if (!frag || !frag.scenes || !frag.scenes.length) { if (cb) cb(); return; }
     const subdued = !!(opts && opts.subdued); // 再見: 短縮+控えめ演出
     // 章ごとに哀愁/神秘のBGMを選ぶ(再会・統合は高揚、終章は神秘)
-    const mood = (frag.id === 'reunion' || frag.id === 'endbringer') ? 'heroic' : (/star|abyss|phase|traveler|cycle/.test(frag.id || '') ? 'mystic' : 'somber');
+    const mood = (frag.id === 'reunion' || frag.id === 'endbringer') ? 'heroic' : (/star|abyss|phase|traveler|cycle|firstwalker/.test(frag.id || '') ? 'mystic' : 'somber');
     const scenes = frag.scenes.map(function (s, i) {
       const fx = s.fx && STORYFX[s.fx];
       return {

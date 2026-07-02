@@ -227,6 +227,14 @@ Game.Audio = (function () {
       case 'thunder':    if (throttled('th', 0.08)) { beep(300, 0.05, 'square', 0.09); if (ctx) noiseBurst(ctx.currentTime, 0.12, 0.12, 3000, true); beep(120, 0.14, 'sawtooth', 0.08); } break;
       case 'whirl':      if (throttled('wh', 0.1)) { beep(420, 0.16, 'triangle', 0.06); beep(620, 0.12, 'sine', 0.04); } break;
       case 'engine': if (throttled('engine', 0.3)) beep(110, 0.2, 'sawtooth', 0.05); break;
+      // 乗車: ドスッという乗り込み＋起動の上がり音
+      case 'mount': beep(300, 0.06, 'square', 0.06); sbeep(430, 0.07, 'triangle', 0.05, 0.06); subThump(170, 65, 0.12, 0.09); break;
+      // 降車: 下がり音＋着地
+      case 'dismount': beep(380, 0.05, 'square', 0.05); sbeep(240, 0.08, 'triangle', 0.05, 0.05); subThump(150, 55, 0.1, 0.07); break;
+      // リロード開始: マガジン抜き差しのクリック・クラック
+      case 'reload': if (throttled('rl', 0.2)) { beep(520, 0.03, 'square', 0.05); sbeep(370, 0.04, 'square', 0.05, 0.08); if (ctx) noisePiece(ctx.currentTime, 0.05, 0.07, 'highpass', 3200, 0.8, true); } break;
+      // リロード完了: スライドを引く金属音
+      case 'reload_done': beep(640, 0.03, 'square', 0.06); sbeep(880, 0.04, 'square', 0.05, 0.05); if (ctx) { noisePiece(ctx.currentTime, 0.04, 0.08, 'highpass', 2800, 0.8, true); noisePiece(ctx.currentTime + 0.06, 0.05, 0.09, 'bandpass', 1500, 1.2, true); } break;
       case 'splash': if (throttled('splash', 0.12)) { beep(420 + Math.random() * 80, 0.08, 'sine', 0.04); beep(240, 0.1, 'sine', 0.03); } break;
       // 会心ヒット: 鋭い高音(影世界は僅かに低め)
       case 'crit': if (throttled('crit', 0.05)) { const sh = (Game.state && Game.state.worldName === 'shadow') ? 0.92 : 1; beep(1500 * sh, 0.05, 'square', 0.09); beep(2100 * sh, 0.045, 'triangle', 0.06); } break;
@@ -387,6 +395,67 @@ Game.Audio = (function () {
     }
   }
 
+  // ===== 乗り物エンジンループ(1系統を常設再利用・mount/dismountで音色を切替) =====
+  // car=低い唸り / boat=水のチャグ / plane=高めのドローン / carpet=柔らかな輝きハム
+  const VEH_LOOP = {
+    car:    { osc: 'sawtooth', hz: 54,  oscVol: 0.5,  filt: 'lowpass',  cut: 240,  q: 0.7, noiseVol: 0.3,  lfoHz: 11,  lfoDepth: 0.22, vol: 0.05 },
+    boat:   { osc: 'triangle', hz: 66,  oscVol: 0.45, filt: 'bandpass', cut: 520,  q: 0.8, noiseVol: 0.7,  lfoHz: 4.5, lfoDepth: 0.55, vol: 0.055 },
+    plane:  { osc: 'sawtooth', hz: 122, oscVol: 0.5,  filt: 'bandpass', cut: 950,  q: 0.6, noiseVol: 0.45, lfoHz: 15,  lfoDepth: 0.1,  vol: 0.045 },
+    carpet: { osc: 'sine',     hz: 194, oscVol: 0.35, filt: 'highpass', cut: 2600, q: 0.5, noiseVol: 0.16, lfoHz: 0.9, lfoDepth: 0.35, vol: 0.032 },
+  };
+  const veh = { want: null, inten: 0, built: false, osc: null, oscG: null, nF: null, nG: null, lfo: null, lfoG: null, gain: null };
+  function buildVehicleLoop() {
+    if (veh.built || !ctx || !noiseBuf) return;
+    try {
+      veh.gain = ctx.createGain(); veh.gain.gain.value = 0; veh.gain.connect(sfxGain);
+      veh.osc = ctx.createOscillator(); veh.osc.type = 'sawtooth'; veh.osc.frequency.value = 54;
+      veh.oscG = ctx.createGain(); veh.oscG.gain.value = 0.5;
+      veh.osc.connect(veh.oscG); veh.oscG.connect(veh.gain);
+      const src = ctx.createBufferSource(); src.buffer = noiseBuf; src.loop = true; // 共有ノイズをループ再利用(新規バッファ生成なし)
+      veh.nF = ctx.createBiquadFilter(); veh.nF.type = 'lowpass'; veh.nF.frequency.value = 240;
+      veh.nG = ctx.createGain(); veh.nG.gain.value = 0.3;
+      src.connect(veh.nF); veh.nF.connect(veh.nG); veh.nG.connect(veh.gain);
+      veh.lfo = ctx.createOscillator(); veh.lfo.type = 'sine'; veh.lfo.frequency.value = 10;
+      veh.lfoG = ctx.createGain(); veh.lfoG.gain.value = 0;
+      veh.lfo.connect(veh.lfoG); veh.lfoG.connect(veh.gain.gain);
+      veh.osc.start(); src.start(); veh.lfo.start();
+      veh.built = true;
+    } catch (e) { veh.built = false; veh.gain = null; }
+  }
+  function applyVehicleLoop() {
+    if (!veh.built || !ctx) return;
+    const t = ctx.currentTime, cfg = veh.want && VEH_LOOP[veh.want];
+    if (!enabled || !cfg) {
+      veh.gain.gain.setTargetAtTime(0.0001, t, 0.15);
+      veh.lfoG.gain.setTargetAtTime(0, t, 0.15);
+      return;
+    }
+    const k = 0.85 + 0.35 * veh.inten;              // 走行強度でわずかに回転数が上がる
+    const v = cfg.vol * (0.7 + 0.5 * veh.inten);    // アイドル→巡航で音量も少しだけ
+    veh.osc.type = cfg.osc; veh.osc.frequency.setTargetAtTime(cfg.hz * k, t, 0.12);
+    veh.oscG.gain.setTargetAtTime(cfg.oscVol, t, 0.12);
+    veh.nF.type = cfg.filt; veh.nF.frequency.setTargetAtTime(cfg.cut * k, t, 0.12); veh.nF.Q.value = cfg.q;
+    veh.nG.gain.setTargetAtTime(cfg.noiseVol, t, 0.12);
+    veh.lfo.frequency.setTargetAtTime(cfg.lfoHz * k, t, 0.12);
+    veh.lfoG.gain.setTargetAtTime(v * cfg.lfoDepth, t, 0.2);
+    veh.gain.gain.setTargetAtTime(v, t, 0.2);
+  }
+  // 公開API: Game.Audio.vehicleLoop(type|null, intensity 0..1)
+  // 乗車で開始・降車(null)で停止。intensity=走行スロットル(音程/音量に連動)。冪等・毎tick呼んでも安全
+  function vehicleLoop(type, intensity) {
+    const want = VEH_LOOP[type] ? type : null;
+    const inten = Math.max(0, Math.min(1, intensity || 0));
+    const changed = want !== veh.want || Math.abs(inten - veh.inten) > 0.02;
+    veh.want = want; veh.inten = inten;
+    if (!veh.built) {
+      if (!want || !enabled) return;
+      ensure(); buildVehicleLoop();
+      if (!veh.built) return;
+      applyVehicleLoop(); return;
+    }
+    if (changed) applyVehicleLoop();
+  }
+
   // ===== 天候アンビエンスレイヤー(雨/嵐/吹雪/砂嵐のループ・1系統を再利用) =====
   const wx = { gain: null, filter: null, type: null };
   function ensureWeatherLayer() {
@@ -541,6 +610,7 @@ Game.Audio = (function () {
     applyBgmGain(0.1);
     if (!enabled) { cineStop(); setWeatherLayer('clear'); }
     if (enabled) { ensure(); if (!bgm.started) startBGM(); }
+    applyVehicleLoop(); // 乗車中のエンジンループもON/OFFに追従
     return enabled;
   }
   function isEnabled() { return enabled; }
@@ -620,5 +690,5 @@ Game.Audio = (function () {
     bgm.duck = (amount == null || amount >= 1) ? 1 : Math.max(0, amount);
     applyBgmGain(0.5);
   }
-  return { play, eat, footstep, comboSound, ambientTick, ensure, toggle, isEnabled, startBGM, tickBGM, updateMood, setMood, cineStart, cineStop, cue, setVolumes, duckBGM };
+  return { play, eat, footstep, comboSound, ambientTick, ensure, toggle, isEnabled, startBGM, tickBGM, updateMood, setMood, cineStart, cineStop, cue, setVolumes, duckBGM, vehicleLoop };
 })();

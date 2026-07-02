@@ -230,8 +230,8 @@ Game.UI = (function () {
   function openShop() {
     const sc = document.getElementById('trade-screen'); if (!sc) return;
     shopMode = true; sc.classList.remove('hidden'); Game.state.paused = true;
-    const title = sc.querySelector('h2'); if (title) title.textContent = '商館 🏪';
-    tradeStock = SHOP_STOCK.slice(); refreshTrade();
+    const title = sc.querySelector('h2'); if (title) title.textContent = 'バーツ商館 🏪';
+    tradeStock = SHOP_STOCK.slice(); lastBoughtIdx = -1; lastCurShown = null; refreshTrade();
   }
   let tradeStock = [];
   function rollTradeStock() {
@@ -242,7 +242,7 @@ Game.UI = (function () {
     tradeStock = TRADE_BASE.concat(picks);
     tradeStock.push({ rand: true, price: 4, label: '謎の装備（ランダム）' });
   }
-  function openTrade() { const sc = document.getElementById('trade-screen'); if (!sc) return; shopMode = false; const title = sc.querySelector('h2'); if (title) title.textContent = '旅の商人 🧳'; sc.classList.remove('hidden'); Game.state.paused = true; rollTradeStock(); refreshTrade(); }
+  function openTrade() { const sc = document.getElementById('trade-screen'); if (!sc) return; shopMode = false; const title = sc.querySelector('h2'); if (title) title.textContent = '旅の商人 🧳'; sc.classList.remove('hidden'); Game.state.paused = true; rollTradeStock(); lastBoughtIdx = -1; lastCurShown = null; refreshTrade(); }
   function closeTrade() { const sc = document.getElementById('trade-screen'); if (sc) sc.classList.add('hidden'); Game.state.paused = false; shopMode = false; }
 
   // 記憶回廊(物語ギャラリー)
@@ -251,34 +251,145 @@ Game.UI = (function () {
   function renderStory() {
     const body = document.getElementById('story-body'); if (!body || !Game.Story) return;
     const list = Game.Story.list(); const seen = list.filter(function (f) { return f.seen; }).length;
-    let h = '<p class="hint">解放した物語 <b style="color:#bfa0ff">' + seen + ' / ' + list.length + '</b>　｜　刻片 🔮 <b>' + (Game.Inventory ? Game.Inventory.count('kokuhen') : 0) + '</b></p>';
-    list.forEach(function (f) {
+    // 章ごとのムード色は公開データ Game.STORY の col を参照（無ければ既定紫）
+    const colOf = {};
+    if (Game.STORY && Game.STORY.forEach) Game.STORY.forEach(function (f) { colOf[f.id] = f.col; });
+    const pct = list.length ? Math.round(seen / list.length * 100) : 0;
+    let h = '<div class="story-head"><span>解放した物語 <b>' + seen + ' / ' + list.length + '</b></span><span>刻片 🔮 <b>' + (Game.Inventory ? Game.Inventory.count('kokuhen') : 0) + '</b></span></div>';
+    h += '<div class="story-prog"><i style="width:' + pct + '%"></i></div>';
+    let idx = 0;
+    const card = function (f) {
+      const col = colOf[f.id] || '#3a3458';
+      const delay = Math.min(idx * 45, 540); idx++;
       if (f.seen) {
-        h += '<div class="story-frag"><div class="sf-head"><b>' + f.title + '</b><button class="sf-play map-btn" data-id="' + f.id + '">▶ 再生</button></div><div class="sf-text">' + f.text.replace(/\n/g, '<br>') + '</div></div>';
-      } else {
-        h += '<div class="story-frag locked"><div class="sf-head"><b>？？？</b></div><div class="sf-text" style="opacity:.55">解放条件: ' + f.trigger + '</div></div>';
+        return '<div class="story-frag" style="animation-delay:' + delay + 'ms;border-left-color:' + col + '">' +
+          '<div class="sf-head"><span class="sf-chip" style="background:' + col + '"></span><b>' + f.title + '</b>' +
+          '<button class="sf-play map-btn" data-id="' + f.id + '">▶ 再生</button></div>' +
+          '<div class="sf-text">' + f.text.replace(/\n/g, '<br>') + '</div></div>';
       }
-    });
+      return '<div class="story-frag locked" style="animation-delay:' + delay + 'ms">' +
+        '<div class="sf-head"><span class="sf-chip"></span><b>？？？</b></div>' +
+        '<div class="sf-text" style="opacity:.55">解放条件: ' + f.trigger + '</div></div>';
+    };
+    // 本編章と断章をセクション分け（タイトル先頭「断章」で判定）
+    const main = list.filter(function (f) { return f.title.indexOf('断章') !== 0; });
+    const frags = list.filter(function (f) { return f.title.indexOf('断章') === 0; });
+    h += '<div class="story-sec">本編 <span class="ss-n">' + main.filter(function (f) { return f.seen; }).length + '/' + main.length + '</span></div>';
+    main.forEach(function (f) { h += card(f); });
+    if (frags.length) {
+      h += '<div class="story-sec">断章 <span class="ss-n">' + frags.filter(function (f) { return f.seen; }).length + '/' + frags.length + '</span></div>';
+      frags.forEach(function (f) { h += card(f); });
+    }
     body.innerHTML = h;
     body.querySelectorAll('.sf-play[data-id]').forEach(function (btn) { btn.addEventListener('click', function () { closeStory(); Game.Story.play(btn.getAttribute('data-id')); }); });
+  }
+  // ショップカード用: アイテムデータから一行効果テキストを導出（無ければ flavor）
+  const CURE_NAMES = { bleed: '出血', poison: '毒', infection: '感染', burn: '火傷', frost: '凍え' };
+  const BUFF_NAMES = { strength: '一時的に攻撃力が高まる', swiftness: '一時的に足が速くなる', ironskin: '一時的に守りが固くなる', regen_buff: '一時的にHPが回復し続ける' };
+  function itemEffectLine(id) {
+    const def = Game.ITEMS[id]; if (!def) return '';
+    const s = [];
+    if (def.heal) s.push('HP+' + def.heal);
+    if (def.cures) s.push(def.cures.map(function (c) { return CURE_NAMES[c] || c; }).join('・') + 'を治す');
+    if (def.food) s.push('空腹+' + def.food);
+    if (def.buff) s.push(BUFF_NAMES[def.buff.type] || '一時強化');
+    if (def.throw) s.push('投擲 威力' + (def.throw.dmg || '?'));
+    if (def.attack != null) s.push('攻撃力 ' + def.attack);
+    if (def.armor != null) s.push('防御 ' + def.armor);
+    if (def.relic) {
+      const r = def.relic;
+      if (r.crit) s.push('会心率+' + Math.round(r.crit * 100) + '%');
+      if (r.moveSpd) s.push('移動速度+' + Math.round(r.moveSpd * 100) + '%');
+      if (r.regen) s.push('HP自然回復+');
+      if (r.lifesteal) s.push('吸血+' + Math.round(r.lifesteal * 100) + '%');
+      if (r.xpBoost) s.push('経験+' + Math.round(r.xpBoost * 100) + '%');
+    }
+    if (def.keepBts) s.push('死亡してもバーツを失わない');
+    if (def.skillTome) s.push('スキルポイント+' + def.skillTome);
+    if (def.invExpand) s.push('持ち物の上限が増える');
+    if (def.xpGain) s.push('経験値+' + def.xpGain);
+    if (def.plant) s.push('畑に植えて育てる');
+    if (!s.length && def.tool) s.push('道具: ' + def.tool + (def.tier ? ' Lv' + def.tier : ''));
+    if (!s.length && def.place !== undefined) s.push('設置して使う');
+    if (!s.length) return def.flavor || '';
+    return s.join(' / ');
+  }
+  // 商館のカテゴリ分け（表示のみ・在庫データは不変）
+  const SHOP_CAT_ORDER = ['回復・治療', '食料', '弾薬', '強化薬', '投擲・爆薬', '農耕の種', '設置・道具', '成長の秘宝', '遺物・護符', '素材・その他', '掘り出し物'];
+  function shopCategory(t) {
+    if (t.rand) return '掘り出し物';
+    const def = Game.ITEMS[t.id]; if (!def) return '素材・その他';
+    if (t.id.indexOf('ammo_') === 0 || t.id === 'rocket_ammo' || t.id === 'energy_cell' || t.id === 'shell_12g') return '弾薬';
+    if (def.relic || def.keepBts) return '遺物・護符';
+    if (def.skillTome || def.invExpand || def.xpGain) return '成長の秘宝';
+    if (def.heal || def.cures) return '回復・治療';
+    if (def.buff) return '強化薬';
+    if (def.throw || def.attack != null) return '投擲・爆薬';
+    if (def.food) return '食料';
+    if (def.plant) return '農耕の種';
+    if (def.place !== undefined || def.tool) return '設置・道具';
+    return '素材・その他';
+  }
+  let lastBoughtIdx = -1, lastCurShown = null, curAnimId = 0;
+  // 購入後の所持通貨カウントアップ演出
+  function animateCurNum(from, to) {
+    const numEl = document.getElementById('trade-cur-num'); if (!numEl) return;
+    const wrap = document.getElementById('trade-cur');
+    if (wrap) { wrap.classList.remove('pulse'); void wrap.offsetWidth; wrap.classList.add('pulse'); }
+    const dur = 420, t0 = performance.now(), my = ++curAnimId;
+    (function step(now) {
+      if (my !== curAnimId) return;
+      const k = Math.min(1, (now - t0) / dur);
+      const e = 1 - Math.pow(1 - k, 3);
+      numEl.textContent = Math.round(from + (to - from) * e);
+      if (k < 1) requestAnimationFrame(step);
+    })(t0);
   }
   function refreshTrade() {
     const body = document.getElementById('trade-body'); if (!body) return;
     const cur = shopMode ? (Game.state.player.bts || 0) : Game.Inventory.count('gold_bar');
-    const curName = shopMode ? 'バーツ' : '金塊', curColor = shopMode ? '#ffd24a' : '#e8c54a', curIcon = shopMode ? '🪙' : '🟨';
-    const sub = shopMode ? '欲しい品を選べ。（バーツで購入）' : '欲しい品を選べ。（品揃えは来訪ごとに変わる）';
-    let h = '<p class="hint">所持 ' + curName + ' <b style="color:' + curColor + '">' + cur + '</b>　' + sub + '</p><div class="trade-list">';
-    tradeStock.forEach(function (t, i) {
+    const curName = shopMode ? 'バーツ' : '金塊', curIcon = shopMode ? '🪙' : '🟨';
+    let h = '<div class="trade-wallet"><span class="tw-lbl">所持' + curName + '</span><b id="trade-cur" class="tw-val' + (shopMode ? '' : ' gold') + '">' + curIcon + ' <span id="trade-cur-num">' + cur + '</span></b></div>';
+    h += '<p class="trade-sub">' + (shopMode ? '常設の品揃え・固定価格。欲しい品をタップで購入。' : '品揃えは旅のたびに入れ替わる — 一期一会の市。') + '</p>';
+    const rowHTML = function (t, i) {
       const can = cur >= t.price;
-      const name = t.rand ? t.label : (Game.ITEMS[t.id].name + (t.n > 1 ? ' ×' + t.n : ''));
+      const def = t.rand ? null : Game.ITEMS[t.id];
+      const name = t.rand ? t.label : (def.name + (t.n > 1 ? ' ×' + t.n : ''));
       const url = !t.rand && Game.Icons ? Game.Icons.dataURL(t.id, null) : null;
-      h += '<button class="trade-row' + (can ? '' : ' disabled') + '" data-i="' + i + '"' + (can ? '' : ' disabled') + '>' +
-        '<span class="tr-ic"' + (url ? ' style="background-image:url(' + url + ')"' : '') + '></span>' +
-        '<span class="tr-name">' + name + '</span><span class="tr-price">' + curIcon + t.price + '</span></button>';
-    });
-    h += '</div>';
+      const eff = t.rand ? '何が届くかは受け取るまで分からない' : itemEffectLine(t.id);
+      return '<button class="trade-row' + (can ? '' : ' disabled') + (t.rare ? ' rare' : '') + (i === lastBoughtIdx ? ' bought' : '') + '" data-i="' + i + '"' + (can ? '' : ' disabled') + '>' +
+        '<span class="tr-ic"' + (url ? ' style="background-image:url(' + url + ')"' : '') + '>' + (t.rand ? '🎁' : '') + '</span>' +
+        '<span class="tr-mid"><span class="tr-name">' + (t.rare ? '<em class="tr-rare-tag">希少</em>' : '') + name + '</span>' +
+        (eff ? '<span class="tr-eff">' + eff + '</span>' : '') + '</span>' +
+        '<span class="tr-price' + (can ? '' : ' short') + '">' + curIcon + t.price + '</span></button>';
+    };
+    if (shopMode) {
+      // カテゴリごとにまとめて陳列（見出し＋カード）
+      const groups = {};
+      tradeStock.forEach(function (t, i) { const c = shopCategory(t); (groups[c] = groups[c] || []).push([t, i]); });
+      SHOP_CAT_ORDER.forEach(function (c) {
+        if (!groups[c]) return;
+        h += '<div class="trade-cat">' + c + '</div><div class="trade-list">';
+        groups[c].forEach(function (p) { h += rowHTML(p[0], p[1]); });
+        h += '</div>';
+        delete groups[c];
+      });
+      for (const c in groups) { // 想定外カテゴリの保険
+        h += '<div class="trade-cat">' + c + '</div><div class="trade-list">';
+        groups[c].forEach(function (p) { h += rowHTML(p[0], p[1]); });
+        h += '</div>';
+      }
+    } else {
+      h += '<div class="trade-list">';
+      tradeStock.forEach(function (t, i) { h += rowHTML(t, i); });
+      h += '</div>';
+    }
     body.innerHTML = h;
     body.querySelectorAll('.trade-row[data-i]').forEach(function (btn) { btn.addEventListener('click', function () { buyTrade(parseInt(btn.getAttribute('data-i'), 10)); }); });
+    // 通貨が変動していればカウントアップ＋パルス（購入の満足感）
+    if (lastCurShown != null && lastCurShown !== cur) animateCurNum(lastCurShown, cur);
+    lastCurShown = cur;
+    lastBoughtIdx = -1;
   }
   function buyTrade(i) {
     const t = tradeStock[i]; if (!t) return;
@@ -292,6 +403,7 @@ Game.UI = (function () {
       const id = pool[Math.floor(Math.random() * pool.length)];
       if (id) { Game.Inventory.addInstance({ id: id, roll: Game.Loot.roll(id, 0.1) }); toast('購入: ' + Game.ITEMS[id].name); }
     } else { Game.Inventory.add(t.id, t.n); toast('購入: ' + Game.ITEMS[t.id].name); }
+    lastBoughtIdx = i; // 再描画時に購入カードへパルス演出
     Game.Audio.play('craft'); refreshTrade(); refreshHotbar(); refreshStats();
     if (!shopMode && Game.Story && !Game.Story.seen('merchant')) Game.Story.unlock('merchant', true); // 旅商人と初取引で記憶回廊
   }
@@ -304,6 +416,7 @@ Game.UI = (function () {
   function closeStats() { const sc = document.getElementById('stats-screen'); if (sc) sc.classList.add('hidden'); Game.state.paused = false; }
   function toggleStats() { const sc = document.getElementById('stats-screen'); if (!sc) return; if (sc.classList.contains('hidden')) openStats(); else closeStats(); }
   const skOpen = {}; // スキル系統の開閉状態
+  let achBase = null; // 実績のセッション開始時スナップショット(以後の解除に NEW を付ける)
   function renderStats() {
     const p = Game.state.player; const body = document.getElementById('stats-body'); if (!body || !p) return;
     const slot = Game.Inventory.selectedSlot(); const wst = Game.Loot.stats(slot);
@@ -405,12 +518,18 @@ Game.UI = (function () {
       h += '</div>';
     });
     h += '<p class="hint">前提スキルを習得すると次が解放。振り直しは「記憶の書」(レア)。レベル上限 ' + (Game.MAX_LEVEL || 9999) + '。</p>';
-    // 実績一覧
+    // 実績一覧（達成サマリー＋バー、セッション中の新規解除は NEW 強調）
     if (Game.ACHIEVEMENTS && Game.Achievements) {
-      h += '<h2>実績 <span style="color:#ffe27a;font-size:.9rem">' + Game.Achievements.count() + ' / ' + Game.Achievements.total() + '</span></h2><div class="ach-list">';
+      if (!achBase) { achBase = {}; for (const id in Game.ACHIEVEMENTS) if (Game.Achievements.has(id)) achBase[id] = 1; }
+      const aGot = Game.Achievements.count(), aTot = Game.Achievements.total();
+      const aPct = aTot ? Math.round(aGot / aTot * 100) : 0;
+      h += '<h2>実績 <span style="color:#ffe27a;font-size:.9rem">' + aGot + ' / ' + aTot + '</span><span style="color:#7a8494;font-size:.78rem">　達成率 ' + aPct + '%</span></h2>';
+      h += '<div class="ach-prog"><i style="width:' + aPct + '%"></i></div>';
+      h += '<div class="ach-list">';
       for (const id in Game.ACHIEVEMENTS) {
         const a = Game.ACHIEVEMENTS[id], got = Game.Achievements.has(id);
-        h += '<div class="ach-row' + (got ? ' got' : '') + '"><span class="ach-mk">' + (got ? '🏆' : '🔒') + '</span><div><b>' + a.name + '</b><br><span class="ach-d">' + a.desc + '</span></div></div>';
+        const isNew = got && !achBase[id];
+        h += '<div class="ach-row' + (got ? ' got' : '') + (isNew ? ' fresh' : '') + '"><span class="ach-mk">' + (got ? '🏆' : '🔒') + '</span><div><b>' + a.name + (isNew ? '<em class="ach-new">NEW</em>' : '') + '</b><br><span class="ach-d">' + a.desc + '</span></div></div>';
       }
       h += '</div>';
     }

@@ -140,11 +140,25 @@ button { font-family: inherit; touch-action: manipulation; }
 .opt-kb-head { font-weight: 700; color: #cfe0ff; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
 .kb-btn { min-width: 72px; padding: 8px 10px; border-radius: 8px; border: 1px solid #33455e; background: #1a2436; color: #e8edf2; font-weight: 700; cursor: pointer; flex: 0 0 auto; }
 .kb-btn.listening { background: #c9a23a; color: #1a1408; border-color: #ffe27a; }
-.story-frag { background: rgba(40,36,64,0.5); border: 1px solid #3a3458; border-radius: 8px; padding: 8px 10px; margin: 6px 0; }
-.story-frag.locked { background: rgba(20,22,34,0.5); border-style: dashed; }
+/* 記憶回廊(物語ギャラリー) */
+.story-head { display: flex; align-items: center; justify-content: space-between; color: #cdd4e0; font-size: .82rem; margin-bottom: 5px; }
+.story-head b { color: #bfa0ff; }
+.story-prog { height: 5px; background: #1a2233; border-radius: 3px; overflow: hidden; margin-bottom: 6px; }
+.story-prog i { display: block; height: 100%; background: linear-gradient(90deg, #7a4fb0, #b884e8); border-radius: 3px; transition: width .4s; }
+.story-sec { color: #9a86c8; font-size: .76rem; font-weight: 700; letter-spacing: 2px; margin: 13px 0 4px;
+  border-bottom: 1px solid rgba(160,130,220,0.22); padding-bottom: 3px; display: flex; justify-content: space-between; align-items: baseline; }
+.story-sec .ss-n { font-size: .7rem; letter-spacing: 0; color: #7a6aa4; }
+.story-frag { background: rgba(40,36,64,0.5); border: 1px solid #3a3458; border-left: 4px solid #3a3458;
+  border-radius: 8px; padding: 8px 10px; margin: 6px 0; animation: sfIn .34s ease both; }
+@keyframes sfIn { 0% { opacity: 0; transform: translateY(7px); } 100% { opacity: 1; transform: none; } }
+.story-frag.locked { background: rgba(20,22,34,0.5); border-style: dashed; border-left-style: solid; }
 .sf-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #cfc0ff; }
+.sf-head b { flex: 1; min-width: 0; }
+.sf-chip { width: 10px; height: 10px; border-radius: 3px; flex: 0 0 auto;
+  border: 1px solid rgba(255,255,255,0.22); box-shadow: 0 0 6px rgba(184,132,232,0.4); }
+.story-frag.locked .sf-chip { background: #242c3c; box-shadow: none; border-color: rgba(255,255,255,0.08); }
 .sf-text { font-size: .82rem; color: #cdd4e0; margin-top: 6px; line-height: 1.5; }
-.sf-play { flex: 0 0 auto; }
+.sf-play { flex: 0 0 auto; min-height: 40px; padding: 8px 14px; }
 .opt-toggle.on { background: #2f7a4a; border-color: #6fc46b; color: #fff; }
 #fps { position: absolute; top: 2px; right: 4px; z-index: 31; font-size: .7rem; color: #8fffa0; pointer-events: none; text-shadow: 0 1px 2px #000; }
 /* タッチUIのサイズ/透明度（設定で変更）・左利き反転 */
@@ -165,9 +179,16 @@ body.left-handed #action-btns { right: auto; left: calc(12px + env(safe-area-ins
 .skill-row.owned { opacity: .7; } .skill-row.owned .sk-buy { background: #444; border-color: #666; cursor: default; }
 .sp-badge { color: #ffe27a; font-weight: 700; }
 /* 実績一覧 */
+.ach-prog { height: 7px; background: #1a2233; border-radius: 4px; overflow: hidden; margin: 2px 0 8px; }
+.ach-prog i { display: block; height: 100%; background: linear-gradient(90deg, #c9a23a, #ffe27a); border-radius: 4px; transition: width .4s; }
 .ach-list { display: flex; flex-direction: column; gap: 5px; }
 .ach-row { display: flex; align-items: center; gap: 9px; padding: 7px 9px; border: 1px solid #2c3a52; border-radius: 8px; background: rgba(20,28,42,0.5); opacity: .5; }
 .ach-row.got { opacity: 1; background: rgba(50,66,40,0.5); border-color: #5a7a3a; }
+.ach-row.got .ach-mk { text-shadow: 0 0 8px rgba(255,226,122,0.55); }
+/* このセッションで新たに解除した実績 */
+.ach-row.fresh { border-color: #ffe27a; box-shadow: 0 0 9px rgba(255,226,122,0.3); }
+.ach-new { font-style: normal; background: #e0664a; color: #fff; font-size: .58rem; font-weight: 700;
+  border-radius: 4px; padding: 1px 5px; margin-left: 6px; vertical-align: 1px; letter-spacing: 1px; }
 .ach-row .ach-mk { font-size: 1.1rem; }
 .ach-row b { font-size: .86rem; color: #e8edf2; }
 .ach-row .ach-d { font-size: .74rem; color: #9fb0c4; }
@@ -296,8 +317,8 @@ body.left-handed #action-btns { right: auto; left: calc(12px + env(safe-area-ins
   padding: 5px 14px; border-radius: 20px; max-width: 64vw; white-space: nowrap; overflow: hidden;
   text-overflow: ellipsis; pointer-events: none; }
 .quest-list { display: flex; flex-direction: column; gap: 5px; }
-.quest-row { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px;
-  background: rgba(30,40,58,0.6); font-size: .86rem; }
+.quest-row { display: flex; align-items: center; gap: 8px; padding: 8px 10px; min-height: 44px; border-radius: 9px;
+  border: 1px solid #2c3a52; background: rgba(30,40,58,0.6); font-size: .86rem; }
 .quest-row .qmark { width: 16px; text-align: center; }
 .quest-row .qname { font-weight: 700; min-width: 96px; }
 .quest-row .qdesc { color: #9fb0c4; font-size: .78rem; }
@@ -415,15 +436,40 @@ body.shadow-mode #app::after {
 .drag-ghost .icon { width: 30px; height: 30px; }
 .inv-discard { background: #7a2f3a !important; border-color: #c0505a !important; }
 .chest-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
-/* 旅商人トレード */
+/* バーツ商館/旅商人 トレード */
+.trade-wallet { display: flex; align-items: center; justify-content: space-between; background: rgba(16,24,42,0.72);
+  border: 1px solid #33455e; border-radius: 10px; padding: 9px 13px; margin-bottom: 6px; }
+.tw-lbl { color: #9fb6d0; font-size: .78rem; }
+.tw-val { color: #ffd24a; font-size: 1.08rem; letter-spacing: .5px; display: inline-block; }
+.tw-val.gold { color: #e8c54a; }
+.tw-val.pulse { animation: twPulse .45s ease; }
+@keyframes twPulse { 0% { transform: scale(1); } 30% { transform: scale(1.22); text-shadow: 0 0 12px rgba(255,210,74,0.85); } 100% { transform: scale(1); } }
+.trade-sub { color: #8fa3bb; font-size: .74rem; margin: 0 0 8px; line-height: 1.4; }
+.trade-cat { color: #8fa3bb; font-size: .74rem; font-weight: 700; letter-spacing: 1px; margin: 11px 0 4px;
+  border-bottom: 1px solid rgba(255,255,255,0.07); padding-bottom: 3px; }
 .trade-list { display: flex; flex-direction: column; gap: 6px; }
 .trade-row { display: flex; align-items: center; gap: 9px; padding: 8px 10px; min-height: 48px; border: 1px solid #4a5e7e; border-radius: 9px;
   background: rgba(30,42,62,0.7); color: #e8edf2; cursor: pointer; width: 100%; text-align: left; }
 .trade-row:active { filter: brightness(1.2); }
 .trade-row.disabled { opacity: .4; cursor: not-allowed; }
-.trade-row .tr-ic { width: 30px; height: 30px; background-size: contain; background-repeat: no-repeat; background-position: center; flex: 0 0 auto; }
-.trade-row .tr-name { flex: 1; font-size: .86rem; font-weight: 700; }
-.trade-row .tr-price { color: #ffe27a; font-weight: 700; font-size: .85rem; }
+.trade-row .tr-ic { width: 30px; height: 30px; background-size: contain; background-repeat: no-repeat; background-position: center; flex: 0 0 auto;
+  display: flex; align-items: center; justify-content: center; font-size: 20px; }
+.trade-row .tr-mid { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.trade-row .tr-name { font-size: .86rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.trade-row .tr-eff { font-size: .68rem; color: #9fb6d0; line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.trade-row .tr-price { color: #ffe27a; font-weight: 700; font-size: .85rem; flex: 0 0 auto; }
+.trade-row .tr-price.short { color: #e0785a; }
+/* 希少枠: 金の縁とほのかな輝き */
+.trade-row.rare { border-color: #c9a23a; background: linear-gradient(160deg, rgba(66,52,18,0.72), rgba(30,42,62,0.7));
+  box-shadow: 0 0 9px rgba(232,197,74,0.28); }
+.tr-rare-tag { font-style: normal; color: #241a05; background: linear-gradient(180deg, #ffe27a, #c9a23a);
+  border-radius: 4px; font-size: .6rem; padding: 1px 5px; margin-right: 5px; vertical-align: 1px; }
+/* 購入直後のカードパルス */
+.trade-row.bought { animation: rowBought .5s ease; }
+@keyframes rowBought {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.03); border-color: #7fe0a0; box-shadow: 0 0 14px rgba(127,224,160,0.5); }
+  100% { transform: scale(1); } }
 .slot.multi-sel { outline: 3px solid #ffe27a; outline-offset: -3px; }
 .craft-list { display: flex; flex-direction: column; gap: 5px; }
 .craft-tools { display: flex; gap: 6px; margin-bottom: 6px; }
@@ -575,7 +621,8 @@ body.has-pad #touch-controls { display: none !important; }
   #death-screen:not(.hidden), .death-box h1, .death-box .big-btn,
   #ending-screen:not(.hidden), .ending-box, .ending-box h1, .ending-box .ending-msg,
   .ending-box .ending-stats, .ending-box .big-btn, .ending-stats div,
-  #intro-screen:not(.hidden), #intro-screen .lore-box, #intro-body, #intro-screen .big-btn {
+  #intro-screen:not(.hidden), #intro-screen .lore-box, #intro-body, #intro-screen .big-btn,
+  .story-frag, .trade-row.bought, .tw-val.pulse {
     animation: none !important; transition-duration: 0s !important;
   }
 }

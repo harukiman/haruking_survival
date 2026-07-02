@@ -24,6 +24,13 @@ Game.Rocket = (function () {
   function onRemoteLaunch() { launchTo('space'); } // クライアント受信
 
   function launchTo(name) {
+    // 点火の手応え: 震動＋噴射炎/白煙(演出のみ)
+    const p = Game.state && Game.state.player;
+    if (Game.Render && Game.Render.shake) Game.Render.shake(8);
+    if (p && Game.Render && Game.Render.spawnParticles) {
+      Game.Render.spawnParticles(p.x, p.y + 10, '#ffb060', 14);
+      Game.Render.spawnParticles(p.x, p.y + 10, '#c9cdd6', 10);
+    }
     if (Game.Cutscene && Game.Cutscene.playLaunch) {
       Game.state.paused = true;
       Game.Cutscene.playLaunch(name === 'space', function () {

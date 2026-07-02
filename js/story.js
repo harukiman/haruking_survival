@@ -138,15 +138,31 @@ Game.STORY = [
     { text: '影の世界には、影から影へと跳び渡る者がいる。\n間合いも、逃げ場も、奴らの前では意味を成さない。', col: '#241038', col2: '#b06ad0', icon: '🌫', d: 5000 },
     { text: '逃げて勝てぬのなら、踏み込んで断つしかない。\n——恐れから目を背けず、その懐へ。影を縫う針を、こちらが折るのだ。', col: '#1a0c2a', col2: '#c884f0', icon: '🪡', d: 5400 },
   ] },
+  { id: 'firstwalker', title: '断章 ― 最初の影渡り', trigger: '相渡りを重ね、境の理に触れたとき', col: '#1e3a34', scenes: [
+    { text: '最初に相を渡った者の名を、碑は記していない。\nただ「境を視た者」と、それだけが伝わっている。', fx: 'sw_meadow', col: '#1e3a34', col2: '#bfe8d0', icon: '🌿', d: 5200 },
+    { text: '境は、鏡だった。指を伸ばせば、向こうからも同じ指が伸びてくる。\n触れた刹那——世界は音もなく、裏返った。', fx: 'sw_mirror', col: '#16283a', col2: '#a0e8e0', icon: '🌓', d: 5600, audio: 'shimmer' },
+    { text: '渡れたのは、ひとりだった。\nだが光の岸には、渡らなかった半身が、立ったまま残されていた。', fx: 'sw_cross', col: '#14092a', col2: '#c0b0ff', icon: '🚶', d: 5600, audio: 'riser' },
+    { text: '以来、相を渡る者の足音は、いつも片方だけ軽い。\n——あなたの影が時折あなたを見上げるのは、そのせいだ。', fx: 'sw_price', col: '#1a1626', col2: '#9fd0d8', icon: '👤', d: 5800, audio: 'swell' },
+  ] },
+  { id: 'twoprayers', title: '断章 ― 二人の祈り手', trigger: '終焉を越え、はじまりの祈りに触れたとき', col: '#2e2030', scenes: [
+    { text: '終焉の王が光と影に還ったあと、灰の野に、ふたつの小さな灯が残っていた。', fx: 'pr_ash', col: '#2a2226', col2: '#e0b8b0', icon: '🕯', d: 5200 },
+    { text: '憶えている者は、もういない。\n裂かれる前夜、丘の上で背中を合わせて祈った、ふたりのことを。', fx: 'pr_two', col: '#3a2c18', col2: '#ffd8a0', icon: '⛰', d: 5600, audio: 'choir' },
+    { text: '昼を願った声と、夜を望んだ声。碑がひた隠した真実は、ひとつだけ。\n——それは、同じひとりの胸から生まれた祈りだった。', fx: 'pr_one', col: '#241c30', col2: '#ffe9c0', icon: '🕊', d: 6000, audio: 'swell' },
+    { text: '世界を裂くのに、戦は要らない。ひとつの心が揺れれば、足りてしまう。\nならば世界を還せるのも——揺れてなお立ち続ける、ひとつの心だ。', fx: 'pr_quiet', col: '#102824', col2: '#a0d8c0', icon: '🌱', d: 5800, audio: 'shimmer' },
+  ] },
 ];
 
 Game.Story = (function () {
   function set() { return Game.state.storySeen || (Game.state.storySeen = {}); }
   function byId(id) { for (let i = 0; i < Game.STORY.length; i++) if (Game.STORY[i].id === id) return Game.STORY[i]; return null; }
   function seen(id) { return !!set()[id]; }
-  function playFrag(f, subdued) {
+  function playFrag(f, subdued, tries) {
     if (!f || !Game.Cutscene || !Game.Cutscene.playStory) return;
-    if (Game.Cutscene.isPlaying && Game.Cutscene.isPlaying()) return; // 多重再生防止
+    if (Game.Cutscene.isPlaying && Game.Cutscene.isPlaying()) {
+      // 別ムービー再生中は終了を待って再試行(最大60s)。初解放の演出を取りこぼさない
+      if ((tries || 0) < 60) setTimeout(function () { playFrag(f, subdued, (tries || 0) + 1); }, 1000);
+      return;
+    }
     Game.state.paused = true;
     Game.Cutscene.playStory(f, function () { Game.state.paused = false; }, { subdued: subdued });
   }
@@ -169,5 +185,29 @@ Game.Story = (function () {
   // デバッグ/閲覧用: 記憶回廊を全解除（演出なし）
   function unlockAll() { const s = set(); Game.STORY.forEach(function (f) { s[f.id] = true; }); if (Game.UI && Game.UI.refreshStory) Game.UI.refreshStory(); }
   function total() { return Game.STORY.length; }
+
+  // ===== データ駆動の自動トリガ =====
+  // 他ファイルに触れず、Game.state の公開フラグを監視して断章を解放する。
+  // delay: 条件成立から解放までの猶予(直前のムービーと連続再生になるのを避ける余韻)
+  const AUTO_TRIGGERS = [
+    { id: 'firstwalker', delay: 4000,  when: function () { return (Game.state.shiftCount || 0) >= 8; } },
+    { id: 'twoprayers',  delay: 24000, when: function () { return seen('endbringer'); } },
+  ];
+  const trigAt = {};
+  setInterval(function () {
+    if (!Game.state || !Game.state.player || Game.state.paused) return;
+    if (Game.Cutscene && Game.Cutscene.isPlaying && Game.Cutscene.isPlaying()) return;
+    const nowT = Date.now();
+    for (let i = 0; i < AUTO_TRIGGERS.length; i++) {
+      const tr = AUTO_TRIGGERS[i];
+      if (seen(tr.id)) continue;
+      let ok = false;
+      try { ok = !!tr.when(); } catch (e) {}
+      if (!ok) { delete trigAt[tr.id]; continue; }
+      if (!trigAt[tr.id]) { trigAt[tr.id] = nowT; continue; }
+      if (nowT - trigAt[tr.id] >= (tr.delay || 0)) { unlock(tr.id, true); break; } // 1tickに1本まで
+    }
+  }, 4000);
+
   return { unlock, play, seen, list, count, unlockAll, total };
 })();

@@ -54,6 +54,7 @@ Game.Projectiles = (function () {
       const pr = spawn(p.x + ux * 14, p.y + uy * 14, ux * sp, uy * sp, dmg, kind, false, null, opts.explosive || 0);
       pr.ang = ang;
       if (opts.crit) pr.crit = true;
+      if (opts.impact) pr.icol = opts.impact; // 口径別の着弾スパーク色(演出のみ)
       if (opts.pierce || kind === 'slash' || kind === 'pierce' || kind === 'laser') { pr.pierce = true; pr.hits = {}; }
       if (opts.chain || kind === 'chain') { pr.chain = opts.chain || 3; }
       if (opts.boomerang || kind === 'boomerang') { pr.boomerang = true; pr.pierce = true; pr.hits = {}; pr.ox = p.x; pr.oy = p.y; pr.life = 140; pr.spin = 0; }
@@ -100,6 +101,9 @@ Game.Projectiles = (function () {
     }
     Game.Render.spawnParticles(x, y, '#ff8a3c', 24);
     Game.Render.spawnParticles(x, y, '#ffe27a', 16);
+    Game.Render.spawnParticles(x, y, '#57504a', 10); // 破片(デブリ)が飛び散る
+    Game.Render.spawnParticles(x, y, '#2e2a26', 6);  // 黒煙
+    if (Game.Render.spawnImpact) Game.Render.spawnImpact(x, y, '#ffb060'); // 爆心のスパーク
     if (Game.Render.flash) Game.Render.flash('rgba(255,160,80,0.35)');
     if (Game.Render.shake) Game.Render.shake(Math.min(12, 5 + radiusTiles * 2)); // 爆発で画面が揺れる
     Game.Audio.play('boom_sfx');
@@ -208,7 +212,7 @@ Game.Projectiles = (function () {
         // 遠距離攻撃で自然オブジェクト(木/石/鉱石など)を破壊できる。設置物/チェストは誤破壊しない
         const breakable = !pr.hostile && meta.mineable && meta.hp != null && o < 100 && o !== Game.OBJ.CHEST && o !== Game.OBJ.TREASURE_CHEST && o !== Game.OBJ.SEAL_WALL;
         if (breakable) damageObject(tx, ty, o, meta, pr.explosive ? pr.dmg * 3 : pr.dmg, pr.x, pr.y);
-        else { Game.Render.spawnParticles(pr.x, pr.y, '#caa86a', 3); if (Game.Render.spawnImpact && !pr.hostile) Game.Render.spawnImpact(pr.x, pr.y, '#c9cdd6'); }
+        else { Game.Render.spawnParticles(pr.x, pr.y, '#caa86a', 3); if (Game.Render.spawnImpact && !pr.hostile) Game.Render.spawnImpact(pr.x, pr.y, pr.icol || '#c9cdd6'); }
         arr.splice(i, 1); continue;
       }
       let hit = false;
@@ -240,7 +244,7 @@ Game.Projectiles = (function () {
           if (Math.hypot(mo.x - pr.x, mo.y - pr.y) < mo.def.size * 0.5 + 6) {
             if (Game.Net.isConnected() && !Game.Net.host) Game.Net.sendHit(mo.id, pr.dmg, pr.x, pr.y); else { Game.Mobs.damageMob(mo, pr.dmg, pr.x, pr.y, pr.crit); if (Game.Mobs.applyDot) Game.Mobs.applyDot(mo, pr.kind); }
             if (pr.chain) { const hs = {}; hs[mo.id] = 1; chainTo(mo.x, mo.y, Math.round(pr.dmg * 0.8), pr.chain, hs); }
-            if (Game.Render.spawnImpact) Game.Render.spawnImpact(pr.x, pr.y, pr.kind === 'laser' || pr.kind === 'pierce' ? '#9fd8ff' : '#ffd86a');
+            if (Game.Render.spawnImpact) Game.Render.spawnImpact(pr.x, pr.y, pr.icol || (pr.kind === 'laser' || pr.kind === 'pierce' ? '#9fd8ff' : '#ffd86a'));
             hit = true; break;
           }
         }

@@ -7,6 +7,20 @@ Game.Player = (function () {
 
   const mining = { active: false, tx: 0, ty: 0, obj: 0, progress: 0 };
 
+  // 乗り物の加速/減速カーブ(最高速は従来と同一・立ち上がりと惰性だけを付与。バランス不変)
+  const VEH_ACCEL = { car: 0.085, boat: 0.055, plane: 0.05, carpet: 0.075 };
+  const VEH_DRAG = { car: 0.85, boat: 0.93, plane: 0.9, carpet: 0.88 };
+  const VEH_TRAIL = { car: '#c9b189', boat: '#bfe2f5', plane: '#e6ecf5', carpet: '#e0bcf0' };
+  // 口径ごとの着弾スパーク色/薬莢色(演出のみ・性能不変)
+  const CALIBER_FX = {
+    ammo_9mm: { imp: '#ffd86a', casing: '#d8b25a' },
+    ammo_556: { imp: '#cfe8ff', casing: '#c9b45a' },
+    ammo_762: { imp: '#ffb060', casing: '#b58a3c' },
+    shell_12g: { imp: '#ff9a6a', casing: '#c04a3a' },
+    ammo_50: { imp: '#ffffff', casing: '#a88a50' },
+    bullet: { imp: '#ffd86a', casing: '#d8b25a' },
+  };
+
   function makeDefault() {
     return {
       x: 0, y: 0, prevX: 0, prevY: 0,
@@ -96,6 +110,18 @@ Game.Player = (function () {
     const wt = Game.state.weather && Game.state.weather.type;
     if ((wt === 'sandstorm' || wt === 'blizzard') && p.vehicle !== 'plane' && p.vehicle !== 'carpet') spd *= 0.7;
     if (!p.vehicle) spd *= (1 + skillBonus().moveSpd + setBonus().moveSpd + (Game.Status ? Game.Status.buffSum().spd : 0)); // スキル健脚＋俊足の薬＋セット効果
+    // 乗り物: スロットル(0..1)を積分して加速/減速カーブを作る。最高速そのものは不変
+    if (p.vehicle) {
+      if (moving) {
+        p.vThr = Math.min(1, (p.vThr || 0) + (VEH_ACCEL[p.vehicle] || 0.08));
+        p.vDirX = dx / len; p.vDirY = dy / len; // 惰性用に進行方向を記憶
+      } else {
+        p.vThr = (p.vThr || 0) * (VEH_DRAG[p.vehicle] || 0.88);
+        if (p.vThr < 0.04) p.vThr = 0;
+      }
+    } else p.vThr = 0;
+    // エンジンループ音を実走行状態に同期(冪等・セーブ復帰やワールド移動後も自動整合)
+    if (Game.Audio.vehicleLoop && Game.state.tick % 6 === 0) Game.Audio.vehicleLoop(p.vehicle || null, p.vThr || 0);
     if ((p.rolling || 0) > 0) {
       // 回避ロール中: 固定方向へ高速移動（壁は通常同様に停止）＋砂煙
       p.rolling--;
@@ -108,9 +134,10 @@ Game.Player = (function () {
       dx /= len; dy /= len;
       p.dir = intent.dir || p.dir;
       const ox = p.x, oy = p.y;
-      const nx = p.x + dx * spd;
+      const mvSpd = p.vehicle ? spd * (0.3 + 0.7 * p.vThr) : spd; // 乗り物は出だし30%→滑らかに最高速へ
+      const nx = p.x + dx * mvSpd;
       if (!blocked(nx, p.y)) p.x = nx;
-      const ny = p.y + dy * spd;
+      const ny = p.y + dy * mvSpd;
       if (!blocked(p.x, ny)) p.y = ny;
       // スタック対策: 動こうとしているのに両軸とも進めない状態が続いたら歩ける場所へ救出
       if (Math.abs(p.x - ox) < 0.01 && Math.abs(p.y - oy) < 0.01 && !p.vehicle) {
@@ -124,11 +151,29 @@ Game.Player = (function () {
         const kind = (g === T.STONE || g === T.DUNGEON_FLOOR || g === T.VOLCANIC) ? 'stone' : (g === T.SAND || g === T.SNOW || g === T.DIRT) ? 'soft' : 'grass';
         Game.Audio.footstep(kind, Math.floor(Game.state.tick / 14) % 2);
       }
-      if (p.vehicle && Game.state.tick % 24 === 0) Game.Audio.play('engine');
+      // 走行トレイル: 車=砂埃 / ボート=航跡 / 飛行機・絨毯=淡い雲(3tickに1粒・低コスト)
+      if (p.vehicle && (p.vThr || 0) > 0.2 && Game.state.tick % 3 === 0) {
+        Game.Render.spawnParticles(p.x - (p.vDirX || 0) * 10, p.y - (p.vDirY || 0) * 10 + (p.vehicle === 'boat' ? 5 : 7), VEH_TRAIL[p.vehicle] || '#cfd6e0', 1);
+        if (p.vehicle === 'boat' && Game.state.tick % 21 === 0) Game.Audio.play('splash');
+      }
+    } else if (p.vehicle && (p.vThr || 0) > 0) {
+      // 惰性: 入力を離しても即停止せず滑らかに減速(最後の進行方向へ滑る)
+      const cs = spd * (0.3 + 0.7 * p.vThr) * p.vThr;
+      const cx = p.x + (p.vDirX || 0) * cs; if (!blocked(cx, p.y)) p.x = cx;
+      const cy = p.y + (p.vDirY || 0) * cs; if (!blocked(p.x, cy)) p.y = cy;
+      if ((p.vThr || 0) > 0.3 && Game.state.tick % 4 === 0) Game.Render.spawnParticles(p.x - (p.vDirX || 0) * 10, p.y - (p.vDirY || 0) * 10 + 6, VEH_TRAIL[p.vehicle] || '#cfd6e0', 1);
+      p.stuckT = 0;
     } else p.stuckT = 0;
 
     if (p.invuln > 0) p.invuln--;
     if (p.attackCd > 0) p.attackCd--;
+    // 発砲反動キックの復元(視覚のみ・数tickで元位置へ戻すためゲームプレイ影響なし)
+    if ((p.recoilN || 0) > 0) {
+      p.recoilN--;
+      const rbx = p.x - (p.recoilX || 0); if (!blocked(rbx, p.y)) p.x = rbx;
+      const rby = p.y - (p.recoilY || 0); if (!blocked(p.x, rby)) p.y = rby;
+      if (p.recoilN <= 0) { p.recoilX = 0; p.recoilY = 0; }
+    }
     // 先行入力バッファ: CDが明けた瞬間に予約済みの一撃を自動発動(近接/杖のみ。銃はtryFire側で管理)
     if (p.attackCd <= 0 && p.attackBuf) {
       p.attackBuf = false;
@@ -142,7 +187,7 @@ Game.Player = (function () {
         const ri = p.reloadInfo; p.reloadInfo = null;
         const reserve = Game.Inventory.count(ri.ammo);
         const take = Math.min(ri.need, reserve);
-        if (take > 0) { Game.Inventory.remove(ri.ammo, take); p.mags[ri.gid] = (p.mags[ri.gid] || 0) + take; Game.Audio.play('equip'); Game.UI.toast('リロード完了 — ' + (Game.ITEMS[ri.ammo] ? Game.ITEMS[ri.ammo].name : ri.ammo) + ' ' + p.mags[ri.gid] + '発'); }
+        if (take > 0) { Game.Inventory.remove(ri.ammo, take); p.mags[ri.gid] = (p.mags[ri.gid] || 0) + take; Game.Audio.play('reload_done'); Game.UI.toast('リロード完了 — ' + (Game.ITEMS[ri.ammo] ? Game.ITEMS[ri.ammo].name : ri.ammo) + ' ' + p.mags[ri.gid] + '発'); }
         Game.UI.refreshHotbar();
       }
     }
@@ -388,9 +433,20 @@ Game.Player = (function () {
     if (def.ending) { Game.Quests.reunify(); return; }
     if (def.vehicle) {
       const p = Game.state.player;
-      if (p.vehicle === def.vehicle) { p.vehicle = null; Game.UI.toast(def.name + ' から降りた'); }
-      else { p.vehicle = def.vehicle; Game.UI.toast(def.name + ' に乗った'); }
-      Game.Audio.play('engine'); return;
+      if (p.vehicle === def.vehicle) {
+        p.vehicle = null; p.vThr = 0;
+        Game.Audio.play('dismount');
+        if (Game.Audio.vehicleLoop) Game.Audio.vehicleLoop(null);
+        Game.Render.spawnParticles(p.x, p.y + 6, '#cfd6e0', 4);
+        Game.UI.toast(def.name + ' から降りた');
+      } else {
+        p.vehicle = def.vehicle; p.vThr = 0;
+        Game.Audio.play('mount');
+        if (Game.Audio.vehicleLoop) Game.Audio.vehicleLoop(def.vehicle, 0);
+        Game.Render.spawnParticles(p.x, p.y + 6, '#cfd6e0', 5);
+        Game.UI.toast(def.name + ' に乗った');
+      }
+      return;
     }
     if (def.shift) { Game.World.shift(); return; }
     if (def.respec) { const n = respec(); Game.Inventory.remove(sel.id, 1); Game.UI.toast('記憶の書を読んだ — スキルを振り直した（' + n + 'P返却）'); Game.UI.refreshAll(); return; }
@@ -511,7 +567,7 @@ Game.Player = (function () {
     p.reloadCd = sel.reloadTime || 48; // ~1.6秒 @30Hz
     p.reloadMax = p.reloadCd; // 進捗バー用の総時間
     p.reloadInfo = { gid: gid, ammo: sel.ammo, need: cap - cur };
-    Game.Audio.play('gun');
+    Game.Audio.play('reload'); // マガジン交換のクリック音(発砲音と区別)
     Game.UI.toast('リロード中… 🔄');
     Game.UI.refreshHotbar();
     return true;
@@ -542,19 +598,33 @@ Game.Player = (function () {
     const critCh = (Game.TUNE.BASE_CRIT || 0.08) + skillBonus().crit + (setBonus().crit || 0);
     const isCrit = Math.random() < critCh;
     if (isCrit) { dmg = Math.round(dmg * (Game.TUNE.CRIT_MULT || 1.8)); Game.Audio.play('crit'); if (Game.Render.shake) Game.Render.shake(5); }
+    const cfx = CALIBER_FX[sel.ammo] || null; // 口径別の着弾/薬莢演出(性能不変)
+    const ang = Game.Projectiles.aimAngle ? Game.Projectiles.aimAngle() : 0;
     for (let i = 0; i < pellets; i++) {
       const spr = pellets > 1 ? (Math.random() - 0.5) * (sel.spread || 0.5) : (sel.spread || 0);
-      Game.Projectiles.fire(dmg, kind, { spread: spr, explosive: sel.explosive || 0, speed: sel.bspeed, crit: isCrit });
+      Game.Projectiles.fire(dmg, kind, { spread: spr, explosive: sel.explosive || 0, speed: sel.bspeed, crit: isCrit, impact: cfx ? cfx.imp : null });
     }
     p.attackCd = sel.cd || 12;
     // マズルフラッシュ(銃口の閃光)。銃種で色/大きさを変える
-    if (Game.Render.spawnMuzzle && Game.Projectiles.aimAngle) {
-      const ang = Game.Projectiles.aimAngle();
+    if (Game.Render.spawnMuzzle) {
       const mcol = sel.bkind === 'laser' || sel.bkind === 'pierce' ? (sel.color || '#9fd8ff') : (sel.bkind === 'rocket' ? '#ff9a3c' : '#ffe06a');
       const msc = sel.pellets ? 1.5 : (sel.explosive ? 1.6 : (sel.cd <= 6 ? 0.8 : 1));
       Game.Render.spawnMuzzle(p.x + Math.cos(ang) * 16, p.y + Math.sin(ang) * 16, ang, mcol, msc);
     }
-    Game.Render.spawnParticles(p.x, p.y, '#ffe9a0', 2);
+    // 薬莢排出: 銃の横へ弾ける小片(ロケット/エネルギー系は出ない)
+    if (cfx && kind !== 'rocket') {
+      const cx2 = Math.cos(ang + Math.PI / 2), cy2 = Math.sin(ang + Math.PI / 2);
+      Game.Render.spawnParticles(p.x + cx2 * 9, p.y + cy2 * 9 - 4, cfx.casing, 1);
+    } else {
+      Game.Render.spawnParticles(p.x, p.y, '#ffe9a0', 2);
+    }
+    // 反動キック: 撃った瞬間だけ照準の逆へ僅かに沈み、数tickで自動復元(視覚のみ)
+    const kick = sel.explosive ? 3 : sel.pellets ? 2.4 : (sel.cd >= 30 ? 2.6 : (sel.cd <= 6 ? 0.7 : 1.3));
+    const kkx = -Math.cos(ang) * kick, kky = -Math.sin(ang) * kick;
+    if (!blocked(p.x + kkx, p.y + kky)) {
+      p.x += kkx; p.y += kky;
+      p.recoilN = 3; p.recoilX = kkx / 3; p.recoilY = kky / 3;
+    }
     // 重火器は反動で画面が揺れる(スナイパー/ロケット/ショットガン=高cdや爆発)
     if (Game.Render.shake) { const recoil = sel.explosive ? 7 : sel.pellets ? 5 : (sel.cd >= 30 ? 6 : 0); if (recoil) Game.Render.shake(recoil); }
     Game.Audio.play(sel.gunsfx || 'gun');
