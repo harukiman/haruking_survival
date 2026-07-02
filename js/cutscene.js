@@ -539,7 +539,10 @@ Game.Cutscene = (function () {
   function runScenes(scenes, cb, opts) {
     opts = opts || {};
     playing = true; onDone = cb; curScene = -1; shakeMag = 0;
-    curScenes = scenes; curTotal = scenes.reduce(function (a, s) { return a + s.d; }, 0);
+    // 各場面の表示時間を1.5倍に(文字を読む時間の確保, ユーザー指示 2026-07-02)。
+    // シーン定数は共有オブジェクトなのでコピーしてから伸長(再生ごとの累積倍加を防止)
+    curScenes = scenes.map(function (s) { const c = Object.assign({}, s); c.d = Math.round(s.d * 1.5); return c; });
+    curTotal = curScenes.reduce(function (a, s) { return a + s.d; }, 0);
     bgCol = opts.bg || '#03040a'; subduedMode = !!opts.subdued;
     prevDraw = null; prevUntilE = 0; typeDone = false; lastSc = null;
     cv = document.createElement('canvas'); cv.id = 'cutscene-canvas';
