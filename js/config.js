@@ -383,24 +383,24 @@ Game.ITEMS = {
   // ===== P33 ワクワク武器（飛ぶ斬撃/雷/ブーメラン/ビーム）＋Fate風レジェンダリ =====
   energy_cell: { name:'エネルギーセル', stack:99, color:'#2aa0d0', flavor:'エネルギー兵器の動力。青く脈動する。' },
   wind_blade:  { name:'風斬りの剣', stack:1, color:'#bfe8d8', tool:'sword', tier:3, attack:9, proj:{kind:'slash', dmg:7, cd:14}, wsfx:'slash_air', flavor:'振るたび刃から斬撃が飛ぶ。間合いの外から斬れ。' },
-  thunder_sword:{ name:'雷鳴剣', stack:1, color:'#ffe27a', tool:'sword', tier:4, attack:11, proj:{kind:'chain', dmg:9, chain:3, cd:18}, wsfx:'thunder', flavor:'放たれた雷は敵から敵へ飛び移る。' },
+  thunder_sword:{ name:'雷鳴剣', stack:1, color:'#ffe27a', tool:'sword', tier:4, attack:11, proj:{kind:'chain', dmg:9, chain:3, cd:18}, wsfx:'thunder', special:{type:'thunder', name:'雷鳴', count:2, pct:0.5, cd:90}, flavor:'放たれた雷は敵から敵へ飛び移る。斬撃の余波が天雷を呼ぶ。' },
   boomerang_axe:{ name:'回帰の戦斧', stack:1, color:'#caa86a', tool:'sword', tier:3, attack:12, proj:{kind:'boomerang', dmg:13, cd:28}, wsfx:'whirl', flavor:'投げれば貫き、手元へ還る。' },
   crescent_twinblade:{ name:'三日月の双刃', stack:1, color:'#9fe0d0', tool:'sword', tier:4, attack:13, proj:{kind:'slash', dmg:8, count:3, spread:0.5, cd:20}, wsfx:'slash_air', flavor:'一振りで三日月の斬撃が扇状に飛ぶ。群れを薙げ。' },
   laser_rifle: { name:'レーザーライフル', stack:1, color:'#141416', tool:'gun', mag:20, ammo:'energy_cell', fireDmg:14, cd:8, bkind:'laser', gunsfx:'beam', flavor:'敵を貫く収束光。' },
   railgun:     { name:'レールガン', stack:1, color:'#101014', tool:'gun', mag:5, ammo:'energy_cell', fireDmg:38, cd:40, bspeed:16, bkind:'pierce', gunsfx:'beam', flavor:'超電磁加速。直線上の全てを撃ち抜く。' },
-  excalibur:   { name:'約束された勝利の剣', stack:1, color:'#ffe9a0', tool:'sword', tier:5, attack:22, proj:{kind:'slash', dmg:34, big:true, cd:40}, wsfx:'beam', flavor:'掲げれば光の砲撃となりて、邪悪を薙ぎ払う。' },
-  gae_bolg:    { name:'刺し穿つ死棘の槍', stack:1, color:'#c0303a', tool:'sword', tier:5, attack:18, proj:{kind:'pierce', dmg:24, cd:22}, wsfx:'slash_air', flavor:'放てば因果を捻じ曲げ、必ず心臓を貫く朱槍。' },
+  excalibur:   { name:'約束された勝利の剣', stack:1, color:'#ffe9a0', tool:'sword', tier:5, attack:22, proj:{kind:'slash', dmg:34, big:true, cd:40}, wsfx:'beam', special:{type:'shock', name:'聖光の衝撃', pct:0.5, r:2.4, cd:80, color:'#ffe9a0'}, flavor:'掲げれば光の砲撃となりて、邪悪を薙ぎ払う。' },
+  gae_bolg:    { name:'刺し穿つ死棘の槍', stack:1, color:'#c0303a', tool:'sword', tier:5, attack:18, proj:{kind:'pierce', dmg:24, cd:22}, wsfx:'slash_air', special:{type:'brand', name:'死棘の毒', dot:'venom', color:'#c0303a'}, flavor:'放てば因果を捻じ曲げ、必ず心臓を貫く朱槍。' },
   gate_babylon:{ name:'王の財宝', stack:1, color:'#e8c54a', tool:'sword', tier:5, attack:16, proj:{kind:'slash', dmg:11, count:5, spread:0.7, cd:34}, wsfx:'slash_air', flavor:'無数の宝具を雨と降らせる、王の蔵。' },
-  prism_blade: { name:'プリズムの刃', stack:1, color:'#c884f0', tool:'sword', tier:5, attack:19, proj:{kind:'slash', dmg:16, count:3, spread:0.4, cd:30}, wsfx:'beam', flavor:'水晶の女王の刃。光を七色に砕き、三閃となって奔る。' },
-  dragon_fang: { name:'竜牙の大剣', stack:1, color:'#8a2fb0', tool:'sword', tier:5, attack:24, proj:{kind:'slash', dmg:28, big:true, cd:36}, wsfx:'beam', flavor:'深淵の竜の牙より鍛えし大剣。振るえば闇を裂く咆哮が奔る。' },
-  endblade:    { name:'終焉の剣', stack:1, color:'#ff5a7a', tool:'sword', tier:5, attack:26, aoe:true, proj:{kind:'slash', dmg:32, big:true, cd:32}, wsfx:'beam', flavor:'全ての強敵を退けし者に託される、終焉と再生の剣。一閃が世界の罅を薙ぐ。' },
-  colossus_blade:{ name:'巨像の大剣', stack:1, color:'#d08a4a', tool:'sword', tier:5, attack:23, proj:{kind:'slash', dmg:22, big:true, cd:38}, wsfx:'beam', flavor:'黄昏の巨像の核より鍛えし剛剣。一振りで大地を断つ。' },
-  mire_scythe: { name:'澱みの大鎌', stack:1, color:'#7a9a3a', tool:'sword', tier:5, attack:21, proj:{kind:'venom', dmg:18, count:2, spread:0.3, cd:34}, wsfx:'beam', flavor:'沼の主の骸より鍛えし大鎌。振るえば毒の刃が弧を描いて奔る。' },
-  magma_maul:  { name:'溶岩の大槌', stack:1, color:'#d8521f', tool:'sword', tier:5, attack:25, aoe:true, proj:{kind:'fire', dmg:20, explosive:1.6, cd:40}, wsfx:'beam', flavor:'溶岩の王の核より鍛えし大槌。叩きつければ灼熱が炸裂する。' },
-  spore_scythe:{ name:'菌糸の大鎌', stack:1, color:'#9a6ad0', tool:'sword', tier:5, attack:22, proj:{kind:'venom', dmg:18, count:3, spread:0.4, cd:34}, wsfx:'beam', flavor:'胞子の女王より生まれた大鎌。振るえば毒胞子が三方へ舞う。' },
+  prism_blade: { name:'プリズムの刃', stack:1, color:'#c884f0', tool:'sword', tier:5, attack:19, proj:{kind:'slash', dmg:16, count:3, spread:0.4, cd:30}, wsfx:'beam', special:{type:'echo', name:'三閃残光', hits:2, pct:0.35, cd:70, color:'#c884f0'}, flavor:'水晶の女王の刃。光を七色に砕き、三閃となって奔る。' },
+  dragon_fang: { name:'竜牙の大剣', stack:1, color:'#8a2fb0', tool:'sword', tier:5, attack:24, proj:{kind:'slash', dmg:28, big:true, cd:36}, wsfx:'beam', special:{type:'shock', name:'竜咆', pct:0.5, r:2.4, cd:75, color:'#8a2fb0'}, flavor:'深淵の竜の牙より鍛えし大剣。振るえば闇を裂く咆哮が奔る。' },
+  endblade:    { name:'終焉の剣', stack:1, color:'#ff5a7a', tool:'sword', tier:5, attack:26, aoe:true, proj:{kind:'slash', dmg:32, big:true, cd:32}, wsfx:'beam', special:{type:'echo', name:'終焉の三連', hits:2, pct:0.4, cd:60, color:'#ff5a7a'}, flavor:'全ての強敵を退けし者に託される、終焉と再生の剣。一閃は三たび木霊する。' },
+  colossus_blade:{ name:'巨像の大剣', stack:1, color:'#d08a4a', tool:'sword', tier:5, attack:23, proj:{kind:'slash', dmg:22, big:true, cd:38}, wsfx:'beam', special:{type:'shock', name:'大地断ち', pct:0.5, r:2.4, cd:75, color:'#d08a4a'}, flavor:'黄昏の巨像の核より鍛えし剛剣。一振りで大地を断つ。' },
+  mire_scythe: { name:'澱みの大鎌', stack:1, color:'#7a9a3a', tool:'sword', tier:5, attack:21, proj:{kind:'venom', dmg:18, count:2, spread:0.3, cd:34}, wsfx:'beam', special:{type:'reap', name:'吸命', healPct:0.03, cd:30, color:'#8fe06a'}, flavor:'沼の主の骸より鍛えし大鎌。刈り取った命が使い手を潤す。' },
+  magma_maul:  { name:'溶岩の大槌', stack:1, color:'#d8521f', tool:'sword', tier:5, attack:25, aoe:true, proj:{kind:'fire', dmg:20, explosive:1.6, cd:40}, wsfx:'beam', special:{type:'brand', name:'焔纏', dot:'fire', color:'#ff7a3a'}, flavor:'溶岩の王の核より鍛えし大槌。打たれた者は炎を纏う。' },
+  spore_scythe:{ name:'菌糸の大鎌', stack:1, color:'#9a6ad0', tool:'sword', tier:5, attack:22, proj:{kind:'venom', dmg:18, count:3, spread:0.4, cd:34}, wsfx:'beam', special:{type:'reap', name:'吸命', healPct:0.03, cd:30, color:'#9a6ad0'}, flavor:'胞子の女王より生まれた大鎌。散った命は菌糸を伝って還る。' },
   // ===== エンドゲーム手作り装備(ボス素材) =====
-  starcore_greatsword:{ name:'星核の大剣', stack:1, color:'#cfe0ff', tool:'sword', tier:5, attack:24, proj:{kind:'slash', dmg:24, big:true, cd:34}, wsfx:'beam', flavor:'星核を鍛え込んだ大剣。振るえば星屑の一閃が奔る。' },
-  voidcore_blade:{ name:'虚無の刃', stack:1, color:'#c060ff', tool:'sword', tier:5, attack:22, proj:{kind:'hex', dmg:18, count:2, spread:0.35, pierce:true, cd:32}, wsfx:'beam', flavor:'影核と虚の心臓より生まれた刃。貫く闇の弾を放つ。' },
+  starcore_greatsword:{ name:'星核の大剣', stack:1, color:'#cfe0ff', tool:'sword', tier:5, attack:24, proj:{kind:'slash', dmg:24, big:true, cd:34}, wsfx:'beam', special:{type:'echo', name:'星屑残光', hits:2, pct:0.35, cd:70, color:'#cfe0ff'}, flavor:'星核を鍛え込んだ大剣。一閃の後、星屑の残光が追い斬る。' },
+  voidcore_blade:{ name:'虚無の刃', stack:1, color:'#c060ff', tool:'sword', tier:5, attack:22, proj:{kind:'hex', dmg:18, count:2, spread:0.35, pierce:true, cd:32}, wsfx:'beam', special:{type:'reap', name:'虚喰', healPct:0.04, cd:30, color:'#c060ff'}, flavor:'影核と虚の心臓より生まれた刃。屠った命を喰らい、主を癒す。' },
   star_aegis:  { name:'星核の鎧', stack:1, color:'#bfe0ff', armor:8, slot:'chest', warm:true, flavor:'星鋼と星核で鍛えた鎧。あらゆる衝撃を受け流す。' },
   void_helm:   { name:'虚無の兜', stack:1, color:'#a060e0', armor:5, slot:'head', flavor:'影核を埋め込んだ兜。影の囁きを遮る。' },
   // 乗り物
@@ -411,7 +411,7 @@ Game.ITEMS = {
   rocket:        { name:'ロケット', stack:1, color:'#d8d8e0', place:Game.OBJ.ROCKET, flavor:'空の果て、星々の海へ。全ての貴き素材を束ねて。' },
   star_metal:    { name:'星鋼', stack:99, color:'#aee0ff', flavor:'星の核から採れる金属。地上のどんな鋼より硬く、軽い。' },
   star_core:     { name:'星核', stack:16, color:'#ffe9ff', flavor:'小さな星そのもの。無限の力が秘められている。' },
-  cosmic_blade:  { name:'コズミックブレード', stack:1, color:'#aee0ff', tool:'sword', tier:5, attack:18, flavor:'星鋼で鍛えし剣。一閃が闇を裂く。' },
+  cosmic_blade:  { name:'コズミックブレード', stack:1, color:'#aee0ff', tool:'sword', tier:5, attack:18, special:{type:'thunder', name:'星の裁き', count:2, pct:0.5, cd:90, color:'#aee0ff'}, flavor:'星鋼で鍛えし剣。一閃が闇を裂き、星の光が敵を撃つ。' },
   star_cannon:   { name:'スターキャノン', stack:1, color:'#aee0ff', tool:'gun', mag:8, ammo:'bullet', fireDmg:22, cd:10, explosive:2.0, bkind:'rocket', gunsfx:'gun_rocket', flavor:'星の力を撃ち放つ砲。着弾で炸裂する。' },
   gravity_boots: { name:'重力ブーツ', stack:1, color:'#88a', armor:4, slot:'chest', flavor:'星の重力を御す靴。' },
   // 家具・家作り
@@ -449,7 +449,7 @@ Game.ITEMS = {
   bone_club:     { name:'骨の棍棒', stack:1, color:'#dcdcd0', tool:'sword', tier:1, attack:4, flavor:'打ち倒した者の骨で。原始の暴力。' },
   gold_sword:    { name:'金の剣', stack:1, color:'#e8c54a', tool:'sword', tier:2, attack:6, flavor:'美しき黄金の刃。見栄えは一流、実用も悪くない。' },
   war_hammer:    { name:'戦鎚', stack:1, color:'#b8bcc0', tool:'sword', tier:3, attack:10, aoe:true, flavor:'振り抜けば鎧ごと砕く重鎚。周囲を薙ぎ払う。' },
-  crystal_blade: { name:'影晶の刃', stack:1, color:'#b86ad0', tool:'sword', tier:4, attack:13, voidBonus:true, flavor:'影晶を研ぎ澄ました刃。虚ろなものほどよく斬れる。' },
+  crystal_blade: { name:'影晶の刃', stack:1, color:'#b86ad0', tool:'sword', tier:4, attack:13, voidBonus:true, special:{type:'brand', name:'氷纏', dot:'frost', color:'#9fd8ff'}, flavor:'影晶を研ぎ澄ました刃。斬られた者は冷気に縛られ鈍る。' },
   chitin_spear:  { name:'甲殻の槍', stack:1, color:'#c08040', tool:'sword', tier:2, attack:7, flavor:'砂漠の蟲の殻を束ねた槍。間合いに優れる。' },
   // ===== P25: 防具・セット素材 =====
   gold_helmet:   { name:'金の兜', stack:1, color:'#e8c54a', armor:2, slot:'head' },
@@ -459,8 +459,8 @@ Game.ITEMS = {
   star_helmet:   { name:'星鋼の兜', stack:1, color:'#aee0ff', armor:4, slot:'head' },
   chitin_armor:  { name:'甲殻の鎧', stack:1, color:'#c08040', armor:3, slot:'chest' },
   // ===== P27 ボス固有レジェンダリ =====
-  sand_greatsword:{ name:'砂塵の大剣', stack:1, color:'#d8b048', tool:'sword', tier:4, attack:14, aoe:true, flavor:'墳墓の王の遺刃。振るうたび、千年の砂塵が舞う。' },
-  magma_hammer:  { name:'溶岩の戦槌', stack:1, color:'#c0502a', tool:'sword', tier:5, attack:17, aoe:true, flavor:'溶炉の巨人の鎚。打てば大地が灼ける。' },
+  sand_greatsword:{ name:'砂塵の大剣', stack:1, color:'#d8b048', tool:'sword', tier:4, attack:14, aoe:true, special:{type:'shock', name:'砂塵の衝撃波', pct:0.4, r:2.0, cd:90, color:'#d8b048'}, flavor:'墳墓の王の遺刃。振るうたび、千年の砂塵が衝撃となって荒れ狂う。' },
+  magma_hammer:  { name:'溶岩の戦槌', stack:1, color:'#c0502a', tool:'sword', tier:5, attack:17, aoe:true, special:{type:'shock', name:'灼熱の衝撃波', pct:0.45, r:2.2, cd:75, dot:'fire', color:'#ff7a3a'}, flavor:'溶炉の巨人の鎚。打てば大地が灼け、衝撃が炎を撒く。' },
   pharaoh_crown: { name:'王の冠', stack:1, color:'#e8c54a', armor:4, slot:'head', flavor:'墳墓に眠りし王の黄金の冠。威厳が身を護る。' },
   mind_tome:     { name:'記憶の書', stack:8, color:'#d0c0ff', respec:true, flavor:'稀少な記憶の書。読めばスキルを振り直せる。' },
   wisdom_tome:   { name:'知恵の書', stack:8, color:'#ffd86b', skillTome:1, flavor:'古の知恵が宿る稀覯本。読めばスキルポイントを1得る。' },
@@ -732,6 +732,16 @@ Game.SKILL_TREE = [
     }
   });
 })();
+
+// ===== パッシブ(自動発動)スキル: 各系統の最上位に配置。数値は控えめ・CDあり =====
+Game.SKILL_TREE.push(
+  { id:'p_focus',    branch:'war',    name:'集中',   tier:5, cost:4, req:['w6'], eff:{flag:'focus'},    desc:'10秒間 被弾しないと次の一撃が会心確定' },
+  { id:'p_counter',  branch:'guard',  name:'逆襲',   tier:5, cost:4, req:['g5'], eff:{flag:'counter'},  desc:'HP30%未満で被弾時 周囲に衝撃波(CD30秒)' },
+  { id:'p_tenacity', branch:'guard',  name:'執念',   tier:5, cost:5, req:['g7'], eff:{flag:'tenacity'}, desc:'致死ダメージを1度だけHP1で耐える(CD3分)' },
+  { id:'p_tailwind', branch:'surv',   name:'追い風', tier:5, cost:4, req:['s6'], eff:{flag:'tailwind'}, desc:'敵を倒すと3秒間 移動+8%(重複なし)' },
+  { id:'p_mend',     branch:'arcane', name:'快癒',   tier:5, cost:4, req:['a5'], eff:{flag:'mend'},     desc:'受ける状態異常の持続時間-25%' },
+  { id:'p_conserve', branch:'hunter', name:'節約',   tier:5, cost:4, req:['gx_hunter_4_0'], eff:{flag:'conserve'}, desc:'射撃の12%で弾薬を消費しない' }
+);
 
 Game.SKILL_BY_ID = {};
 Game.SKILL_TREE.forEach(function (n) { Game.SKILL_BY_ID[n.id] = n; });

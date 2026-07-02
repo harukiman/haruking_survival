@@ -93,10 +93,13 @@ Game.Combat = (function () {
     const st = Game.Loot.stats(slot);
     // 武器ダメージにレベル/STR/スキル補正（同じ装備でもレベルで±）
     let dmg = Game.Player.effAttack(st.atk > 0 ? st.atk : 1);
-    // 会心（クリティカル）: 基礎8% ＋ スキル ＋ 装備affix。クリ時 1.8x
+    const baseDmg = dmg; // 特殊効果のスケール基準(会心補正前)
+    // 会心（クリティカル）: 基礎8% ＋ スキル ＋ 装備affix。クリ時 1.8x。パッシブ「集中」は確定会心
     const critCh = (Game.TUNE.BASE_CRIT || 0.08) + Game.Player.skillBonus().crit + (st.crit || 0) + (Game.Player.setBonus().crit || 0);
-    const isCrit = Math.random() < critCh;
+    const focusCrit = Game.Player.focusArmed && Game.Player.focusArmed();
+    const isCrit = focusCrit || Math.random() < critCh;
     if (isCrit) { dmg = Math.round(dmg * (Game.TUNE.CRIT_MULT || 1.8)); Game.Render.shake(7); Game.Audio.play('crit'); }
+    if (focusCrit) Game.Player.consumeFocus();
     // 範囲攻撃: スキル「旋風斬り」 or 範囲武器(大剣/戦鎚)は範囲内の敵すべてに当てる
     const wdef = slot && Game.ITEMS[slot.id];
     const aoe = Game.Player.skillFlag('aoe') || (wdef && wdef.aoe);
@@ -105,10 +108,17 @@ Game.Combat = (function () {
     if (aoe) {
       for (let i = 0; i < mobs.length; i++) { const m = mobs[i]; if (m.def.friendly) continue; if (Math.hypot(m.x - p.x, m.y - p.y) <= rangePx + m.def.size * 0.5) targets.push(m); }
     } else targets.push(best);
+    const canDirect = !(Game.Net.isConnected() && !Game.Net.host); // マルチのゲスト中は直接ダメージ不可
     for (let i = 0; i < targets.length; i++) {
       const tg = targets[i];
-      if (Game.Net.isConnected() && !Game.Net.host) { Game.Net.sendHit(tg.id, dmg, p.x, p.y); Game.Render.spawnBlood(tg.x, tg.y, 4); }
+      if (!canDirect) { Game.Net.sendHit(tg.id, dmg, p.x, p.y); Game.Render.spawnBlood(tg.x, tg.y, 4); }
       else Game.Mobs.damageMob(tg, dmg, p.x, p.y, isCrit);
+    }
+    // 上位武器の特殊効果(雷鳴/残光/衝撃波/吸命/纏い)。ホスト/ソロのみ(ゲストはダメージ権限なし)
+    let kills = 0;
+    if (canDirect) {
+      for (let i = 0; i < targets.length; i++) if (targets[i].hp <= 0) kills++;
+      runSpecial(p, wdef, slot, targets, best, baseDmg, kills, rangePx);
     }
     // 吸血（装備のvampiric＋スキル lifesteal）
     let ls = (st.lifesteal || 0) + Game.Player.skillBonus().lifesteal + (Game.Player.setBonus().lifesteal || 0);
@@ -120,6 +130,109 @@ Game.Combat = (function () {
     Game.Render.spawnSlash(p.x, p.y, p.dir, st.atk >= 8 ? '#ffd86b' : '#ffffff');
     Game.Audio.play('swing');
     return true;
+  }
+
+  // ===== 上位近接武器の特殊効果(data-driven: ITEMS[].special) =====
+  // 初回発動は盛大に・以降は控えめに(セッション毎リセット)
+  const PROC_SEEN = {};
+  function procFx(x, y, sp) {
+    const first = !PROC_SEEN[sp.name]; PROC_SEEN[sp.name] = 1;
+    const col = sp.color || '#ffe27a';
+    if (Game.Render.spawnFloat) Game.Render.spawnFloat(x, y - 26, sp.name, col, first);
+    if (first) {
+      Game.Render.spawnParticles(x, y, col, 16);
+      if (Game.Render.flash) Game.Render.flash('rgba(255,240,200,0.10)');
+    }
+  }
+
+  // 敵対モブを近い順に最大 n 体(除外集合あり)
+  function nearestHostiles(px, py, reachPx, n) {
+    const out = [];
+    const mobs = Game.state.mobs;
+    for (let i = 0; i < mobs.length; i++) {
+      const m = mobs[i];
+      if (m.def.friendly || m.def.npc || m.hp <= 0) continue;
+      const d = Math.hypot(m.x - px, m.y - py);
+      if (d <= reachPx) out.push([d, m]);
+    }
+    out.sort(function (a, b) { return a[0] - b[0]; });
+    return out.slice(0, n).map(function (e) { return e[1]; });
+  }
+
+  function runSpecial(p, wdef, slot, targets, best, baseDmg, kills, rangePx) {
+    const sp = wdef && wdef.special;
+    if (!sp) return;
+    const now = Game.state.tick;
+    // 纏い(brand): CDなし。命中した敵全員に既存DoTを付与(炎上/凍え/毒)。演出は控えめ
+    if (sp.type === 'brand') {
+      for (let i = 0; i < targets.length; i++) {
+        if (targets[i].hp <= 0) continue;
+        Game.Mobs.applyDot(targets[i], sp.dot);
+        Game.Render.spawnParticles(targets[i].x, targets[i].y, sp.color || '#ff7a3a', 3);
+      }
+      if (!PROC_SEEN[sp.name] && targets.length) procFx(best.x, best.y, sp);
+      return;
+    }
+    // 吸命(reap): 撃破時のみ。小回復＋緑の粒子。短CDで多重撃破の暴発を防ぐ
+    if (sp.type === 'reap') {
+      if (!p.spCd) p.spCd = {};
+      const rk = 'reap:' + slot.id;
+      if (kills > 0 && (p.spCd[rk] || 0) <= now) {
+        p.spCd[rk] = now + (sp.cd || 30);
+        const heal = Math.max(2, Math.round(p.maxHealth * (sp.healPct || 0.03)));
+        if (p.health < p.maxHealth) p.health = Math.min(p.maxHealth, p.health + heal);
+        procFx(p.x, p.y, sp);
+        if (Game.Render.spawnFloat) Game.Render.spawnFloat(p.x, p.y - 14, '+' + heal, '#8fe06a');
+        Game.Render.spawnParticles(p.x, p.y, '#8fe06a', 6);
+        Game.Audio.play('eat');
+        Game.UI.refreshStats();
+      }
+      return;
+    }
+    // 以降はCD制(雷鳴/残光/衝撃波)
+    if (!p.spCd) p.spCd = {};
+    const key = sp.type + ':' + slot.id;
+    if ((p.spCd[key] || 0) > now) return;
+    if (sp.type === 'thunder') {
+      // 周囲の敵 最大count体に天雷(武器攻撃力の pct 倍)
+      const victims = nearestHostiles(p.x, p.y, 6 * TS, sp.count || 2);
+      if (!victims.length) return;
+      p.spCd[key] = now + (sp.cd || 90);
+      const d = Math.max(1, Math.round(baseDmg * (sp.pct || 0.5)));
+      for (let i = 0; i < victims.length; i++) {
+        const m = victims[i];
+        Game.Render.spawnLightning(m.x + (Math.random() - 0.5) * 20, m.y - 170, m.x, m.y);
+        Game.Render.spawnImpact(m.x, m.y, sp.color || '#ffe27a');
+        Game.Mobs.damageMob(m, d, p.x, p.y, false);
+      }
+      Game.Audio.play('thunder');
+      procFx(victims[0].x, victims[0].y, sp);
+    } else if (sp.type === 'shock') {
+      // 自分中心の衝撃波リング(半径 r タイル)。dot 指定があれば併せて付与
+      p.spCd[key] = now + (sp.cd || 75);
+      const d = Math.max(1, Math.round(baseDmg * (sp.pct || 0.45)));
+      const rr = (sp.r || 2.2) * TS;
+      const victims = nearestHostiles(p.x, p.y, rr, 99);
+      Game.Render.spawnImpact(p.x, p.y, sp.color || '#ffd86b');
+      Game.Render.spawnParticles(p.x, p.y, sp.color || '#ffd86b', 12);
+      Game.Render.shake(5);
+      for (let i = 0; i < victims.length; i++) {
+        const m = victims[i];
+        Game.Mobs.damageMob(m, d, p.x, p.y, false);
+        if (sp.dot) Game.Mobs.applyDot(m, sp.dot);
+      }
+      Game.Audio.play('boom_sfx');
+      procFx(p.x, p.y, sp);
+    } else if (sp.type === 'echo') {
+      // 残光: 本命中の後、遅延した追撃を hits 回(それぞれ pct 倍)。player.update が消化
+      if (!best || best.hp <= 0) return;
+      p.spCd[key] = now + (sp.cd || 60);
+      const d = Math.max(1, Math.round(baseDmg * (sp.pct || 0.4)));
+      if (!p.echoQ) p.echoQ = [];
+      const hits = sp.hits || 2;
+      for (let i = 1; i <= hits; i++) p.echoQ.push({ t: now + i * 4, m: best, d: d, color: sp.color || '#ffe9f0' });
+      procFx(best.x, best.y, sp);
+    }
   }
 
   return { tryAttack };

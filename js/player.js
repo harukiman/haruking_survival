@@ -62,8 +62,112 @@ Game.Player = (function () {
     return false;
   }
 
+  // ===== パッシブスキル(自動発動): Survival.damage を一度だけラップして被弾トリガーを得る =====
+  // (script読込順で player.js が先のため、初回updateで遅延フック。survival.js自体は不変更)
+  let passiveHooked = false;
+  function ensurePassiveHooks() {
+    if (passiveHooked || !Game.Survival || !Game.Survival.damage) return;
+    passiveHooked = true;
+    const origDamage = Game.Survival.damage;
+    Game.Survival.damage = function (amount, source) {
+      const p = Game.state.player;
+      const physical = source !== 'starve' && source !== 'sanity' && source !== 'status';
+      // 執念: 致死ダメージを1度だけHP1で耐える(CD3分・セッション毎)
+      if (p && p.health > 0 && !(physical && p.invuln > 0) && skillFlag('tenacity') && (p.tenacityCd || 0) <= Game.state.tick) {
+        const eff = physical ? Math.max(1, amount - totalArmor()) : amount;
+        if (eff >= p.health) {
+          p.health = eff + 1; // 直後の減算で HP1 が残る
+          p.tenacityCd = Game.state.tick + 5400;
+          if (Game.Render.spawnFloat) Game.Render.spawnFloat(p.x, p.y - 30, '執念!', '#ffd86b', true);
+          if (Game.Render.flash) Game.Render.flash('rgba(255,216,107,0.22)');
+          Game.Render.spawnParticles(p.x, p.y, '#ffd86b', 14);
+          Game.Audio.play('relic_get');
+          Game.UI.toast('執念 — 致死の一撃をHP1で耐えた！');
+        }
+      }
+      const r = origDamage(amount, source);
+      if (r !== false && p) {
+        p.lastHurtTick = Game.state.tick;
+        if (p.focusArmed) { p.focusArmed = false; if (Game.UI.refreshStats) Game.UI.refreshStats(); } // 被弾で集中は途切れる
+        // 逆襲: HP30%未満で被弾時、周囲に衝撃波(CD30秒)。ホスト/ソロのみ
+        if (physical && p.health > 0 && p.health < p.maxHealth * 0.3 && skillFlag('counter')
+          && (p.counterCd || 0) <= Game.state.tick && !(Game.Net.isConnected() && !Game.Net.host)) {
+          p.counterCd = Game.state.tick + 900;
+          const cd2 = Math.max(4, Math.round(currentWeaponAtk() * 0.6));
+          const mobs = Game.state.mobs;
+          for (let i = 0; i < mobs.length; i++) {
+            const m = mobs[i];
+            if (m.def.friendly || m.def.npc || m.hp <= 0) continue;
+            if (Math.hypot(m.x - p.x, m.y - p.y) <= 2.2 * TS) Game.Mobs.damageMob(m, cd2, p.x, p.y, false);
+          }
+          if (Game.Render.spawnImpact) Game.Render.spawnImpact(p.x, p.y, '#9fd8ff');
+          Game.Render.spawnParticles(p.x, p.y, '#9fd8ff', 12);
+          if (Game.Render.spawnFloat) Game.Render.spawnFloat(p.x, p.y - 26, '逆襲!', '#9fd8ff', !p.counterSeen);
+          p.counterSeen = 1;
+          Game.Render.shake(5);
+          Game.Audio.play('boom_sfx');
+        }
+      }
+      return r;
+    };
+  }
+
+  // パッシブ(集中/追い風)と残光追撃キューの毎tick処理
+  function updatePassives(p) {
+    // 残光(echo)追撃: combat.js が積んだ遅延ヒットを消化
+    if (p.echoQ && p.echoQ.length) {
+      for (let i = p.echoQ.length - 1; i >= 0; i--) {
+        const e = p.echoQ[i];
+        if (Game.state.tick < e.t) continue;
+        p.echoQ.splice(i, 1);
+        const m = e.m;
+        if (m && m.hp > 0 && Game.state.mobs.indexOf(m) >= 0) {
+          Game.Render.spawnSlash(m.x, m.y, p.dir, e.color || '#ffe9f0');
+          Game.Render.spawnParticles(m.x, m.y, e.color || '#ffe9f0', 4);
+          Game.Audio.play('slash_air');
+          Game.Mobs.damageMob(m, e.d, p.x, p.y, false);
+        }
+      }
+    }
+    // 追い風: 敵撃破(図鑑カウント増加)で3秒 移動+8%。スタックせずタイマー更新のみ
+    if ((p.tailwindT || 0) > 0) p.tailwindT--;
+    if (skillFlag('tailwind')) {
+      const bs = Game.state.bestiary || {};
+      let tot = 0; for (const k in bs) tot += bs[k];
+      if (p.killBase == null) p.killBase = tot;
+      if (tot > p.killBase) {
+        p.killBase = tot;
+        const fresh = (p.tailwindT || 0) <= 0;
+        p.tailwindT = 90;
+        if (fresh) { // 発動の瞬間のみ表示(更新時は無演出=スパム防止)
+          if (Game.Render.spawnFloat) Game.Render.spawnFloat(p.x, p.y - 24, '追い風', '#7fe0a0');
+          Game.Render.spawnParticles(p.x, p.y, '#7fe0a0', 5);
+        }
+      }
+    } else p.killBase = null;
+    // 集中: 10秒(300tick)無被弾で次の一撃が会心確定。武装完了の瞬間だけ知らせる
+    if (skillFlag('focus')) {
+      const idleFrom = Math.max(p.lastHurtTick || 0, p.focusUse || 0);
+      const armed = Game.state.tick - idleFrom >= 300;
+      if (armed && !p.focusArmed) {
+        p.focusArmed = true;
+        if (Game.Render.spawnFloat) Game.Render.spawnFloat(p.x, p.y - 24, '集中', '#7fe0ff');
+        Game.Render.spawnParticles(p.x, p.y, '#7fe0ff', 5);
+        Game.Audio.play('select');
+      }
+    } else p.focusArmed = false;
+  }
+  function focusArmed() { return !!Game.state.player.focusArmed; }
+  function consumeFocus() {
+    const p = Game.state.player;
+    p.focusArmed = false; p.focusUse = Game.state.tick;
+    if (Game.Render.spawnFloat) Game.Render.spawnFloat(p.x, p.y - 30, '集中一閃!', '#7fe0ff', true);
+  }
+
   function update(intent) {
     const p = Game.state.player;
+    ensurePassiveHooks();
+    updatePassives(p);
     p.prevX = p.x; p.prevY = p.y;
 
     let dx = intent.dx, dy = intent.dy;
@@ -110,6 +214,7 @@ Game.Player = (function () {
     const wt = Game.state.weather && Game.state.weather.type;
     if ((wt === 'sandstorm' || wt === 'blizzard') && p.vehicle !== 'plane' && p.vehicle !== 'carpet') spd *= 0.7;
     if (!p.vehicle) spd *= (1 + skillBonus().moveSpd + setBonus().moveSpd + (Game.Status ? Game.Status.buffSum().spd : 0)); // スキル健脚＋俊足の薬＋セット効果
+    if (!p.vehicle && (p.tailwindT || 0) > 0) spd *= 1.08; // パッシブ「追い風」: 撃破後3秒 移動+8%
     // 乗り物: スロットル(0..1)を積分して加速/減速カーブを作る。最高速そのものは不変
     if (p.vehicle) {
       if (moving) {
@@ -590,13 +695,21 @@ Game.Player = (function () {
       p.mags[gid] = 0; loaded = 0;
     }
     if (loaded <= 0) { startReload(sel, gid); return; } // 空 → リロード
-    p.mags[gid] = loaded - 1; // マガジンから1発消費
+    // パッシブ「節約」: 12%で弾薬を消費しない(表示は1秒スロットルでスパム防止)
+    if (skillFlag('conserve') && Math.random() < 0.12) {
+      if (Game.state.tick - (p.conserveFx || 0) > 30) {
+        p.conserveFx = Game.state.tick;
+        if (Game.Render.spawnFloat) Game.Render.spawnFloat(p.x, p.y - 22, '節約', '#9fd8a0');
+      }
+    } else p.mags[gid] = loaded - 1; // マガジンから1発消費
     const kind = sel.bkind || 'bullet';
     const pellets = sel.pellets || 1;
     let dmg = effAttack(sel.fireDmg || 6); // 銃もLv/STR補正
-    // 会心: 近接と同じ判定を遠距離にも適用(クリ時 1.8x ＋ 音/反動)
+    // 会心: 近接と同じ判定を遠距離にも適用(クリ時 1.8x ＋ 音/反動)。パッシブ「集中」は確定会心
     const critCh = (Game.TUNE.BASE_CRIT || 0.08) + skillBonus().crit + (setBonus().crit || 0);
-    const isCrit = Math.random() < critCh;
+    const focusCrit = focusArmed();
+    const isCrit = focusCrit || Math.random() < critCh;
+    if (focusCrit) consumeFocus();
     if (isCrit) { dmg = Math.round(dmg * (Game.TUNE.CRIT_MULT || 1.8)); Game.Audio.play('crit'); if (Game.Render.shake) Game.Render.shake(5); }
     const cfx = CALIBER_FX[sel.ammo] || null; // 口径別の着弾/薬莢演出(性能不変)
     const ang = Game.Projectiles.aimAngle ? Game.Projectiles.aimAngle() : 0;
@@ -981,5 +1094,6 @@ Game.Player = (function () {
     skillBonus, skillFlag, canUnlock, currentWeaponAtk, equippedArmorAt, xpForLevel,
     reloadCurrent, magLoaded, magCap, selGunId, contextAction,
     saveLoadout, applyLoadout,
+    focusArmed, consumeFocus,
   };
 })();

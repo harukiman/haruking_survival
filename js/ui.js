@@ -1007,7 +1007,7 @@ Game.UI = (function () {
     if (!badge) return;
     if (Game.Net && Game.Net.isConnected()) {
       badge.classList.remove('hidden');
-      cnt.textContent = (Game.Net.peerCount() + 1) + '人';
+      cnt.textContent = Game.Net.statusText ? Game.Net.statusText() : (Game.Net.peerCount() + 1) + '人'; // net.js の状態文言に統一(再接続中…等)
     } else badge.classList.add('hidden');
   }
 

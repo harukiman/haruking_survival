@@ -23,8 +23,14 @@ Game.Status = (function () {
   }
 
   function st() { const p = Game.state.player; if (!p.status) p.status = {}; return p.status; }
-  function apply(type, ticks) { const s = st(); const fresh = !(s[type] > 0); s[type] = Math.max(s[type] || 0, ticks); if (fresh) flash(type); }
-  function add(type, ticks) { const s = st(); const fresh = !(s[type] > 0); s[type] = (s[type] || 0) + ticks; if (fresh) flash(type); }
+  // パッシブ「快癒」: 受ける状態異常(デバフのみ)の持続時間 -25%
+  function mendTicks(type, ticks) {
+    const t = TYPES[type];
+    if (t && !t.buff && Game.Player && Game.Player.skillFlag && Game.Player.skillFlag('mend')) return Math.max(1, Math.round(ticks * 0.75));
+    return ticks;
+  }
+  function apply(type, ticks) { const s = st(); const fresh = !(s[type] > 0); ticks = mendTicks(type, ticks); s[type] = Math.max(s[type] || 0, ticks); if (fresh) flash(type); }
+  function add(type, ticks) { const s = st(); const fresh = !(s[type] > 0); ticks = mendTicks(type, ticks); s[type] = (s[type] || 0) + ticks; if (fresh) flash(type); }
   function has(type) { return (st()[type] || 0) > 0; }
   function cure(type) { st()[type] = 0; }
   function clearAll() { Game.state.player.status = {}; }
