@@ -906,7 +906,8 @@ Game.Mobs = (function () {
       ctx.fillStyle = 'rgba(0,0,0,0.25)';
       ctx.beginPath(); ctx.ellipse(0, r + hop, r, r * 0.4, 0, 0, Math.PI * 2); ctx.fill();
       // アイドルの呼吸: ごく僅かな縦伸縮で生命感(足元基準でスクワッシュ&ストレッチ)
-      const breathe = 1 + Math.sin(m.hopPhase * 0.4 + (m.wobble || 0)) * 0.045;
+      // 跳ねるモブは着地時に潰れ・頂点で伸びる控えめなスクワッシュ&ストレッチを追加
+      const breathe = 1 + Math.sin(m.hopPhase * 0.4 + (m.wobble || 0)) * 0.045 + (m.def.hop ? (hop * 0.2 - 0.5) * 0.09 : 0);
       ctx.translate(0, r); ctx.scale(2 - breathe, breathe); ctx.translate(0, -r);
       // 本体（形状バリエーション）。状態異常で色味、個体差で明暗
       let bodyCol = m.tint ? shadeHex(m.def.color, m.tint) : m.def.color;
@@ -916,24 +917,46 @@ Game.Mobs = (function () {
         else if (m.dot.slow > 0) bodyCol = '#8fd0ff';
       }
       if (windup && (Game.state.tick % 6) < 3) bodyCol = shadeHex(bodyCol, 55); // 溜め中は体が明滅(構えの視認)
-      ctx.fillStyle = m.hurt > 0 ? '#fff' : bodyCol;
+      // 2トーン陰影+輪郭: 下側/肢を暗く・上部に小ハイライト、細い暗輪郭で地形から浮き立たせる(ボス/精鋭は太め)
+      const hurtNow = m.hurt > 0;
+      const litCol = hurtNow ? '#fff' : bodyCol;
+      const dimCol = hurtNow ? '#fff' : shadeHex(bodyCol, -46);
+      const hiCol = hurtNow ? '#fff' : shadeHex(bodyCol, 62);
+      const oW = m.def.boss ? 2.2 : (m.elite || m.champion) ? 1.7 : 1.1;
+      const oCol = 'rgba(18,14,26,0.45)';
+      ctx.fillStyle = litCol;
       const shape = m.def.shape || defaultShape(m.type);
       let eyeY = -r * 0.3;
       if (shape === 'blob') {
         roundRect(ctx, -r, -r * 0.7, r * 2, r * 1.5, 6); ctx.fill();
+        ctx.strokeStyle = oCol; ctx.lineWidth = oW; ctx.stroke();
+        ctx.fillStyle = dimCol; roundRect(ctx, -r * 0.92, r * 0.38, r * 1.84, r * 0.36, 5); ctx.fill();
+        ctx.fillStyle = hiCol; ctx.beginPath(); ctx.arc(-r * 0.38, -r * 0.32, r * 0.2, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = litCol;
       } else if (shape === 'spider') {
         ctx.strokeStyle = m.def.color; ctx.lineWidth = 2;
         for (let a = 0; a < 4; a++) { const ang = a * 0.5 + 0.3; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(ang) * r * 1.6, Math.sin(ang) * r); ctx.moveTo(0, 0); ctx.lineTo(-Math.cos(ang) * r * 1.6, Math.sin(ang) * r); ctx.stroke(); }
         ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = oCol; ctx.lineWidth = oW; ctx.stroke();
+        ctx.fillStyle = dimCol; ctx.beginPath(); ctx.arc(0, 0, r * 0.97, Math.PI * 0.22, Math.PI * 0.78); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = hiCol; ctx.beginPath(); ctx.arc(-r * 0.32, -r * 0.35, r * 0.17, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = litCol;
       } else if (shape === 'tall') {
         // 巨人系: 縦長の胴体＋頭＋肩
         roundRect(ctx, -r * 0.7, -r * 1.3, r * 1.4, r * 2.3, 5); ctx.fill();
+        ctx.strokeStyle = oCol; ctx.lineWidth = oW; ctx.stroke();
         ctx.beginPath(); ctx.arc(0, -r * 1.25, r * 0.55, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = dimCol; // 腕(肢側)と下胴を暗く
         ctx.fillRect(-r * 0.95, -r * 0.9, r * 0.35, r * 1.1); ctx.fillRect(r * 0.6, -r * 0.9, r * 0.35, r * 1.1);
+        ctx.fillRect(-r * 0.62, r * 0.55, r * 1.24, r * 0.4);
+        ctx.fillStyle = hiCol; ctx.beginPath(); ctx.arc(-r * 0.15, -r * 1.38, r * 0.15, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = litCol;
         eyeY = -r * 1.3;
       } else if (shape === 'orb') {
         // 浮遊する眼
         ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = oCol; ctx.lineWidth = oW; ctx.stroke();
+        ctx.fillStyle = dimCol; ctx.beginPath(); ctx.arc(0, 0, r * 0.97, Math.PI * 0.25, Math.PI * 0.75); ctx.closePath(); ctx.fill();
         ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(0, 0, r * 0.6, 0, Math.PI * 2); ctx.fill();
         const ex0 = m.dir === 'left' ? -r * 0.25 : m.dir === 'right' ? r * 0.25 : 0;
         ctx.fillStyle = '#c0203a'; ctx.beginPath(); ctx.arc(ex0, 0, r * 0.32, 0, Math.PI * 2); ctx.fill();
@@ -942,45 +965,72 @@ Game.Mobs = (function () {
         ctx.beginPath(); ctx.moveTo(0, -r);
         for (let a = 1; a <= 8; a++) { const ang = a / 8 * Math.PI * 2; const rr = r * (a % 2 ? 0.78 : 1) * (1 + Math.sin(m.hopPhase + a) * 0.06); ctx.lineTo(Math.cos(ang) * rr, Math.sin(ang) * rr); }
         ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = oCol; ctx.lineWidth = oW; ctx.stroke();
       } else if (shape === 'spiky') {
         ctx.beginPath();
         for (let a = 0; a < 10; a++) { const ang = a / 10 * Math.PI * 2; const rr = a % 2 ? r * 0.55 : r * 1.15; const fn = a === 0 ? 'moveTo' : 'lineTo'; ctx[fn](Math.cos(ang) * rr, Math.sin(ang) * rr); }
         ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = oCol; ctx.lineWidth = oW; ctx.stroke();
+        ctx.fillStyle = hiCol; ctx.beginPath(); ctx.arc(-r * 0.22, -r * 0.22, r * 0.14, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = litCol;
       } else if (shape === 'beast') {
-        // 四足獣: 横長胴体＋脚＋耳＋尻尾。向きで頭の左右
+        // 四足獣: 横長胴体＋脚＋耳＋尻尾。向きで頭の左右(脚は暗色で奥行き)
         const fx = m.dir === 'left' ? -1 : 1;
+        ctx.fillStyle = dimCol;
         ctx.fillRect(-r * 0.8, r * 0.2, r * 0.3, r * 0.7); ctx.fillRect(r * 0.5, r * 0.2, r * 0.3, r * 0.7); // 後ろ脚
         ctx.fillRect(-r * 0.4, r * 0.3, r * 0.28, r * 0.6); ctx.fillRect(r * 0.15, r * 0.3, r * 0.28, r * 0.6); // 前脚
+        ctx.fillStyle = litCol;
         roundRect(ctx, -r, -r * 0.55, r * 2, r * 1.1, r * 0.5); ctx.fill(); // 胴
+        ctx.strokeStyle = oCol; ctx.lineWidth = oW; ctx.stroke();
+        ctx.fillStyle = dimCol; ctx.fillRect(-r * 0.8, r * 0.28, r * 1.6, r * 0.24); ctx.fillStyle = litCol; // 腹側の陰
         ctx.beginPath(); ctx.arc(fx * r * 0.85, -r * 0.35, r * 0.55, 0, Math.PI * 2); ctx.fill(); // 頭
+        ctx.strokeStyle = oCol; ctx.lineWidth = oW; ctx.stroke();
         ctx.beginPath(); ctx.moveTo(fx * r * 0.7, -r * 0.8); ctx.lineTo(fx * r * 0.55, -r * 1.25); ctx.lineTo(fx * r * 1.0, -r * 0.85); ctx.closePath(); ctx.fill(); // 耳
+        ctx.fillStyle = hiCol; ctx.beginPath(); ctx.arc(fx * r * 0.72, -r * 0.52, r * 0.14, 0, Math.PI * 2); ctx.fill(); // 頭のハイライト
         ctx.strokeStyle = bodyCol; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(-fx * r * 0.95, -r * 0.2); ctx.quadraticCurveTo(-fx * r * 1.5, -r * 0.4, -fx * r * 1.4, r * 0.2); ctx.stroke(); // 尻尾
-        eyeY = -r * 0.45; ctx.fillStyle = m.hurt > 0 ? '#fff' : bodyCol;
+        eyeY = -r * 0.45; ctx.fillStyle = litCol;
       } else if (shape === 'humanoid') {
-        // 人型: 頭＋胴＋腕＋脚
+        // 人型: 頭＋胴＋腕＋脚(肢は暗色で本体から分離して見せる)
+        ctx.fillStyle = dimCol;
         ctx.fillRect(-r * 0.25, r * 0.35, r * 0.25, r * 0.7); ctx.fillRect(0, r * 0.35, r * 0.25, r * 0.7); // 脚
+        ctx.fillStyle = litCol;
         roundRect(ctx, -r * 0.5, -r * 0.5, r, r * 1.0, 3); ctx.fill(); // 胴
+        ctx.strokeStyle = oCol; ctx.lineWidth = oW; ctx.stroke();
+        ctx.fillStyle = dimCol;
         ctx.fillRect(-r * 0.75, -r * 0.4, r * 0.25, r * 0.85); ctx.fillRect(r * 0.5, -r * 0.4, r * 0.25, r * 0.85); // 腕
+        ctx.fillStyle = litCol;
         ctx.beginPath(); ctx.arc(0, -r * 0.8, r * 0.5, 0, Math.PI * 2); ctx.fill(); // 頭
+        ctx.strokeStyle = oCol; ctx.lineWidth = oW; ctx.stroke();
+        ctx.fillStyle = hiCol; ctx.beginPath(); ctx.arc(-r * 0.14, -r * 0.9, r * 0.12, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = litCol;
         eyeY = -r * 0.85;
       } else if (shape === 'bird' || shape === 'bat') {
-        // 翼を広げた飛行体
+        // 翼を広げた飛行体(翼は暗色トーンで胴を際立たせる)
         const wf = shape === 'bat' ? 1.7 : 1.4, flap = Math.sin(m.hopPhase * 0.8) * r * 0.3;
+        ctx.fillStyle = dimCol;
         ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(-r * wf, -r * 0.5 - flap, -r * wf * 1.1, r * 0.2); ctx.quadraticCurveTo(-r * 0.6, r * 0.1, 0, r * 0.3); ctx.closePath(); ctx.fill(); // 左翼
         ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(r * wf, -r * 0.5 - flap, r * wf * 1.1, r * 0.2); ctx.quadraticCurveTo(r * 0.6, r * 0.1, 0, r * 0.3); ctx.closePath(); ctx.fill(); // 右翼
+        ctx.fillStyle = litCol;
         ctx.beginPath(); ctx.ellipse(0, 0, r * 0.5, r * 0.7, 0, 0, Math.PI * 2); ctx.fill(); // 胴
+        ctx.strokeStyle = oCol; ctx.lineWidth = oW; ctx.stroke();
         eyeY = -r * 0.25;
       } else if (shape === 'serpent') {
-        // 蛇/芋虫: くねる胴体の連結
+        // 蛇/芋虫: くねる胴体の連結(尾側ほど暗く遠近感)
         const segs = 5;
         for (let sgi = segs; sgi >= 0; sgi--) {
           const off = sgi / segs; const sx = -off * r * 1.8; const sy = Math.sin(m.hopPhase + sgi * 0.8) * r * 0.4;
+          ctx.fillStyle = sgi >= 3 ? dimCol : litCol;
           ctx.beginPath(); ctx.arc(sx, sy, r * (0.85 - off * 0.45), 0, Math.PI * 2); ctx.fill();
         }
         ctx.beginPath(); ctx.arc(r * 0.2, Math.sin(m.hopPhase) * r * 0.2, r * 0.6, 0, Math.PI * 2); ctx.fill(); // 頭
+        ctx.strokeStyle = oCol; ctx.lineWidth = oW; ctx.stroke();
         eyeY = -r * 0.2;
       } else {
         ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = oCol; ctx.lineWidth = oW; ctx.stroke();
+        ctx.fillStyle = dimCol; ctx.beginPath(); ctx.arc(0, 0, r * 0.97, Math.PI * 0.25, Math.PI * 0.75); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = hiCol; ctx.beginPath(); ctx.arc(-r * 0.32, -r * 0.35, r * 0.18, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = litCol;
       }
       // 種別ごとの特徴(角/枝角/耳/牙/トサカ/斑紋など)で形をより明確に差別化
       drawMobFeatures(ctx, m, r, bodyCol, shape);
@@ -1008,7 +1058,7 @@ Game.Mobs = (function () {
 
   // 種別ごとの識別特徴を本体に重ねる(原点=本体中心、向きは描画側で未回転)。形の差を明確化
   function drawMobFeatures(ctx, m, r, bodyCol, shape) {
-    const t = m.type, dark = shadeHex(bodyCol, 0.6), fx = m.dir === 'left' ? -1 : 1;
+    const t = m.type, dark = shadeHex(bodyCol, -60), fx = m.dir === 'left' ? -1 : 1; // shadeHexは加算式: 負値で暗色に
     const horn = '#e8e0c8', bone = '#dfd8c0';
     ctx.lineCap = 'round';
     // 角(ボア/ゴーレム/トロル/溶炉/巨像系)
@@ -1032,7 +1082,7 @@ Game.Mobs = (function () {
     }
     // トサカ/背びれ(サラマンダー/竜/トカゲ/エンバー)
     if (/salamander|dragon|ember|lava|dune_serpent|astral/.test(t)) {
-      ctx.fillStyle = shadeHex(bodyCol, 1.3); ctx.beginPath();
+      ctx.fillStyle = shadeHex(bodyCol, 42); ctx.beginPath();
       for (let k = -1; k <= 1; k++) { ctx.moveTo(k * r * 0.4, -r * 0.7); ctx.lineTo(k * r * 0.4 + r * 0.12, -r * 1.15); ctx.lineTo(k * r * 0.4 + r * 0.24, -r * 0.75); }
       ctx.closePath(); ctx.fill();
     }
