@@ -58,6 +58,57 @@ Game.Icons = (function () {
 
   function outline(ctx) { ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.strokeStyle = 'rgba(0,0,0,0.85)'; ctx.lineWidth = 2.4; }
 
+  // ===== 質感ヘルパー（アイコンは一度だけ描いてキャッシュされるため、ここでの勾配生成は毎フレーム負荷にならない） =====
+  // 金属のきらめき（十字の光点）
+  function glint(ctx, x, y, s) {
+    ctx.save(); ctx.globalAlpha = 0.9; ctx.fillStyle = '#ffffff';
+    ctx.fillRect(x - s, y - 0.6, s * 2, 1.2); ctx.fillRect(x - 0.6, y - s, 1.2, s * 2);
+    ctx.globalAlpha = 0.6; ctx.fillRect(x - 0.8, y - 0.8, 1.6, 1.6);
+    ctx.restore();
+  }
+  // 木目（柄などの縦方向の筋）
+  function grainV(ctx, x, y, w, h) {
+    ctx.save(); ctx.strokeStyle = 'rgba(40,22,8,0.35)'; ctx.lineWidth = 0.8;
+    for (let i = 1; i <= 2; i++) { const gx = x + (w * i) / 3; ctx.beginPath(); ctx.moveTo(gx, y + 1); ctx.lineTo(gx + 0.6, y + h - 1); ctx.stroke(); }
+    ctx.restore();
+  }
+  // 金属の縦グラデーション（刃・ヘッド用）
+  function metalGradV(ctx, x0, x1, base) {
+    const g = ctx.createLinearGradient(x0, 0, x1, 0);
+    g.addColorStop(0, shade(base, 0.72)); g.addColorStop(0.45, mix(base, '#ffffff', 0.38)); g.addColorStop(1, shade(base, 0.88));
+    return g;
+  }
+
+  // レアリティ演出＋接地影。描画済みアイコンの背面にグロー、前面に角飾り枠
+  function finishIcon(ctx, roll) {
+    // 接地影（背面へ）
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-over';
+    ctx.fillStyle = 'rgba(0,0,0,0.20)';
+    ctx.beginPath(); ctx.ellipse(SIZE / 2, SIZE - 5, 13, 3.5, 0, 0, Math.PI * 2); ctx.fill();
+    const r = roll ? roll.rarity : 0;
+    if (r > 0 && Game.Loot && Game.Loot.RARITY && Game.Loot.RARITY[r]) {
+      const col = Game.Loot.RARITY[r].color;
+      // 背面グロー
+      const g = ctx.createRadialGradient(SIZE / 2, SIZE / 2, 3, SIZE / 2, SIZE / 2, SIZE / 2);
+      g.addColorStop(0, col); g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.globalAlpha = 0.16 + r * 0.06; ctx.fillStyle = g; ctx.fillRect(0, 0, SIZE, SIZE);
+      // 前面の角飾り枠
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.globalAlpha = 0.85; ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.lineCap = 'round';
+      const L = 8, m = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(m, m + L); ctx.lineTo(m, m); ctx.lineTo(m + L, m);
+      ctx.moveTo(SIZE - m - L, m); ctx.lineTo(SIZE - m, m); ctx.lineTo(SIZE - m, m + L);
+      ctx.moveTo(SIZE - m, SIZE - m - L); ctx.lineTo(SIZE - m, SIZE - m); ctx.lineTo(SIZE - m - L, SIZE - m);
+      ctx.moveTo(m + L, SIZE - m); ctx.lineTo(m, SIZE - m); ctx.lineTo(m, SIZE - m - L);
+      ctx.stroke();
+      // レジェンダリーは小さな星のきらめき
+      if (r >= 3) { glint(ctx, SIZE - 9, 10, 3.2); glint(ctx, 10, SIZE - 12, 2.4); }
+    }
+    ctx.restore();
+  }
+
   function drawIcon(ctx, id, def, roll) {
     const cls = classify(id, def);
     const base = (def && def.color) || '#9aa';
@@ -67,20 +118,27 @@ Game.Icons = (function () {
     const M = SIZE / 2;
     switch (cls) {
       case 'sword': {
-        // 斜めの刀身＋鍔＋柄
+        // 斜めの刀身＋鍔＋柄（刃は金属グラデ＋きらめき）
         ctx.save(); ctx.translate(M, M); ctx.rotate(-Math.PI / 4);
-        ctx.fillStyle = c.base; ctx.beginPath(); ctx.moveTo(-3, -18); ctx.lineTo(3, -18); ctx.lineTo(4, 8); ctx.lineTo(0, 13); ctx.lineTo(-4, 8); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = metalGradV(ctx, -4, 4, c.base);
+        ctx.beginPath(); ctx.moveTo(-3, -18); ctx.lineTo(3, -18); ctx.lineTo(4, 8); ctx.lineTo(0, 13); ctx.lineTo(-4, 8); ctx.closePath(); ctx.fill(); ctx.stroke();
         ctx.fillStyle = c.hi; ctx.fillRect(-1, -17, 1.6, 24); // 刃の光
+        ctx.fillStyle = shade(c.base, 0.6); ctx.fillRect(2.2, -16, 1.2, 22); // 刃の陰(峰)
         ctx.fillStyle = c.accent; ctx.fillRect(-9, 8, 18, 4); ctx.strokeRect(-9, 8, 18, 4); // 鍔
         ctx.fillStyle = shade(c.accent, 0.6); ctx.fillRect(-2.5, 11, 5, 9); ctx.strokeRect(-2.5, 11, 5, 9); // 柄
+        grainV(ctx, -2.5, 11, 5, 9);
+        glint(ctx, 0, -13, 2.6); // 切っ先近くの金属光
         ctx.restore(); break;
       }
       case 'hammer': {
         ctx.strokeStyle = 'rgba(0,0,0,0.85)';
         ctx.fillStyle = shade('#7a5a30', 1); ctx.fillRect(M - 2, 10, 4, 30); ctx.strokeRect(M - 2, 10, 4, 30); // 柄
-        ctx.fillStyle = c.base; ctx.fillRect(M - 14, 8, 28, 14); ctx.strokeRect(M - 14, 8, 28, 14); // ヘッド
+        grainV(ctx, M - 2, 12, 4, 26);
+        ctx.fillStyle = metalGradV(ctx, M - 14, M + 14, c.base); ctx.fillRect(M - 14, 8, 28, 14); ctx.strokeRect(M - 14, 8, 28, 14); // ヘッド
         ctx.fillStyle = c.hi; ctx.fillRect(M - 12, 10, 24, 3);
-        ctx.fillStyle = c.accent; ctx.fillRect(M - 14, 8, 4, 14); break;
+        ctx.fillStyle = shade(c.base, 0.55); ctx.fillRect(M - 12, 19, 24, 2); // 下面の陰
+        ctx.fillStyle = c.accent; ctx.fillRect(M - 14, 8, 4, 14);
+        glint(ctx, M + 9, 12, 2.6); break;
       }
       case 'club': {
         ctx.save(); ctx.translate(M, M); ctx.rotate(-Math.PI / 4);
@@ -90,8 +148,11 @@ Game.Icons = (function () {
       case 'spear': {
         ctx.save(); ctx.translate(M, M); ctx.rotate(-Math.PI / 4);
         ctx.fillStyle = shade('#7a5a30', 1); ctx.fillRect(-1.5, -6, 3, 26); ctx.strokeRect(-1.5, -6, 3, 26); // 柄
-        ctx.fillStyle = c.base; ctx.beginPath(); ctx.moveTo(0, -22); ctx.lineTo(5, -8); ctx.lineTo(-5, -8); ctx.closePath(); ctx.fill(); ctx.stroke(); // 穂先
-        ctx.fillStyle = c.hi; ctx.fillRect(-0.8, -20, 1.4, 10); ctx.restore(); break;
+        grainV(ctx, -1.5, -4, 3, 22);
+        ctx.fillStyle = metalGradV(ctx, -5, 5, c.base);
+        ctx.beginPath(); ctx.moveTo(0, -22); ctx.lineTo(5, -8); ctx.lineTo(-5, -8); ctx.closePath(); ctx.fill(); ctx.stroke(); // 穂先
+        ctx.fillStyle = c.hi; ctx.fillRect(-0.8, -20, 1.4, 10);
+        glint(ctx, 0, -18, 2.2); ctx.restore(); break;
       }
       case 'gun': {
         // 銃種ごとに実銃に即したシルエットを描き分ける（同形を作らない）
@@ -161,27 +222,33 @@ Game.Icons = (function () {
       case 'pickaxe': case 'axe': case 'hoe': {
         ctx.strokeStyle = 'rgba(0,0,0,0.85)';
         ctx.fillStyle = '#8a5a30'; ctx.save(); ctx.translate(M, M); ctx.rotate(Math.PI / 5);
-        ctx.fillRect(-2, -16, 4, 32); ctx.strokeRect(-2, -16, 4, 32); ctx.restore(); // 柄
-        ctx.fillStyle = c.base;
+        ctx.fillRect(-2, -16, 4, 32); ctx.strokeRect(-2, -16, 4, 32); grainV(ctx, -2, -14, 4, 28); ctx.restore(); // 柄
+        ctx.fillStyle = metalGradV(ctx, M - 16, M + 16, c.base);
         if (cls === 'pickaxe') { ctx.beginPath(); ctx.moveTo(M - 16, M - 12); ctx.quadraticCurveTo(M, M - 18, M + 16, M - 12); ctx.lineTo(M + 14, M - 8); ctx.quadraticCurveTo(M, M - 13, M - 14, M - 8); ctx.closePath(); ctx.fill(); ctx.stroke(); }
         else if (cls === 'axe') { ctx.beginPath(); ctx.moveTo(M + 2, M - 16); ctx.quadraticCurveTo(M + 18, M - 12, M + 14, M + 2); ctx.lineTo(M + 2, M - 4); ctx.closePath(); ctx.fill(); ctx.stroke(); }
         else { ctx.fillRect(M + 2, M - 16, 14, 5); ctx.strokeRect(M + 2, M - 16, 14, 5); }
-        ctx.fillStyle = c.hi; ctx.globalAlpha = 0.5; ctx.fillRect(M - 10, M - 12, 20, 1.5); ctx.globalAlpha = 1; break;
+        ctx.fillStyle = c.hi; ctx.globalAlpha = 0.5; ctx.fillRect(M - 10, M - 12, 20, 1.5); ctx.globalAlpha = 1;
+        glint(ctx, cls === 'axe' ? M + 12 : M + 10, M - 12, 2.4); break;
       }
       case 'bow': {
         ctx.strokeStyle = c.base; ctx.lineWidth = 3.2; ctx.beginPath(); ctx.arc(M + 6, M, 16, Math.PI * 0.6, Math.PI * 1.4); ctx.stroke();
         ctx.strokeStyle = '#eee'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(M - 5, M - 14); ctx.lineTo(M - 5, M + 14); ctx.stroke(); break;
       }
       case 'shield': case 'chest': {
-        ctx.fillStyle = c.base; ctx.beginPath(); ctx.moveTo(M, 8); ctx.lineTo(M + 14, 14); ctx.lineTo(M + 11, 34); ctx.lineTo(M, 40); ctx.lineTo(M - 11, 34); ctx.lineTo(M - 14, 14); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = metalGradV(ctx, M - 14, M + 14, c.base);
+        ctx.beginPath(); ctx.moveTo(M, 8); ctx.lineTo(M + 14, 14); ctx.lineTo(M + 11, 34); ctx.lineTo(M, 40); ctx.lineTo(M - 11, 34); ctx.lineTo(M - 14, 14); ctx.closePath(); ctx.fill(); ctx.stroke();
         ctx.fillStyle = c.accent; ctx.fillRect(M - 2, 12, 4, 26); ctx.fillRect(M - 12, 20, 24, 4);
-        ctx.fillStyle = c.hi; ctx.globalAlpha = 0.4; ctx.beginPath(); ctx.moveTo(M, 10); ctx.lineTo(M - 10, 16); ctx.lineTo(M - 2, 16); ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1; break;
+        ctx.fillStyle = shade(c.base, 0.6); ctx.beginPath(); ctx.moveTo(M + 11, 34); ctx.lineTo(M, 40); ctx.lineTo(M, 36); ctx.closePath(); ctx.fill(); // 下端の陰
+        ctx.fillStyle = c.hi; ctx.globalAlpha = 0.4; ctx.beginPath(); ctx.moveTo(M, 10); ctx.lineTo(M - 10, 16); ctx.lineTo(M - 2, 16); ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1;
+        glint(ctx, M - 7, 15, 2.2); break;
       }
       case 'helmet': {
-        ctx.fillStyle = c.base; ctx.beginPath(); ctx.arc(M, M, 14, Math.PI, 0); ctx.lineTo(M + 14, M + 8); ctx.lineTo(M - 14, M + 8); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = metalGradV(ctx, M - 14, M + 14, c.base);
+        ctx.beginPath(); ctx.arc(M, M, 14, Math.PI, 0); ctx.lineTo(M + 14, M + 8); ctx.lineTo(M - 14, M + 8); ctx.closePath(); ctx.fill(); ctx.stroke();
         ctx.fillStyle = shade(c.base, 0.5); ctx.fillRect(M - 14, M + 4, 28, 5); ctx.strokeRect(M - 14, M + 4, 28, 5); // 面
         ctx.fillStyle = c.accent; ctx.fillRect(M - 1.5, M - 14, 3, 10); // 飾り
-        ctx.fillStyle = c.hi; ctx.globalAlpha = 0.4; ctx.beginPath(); ctx.arc(M - 5, M - 4, 4, 0, 7); ctx.fill(); ctx.globalAlpha = 1; break;
+        ctx.fillStyle = c.hi; ctx.globalAlpha = 0.4; ctx.beginPath(); ctx.arc(M - 5, M - 4, 4, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
+        glint(ctx, M - 6, M - 5, 2.2); break;
       }
       case 'potion': {
         ctx.fillStyle = '#cfe0ee'; ctx.fillRect(M - 4, 8, 8, 6); ctx.strokeRect(M - 4, 8, 8, 6); // 栓
@@ -244,10 +311,20 @@ Game.Icons = (function () {
         break;
       }
       case 'material': {
-        // 結晶/インゴット風
+        // 結晶/インゴット風（ファセット線＋きらめきで宝石/金属を差別化）
         const h = hash(id);
-        if (h % 2 === 0) { ctx.fillStyle = c.base; ctx.beginPath(); ctx.moveTo(M, 8); ctx.lineTo(M + 12, 22); ctx.lineTo(M + 6, 40); ctx.lineTo(M - 6, 40); ctx.lineTo(M - 12, 22); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.fillStyle = c.hi; ctx.globalAlpha = 0.5; ctx.beginPath(); ctx.moveTo(M, 8); ctx.lineTo(M - 12, 22); ctx.lineTo(M, 26); ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1; }
-        else { ctx.fillStyle = c.base; ctx.beginPath(); ctx.moveTo(14, 30); ctx.lineTo(34, 30); ctx.lineTo(30, 38); ctx.lineTo(10, 38); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.fillStyle = mix(c.base, '#fff', 0.3); ctx.beginPath(); ctx.moveTo(14, 30); ctx.lineTo(34, 30); ctx.lineTo(31, 26); ctx.lineTo(11, 26); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+        if (h % 2 === 0) {
+          ctx.fillStyle = c.base; ctx.beginPath(); ctx.moveTo(M, 8); ctx.lineTo(M + 12, 22); ctx.lineTo(M + 6, 40); ctx.lineTo(M - 6, 40); ctx.lineTo(M - 12, 22); ctx.closePath(); ctx.fill(); ctx.stroke();
+          ctx.fillStyle = c.hi; ctx.globalAlpha = 0.5; ctx.beginPath(); ctx.moveTo(M, 8); ctx.lineTo(M - 12, 22); ctx.lineTo(M, 26); ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1;
+          ctx.fillStyle = shade(c.base, 0.62); ctx.globalAlpha = 0.7; ctx.beginPath(); ctx.moveTo(M + 12, 22); ctx.lineTo(M + 6, 40); ctx.lineTo(M, 26); ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1; // 右下ファセット陰
+          ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(M, 8); ctx.lineTo(M, 26); ctx.moveTo(M - 12, 22); ctx.lineTo(M, 26); ctx.lineTo(M + 12, 22); ctx.stroke(); // ファセット稜線
+          glint(ctx, M - 4, 16, 2.6);
+        } else {
+          ctx.fillStyle = metalGradV(ctx, 10, 34, c.base); ctx.beginPath(); ctx.moveTo(14, 30); ctx.lineTo(34, 30); ctx.lineTo(30, 38); ctx.lineTo(10, 38); ctx.closePath(); ctx.fill(); ctx.stroke();
+          ctx.fillStyle = mix(c.base, '#fff', 0.3); ctx.beginPath(); ctx.moveTo(14, 30); ctx.lineTo(34, 30); ctx.lineTo(31, 26); ctx.lineTo(11, 26); ctx.closePath(); ctx.fill(); ctx.stroke();
+          glint(ctx, 28, 28, 2.2);
+        }
         break;
       }
       default: {
@@ -257,15 +334,20 @@ Game.Icons = (function () {
     }
   }
 
+  // アイコンは (id, rarity) キーでオフスクリーン描画→dataURL をキャッシュ。毎フレーム再描画しない。
+  // gen 装備 × レアリティで組合せが多いため上限を設け、超えたら全破棄（再生成は安価・稀）
+  const CACHE_MAX = 400;
+  let cacheN = 0;
   function dataURL(id, roll) {
     const def = Game.ITEMS[id]; if (!def) return null;
     const key = id + (roll ? ':' + roll.rarity : '');
     if (cache[key]) return cache[key];
     const cv = document.createElement('canvas'); cv.width = SIZE; cv.height = SIZE;
     const ctx = cv.getContext('2d');
-    try { drawIcon(ctx, id, def, roll); } catch (e) { return null; }
+    try { drawIcon(ctx, id, def, roll); finishIcon(ctx, roll); } catch (e) { return null; }
     const url = cv.toDataURL();
-    cache[key] = url; return url;
+    if (cacheN >= CACHE_MAX) { for (const k in cache) delete cache[k]; cacheN = 0; }
+    cache[key] = url; cacheN++; return url;
   }
 
   return { dataURL, classify };

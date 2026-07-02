@@ -12,7 +12,7 @@
 <meta property="og:type" content="website">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%234a8f3c'/%3E%3Crect x='10' y='6' width='12' height='8' fill='%23805333'/%3E%3Crect x='8' y='12' width='16' height='12' fill='%232f7d27'/%3E%3C/svg%3E">
 <title>Haruking Survival — 俯瞰サンドボックス</title>
-<link rel="stylesheet" href="css/style.css?v=233">
+<link rel="stylesheet" href="css/style.css?v=234">
 </head>
 <body>
 <div id="app">
@@ -192,8 +192,8 @@
       <h2 style="font-size:1rem;margin-top:14px">操作説明</h2>
       <div class="ctrl-ref">
         <p><b>PC</b>：WASD/矢印=移動 ／ Shift=ダッシュ ／ 左クリック=採掘・攻撃 ／ 右クリック=設置・対話・使用 ／ 1-9・ホイール=ホットバー ／ E=インベントリ ／ F=影渡り ／ N=大マップ ／ M=音 ／ Esc=このメニュー</p>
-        <p><b>スマホ</b>：画面左をなぞって移動(フローティングスティック) ／ 右下=採掘・設置・走る・影渡り・袋 ／ 上の⚙=オプション ／ 🗺orミニマップ=大マップ(薄さ調節可)</p>
-        <p><b>PS4パッド</b>：左スティック/十字=移動 ／ 右スティック=カーソル ／ ×=採掘・攻撃 ／ R2=カーソルでクリック ／ □○=設置・対話 ／ △=影渡り ／ L1/R1=ホットバー ／ L2=ダッシュ ／ R3=大マップ ／ OPTIONS=インベントリ</p>
+        <p><b>スマホ</b>：画面左をなぞって移動(指を追うフローティングスティック) ／ 右下=採掘・設置・走る・影渡り・袋 ／ 「走る」は短タップで走り続け・もう一度で解除 ／ 上の⚙=オプション ／ ミニマップ=大マップ(薄さ調節可)</p>
+        <p><b>PS4パッド</b>：左スティック/十字=移動 ／ 右スティック=カーソル ／ ×=採掘・攻撃 ／ R2=カーソルでクリック ／ □=設置・対話 ／ ○=回避ロール ／ △=影渡り ／ L1/R1=ホットバー ／ L2=ダッシュ ／ R3=大マップ ／ OPTIONS=インベントリ</p>
       </div>
       <p class="hint">自動保存も有効です（30秒ごと／離脱時）</p>
     </div>
@@ -226,14 +226,15 @@
       <button class="dbtn right" data-dir="right">▶</button>
       <button class="dbtn down" data-dir="down">▼</button>
     </div>
+    <!-- 使用頻度の高いボタンほど下（親指の近く）。採掘=最下段の大ボタン -->
     <div id="action-btns">
-      <button id="btn-mine" class="abtn">採掘</button>
-      <button id="btn-place" class="abtn">設置</button>
-      <button id="btn-use" class="abtn">開く</button>
-      <button id="btn-dash" class="abtn small dash">走る</button>
-      <button id="btn-roll" class="abtn small roll">回避</button>
-      <button id="btn-shift" class="abtn small shift">影渡り</button>
       <button id="btn-inv" class="abtn small">袋</button>
+      <button id="btn-shift" class="abtn small shift">影渡り</button>
+      <button id="btn-use" class="abtn small">開く</button>
+      <button id="btn-place" class="abtn">設置</button>
+      <button id="btn-roll" class="abtn small roll">回避</button>
+      <button id="btn-dash" class="abtn small dash">走る</button>
+      <button id="btn-mine" class="abtn main">採掘</button>
     </div>
   </div>
 
@@ -264,42 +265,42 @@
   } catch (e) { console.warn('Trystero load failed (multiplayer disabled):', e); }
 </script>
 
-<script src="js/config.js?v=233"></script>
-<script src="js/utils.js?v=233"></script>
-<script src="js/noise.js?v=233"></script>
-<script src="js/tiles.js?v=233"></script>
-<script src="js/worldgen.js?v=233"></script>
-<script src="js/settings.js?v=233"></script>
-<script src="js/icons.js?v=233"></script>
-<script src="js/world.js?v=233"></script>
-<script src="js/camera.js?v=233"></script>
-<script src="js/lighting.js?v=233"></script>
-<script src="js/render.js?v=233"></script>
-<script src="js/inventory.js?v=233"></script>
-<script src="js/loot.js?v=233"></script>
-<script src="js/crafting.js?v=233"></script>
-<script src="js/combat.js?v=233"></script>
-<script src="js/projectiles.js?v=233"></script>
-<script src="js/player.js?v=233"></script>
-<script src="js/survival.js?v=233"></script>
-<script src="js/status.js?v=233"></script>
-<script src="js/farming.js?v=233"></script>
-<script src="js/daynight.js?v=233"></script>
-<script src="js/events.js?v=233"></script>
-<script src="js/mobs.js?v=233"></script>
-<script src="js/input.js?v=233"></script>
-<script src="js/audio.js?v=233"></script>
-<script src="js/ui.js?v=233"></script>
-<script src="js/cutscene.js?v=233"></script>
-<script src="js/story.js?v=233"></script>
-<script src="js/net.js?v=233"></script>
-<script src="js/discovery.js?v=233"></script>
-<script src="js/rocket.js?v=233"></script>
-<script src="js/lore.js?v=233"></script>
-<script src="js/achievements.js?v=233"></script>
-<script src="js/bounty.js?v=233"></script>
-<script src="js/quests.js?v=233"></script>
-<script src="js/save.js?v=233"></script>
-<script src="js/main.js?v=233"></script>
+<script src="js/config.js?v=234"></script>
+<script src="js/utils.js?v=234"></script>
+<script src="js/noise.js?v=234"></script>
+<script src="js/tiles.js?v=234"></script>
+<script src="js/worldgen.js?v=234"></script>
+<script src="js/settings.js?v=234"></script>
+<script src="js/icons.js?v=234"></script>
+<script src="js/world.js?v=234"></script>
+<script src="js/camera.js?v=234"></script>
+<script src="js/lighting.js?v=234"></script>
+<script src="js/render.js?v=234"></script>
+<script src="js/inventory.js?v=234"></script>
+<script src="js/loot.js?v=234"></script>
+<script src="js/crafting.js?v=234"></script>
+<script src="js/combat.js?v=234"></script>
+<script src="js/projectiles.js?v=234"></script>
+<script src="js/player.js?v=234"></script>
+<script src="js/survival.js?v=234"></script>
+<script src="js/status.js?v=234"></script>
+<script src="js/farming.js?v=234"></script>
+<script src="js/daynight.js?v=234"></script>
+<script src="js/events.js?v=234"></script>
+<script src="js/mobs.js?v=234"></script>
+<script src="js/input.js?v=234"></script>
+<script src="js/audio.js?v=234"></script>
+<script src="js/ui.js?v=234"></script>
+<script src="js/cutscene.js?v=234"></script>
+<script src="js/story.js?v=234"></script>
+<script src="js/net.js?v=234"></script>
+<script src="js/discovery.js?v=234"></script>
+<script src="js/rocket.js?v=234"></script>
+<script src="js/lore.js?v=234"></script>
+<script src="js/achievements.js?v=234"></script>
+<script src="js/bounty.js?v=234"></script>
+<script src="js/quests.js?v=234"></script>
+<script src="js/save.js?v=234"></script>
+<script src="js/main.js?v=234"></script>
 </body>
 </html>

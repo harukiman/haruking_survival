@@ -3,8 +3,38 @@ window.Game = window.Game || {};
 
 Game.Cutscene = (function () {
   let cv, ctx, raf, onDone, t0, skipBtn, playing = false, W = 0, H = 0, curScene = -1, shakeMag = 0, clickArmedAt = 0;
-  // モバイルで「はじめから」タップが新規キャンバスへ貫通し即スキップされるのを防ぐ
-  function canvasClick() { if (performance.now() >= clickArmedAt) finish(); }
+  let curScenes = null, curTotal = 0, bgCol = '#03040a', subduedMode = false, lastSc = null;
+  let prevDraw = null, prevUntilE = 0, typeStart = 0, typeDone = false;
+  let grainPat = null, vinGrad = null, holdTimer = 0, layoutCache = { t: '', w: 0, lines: [] };
+
+  // ===== イージング =====
+  function easeInOutCubic(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+  function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+  function clamp01(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
+  // 再見時は粒子を半減(モバイル負荷/控えめ演出)
+  function pn(n) { return subduedMode ? (n / 2) | 0 : n; }
+
+  // タップ=文章即時表示→次シーン送り / 長押し600ms=全スキップ
+  // (モバイルで「はじめから」タップが新規キャンバスへ貫通するのを clickArmedAt で防ぐ)
+  function onPointerDown() {
+    if (!playing || performance.now() < clickArmedAt) return;
+    clearTimeout(holdTimer);
+    holdTimer = setTimeout(function () { finish(); }, 600);
+  }
+  function onPointerUp() {
+    clearTimeout(holdTimer);
+    if (!playing || performance.now() < clickArmedAt) return;
+    if (!typeDone) typeDone = true;
+    else advanceScene();
+  }
+  function onPointerCancel() { clearTimeout(holdTimer); }
+  function advanceScene() {
+    if (!curScenes) { finish(); return; }
+    let acc = 0;
+    for (let i = 0; i <= curScene && i < curScenes.length; i++) acc += curScenes[i].d;
+    if (acc >= curTotal - 1) { finish(); return; }
+    t0 = performance.now() - acc;
+  }
 
   const SCENES = [
     { d: 4400, draw: sceneUnified, text: 'かつて、世界はひとつだった。', onEnter: function () { Game.Audio.cineStart(); Game.Audio.cue('swell'); } },
@@ -15,95 +45,105 @@ Game.Cutscene = (function () {
     { d: 5200, draw: sceneArrival, text: '名も故郷も持たぬまま、ひとりの旅人が、裂けた大地に舞い降りた。', shake: 0.15, onEnter: function () { Game.Audio.cineStart('somber'); Game.Audio.cue('shimmer'); } },
     { d: 5200, draw: sceneTitle, text: '', onEnter: function () { Game.Audio.cue('choir'); Game.Audio.cue('boom'); } },
   ];
-  const TOTAL = SCENES.reduce(function (a, s) { return a + s.d; }, 0);
-
-  function play(cb) {
-    onDone = cb; playing = true; curScene = -1; shakeMag = 0;
-    cv = document.createElement('canvas');
-    cv.id = 'cutscene-canvas';
-    cv.style.cssText = 'position:absolute;inset:0;z-index:60;background:#05070e;touch-action:none';
-    document.getElementById('app').appendChild(cv);
-    ctx = cv.getContext('2d');
-    resize();
-    window.addEventListener('resize', resize);
-    skipBtn = document.createElement('button');
-    skipBtn.id = 'cutscene-skip'; skipBtn.textContent = 'スキップ ▶';
-    skipBtn.addEventListener('click', function (e) { e.stopPropagation(); finish(); });
-    document.getElementById('app').appendChild(skipBtn);
-    clickArmedAt = performance.now() + 800;
-    cv.addEventListener('click', canvasClick);
-    t0 = performance.now();
-    raf = requestAnimationFrame(frame);
-  }
+  function play(cb) { runScenes(SCENES, cb, { bg: '#05070e', arm: 800 }); }
 
   function resize() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     W = window.innerWidth; H = window.innerHeight;
     cv.width = W * dpr; cv.height = H * dpr; cv.style.width = W + 'px'; cv.style.height = H + 'px';
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  }
-
-  function frame(now) {
-    if (!playing) return;
-    let e = now - t0;
-    if (e >= TOTAL) { finish(); return; }
-    // 現在シーン
-    let acc = 0, sc = SCENES[0], local = 0, idx = 0;
-    for (let i = 0; i < SCENES.length; i++) {
-      if (e < acc + SCENES[i].d) { sc = SCENES[i]; local = (e - acc) / SCENES[i].d; idx = i; break; }
-      acc += SCENES[i].d;
-    }
-    if (idx !== curScene) { curScene = idx; shakeMag = sc.shake || 0; if (sc.onEnter) try { sc.onEnter(); } catch (er) {} }
-    ctx.clearRect(0, 0, W, H);
-    ctx.fillStyle = '#05070e'; ctx.fillRect(0, 0, W, H);
-    // カメラシェイク（シーン頭で強く→減衰）
-    const decay = Math.max(0, 1 - local * 2.2);
-    const sh = (Game.Settings && !Game.Settings.get('screenShake')) ? 0 : shakeMag * decay * 14;
-    ctx.save();
-    if (sh > 0.2) ctx.translate((Math.random() - 0.5) * sh, (Math.random() - 0.5) * sh);
-    sc.draw(local, now);
-    ctx.restore();
-    if (sc.text) drawText(sc.text, local);
-    // 全体フェードイン/アウト
-    if (e < 600) { ctx.fillStyle = 'rgba(5,7,14,' + (1 - e / 600) + ')'; ctx.fillRect(0, 0, W, H); }
-    if (e > TOTAL - 900) { ctx.fillStyle = 'rgba(5,7,14,' + ((e - (TOTAL - 900)) / 900) + ')'; ctx.fillRect(0, 0, W, H); }
-    raf = requestAnimationFrame(frame);
+    // 周辺減光(サイズ依存なのでリサイズ時に再生成)
+    vinGrad = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.42, W / 2, H / 2, Math.max(W, H) * 0.72);
+    vinGrad.addColorStop(0, 'rgba(0,0,0,0)'); vinGrad.addColorStop(1, 'rgba(0,0,0,0.34)');
+    layoutCache = { t: '', w: 0, lines: [] };
   }
 
   function finish() {
     if (!playing) return;
     playing = false;
+    clearTimeout(holdTimer);
     cancelAnimationFrame(raf);
     window.removeEventListener('resize', resize);
     if (Game.Audio && Game.Audio.cineStop) Game.Audio.cineStop();
     if (cv && cv.parentNode) cv.parentNode.removeChild(cv);
     if (skipBtn && skipBtn.parentNode) skipBtn.parentNode.removeChild(skipBtn);
+    curScenes = null; lastSc = null; prevDraw = null; grainPat = null;
     if (onDone) onDone();
   }
 
-  function drawText(txt, local) {
-    let a = 1;
-    if (local < 0.15) a = local / 0.15;
-    else if (local > 0.85) a = (1 - local) / 0.15;
-    ctx.globalAlpha = Math.max(0, Math.min(1, a));
-    ctx.fillStyle = '#eef0ff';
-    ctx.font = (W < 460 ? 16 : 22) + 'px -apple-system,"Hiragino Sans",sans-serif';
-    ctx.textAlign = 'center';
-    ctx.shadowColor = '#000'; ctx.shadowBlur = 8;
-    wrapText(txt, W / 2, H * 0.82, W * 0.86, (W < 460 ? 24 : 32));
-    ctx.shadowBlur = 0; ctx.globalAlpha = 1; ctx.textAlign = 'left';
+  // ===== フィルム的オーバーレイ(粒状ノイズ) =====
+  function makeGrain() {
+    const gc = document.createElement('canvas'); gc.width = gc.height = 96;
+    const g = gc.getContext('2d'), img = g.createImageData(96, 96);
+    for (let i = 0; i < img.data.length; i += 4) { const v = 108 + Math.random() * 148 | 0; img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 255; }
+    g.putImageData(img, 0, 0);
+    grainPat = ctx.createPattern(gc, 'repeat');
   }
-  function wrapText(text, cx, cy, maxW, lh) {
-    const parts = text.split('、');
-    let lines = [], cur = '';
-    for (let i = 0; i < parts.length; i++) {
-      const seg = parts[i] + (i < parts.length - 1 ? '、' : '');
-      if (ctx.measureText(cur + seg).width > maxW && cur) { lines.push(cur); cur = seg; }
-      else cur += seg;
+  function drawFilmOverlay(now) {
+    if (vinGrad) { ctx.fillStyle = vinGrad; ctx.fillRect(0, 0, W, H); }
+    if (grainPat) {
+      const ox = (now * 0.61 | 0) % 96, oy = (now * 0.37 | 0) % 96;
+      ctx.save(); ctx.globalAlpha = 0.045; ctx.globalCompositeOperation = 'overlay';
+      ctx.translate(-ox, -oy); ctx.fillStyle = grainPat; ctx.fillRect(0, 0, W + 96, H + 96);
+      ctx.restore();
     }
-    if (cur) lines.push(cur);
-    const startY = cy - (lines.length - 1) * lh / 2;
-    lines.forEach(function (ln, i) { ctx.fillText(ln, cx, startY + i * lh); });
+  }
+  // レターボックス(冒頭でせり出し、終盤でせり戻る)
+  function drawLetterbox(e, total) {
+    const lbMax = Math.round(H * 0.055);
+    const kIn = easeOutCubic(clamp01(e / 700));
+    const kOut = 1 - easeInOutCubic(clamp01((e - (total - 600)) / 600));
+    const h = lbMax * kIn * kOut;
+    if (h < 1) return;
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, W, h); ctx.fillRect(0, H - h, W, h);
+  }
+
+  // ===== 台詞: 行組みキャッシュ+タイプライタ表示 =====
+  function layoutLines(txt, maxW) {
+    if (layoutCache.t === txt && layoutCache.w === W) return layoutCache.lines;
+    const out = [];
+    txt.split('\n').forEach(function (para) {
+      let cur = '';
+      for (let i = 0; i < para.length; i++) {
+        const ch = para[i];
+        if (ctx.measureText(cur + ch).width > maxW && cur) {
+          if (ch === '、' || ch === '。' || ch === '」' || ch === '—') { out.push(cur + ch); cur = ''; continue; } // 行頭禁則
+          out.push(cur); cur = ch;
+        } else cur += ch;
+      }
+      if (cur) out.push(cur);
+    });
+    layoutCache = { t: txt, w: W, lines: out };
+    return out;
+  }
+  function drawText(txt, local, now) {
+    const fs = W < 460 ? 16 : 22, lh = W < 460 ? 25 : 33;
+    ctx.font = '500 ' + fs + 'px -apple-system,"Hiragino Sans",sans-serif';
+    const lines = layoutLines(txt, W * 0.86);
+    let totalChars = 0;
+    for (let i = 0; i < lines.length; i++) totalChars += lines[i].length;
+    let shown = totalChars;
+    if (!typeDone) {
+      shown = Math.max(0, Math.floor((now - typeStart - 260) / 32)); // 1文字32ms
+      if (shown >= totalChars) { shown = totalChars; typeDone = true; }
+    }
+    let a = 1;
+    if (local > 0.86) a = clamp01((1 - local) / 0.14);
+    ctx.globalAlpha = a;
+    ctx.fillStyle = '#eef0ff';
+    ctx.shadowColor = '#000'; ctx.shadowBlur = 8;
+    ctx.textAlign = 'left';
+    const startY = H * 0.80 - (lines.length - 1) * lh / 2;
+    let used = 0;
+    for (let i = 0; i < lines.length; i++) {
+      const ln = lines[i], vis = shown - used;
+      used += ln.length;
+      if (vis <= 0) break;
+      const w = ctx.measureText(ln).width; // 全文幅基準で左寄せ→タイプ中も行が動かない
+      ctx.fillText(vis >= ln.length ? ln : ln.slice(0, vis), W / 2 - w / 2, startY + i * lh);
+    }
+    ctx.shadowBlur = 0; ctx.globalAlpha = 1;
   }
 
   // ===== シーン =====
@@ -484,36 +524,56 @@ Game.Cutscene = (function () {
     const s = 7 + pulse * 2; ctx.fillRect(-s, -s, s * 2, s * 2); ctx.restore();
   }
 
-  function runScenes(scenes, cb) {
+  function runScenes(scenes, cb, opts) {
+    opts = opts || {};
     playing = true; onDone = cb; curScene = -1; shakeMag = 0;
+    curScenes = scenes; curTotal = scenes.reduce(function (a, s) { return a + s.d; }, 0);
+    bgCol = opts.bg || '#03040a'; subduedMode = !!opts.subdued;
+    prevDraw = null; prevUntilE = 0; typeDone = false; lastSc = null;
     cv = document.createElement('canvas'); cv.id = 'cutscene-canvas';
-    cv.style.cssText = 'position:absolute;inset:0;z-index:60;background:#03040a;touch-action:none';
+    cv.style.cssText = 'position:absolute;inset:0;z-index:60;background:' + bgCol + ';touch-action:none';
     document.getElementById('app').appendChild(cv); ctx = cv.getContext('2d'); resize();
+    makeGrain();
     window.addEventListener('resize', resize);
     skipBtn = document.createElement('button'); skipBtn.id = 'cutscene-skip'; skipBtn.textContent = 'スキップ ▶';
     skipBtn.addEventListener('click', function (e) { e.stopPropagation(); finish(); });
     document.getElementById('app').appendChild(skipBtn);
-    clickArmedAt = performance.now() + 700;
-    cv.addEventListener('click', canvasClick);
-    const total = scenes.reduce(function (a, s) { return a + s.d; }, 0);
+    clickArmedAt = performance.now() + (opts.arm || 700);
+    cv.addEventListener('pointerdown', onPointerDown);
+    cv.addEventListener('pointerup', onPointerUp);
+    cv.addEventListener('pointercancel', onPointerCancel);
     t0 = performance.now();
-    (function loop(now) {
-      if (!playing) return;
-      const e = now - t0; if (e >= total) { finish(); return; }
-      let acc = 0, sc = scenes[0], local = 0, idx = 0;
-      for (let i = 0; i < scenes.length; i++) { if (e < acc + scenes[i].d) { sc = scenes[i]; local = (e - acc) / scenes[i].d; idx = i; break; } acc += scenes[i].d; }
-      if (idx !== curScene) { curScene = idx; shakeMag = sc.shake || 0; if (sc.onEnter) try { sc.onEnter(); } catch (er) {} }
-      ctx.clearRect(0, 0, W, H); ctx.fillStyle = '#03040a'; ctx.fillRect(0, 0, W, H);
-      const sh = (Game.Settings && !Game.Settings.get('screenShake')) ? 0 : shakeMag * Math.max(0, 1 - local * 2.2) * 14;
-      ctx.save();
-      if (sh > 0.2) ctx.translate((Math.random() - 0.5) * sh, (Math.random() - 0.5) * sh);
-      sc.draw(local, now);
-      ctx.restore();
-      if (sc.text) drawText(sc.text, local);
-      if (e < 500) { ctx.fillStyle = 'rgba(3,4,10,' + (1 - e / 500) + ')'; ctx.fillRect(0, 0, W, H); }
-      if (e > total - 600) { ctx.fillStyle = 'rgba(3,4,10,' + ((e - (total - 600)) / 600) + ')'; ctx.fillRect(0, 0, W, H); }
-      raf = requestAnimationFrame(loop);
-    })(t0);
+    raf = requestAnimationFrame(sceneFrame);
+  }
+  function sceneFrame(now) {
+    if (!playing || !curScenes) return;
+    const total = curTotal, e = now - t0;
+    if (e >= total) { finish(); return; }
+    let acc = 0, sc = curScenes[0], local = 0, idx = 0;
+    for (let i = 0; i < curScenes.length; i++) { if (e < acc + curScenes[i].d) { sc = curScenes[i]; local = (e - acc) / curScenes[i].d; idx = i; break; } acc += curScenes[i].d; }
+    if (idx !== curScene) {
+      if (lastSc && lastSc !== sc) { prevDraw = lastSc.draw; prevUntilE = e + 430; } // シーン間クロスフェード
+      lastSc = sc; curScene = idx; shakeMag = sc.shake || 0;
+      typeStart = now; typeDone = subduedMode; // 再見時はタイプ演出なしで即全文
+      if (sc.onEnter) try { sc.onEnter(); } catch (er) {}
+    }
+    ctx.clearRect(0, 0, W, H); ctx.fillStyle = bgCol; ctx.fillRect(0, 0, W, H);
+    // カメラシェイク(シーン頭で強く→減衰)
+    const sh = (Game.Settings && !Game.Settings.get('screenShake')) ? 0 : shakeMag * Math.max(0, 1 - local * 2.2) * 14;
+    ctx.save();
+    if (sh > 0.2) ctx.translate((Math.random() - 0.5) * sh, (Math.random() - 0.5) * sh);
+    // ケンバーンズ(緩やかなズームイン)
+    if (sc.kb !== false) { const z = 1 + 0.042 * easeInOutCubic(local); ctx.translate(W / 2, H / 2); ctx.scale(z, z); ctx.translate(-W / 2, -H / 2); }
+    sc.draw(local, now);
+    if (prevDraw && e < prevUntilE) { ctx.globalAlpha = clamp01((prevUntilE - e) / 430); try { prevDraw(1, now); } catch (er) {} ctx.globalAlpha = 1; }
+    else if (prevDraw) prevDraw = null;
+    ctx.restore();
+    drawLetterbox(e, total);
+    drawFilmOverlay(now);
+    if (sc.text) drawText(sc.text, local, now);
+    if (e < 500) { ctx.fillStyle = 'rgba(3,4,10,' + (1 - e / 500) + ')'; ctx.fillRect(0, 0, W, H); }
+    if (e > total - 650) { ctx.fillStyle = 'rgba(3,4,10,' + clamp01((e - (total - 650)) / 650) + ')'; ctx.fillRect(0, 0, W, H); }
+    raf = requestAnimationFrame(sceneFrame);
   }
   function starsBg(now, n) {
     for (let i = 0; i < n; i++) { const x = (i * 53) % W, y = (i * 97 + now * 0.05) % H; ctx.globalAlpha = 0.5 + (i % 3) * 0.2; ctx.fillStyle = '#fff'; ctx.fillRect(x, y, 1.5, 1.5); }
@@ -603,7 +663,7 @@ Game.Cutscene = (function () {
     ctx.globalAlpha = 1;
     // 2層パララックスの塵(奥=遅く小さい / 手前=速く大きい)
     for (let layer = 0; layer < 2; layer++) {
-      const sp = layer ? 0.00045 : 0.0002, sz = layer ? 2.4 : 1.4, n = layer ? 26 : 40;
+      const sp = layer ? 0.00045 : 0.0002, sz = layer ? 2.4 : 1.4, n = pn(layer ? 26 : 40);
       for (let i = 0; i < n; i++) {
         const a = now * sp + i * 0.7 + layer * 3;
         const rx = (cx + Math.cos(a + i) * (70 + i * 8) + W) % W;
@@ -625,14 +685,220 @@ Game.Cutscene = (function () {
     const r = cl(parseInt(hex.slice(1, 3), 16) + amt), g = cl(parseInt(hex.slice(3, 5), 16) + amt), b = cl(parseInt(hex.slice(5, 7), 16) + amt);
     return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
   }
-  function playStory(frag, cb) {
+  // ===== 断章「刻む者」専用シーン(色彩設計: 追憶セピア→火影→夜藍→黎明金) =====
+  function drawStela(x, y, w, h, col) {
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    ctx.moveTo(x - w / 2, y);
+    ctx.lineTo(x - w / 2, y - h + w * 0.4);
+    ctx.quadraticCurveTo(x, y - h - w * 0.22, x + w / 2, y - h + w * 0.4);
+    ctx.lineTo(x + w / 2, y);
+    ctx.closePath(); ctx.fill();
+  }
+  // 膝をつく石工のシルエット。armAng で槌腕をキーフレーム駆動、bow で俯き
+  function drawMason(x, y, s, armAng, bow) {
+    ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
+    ctx.fillStyle = '#120e14'; ctx.strokeStyle = '#120e14'; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.ellipse(2, 16, 13, 7, 0, 0, Math.PI * 2); ctx.fill(); // 畳んだ脚
+    ctx.beginPath(); ctx.ellipse(0, 2, 10, 14, -0.18 - bow * 0.2, 0, Math.PI * 2); ctx.fill(); // 前傾の胴
+    ctx.beginPath(); ctx.arc(-7 - bow * 3, -13 + bow * 3, 6, 0, Math.PI * 2); ctx.fill(); // 俯く頭
+    ctx.lineWidth = 4.5;
+    ctx.beginPath(); ctx.moveTo(-3, -3); ctx.lineTo(-17, 3); ctx.stroke(); // 鑿を支える腕
+    ctx.save(); ctx.translate(1, -7); ctx.rotate(armAng);
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-13, -7); ctx.stroke(); // 槌の腕
+    ctx.fillRect(-18, -12, 8, 8); ctx.restore(); // 槌頭
+    ctx.restore();
+  }
+  function scChrDusk(t, now) {
+    const hz = H * 0.66, pan = easeInOutCubic(t) * 26; // ゆっくり横パン
+    const sky = ctx.createLinearGradient(0, 0, 0, hz);
+    sky.addColorStop(0, '#33261a'); sky.addColorStop(0.7, '#5a3c22'); sky.addColorStop(1, '#8a5a2c');
+    ctx.fillStyle = sky; ctx.fillRect(0, 0, W, hz);
+    // 低い夕陽とハロー
+    const sx = W * 0.24 - pan * 0.4, sy = hz - 26;
+    const g = ctx.createRadialGradient(sx, sy, 4, sx, sy, 120);
+    g.addColorStop(0, 'rgba(255,214,140,0.85)'); g.addColorStop(1, 'rgba(255,190,110,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(sx, sy, 120, 0, 7); ctx.fill();
+    ctx.fillStyle = '#ffd88e'; ctx.beginPath(); ctx.arc(sx, sy, 18, 0, 7); ctx.fill();
+    // 遠景の尾根(視差: 遅)
+    ctx.fillStyle = '#241a10';
+    ctx.beginPath(); ctx.moveTo(0, hz);
+    for (let x = 0; x <= W; x += 24) ctx.lineTo(x, hz - 14 - Math.abs(Math.sin((x + pan * 0.5) * 0.013)) * 34);
+    ctx.lineTo(W, hz); ctx.closePath(); ctx.fill();
+    // 地面
+    const gnd = ctx.createLinearGradient(0, hz, 0, H);
+    gnd.addColorStop(0, '#3a2a16'); gnd.addColorStop(1, '#191009');
+    ctx.fillStyle = gnd; ctx.fillRect(0, hz, W, H - hz);
+    // 未刻の碑と、こうべを垂れる石工(残照の逆光でシルエットを浮かべる)
+    const bx = W * 0.62 - pan, by = H * 0.73; // 台詞帯(下部)と重ならぬ高さ
+    const bl = ctx.createRadialGradient(bx - 40, by - 30, 6, bx - 40, by - 30, 130);
+    bl.addColorStop(0, 'rgba(255,196,130,0.30)'); bl.addColorStop(1, 'rgba(255,196,130,0)');
+    ctx.fillStyle = bl; ctx.beginPath(); ctx.arc(bx - 40, by - 30, 130, 0, 7); ctx.fill();
+    ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(bx + 4, by + 4, 40, 8, 0, 0, 7); ctx.fill();
+    drawStela(bx, by, 40, 92, '#d8cbb2');
+    drawMason(bx - 66, by - 12, 1.6, -0.5, 1);
+    // 漂う塵(セピアの光片)
+    for (let i = 0; i < pn(34); i++) {
+      const x = (i * 97 + now * 0.014 * (1 + i % 3)) % (W + 20) - 10;
+      const y = hz - 130 + ((i * 61) % 190) + Math.sin(now * 0.0011 + i) * 8;
+      ctx.globalAlpha = 0.10 + 0.12 * Math.abs(Math.sin(now * 0.0009 + i * 1.7));
+      ctx.fillStyle = '#ffd9a0'; ctx.fillRect(x, y, 1.8, 1.8);
+    }
+    ctx.globalAlpha = 1;
+  }
+  function scChrCarve(t, now) {
+    ctx.fillStyle = '#150e12'; ctx.fillRect(0, 0, W, H);
+    const cx = W * 0.42, by = H * 0.72;
+    // 上手からの光条
+    const lg = ctx.createLinearGradient(0, 0, W * 0.5, H * 0.75);
+    lg.addColorStop(0, 'rgba(255,190,120,0.20)'); lg.addColorStop(1, 'rgba(255,190,120,0)');
+    ctx.fillStyle = lg;
+    ctx.beginPath(); ctx.moveTo(-40, -20); ctx.lineTo(W * 0.34, -20); ctx.lineTo(W * 0.72, by + 30); ctx.lineTo(W * 0.10, by + 30); ctx.closePath(); ctx.fill();
+    // 大きな碑
+    ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.beginPath(); ctx.ellipse(cx, by + 6, 66, 11, 0, 0, 7); ctx.fill();
+    drawStela(cx, by, 84, 190, '#3f3648');
+    // 刻まれてゆく文字(刻線が増える)
+    const carved = Math.floor(easeOutCubic(t) * 16);
+    ctx.strokeStyle = 'rgba(255,196,120,0.75)'; ctx.lineWidth = 2; ctx.shadowColor = '#ffb060'; ctx.shadowBlur = 6;
+    for (let i = 0; i < carved; i++) {
+      const gx = cx - 16 + (i % 2) * 26, gy = by - 152 + (i >> 1) * 17;
+      ctx.beginPath(); ctx.moveTo(gx, gy); ctx.lineTo(gx + 8, gy + 5); ctx.lineTo(gx + 2, gy + 11); ctx.stroke();
+    }
+    ctx.shadowBlur = 0;
+    // 石工: 槌のキーフレーム(構え→振り下ろし→戻り)。焚き火色の光だまりで逆光に
+    const cyc = (now * 0.0016) % 1;
+    const flick = 0.16 + 0.05 * Math.abs(Math.sin(now * 0.006));
+    const fp = ctx.createRadialGradient(cx + 96, by - 20, 8, cx + 96, by - 20, 150);
+    fp.addColorStop(0, 'rgba(255,160,90,' + flick + ')'); fp.addColorStop(1, 'rgba(255,160,90,0)');
+    ctx.fillStyle = fp; ctx.beginPath(); ctx.arc(cx + 96, by - 20, 150, 0, 7); ctx.fill();
+    const armAng = cyc < 0.55 ? -1.1 * easeInOutCubic(cyc / 0.55) : -1.1 + 1.5 * easeOutCubic((cyc - 0.55) / 0.45);
+    drawMason(cx + 92, by - 16, 2.3, armAng, 0.3);
+    // 打点の火花(振り下ろし直後)
+    if (cyc > 0.55 && cyc < 0.85) {
+      const k = (cyc - 0.55) / 0.3;
+      ctx.fillStyle = '#ffd9a0'; ctx.globalAlpha = (1 - k) * 0.9;
+      for (let i = 0; i < 7; i++) {
+        const a = -2.2 + i * 0.42, r = 4 + k * 26;
+        ctx.fillRect(cx + 44 + Math.cos(a) * r, by - 16 + Math.sin(a) * r, 2.2, 2.2);
+      }
+      ctx.globalAlpha = 1;
+    }
+    // 立ち昇る火の粉
+    for (let i = 0; i < pn(22); i++) {
+      const x = cx + 30 + Math.sin(i * 2.3 + now * 0.0013) * (18 + (i % 4) * 10);
+      const y = by - ((i * 47 + now * 0.05) % (H * 0.62));
+      ctx.globalAlpha = 0.14 + 0.2 * Math.abs(Math.sin(now * 0.002 + i));
+      ctx.fillStyle = i % 3 ? '#ff9a50' : '#ffd9a0'; ctx.fillRect(x, y, 2, 2);
+    }
+    ctx.globalAlpha = 1;
+  }
+  function scChrStones(t, now) {
+    const hz = H * 0.68;
+    const sky = ctx.createLinearGradient(0, 0, 0, hz);
+    sky.addColorStop(0, '#060a18'); sky.addColorStop(1, '#12203c');
+    ctx.fillStyle = sky; ctx.fillRect(0, 0, W, hz);
+    // 星
+    for (let i = 0; i < pn(46); i++) { const x = (i * 83) % W, y = (i * 41) % (hz * 0.9); ctx.globalAlpha = 0.2 + Math.abs(Math.sin(now * 0.0012 + i)) * 0.5; ctx.fillStyle = '#cfe0ff'; ctx.fillRect(x, y, 1.4, 1.4); }
+    ctx.globalAlpha = 1;
+    // 月
+    const mx = W * 0.78, my = H * 0.16;
+    const mg = ctx.createRadialGradient(mx, my, 4, mx, my, 90); mg.addColorStop(0, 'rgba(200,220,255,0.5)'); mg.addColorStop(1, 'rgba(200,220,255,0)');
+    ctx.fillStyle = mg; ctx.beginPath(); ctx.arc(mx, my, 90, 0, 7); ctx.fill();
+    ctx.fillStyle = '#dce6ff'; ctx.beginPath(); ctx.arc(mx, my, 16, 0, 7); ctx.fill();
+    ctx.fillStyle = '#0d1730'; ctx.beginPath(); ctx.arc(mx + 6, my - 5, 14, 0, 7); ctx.fill();
+    // 地面
+    ctx.fillStyle = '#0a1020'; ctx.fillRect(0, hz, W, H - hz);
+    // 立ち並ぶ碑(3層の視差、ゆっくり寄る)
+    const pan = easeInOutCubic(t) * 18;
+    for (let layer = 0; layer < 3; layer++) {
+      const depth = 1 - layer * 0.28, n = 5 + layer * 2;
+      const yBase = hz + 22 + layer * (H - hz) * 0.26;
+      for (let i = 0; i < n; i++) {
+        const x = ((i + 0.5) / n) * W + (i % 2 ? 14 : -10) - pan * depth;
+        drawStela(x, yBase, 16 * depth + 6, (44 + (i * 13) % 22) * depth + 14, layer === 2 ? '#1c2740' : '#131c30');
+      }
+    }
+    // 中央前面: まだ白い碑(淡く脈動)
+    const bx = W * 0.5 - pan * 0.2, by = H * 0.88;
+    const pulse = 0.5 + Math.sin(now * 0.0022) * 0.5;
+    const wg = ctx.createRadialGradient(bx, by - 50, 4, bx, by - 50, 90);
+    wg.addColorStop(0, 'rgba(235,240,255,' + (0.16 + pulse * 0.12) + ')'); wg.addColorStop(1, 'rgba(235,240,255,0)');
+    ctx.fillStyle = wg; ctx.beginPath(); ctx.arc(bx, by - 50, 90, 0, 7); ctx.fill();
+    drawStela(bx, by, 42, 100, '#e6e0d2');
+    // 蛍のような光
+    for (let i = 0; i < pn(16); i++) {
+      const x = (i * 137 + Math.sin(now * 0.0007 + i * 2) * 30 + W) % W;
+      const y = hz + 10 + ((i * 53) % (H - hz - 20)) + Math.sin(now * 0.0013 + i) * 10;
+      ctx.globalAlpha = 0.2 + 0.4 * Math.abs(Math.sin(now * 0.0018 + i * 1.3));
+      ctx.fillStyle = '#bfe0ff'; ctx.fillRect(x, y, 2, 2);
+    }
+    ctx.globalAlpha = 1;
+  }
+  function scChrDawn(t, now) {
+    const hz = H * 0.70, k = easeInOutCubic(t);
+    const sky = ctx.createLinearGradient(0, 0, 0, hz);
+    sky.addColorStop(0, '#1a2244'); sky.addColorStop(0.55, '#4a3a4a'); sky.addColorStop(1, '#d08a3c');
+    ctx.fillStyle = sky; ctx.fillRect(0, 0, W, hz);
+    // 昇る陽と光芒
+    const sy = hz + 26 - k * 60, sx = W * 0.5;
+    ctx.save(); ctx.translate(sx, sy); ctx.globalAlpha = 0.07 + k * 0.08;
+    for (let i = 0; i < 11; i++) { ctx.rotate(Math.PI * 2 / 11 + now * 0.00016); ctx.fillStyle = '#ffe2a0'; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-22, -Math.max(W, H)); ctx.lineTo(22, -Math.max(W, H)); ctx.closePath(); ctx.fill(); }
+    ctx.restore(); ctx.globalAlpha = 1;
+    const g = ctx.createRadialGradient(sx, sy, 6, sx, sy, 150);
+    g.addColorStop(0, 'rgba(255,236,180,0.9)'); g.addColorStop(1, 'rgba(255,200,120,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(sx, sy, 150, 0, 7); ctx.fill();
+    // 地面(朝焼けの照り返し)
+    const gnd = ctx.createLinearGradient(0, hz, 0, H);
+    gnd.addColorStop(0, '#6a4526'); gnd.addColorStop(1, '#241610');
+    ctx.fillStyle = gnd; ctx.fillRect(0, hz, W, H - hz);
+    // 白い碑(中央)
+    const bx = W * 0.56, by = H * 0.84;
+    ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(bx + 5, by + 4, 42, 8, 0, 0, 7); ctx.fill();
+    drawStela(bx, by, 44, 104, '#efe8d8');
+    // 旅人が歩み寄る(歩行キーフレーム)
+    const walk = clamp01(t * 1.5), px = W * 0.12 + (bx - 74 - W * 0.12) * easeInOutCubic(walk);
+    const step = walk < 1 ? Math.sin(now * 0.012) * 4 : 0;
+    ctx.fillStyle = '#141018';
+    ctx.beginPath(); ctx.ellipse(px, by - 26, 8, 13, 0, 0, 7); ctx.fill(); // 胴
+    ctx.beginPath(); ctx.arc(px + 2, by - 43, 5.5, 0, 7); ctx.fill(); // 頭
+    ctx.strokeStyle = '#141018'; ctx.lineWidth = 4; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(px - 3, by - 14); ctx.lineTo(px - 6 - step * 0.6, by); ctx.stroke(); // 脚
+    ctx.beginPath(); ctx.moveTo(px + 3, by - 14); ctx.lineTo(px + 6 + step * 0.6, by); ctx.stroke();
+    // 終盤、碑へ手を伸ばし、指先と碑が呼応して光る
+    const reach = clamp01((t - 0.72) / 0.2);
+    ctx.beginPath(); ctx.moveTo(px + 4, by - 32); ctx.lineTo(px + 18 + reach * 10, by - 32 - reach * 14); ctx.stroke();
+    if (reach > 0) {
+      const rg = ctx.createRadialGradient(bx, by - 60, 2, bx, by - 60, 60 + reach * 50);
+      rg.addColorStop(0, 'rgba(255,244,210,' + (0.25 + reach * 0.45) + ')'); rg.addColorStop(1, 'rgba(255,244,210,0)');
+      ctx.fillStyle = rg; ctx.beginPath(); ctx.arc(bx, by - 60, 110, 0, 7); ctx.fill();
+    }
+    // 立ち昇る光の粒
+    for (let i = 0; i < pn(26); i++) {
+      const x = bx + Math.sin(i * 1.9 + now * 0.001) * (26 + (i % 5) * 12);
+      const y = by - ((i * 37 + now * 0.04) % (H * 0.5));
+      ctx.globalAlpha = 0.15 + 0.25 * Math.abs(Math.sin(now * 0.0016 + i));
+      ctx.fillStyle = i % 2 ? '#fff3d0' : '#ffd9a0'; ctx.fillRect(x, y, 2, 2);
+    }
+    ctx.globalAlpha = 1;
+  }
+  // 断章データ(story.js)の fx キー → 専用描画。汎用章は scStory
+  const STORYFX = { chr_dusk: scChrDusk, chr_carve: scChrCarve, chr_stones: scChrStones, chr_dawn: scChrDawn };
+
+  function playStory(frag, cb, opts) {
     if (!frag || !frag.scenes || !frag.scenes.length) { if (cb) cb(); return; }
+    const subdued = !!(opts && opts.subdued); // 再見: 短縮+控えめ演出
     // 章ごとに哀愁/神秘のBGMを選ぶ(再会・統合は高揚、終章は神秘)
     const mood = (frag.id === 'reunion' || frag.id === 'endbringer') ? 'heroic' : (/star|abyss|phase|traveler|cycle/.test(frag.id || '') ? 'mystic' : 'somber');
     const scenes = frag.scenes.map(function (s, i) {
-      return { d: s.d || 4800, draw: function (t, now) { scStory(t, now, s); }, text: s.text, shake: 0.05, onEnter: function () { if (i === 0 && Game.Audio.cineStart) Game.Audio.cineStart(mood); if (s.audio && Game.Audio.cue) Game.Audio.cue(s.audio); } };
+      const fx = s.fx && STORYFX[s.fx];
+      return {
+        d: Math.round((s.d || 4800) * (subdued ? 0.6 : 1)),
+        draw: fx ? function (t, now) { fx(t, now); } : function (t, now) { scStory(t, now, s); },
+        text: s.text, shake: 0.05,
+        onEnter: function () { if (i === 0 && Game.Audio.cineStart) Game.Audio.cineStart(mood); if (s.audio && Game.Audio.cue) Game.Audio.cue(s.audio); }
+      };
     });
-    runScenes(scenes, cb);
+    runScenes(scenes, cb, { subdued: subdued });
   }
-  return { play, playLaunch, playDiscovery, playBossIntro, playBossOutro, playStory, isPlaying: function () { return playing; } };
+  return { play, playLaunch, playDiscovery, playBossIntro, playBossOutro, playStory, skip: finish, isPlaying: function () { return playing; } };
 })();

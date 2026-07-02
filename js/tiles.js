@@ -36,6 +36,19 @@ Game.Tiles = (function () {
       const s = 2 + Math.floor(rnd() * 3);
       x.fillRect(px, py, s, s);
     }
+    // 水面: 淡い波紋の筋＋深水は暗部で深みをベイク（動くきらめきは render 側）
+    if (id === Game.TILE.WATER || id === Game.TILE.DEEP_WATER) {
+      x.strokeStyle = shade(base, 18); x.lineWidth = 1; x.globalAlpha = 0.5;
+      for (let i = 0; i < 3; i++) {
+        const yy = 5 + Math.floor(rnd() * (TS - 10));
+        x.beginPath(); x.moveTo(3, yy); x.quadraticCurveTo(TS / 2, yy + (rnd() < 0.5 ? -2 : 2), TS - 3, yy); x.stroke();
+      }
+      x.globalAlpha = 1;
+      if (id === Game.TILE.DEEP_WATER) {
+        x.fillStyle = shade(base, -14);
+        for (let i = 0; i < 2; i++) { x.beginPath(); x.ellipse(6 + rnd() * (TS - 12), 6 + rnd() * (TS - 12), 6, 4, 0, 0, Math.PI * 2); x.fill(); }
+      }
+    }
     // 火山地帯は溶岩の亀裂＋熾火
     if (id === Game.TILE.VOLCANIC) {
       x.strokeStyle = '#c0381a'; x.lineWidth = 1.5; x.globalAlpha = 0.8;
@@ -69,15 +82,27 @@ Game.Tiles = (function () {
     store[id] = c;
   }
 
+  // 立ちオブジェクトの接地影（チャンクキャッシュにベイク＝毎フレーム負荷ゼロ）
+  const standing = { tree: 1, deadtree: 1, pine: 1, rock: 1, ore: 1, bush: 1, berry: 1, cactus: 1, flower: 1, sapling: 1, shadowtree: 1, shadowcrystal: 1, lumenore: 1, soulflower: 1, voidrock: 1, starore: 1, giantshroom: 1, glowshroom: 1, pmushroom: 1, obsidian: 1, sulfur: 1, barrel: 1, potted: 1, totem: 1, streetlamp: 1, torch: 1, lantern: 1, brazier: 1, stela: 1, sign: 1, campfire: 1, rocket_obj: 1, lumenlantern: 1, banner: 1, chair: 1 };
+  function contactShadow(x, rx) {
+    x.fillStyle = 'rgba(0,0,0,0.22)';
+    x.beginPath(); x.ellipse(TS / 2, TS - 4, rx || 10, 3.2, 0, 0, Math.PI * 2); x.fill();
+  }
+
   function buildObj(id) {
     const meta = Game.OBJ_META[id];
     if (!meta) return;
     const c = mk(), x = c.getContext('2d');
     const r = meta.render;
+    if (standing[r]) contactShadow(x, r === 'tree' || r === 'pine' || r === 'shadowtree' || r === 'giantshroom' ? 11 : r === 'flower' || r === 'sapling' || r === 'soulflower' || r === 'glowshroom' ? 5 : 9);
     if (r === 'tree') {
-      x.fillStyle = '#6b4424'; x.fillRect(TS / 2 - 3, TS - 12, 6, 12);
+      x.fillStyle = '#57351b'; x.fillRect(TS / 2 - 3, TS - 12, 6, 12); // 幹の陰
+      x.fillStyle = '#6b4424'; x.fillRect(TS / 2 - 1, TS - 12, 4, 12); // 幹
+      x.fillStyle = '#1f4f1a'; circle(x, TS / 2 + 1, TS / 2, 12);      // 下層の暗い葉(深み)
       x.fillStyle = '#2c6b22'; circle(x, TS / 2, TS / 2 - 2, 12);
       x.fillStyle = '#3c8a2e'; circle(x, TS / 2 - 3, TS / 2 - 5, 7);
+      x.fillStyle = '#55a53e'; circle(x, TS / 2 - 5, TS / 2 - 7, 3.6); // 冠のハイライト
+      x.fillStyle = 'rgba(255,255,255,0.16)'; circle(x, TS / 2 - 6, TS / 2 - 8, 1.8);
     } else if (r === 'deadtree') {
       x.strokeStyle = '#5a4a38'; x.lineWidth = 3; x.beginPath(); x.moveTo(TS / 2, TS - 3); x.lineTo(TS / 2, 8); x.stroke();
       x.lineWidth = 2; x.beginPath(); x.moveTo(TS / 2, 14); x.lineTo(TS / 2 - 7, 7); x.moveTo(TS / 2, 18); x.lineTo(TS / 2 + 7, 11); x.moveTo(TS / 2, 12); x.lineTo(TS / 2 + 5, 5); x.stroke();
@@ -103,13 +128,23 @@ Game.Tiles = (function () {
       x.fillStyle = '#7a3a8a'; x.beginPath(); x.ellipse(TS / 2, TS / 2, 8, 5, 0, 0, Math.PI * 2); x.fill();
       x.fillStyle = '#c060e0'; circle(x, TS / 2 - 3, TS / 2 - 1, 1.6); circle(x, TS / 2 + 3, TS / 2, 1.4); circle(x, TS / 2, TS / 2 - 2, 1.2);
     } else if (r === 'rock') {
+      x.fillStyle = '#5c6165'; x.beginPath(); x.ellipse(TS / 2 + 2, TS / 2 + 3, 11.5, 9, 0, 0, Math.PI * 2); x.fill(); // 下部の陰
       x.fillStyle = '#6f7478'; roundBlob(x);
       x.fillStyle = '#878c90'; circle(x, TS / 2 - 3, TS / 2 - 3, 5);
+      x.fillStyle = '#9aa0a4'; circle(x, TS / 2 - 5, TS / 2 - 5, 2.4); // 頂部ハイライト
+      x.strokeStyle = 'rgba(40,44,48,0.55)'; x.lineWidth = 1;          // 岩肌のひび
+      x.beginPath(); x.moveTo(TS / 2 + 2, TS / 2 - 4); x.lineTo(TS / 2 + 6, TS / 2 + 1); x.lineTo(TS / 2 + 4, TS / 2 + 6); x.stroke();
     } else if (r === 'ore') {
+      x.fillStyle = '#5c6165'; x.beginPath(); x.ellipse(TS / 2 + 2, TS / 2 + 3, 11.5, 9, 0, 0, Math.PI * 2); x.fill();
       x.fillStyle = '#6f7478'; roundBlob(x);
+      x.fillStyle = '#878c90'; circle(x, TS / 2 - 4, TS / 2 - 4, 4);
       const rnd = U.rng(id * 131 + 3);
-      x.fillStyle = meta.oreColor;
-      for (let i = 0; i < 6; i++) { const px = 6 + Math.floor(rnd() * 20), py = 6 + Math.floor(rnd() * 20); x.fillRect(px, py, 4, 4); }
+      for (let i = 0; i < 6; i++) {
+        const px = 6 + Math.floor(rnd() * 20), py = 6 + Math.floor(rnd() * 20);
+        x.fillStyle = meta.oreColor; x.fillRect(px, py, 4, 4);
+        x.fillStyle = 'rgba(255,255,255,0.55)'; x.fillRect(px, py, 2, 1.5);           // 鉱石片のファセット光
+        x.fillStyle = 'rgba(0,0,0,0.30)'; x.fillRect(px + 2.6, py + 2.6, 1.4, 1.4);   // ファセット陰
+      }
     } else if (r === 'bush') {
       x.fillStyle = '#2f7a2a'; circle(x, TS / 2, TS / 2 + 2, 9);
       x.fillStyle = '#3c9636'; circle(x, TS / 2 - 4, TS / 2, 5);
@@ -142,10 +177,14 @@ Game.Tiles = (function () {
       [[10,12],[20,14],[14,20],[22,22]].forEach(function (p) { circle(x, p[0], p[1], 2.4); });
     } else if (r === 'pine') {
       x.fillStyle = '#5a3a1e'; x.fillRect(TS / 2 - 2, TS - 10, 4, 10);
+      x.fillStyle = '#163f1e';
+      x.beginPath(); x.moveTo(TS / 2, 3); x.lineTo(TS / 2 + 11, TS - 8); x.lineTo(TS / 2, TS - 8); x.closePath(); x.fill(); // 右側の陰
       x.fillStyle = '#1f5a2a';
-      x.beginPath(); x.moveTo(TS / 2, 3); x.lineTo(TS / 2 + 11, TS - 8); x.lineTo(TS / 2 - 11, TS - 8); x.closePath(); x.fill();
+      x.beginPath(); x.moveTo(TS / 2, 3); x.lineTo(TS / 2 - 11, TS - 8); x.lineTo(TS / 2, TS - 8); x.closePath(); x.fill();
       x.fillStyle = '#2c7a36';
       x.beginPath(); x.moveTo(TS / 2, 7); x.lineTo(TS / 2 + 8, 20); x.lineTo(TS / 2 - 8, 20); x.closePath(); x.fill();
+      x.fillStyle = '#3f9a48';
+      x.beginPath(); x.moveTo(TS / 2, 8); x.lineTo(TS / 2 - 5, 17); x.lineTo(TS / 2, 17); x.closePath(); x.fill(); // 冠のハイライト
     } else if (r === 'cactus') {
       x.fillStyle = '#3b8a3b'; x.fillRect(TS / 2 - 4, 6, 8, TS - 10);
       x.fillRect(TS / 2 - 10, 14, 6, 4); x.fillRect(TS / 2 + 4, 12, 6, 4);

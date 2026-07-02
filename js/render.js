@@ -15,12 +15,14 @@ Game.Render = (function () {
     x.clearRect(0, 0, CHUNK_PX, CHUNK_PX);
     const wn = Game.state.worldName;
     const groundSet = wn === 'shadow' ? Game.Tiles.groundShadow : wn === 'space' ? Game.Tiles.groundSpace : Game.Tiles.ground;
+    const pal = wn === 'shadow' ? Game.SHADOW_TILE_COLOR : wn === 'space' ? Game.SPACE_TILE_COLOR : Game.TILE_COLOR;
     for (let ly = 0; ly < CS; ly++) {
       for (let lx = 0; lx < CS; lx++) {
         const i = ly * CS + lx;
         const g = ch.ground[i];
         const ga = groundSet[g];
         if (ga) x.drawImage(ga, lx * TS, ly * TS);
+        blendTileEdges(x, ch, lx, ly, g, pal); // biome境界のにじみ(ベイク=毎フレーム負荷ゼロ)
         const o = ch.object[i];
         if (o !== Game.OBJ.NONE) {
           const meta = Game.OBJ_META[o];
@@ -33,6 +35,22 @@ Game.Render = (function () {
       }
     }
     ch.dirty = false;
+  }
+
+  // 隣接タイルの色を低アルファの帯で重ね、biome の継ぎ目を柔らかくする（チャンクキャッシュにベイク）
+  function blendTileEdges(x, ch, lx, ly, g, pal) {
+    const wtx = ch.cx * CS + lx, wty = ch.cy * CS + ly;
+    const px = lx * TS, py = ly * TS;
+    let n;
+    n = Game.World.groundAt(wtx, wty - 1);
+    if (n !== g && pal[n]) { x.globalAlpha = 0.20; x.fillStyle = pal[n]; x.fillRect(px, py, TS, 5); x.globalAlpha = 0.14; x.fillRect(px, py, TS, 2); }
+    n = Game.World.groundAt(wtx, wty + 1);
+    if (n !== g && pal[n]) { x.globalAlpha = 0.20; x.fillStyle = pal[n]; x.fillRect(px, py + TS - 5, TS, 5); x.globalAlpha = 0.14; x.fillRect(px, py + TS - 2, TS, 2); }
+    n = Game.World.groundAt(wtx - 1, wty);
+    if (n !== g && pal[n]) { x.globalAlpha = 0.20; x.fillStyle = pal[n]; x.fillRect(px, py, 5, TS); x.globalAlpha = 0.14; x.fillRect(px, py, 2, TS); }
+    n = Game.World.groundAt(wtx + 1, wty);
+    if (n !== g && pal[n]) { x.globalAlpha = 0.20; x.fillStyle = pal[n]; x.fillRect(px + TS - 5, py, 5, TS); x.globalAlpha = 0.14; x.fillRect(px + TS - 2, py, 2, TS); }
+    x.globalAlpha = 1;
   }
 
   // 地面の小装飾(花/小石/ひび/きらめき)を決定論的に描く。チャンクキャッシュに一度だけ焼く=毎フレーム負荷ゼロ
@@ -99,6 +117,7 @@ Game.Render = (function () {
     }
 
     drawWaterShimmer(ctx);
+    drawWindSweep(ctx);
     Game.Farming.drawCrops(ctx);
     drawPhantoms(ctx);
     drawTargetHighlight(ctx);
@@ -410,27 +429,75 @@ Game.Render = (function () {
   }
 
   // 幻影鉱脈: 正気度が低いほどはっきり見える（狂気の視界）
-  // 水面のきらめき: 可視範囲の水タイルにゆらめく波線(間引き＋上限で低負荷)
+  // 水面のきらめき＋鉱石のきらめき: 可視範囲を1パスで走査(間引き＋上限で低負荷)
+  const oreSparkleCol = {
+    [Game.OBJ.COAL_ORE]: '#e8f0ff', [Game.OBJ.IRON_ORE]: '#ffd9b0', [Game.OBJ.GOLD_ORE]: '#ffe27a',
+    [Game.OBJ.LUMEN_ORE]: '#fff3c0', [Game.OBJ.STAR_ORE]: '#aee0ff', [Game.OBJ.SHADOW_CRYSTAL]: '#d8b0ff',
+  };
   function drawWaterShimmer(ctx) {
     const s = Game.state; if (!s || s.paused || s.worldName === 'space') return;
     if (Game.Settings && Game.Settings.get('ambient') === false) return;
     const range = Game.Camera.visibleTileRange(), t = s.tick, z = Game.Camera.zoom();
-    ctx.save(); ctx.strokeStyle = '#dff0ff'; ctx.lineWidth = Math.max(1, z);
-    let drawn = 0;
-    for (let ty = range.ty0; ty <= range.ty1 && drawn < 60; ty++) {
-      for (let tx = range.tx0; tx <= range.tx1 && drawn < 60; tx++) {
-        if (((tx * 7 + ty * 13) & 3) !== 0) continue; // 1/4のタイルのみ
-        const g = Game.World.groundAt(tx, ty);
-        if (g !== Game.TILE.WATER && g !== Game.TILE.DEEP_WATER) continue;
-        const ph = t * 0.05 + tx * 0.7 + ty * 0.5;
-        ctx.globalAlpha = 0.1 + Math.abs(Math.sin(ph)) * 0.18;
-        const sc = Game.Camera.worldToScreen(tx * TS, ty * TS);
-        const yy = sc.y + (TS * 0.5 + Math.sin(ph) * 3) * z;
-        ctx.beginPath(); ctx.moveTo(sc.x + 4 * z, yy); ctx.lineTo(sc.x + (TS - 4) * z, yy); ctx.stroke();
-        drawn++;
+    ctx.save(); ctx.lineWidth = Math.max(1, z);
+    let drawn = 0, sparks = 0;
+    for (let ty = range.ty0; ty <= range.ty1 && (drawn < 60 || sparks < 24); ty++) {
+      for (let tx = range.tx0; tx <= range.tx1; tx++) {
+        // 鉱石のきらめき: 周期的に4点星が明滅（決定論的な位相）
+        if (sparks < 24) {
+          const o = Game.World.objAt(tx, ty);
+          const col = oreSparkleCol[o];
+          if (col) {
+            const cyc = (t + ((tx * 31 + ty * 17) % 97) * 3) % 110;
+            if (cyc < 16) {
+              const k = Math.sin((cyc / 16) * Math.PI); // 0→1→0
+              const sc = Game.Camera.worldToScreen(tx * TS, ty * TS);
+              const ox = (6 + (tx * 13 + ty * 7) % 18) * z, oy = (6 + (tx * 5 + ty * 11) % 16) * z;
+              ctx.globalAlpha = k * 0.9; ctx.fillStyle = col;
+              const l = (2 + k * 2.6) * z;
+              ctx.fillRect(sc.x + ox - l, sc.y + oy - 0.7 * z, l * 2, 1.4 * z);
+              ctx.fillRect(sc.x + ox - 0.7 * z, sc.y + oy - l, 1.4 * z, l * 2);
+              sparks++;
+            }
+          }
+        }
+        // 水面のゆらめく波線
+        if (drawn < 60 && ((tx * 7 + ty * 13) & 3) === 0) {
+          const g = Game.World.groundAt(tx, ty);
+          if (g === Game.TILE.WATER || g === Game.TILE.DEEP_WATER) {
+            const ph = t * 0.05 + tx * 0.7 + ty * 0.5;
+            ctx.globalAlpha = 0.1 + Math.abs(Math.sin(ph)) * 0.18;
+            ctx.strokeStyle = '#dff0ff';
+            const sc = Game.Camera.worldToScreen(tx * TS, ty * TS);
+            const yy = sc.y + (TS * 0.5 + Math.sin(ph) * 3) * z;
+            ctx.beginPath(); ctx.moveTo(sc.x + 4 * z, yy); ctx.lineTo(sc.x + (TS - 4) * z, yy); ctx.stroke();
+            drawn++;
+          }
+        }
       }
     }
-    ctx.restore();
+    ctx.restore(); ctx.globalAlpha = 1;
+  }
+
+  // 風のそよぎ: 淡い光の帯が斜めに流れ、草原の草が揺れている印象を作る（O(1)/frame）
+  let windBand = null;
+  function drawWindSweep(ctx) {
+    const s = Game.state; if (!s || s.paused || s.worldName !== 'light') return;
+    if (Game.Settings && Game.Settings.get('ambient') === false) return;
+    if (!windBand) {
+      windBand = document.createElement('canvas'); windBand.width = 160; windBand.height = 8;
+      const bx = windBand.getContext('2d');
+      const g = bx.createLinearGradient(0, 0, 160, 0);
+      g.addColorStop(0, 'rgba(255,255,238,0)'); g.addColorStop(0.5, 'rgba(255,255,238,0.55)'); g.addColorStop(1, 'rgba(255,255,238,0)');
+      bx.fillStyle = g; bx.fillRect(0, 0, 160, 8);
+    }
+    const v = Game.view, t = s.tick, L = v.w + v.h;
+    ctx.save(); ctx.rotate(-0.35);
+    for (let i = 0; i < 2; i++) {
+      const off = ((t * (1.1 + i * 0.5) + i * 620) % (L + 640)) - 320;
+      ctx.globalAlpha = 0.045;
+      ctx.drawImage(windBand, off - v.h * 0.4, -v.h * 0.5, 130 + i * 70, L * 1.7);
+    }
+    ctx.restore(); ctx.globalAlpha = 1;
   }
 
   function drawPhantoms(ctx) {
@@ -482,40 +549,113 @@ Game.Render = (function () {
     }
   }
 
+  // ドロップ演出: グロー/光柱はスプライト化してキャッシュ（ホットループでの勾配生成を排除）
+  const dropGlowCache = {};
+  function glowSprite(col) {
+    let c = dropGlowCache[col];
+    if (!c) {
+      c = document.createElement('canvas'); c.width = c.height = 48;
+      const g2 = c.getContext('2d');
+      const gr = g2.createRadialGradient(24, 24, 2, 24, 24, 24);
+      gr.addColorStop(0, col); gr.addColorStop(1, 'rgba(0,0,0,0)');
+      g2.fillStyle = gr; g2.fillRect(0, 0, 48, 48);
+      dropGlowCache[col] = c;
+    }
+    return c;
+  }
+  const dropBeamCache = {};
+  function beamSprite(col) {
+    let c = dropBeamCache[col];
+    if (!c) {
+      c = document.createElement('canvas'); c.width = 24; c.height = 96;
+      const g2 = c.getContext('2d');
+      const gr = g2.createLinearGradient(0, 0, 0, 96);
+      gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, col);
+      g2.fillStyle = gr;
+      g2.beginPath(); g2.moveTo(2, 96); g2.lineTo(22, 96); g2.lineTo(16, 0); g2.lineTo(8, 0); g2.closePath(); g2.fill();
+      dropBeamCache[col] = c;
+    }
+    return c;
+  }
+  // 拾得バースト: 前フレームに存在した drop が消えた=拾得。レアリティに応じ、初回のみ盛大に
+  let prevDrops = new Set();
+  const pickupSeen = { 0: 0, 1: 0, 2: 0, 3: 0 };
+  function spawnPickupBurst(d) {
+    const r = d.roll ? d.roll.rarity : 0;
+    const item = Game.ITEMS[d.id];
+    const col = d.roll && Game.Loot.rarityColor ? Game.Loot.rarityColor(d) : (item && item.color) || '#fff';
+    pickupSeen[r] = (pickupSeen[r] || 0) + 1;
+    const lavish = r >= 1 && pickupSeen[r] <= 2; // 初回(と2回目)のみ盛大、以降は控えめ
+    let n = 3 + r * 3;
+    if (lavish) n += 6 + r * 5;
+    spawnParticles(d.x, d.y - 4, col, n);
+    if (lavish) {
+      spawnImpact(d.x, d.y - 6, col);
+      if (r >= 2) spawnParticles(d.x, d.y - 4, '#ffffff', 4 + r * 2);
+      if (r >= 3) spawnLevelRing(d.x, d.y);
+    }
+  }
   function drawDrops(ctx) {
     const drops = Game.state.drops; const z = Game.Camera.zoom(); const t = Game.state.tick;
+    const v = Game.view;
+    const cur = new Set();
     for (let i = 0; i < drops.length; i++) {
       const d = drops[i];
+      cur.add(d);
       const s = Game.Camera.worldToScreen(d.x, d.y);
+      if (s.x < -40 || s.y < -50 || s.x > v.w + 40 || s.y > v.h + 40) continue; // 画面外はスキップ
       const item = Game.ITEMS[d.id];
       const bob = Math.sin((t + i * 7) * 0.15) * 2;
-      // レア装備(roll)は希少度色で発光＋光柱＋きらめき。金塊/刻片など高価品も金色グロー
-      const rare = d.roll && Game.Loot.rarityColor;
-      const precious = !rare && (d.id === 'gold_bar' || d.id === 'kokuhen' || (item && item.relic));
-      if (rare || precious) {
-        const col = rare ? Game.Loot.rarityColor(d) : '#ffd24a';
+      const rot = d.roll ? Math.sin((t + i * 11) * 0.06) * 0.22 : 0; // 装備品はゆっくり左右に揺れる
+      // 足元のソフトシャドウ（浮遊感）
+      ctx.globalAlpha = 0.20 - bob * 0.02;
+      ctx.fillStyle = '#000';
+      ctx.beginPath(); ctx.ellipse(s.x, s.y + 8 * z, (6 - bob * 0.6) * z, 2.4 * z, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 1;
+      // レア装備(roll)は希少度色で発光。レア以上は光柱。金塊/刻片など高価品も金色グロー
+      const rarity = d.roll ? d.roll.rarity : -1;
+      const precious = rarity < 0 && (d.id === 'gold_bar' || d.id === 'kokuhen' || (item && item.relic));
+      if (rarity >= 0 || precious) {
+        const col = rarity >= 0 ? Game.Loot.rarityColor(d) : '#ffd24a';
         const pulse = 0.5 + Math.sin(t * 0.12 + i) * 0.5;
-        // 光柱
-        const beam = ctx.createLinearGradient(s.x, s.y - 46 * z, s.x, s.y + 4);
-        beam.addColorStop(0, 'rgba(0,0,0,0)'); beam.addColorStop(1, col);
-        ctx.globalAlpha = 0.18 + pulse * 0.14; ctx.fillStyle = beam;
-        ctx.beginPath(); ctx.moveTo(s.x - 5 * z, s.y + 2); ctx.lineTo(s.x + 5 * z, s.y + 2); ctx.lineTo(s.x + 2 * z, s.y - 46 * z); ctx.lineTo(s.x - 2 * z, s.y - 46 * z); ctx.closePath(); ctx.fill();
+        // 光柱（レア以上/高価品のみ）
+        if (rarity >= 1 || precious) {
+          ctx.globalAlpha = 0.18 + pulse * 0.14;
+          ctx.drawImage(beamSprite(col), s.x - 6 * z, s.y - 46 * z, 12 * z, 50 * z);
+        }
         // 地面のグロー
-        const g = ctx.createRadialGradient(s.x, s.y + bob, 1, s.x, s.y + bob, 16 * z);
-        g.addColorStop(0, col); g.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.globalAlpha = 0.35 + pulse * 0.25; ctx.fillStyle = g; ctx.beginPath(); ctx.arc(s.x, s.y + bob, 16 * z, 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = (0.28 + pulse * 0.22) * (rarity >= 1 || precious ? 1 : 0.6);
+        ctx.drawImage(glowSprite(col), s.x - 16 * z, s.y + bob - 16 * z, 32 * z, 32 * z);
         ctx.globalAlpha = 1;
         // きらめき
         if ((t + i * 13) % 30 < 4) { ctx.fillStyle = '#fff'; const sx = s.x + Math.cos(i + t * 0.1) * 8 * z, sy = s.y - 6 + Math.sin(i + t * 0.1) * 8 * z + bob; ctx.fillRect(sx - 1, sy - 1, 2, 2); }
-        ctx.save(); ctx.shadowColor = col; ctx.shadowBlur = 8 * z;
-        ctx.fillStyle = col; ctx.fillRect(s.x - 5 * z, s.y - 5 * z + bob, 10 * z, 10 * z); ctx.restore();
+        ctx.save(); ctx.translate(s.x, s.y + bob); ctx.rotate(rot);
+        if (rarity >= 1 || precious) { ctx.shadowColor = col; ctx.shadowBlur = 8 * z; }
+        ctx.fillStyle = col; ctx.fillRect(-5 * z, -5 * z, 10 * z, 10 * z);
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.fillRect(-5 * z, -5 * z, 10 * z, 3 * z); // 上面ハイライト
+        ctx.strokeStyle = 'rgba(0,0,0,0.4)'; ctx.lineWidth = 1; ctx.strokeRect(-5 * z, -5 * z, 10 * z, 10 * z);
+        ctx.restore();
       } else {
+        ctx.save(); ctx.translate(s.x, s.y + bob); ctx.rotate(rot);
         ctx.fillStyle = (item && item.color) || '#fff';
-        ctx.fillRect(s.x - 5 * z, s.y - 5 * z + bob, 10 * z, 10 * z);
+        ctx.fillRect(-5 * z, -5 * z, 10 * z, 10 * z);
+        ctx.fillStyle = 'rgba(255,255,255,0.28)'; ctx.fillRect(-5 * z, -5 * z, 10 * z, 3 * z);
+        ctx.strokeStyle = 'rgba(0,0,0,0.4)'; ctx.lineWidth = 1; ctx.strokeRect(-5 * z, -5 * z, 10 * z, 10 * z);
+        ctx.restore();
       }
-      ctx.strokeStyle = 'rgba(0,0,0,0.4)'; ctx.lineWidth = 1;
-      ctx.strokeRect(s.x - 5 * z, s.y - 5 * z + bob, 10 * z, 10 * z);
     }
+    // 拾得検知: 前フレームにあって今無い drop（プレイヤー近傍のみ=ワールド切替の誤検知除外）
+    if (prevDrops.size) {
+      const p = Game.state.player;
+      prevDrops.forEach(function (d) {
+        if (cur.has(d)) return;
+        const dx = d.x - p.x, dy = d.y - p.y;
+        if (dx * dx + dy * dy > 3600) return; // 60px以内で消えたもののみ
+        spawnPickupBurst(d);
+      });
+    }
+    prevDrops = cur;
   }
 
   // 他プレイヤー（マルチプレイ）

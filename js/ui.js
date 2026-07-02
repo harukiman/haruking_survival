@@ -671,7 +671,7 @@ Game.UI = (function () {
       ammoEl = document.getElementById('ammo-hud');
       if (!ammoEl) {
         ammoEl = document.createElement('div'); ammoEl.id = 'ammo-hud';
-        ammoEl.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:74px;z-index:55;background:rgba(16,24,42,.82);border:1px solid #33455e;border-radius:9px;padding:4px 11px;font-size:.82rem;color:#e8edf2;pointer-events:none;display:none;white-space:nowrap';
+        ammoEl.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:calc(74px + env(safe-area-inset-bottom));z-index:55;background:rgba(16,24,42,.82);border:1px solid #33455e;border-radius:9px;padding:4px 11px;font-size:.82rem;color:#e8edf2;pointer-events:none;display:none;white-space:nowrap';
         (document.getElementById('app') || document.body).appendChild(ammoEl);
       }
     }
@@ -742,6 +742,7 @@ Game.UI = (function () {
       slider('btnSize', '📐 ボタンサイズ', 70, 140) +
       slider('btnOpacity', '👁 ボタン透明度', 30, 100) +
       slider('joySens', '🕹 スティック感度', 60, 160) +
+      toggle('joyFollow', '🕹 スティック追従(指を追う)') +
       toggle('leftHanded', '✋ 左利き(操作左右反転)') +
       toggle('dmgNumbers', '🔢 ダメージ数値表示') +
       toggle('screenShake', '📳 画面のゆれ') +
@@ -767,7 +768,8 @@ Game.UI = (function () {
       // ===== 操作ヘルプ(折りたたみ) =====
       '<div class="opt-help"><div class="opt-help-head" id="opt-help-head">' + (optHelpOpen ? '▼' : '▶') + ' ❔ 操作ヘルプ</div>' +
       (optHelpOpen ? '<div class="opt-help-body">' +
-        '<div class="hk"><b>スマホ</b>: 画面左をなぞって移動／右下ボタンで 採掘・設置・開く・回避・走る・影渡り・袋。ミニマップで大マップ</div>' +
+        '<div class="hk"><b>スマホ</b>: 画面左をなぞって移動（スティックは指を追従）／右下ボタンで 採掘・設置・開く・回避・走る・影渡り・袋。「走る」は短タップで走り続け・再タップ解除。ミニマップで大マップ</div>' +
+        '<div class="hk"><b>インベントリ</b>: アイテムをタップ=選択／同じ物をもう一度タップ=すぐ使用・装備／長めになぞる=並べ替え</div>' +
         '<div class="hk"><b>移動</b> WASD / 矢印</div>' +
         '<div class="hk"><b>採掘・攻撃</b> 左クリック / スペース</div>' +
         '<div class="hk"><b>設置</b> 右クリック / Q・K</div>' +
@@ -978,12 +980,31 @@ Game.UI = (function () {
     q.textContent = cur ? ('🎯 目標: ' + cur.name + ' — ' + cur.desc) : '🎯 すべての目標を達成した';
   }
 
-  // ===== ドラッグ移動＋スワップ（タップ=選択 / スワイプ=移動）=====
+  // ===== ドラッグ移動＋スワップ（タップ=選択 / 2連タップ=即使用・装備 / スワイプ=移動）=====
   let dragSrc = -1, dragging = false, dragGhost = null, dragStart = null;
+  let lastTapIdx = -1, lastTapT = 0;
   function invPointerDown(e, idx) {
     dragSrc = idx; dragging = false; dragStart = { x: e.clientX, y: e.clientY };
     window.addEventListener('pointermove', invPointerMove);
     window.addEventListener('pointerup', invPointerUp);
+  }
+  // 選択中アイテムの既定アクション（2連タップ用）: 装備/使用/ホットバーへ
+  function invPrimaryAction(idx) {
+    const cur = Game.Inventory.slots()[idx]; if (!cur) return false;
+    const d2 = Game.ITEMS[cur.id]; if (!d2) return false;
+    if (d2.armor && d2.slot) Game.Player.equipFromInventory(idx);
+    else if (d2.relic) { invSelected = idx; Game.Player.equipRelic(idx); }
+    else if (d2.food || d2.cures || d2.buff || d2.skillTome || d2.xpGain || d2.invExpand || d2.summonBoss || d2.opensShop || d2.recall) {
+      const tmp = Game.state.player.hotbarIndex;
+      Game.state.player.hotbarIndex = idx; Game.Inventory.useSelected();
+      Game.state.player.hotbarIndex = Math.min(tmp, Game.HOTBAR_SIZE - 1);
+    } else if (Game.Loot.rollable(cur.id) || d2.tool || d2.throw) {
+      const sl = Game.Inventory.slots(); const hb = Game.state.player.hotbarIndex;
+      const t2 = sl[hb]; sl[hb] = sl[idx]; sl[idx] = t2;
+      toast('ホットバー' + (hb + 1) + 'に装備');
+    } else return false;
+    invSelected = -1; refreshInventory(); refreshHotbar();
+    return true;
   }
   function invPointerMove(e) {
     if (dragSrc < 0) return;
@@ -999,7 +1020,16 @@ Game.UI = (function () {
     window.removeEventListener('pointerup', invPointerUp);
     if (dragGhost) { dragGhost.remove(); dragGhost = null; }
     const src = dragSrc; dragSrc = -1;
-    if (!dragging) { invSelected = src; if (Game.Inventory.slots()[src]) Game.Audio.play('cursor'); refreshInventory(); return; } // タップ=選択
+    if (!dragging) {
+      // 同じスロットを素早く2回タップ → 即 使用/装備（メニュー往復を省く）
+      const now = Date.now();
+      if (src === lastTapIdx && now - lastTapT < 340 && Game.Inventory.slots()[src]) {
+        lastTapIdx = -1; lastTapT = 0;
+        if (invPrimaryAction(src)) { Game.Audio.play('select'); return; }
+      }
+      lastTapIdx = src; lastTapT = now;
+      invSelected = src; if (Game.Inventory.slots()[src]) Game.Audio.play('cursor'); refreshInventory(); return; // タップ=選択
+    }
     dragging = false;
     const tgt = document.elementFromPoint(e.clientX, e.clientY);
     const slotEl = tgt && tgt.closest && tgt.closest('.slot');
@@ -1015,7 +1045,7 @@ Game.UI = (function () {
   function renderInvDetail() {
     if (!el.invDetail) return;
     const st = Game.Inventory.slots()[invSelected];
-    if (!st) { el.invDetail.innerHTML = '<p class="hint">アイテムをタップで選択</p>'; return; }
+    if (!st) { el.invDetail.innerHTML = '<p class="hint">アイテムをタップで選択 ／ 同じ物を2回タップですぐ使用・装備 ／ なぞって並べ替え</p>'; return; }
     const def = Game.ITEMS[st.id];
     let h = '<div class="ench-name" style="color:' + (st.roll ? Game.Loot.rarityColor(st) : (def.color || '#fff')) + '">' + (st.roll ? Game.Loot.displayName(st) : def.name) + '</div>';
     if (Game.Loot.rollable(st.id)) h += '<div class="ench-stat">' + Game.Loot.statText(st) + '</div>';
@@ -1542,7 +1572,7 @@ Game.UI = (function () {
       ctxBtn = document.getElementById('context-action');
       if (!ctxBtn) {
         ctxBtn = document.createElement('button'); ctxBtn.id = 'context-action';
-        ctxBtn.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:150px;z-index:57;background:rgba(28,40,64,.94);border:1px solid #5a78a8;border-radius:11px;padding:10px 18px;font-size:1rem;color:#eaf2ff;font-weight:700;box-shadow:0 3px 12px rgba(0,0,0,.4);display:none;cursor:pointer';
+        ctxBtn.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:calc(154px + env(safe-area-inset-bottom));z-index:57;background:rgba(28,40,64,.94);border:1px solid #5a78a8;border-radius:12px;padding:12px 20px;min-height:48px;font-size:1rem;color:#eaf2ff;font-weight:700;box-shadow:0 3px 12px rgba(0,0,0,.4);display:none;cursor:pointer';
         (document.getElementById('app') || document.body).appendChild(ctxBtn);
         ctxBtn.addEventListener('click', function (e) { e.stopPropagation(); Game.Audio.play('select'); Game.Player.useNearby(); });
       }
@@ -1564,7 +1594,7 @@ Game.UI = (function () {
       hbInfoEl = document.getElementById('hb-iteminfo');
       if (!hbInfoEl) {
         hbInfoEl = document.createElement('div'); hbInfoEl.id = 'hb-iteminfo';
-        hbInfoEl.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:118px;z-index:56;background:rgba(14,20,36,.9);border:1px solid #3a4c66;border-radius:10px;padding:6px 13px;max-width:86vw;text-align:center;pointer-events:none;opacity:0;transition:opacity .2s;backdrop-filter:blur(2px)';
+        hbInfoEl.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:calc(118px + env(safe-area-inset-bottom));z-index:56;background:rgba(14,20,36,.9);border:1px solid #3a4c66;border-radius:10px;padding:6px 13px;max-width:86vw;text-align:center;pointer-events:none;opacity:0;transition:opacity .2s;backdrop-filter:blur(2px)';
         (document.getElementById('app') || document.body).appendChild(hbInfoEl);
       }
     }
@@ -1611,7 +1641,7 @@ Game.UI = (function () {
   function flashSave(reason) {
     if (!saveEl) {
       saveEl = document.createElement('div'); saveEl.id = 'autosave-ind';
-      saveEl.style.cssText = 'position:fixed;right:10px;bottom:10px;z-index:60;background:rgba(16,24,42,.82);color:#9fd8a0;border:1px solid #33455e;border-radius:8px;padding:5px 9px;font-size:.72rem;pointer-events:none;opacity:0;transition:opacity .35s;backdrop-filter:blur(2px)';
+      saveEl.style.cssText = 'position:fixed;right:calc(10px + env(safe-area-inset-right));bottom:calc(10px + env(safe-area-inset-bottom));z-index:60;background:rgba(16,24,42,.82);color:#9fd8a0;border:1px solid #33455e;border-radius:8px;padding:5px 9px;font-size:.72rem;pointer-events:none;opacity:0;transition:opacity .35s;backdrop-filter:blur(2px)';
       (document.getElementById('app') || document.body).appendChild(saveEl);
     }
     saveEl.textContent = '💾 オートセーブ';

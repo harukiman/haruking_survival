@@ -41,7 +41,12 @@ Game.Lore = (function () {
     const first = !set()[i];
     set()[i] = 1;
     Game.UI.showLore(frag.t, frag.b, count(), Game.LORE.length);
-    if (first) { Game.Audio.play('craft'); if (count() >= Game.LORE.length) { if (Game.Achievements) Game.Achievements.unlock('lore_complete'); if (Game.Story) Game.Story.unlock('stelae', true); } }
+    if (first) {
+      Game.Audio.play('craft');
+      const c = count();
+      if (c >= 14 && Game.Story) Game.Story.unlock('chronicler', true); // 半ばまで読み解くと「刻む者」のムービー
+      if (c >= Game.LORE.length) { if (Game.Achievements) Game.Achievements.unlock('lore_complete'); if (Game.Story) Game.Story.unlock('stelae', true); }
+    }
   }
 
   function count() { return Object.keys(set()).length; }

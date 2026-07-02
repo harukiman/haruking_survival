@@ -69,6 +69,12 @@ Game.STORY = [
     { text: '点在する石碑は、誰かが世界の崩壊を記録しようとした、最後の足掻きだった。', col: '#2a2c44', col2: '#b6a6f0', icon: '🗿', d: 4800 },
     { text: 'すべてを読み終えたとき、断片は一本の糸となる。\n——記録とは、忘却に抗う祈りの形だ。', col: '#222640', col2: '#cfc0ff', icon: '📜', d: 5000 },
   ] },
+  { id: 'chronicler', title: '断章 ― 刻む者', trigger: '石碑を半ば読み解いたとき', col: '#3a2f1e', scenes: [
+    { text: '世界が裂けたのち、荒野にとどまる者がいた。\n剣ではなく、鑿を選んだ——名も残さぬ石工である。', fx: 'chr_dusk', col: '#3a2f1e', col2: '#e8c88a', icon: '🗿', d: 5400 },
+    { text: '「忘れることは、二度目の崩壊だ」。\n震える手が、最初の一文字を刻んだ。', fx: 'chr_carve', col: '#241a20', col2: '#ffca80', icon: '⚒', d: 5600, audio: 'crack' },
+    { text: '二十と七の碑を刻み終えた石工は、\n最後に、何も記さぬ白い碑をひとつ立てた。', fx: 'chr_stones', col: '#0c1426', col2: '#bfd4ff', icon: '🌙', d: 5400, audio: 'shimmer' },
+    { text: '白き碑は、いまも待っている。\n——続きを刻む、あなたの手を。', fx: 'chr_dawn', col: '#4a3218', col2: '#ffe0a0', icon: '🌅', d: 5800, audio: 'choir' },
+  ] },
   { id: 'starworld', title: '断章 ― 天涯の星', trigger: '星々の世界へ足を踏み入れたとき', col: '#10203a', scenes: [
     { text: '剥がれ落ちた空の欠片の上に、あなたは立っている。\n眼下には、割れた世界が静かに回っていた。', col: '#10203a', col2: '#bfe0ff', icon: '🛰', d: 5000 },
     { text: 'ここでは音もなく、ただ星々が瞬く。\n世界を遠く眺めて初めて、その傷の形がよく見える。', col: '#0c1830', col2: '#cfe8ff', icon: '✦', d: 5200 },
@@ -138,17 +144,20 @@ Game.Story = (function () {
   function set() { return Game.state.storySeen || (Game.state.storySeen = {}); }
   function byId(id) { for (let i = 0; i < Game.STORY.length; i++) if (Game.STORY[i].id === id) return Game.STORY[i]; return null; }
   function seen(id) { return !!set()[id]; }
-  function play(id) {
-    const f = byId(id); if (!f || !Game.Cutscene || !Game.Cutscene.playStory) return;
+  function playFrag(f, subdued) {
+    if (!f || !Game.Cutscene || !Game.Cutscene.playStory) return;
+    if (Game.Cutscene.isPlaying && Game.Cutscene.isPlaying()) return; // 多重再生防止
     Game.state.paused = true;
-    Game.Cutscene.playStory(f, function () { Game.state.paused = false; });
+    Game.Cutscene.playStory(f, function () { Game.state.paused = false; }, { subdued: subdued });
   }
+  // 初回は盛大に、記憶回廊からの再見は控えめ(短縮+即時テキスト)に再生
+  function play(id) { playFrag(byId(id), seen(id)); }
   // 初解放: 記録して自動再生(マルチのゲストは再生しない)。既見なら何もしない
   function unlock(id, autoplay) {
     const f = byId(id); if (!f || seen(id)) return false;
     set()[id] = 1;
     if (Game.UI && Game.UI.toast) Game.UI.toast('📖 記憶回廊に物語が刻まれた — ' + f.title);
-    if (autoplay && !(Game.Net && Game.Net.isConnected() && !Game.Net.host)) play(id);
+    if (autoplay && !(Game.Net && Game.Net.isConnected() && !Game.Net.host)) playFrag(f, false);
     return true;
   }
   function list() {
