@@ -23,12 +23,20 @@ Game.Status = (function () {
   }
 
   function st() { const p = Game.state.player; if (!p.status) p.status = {}; return p.status; }
-  function apply(type, ticks) { const s = st(); s[type] = Math.max(s[type] || 0, ticks); flash(type); }
-  function add(type, ticks) { const s = st(); s[type] = (s[type] || 0) + ticks; flash(type); }
+  function apply(type, ticks) { const s = st(); const fresh = !(s[type] > 0); s[type] = Math.max(s[type] || 0, ticks); if (fresh) flash(type); }
+  function add(type, ticks) { const s = st(); const fresh = !(s[type] > 0); s[type] = (s[type] || 0) + ticks; if (fresh) flash(type); }
   function has(type) { return (st()[type] || 0) > 0; }
   function cure(type) { st()[type] = 0; }
   function clearAll() { Game.state.player.status = {}; }
-  function flash(type) { if (!TYPES[type] || TYPES[type].buff) return; }
+  // デバフが「新規に」付いた瞬間のみ薄い色フラッシュ＋通知(罹患中の再付与では鳴らさない)
+  function flash(type) {
+    const t = TYPES[type]; if (!t || t.buff) return;
+    if (Game.Render && Game.Render.flash && typeof t.color === 'string' && t.color[0] === '#') {
+      const h = t.color;
+      Game.Render.flash('rgba(' + parseInt(h.substr(1, 2), 16) + ',' + parseInt(h.substr(3, 2), 16) + ',' + parseInt(h.substr(5, 2), 16) + ',0.16)');
+    }
+    if (Game.UI && Game.UI.toast) Game.UI.toast(t.icon + ' ' + t.name + '状態になった');
+  }
 
   function isCold() {
     const p = Game.state.player;

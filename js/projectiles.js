@@ -4,6 +4,13 @@ window.Game = window.Game || {};
 Game.Projectiles = (function () {
   const TS = Game.CFG.TILE_SIZE;
 
+  // 弾種→色(描画と発射閃光で共用)
+  const KIND_COLOR = {
+    fire: '#ff7a3c', frost: '#9fd8ff', hex: '#c060ff', venom: '#9fe04a', tracer: '#ffd24a',
+    rocket: '#ff7a3c', slash: '#cfefff', pierce: '#7fe0ff', laser: '#7fe0ff', chain: '#fff07a',
+    boomerang: '#caa86a', bullet: '#ffe9a0',
+  };
+
   function spawn(x, y, vx, vy, dmg, kind, hostile, status, explosive) {
     if (!Game.state.projectiles) Game.state.projectiles = [];
     const pr = { x: x, y: y, prevX: x, prevY: y, vx: vx, vy: vy, life: 70, dmg: dmg, kind: kind || 'bullet', hostile: !!hostile, status: status || null, explosive: explosive || 0 };
@@ -16,8 +23,11 @@ Game.Projectiles = (function () {
     const p = Game.state.player;
     let dx = p.x - m.x, dy = p.y - m.y; const len = Math.hypot(dx, dy) || 1;
     const sp = 6.2;
-    spawn(m.x + dx / len * 12, m.y + dy / len * 12, dx / len * sp, dy / len * sp, dmg, kind || 'hex', true, status);
-    Game.Audio.play('gun');
+    const k = kind || 'hex';
+    spawn(m.x + dx / len * 12, m.y + dy / len * 12, dx / len * sp, dy / len * sp, dmg, k, true, status);
+    // 発射閃光: 弾の出所を明確化(不意打ち感の軽減)＋弾種で音を変える
+    Game.Render.spawnParticles(m.x + dx / len * 12, m.y + dy / len * 12, KIND_COLOR[k] || '#c060ff', 3);
+    Game.Audio.play(k === 'hex' || k === 'frost' || k === 'venom' ? 'beam' : 'gun');
   }
 
   // 発射方向（カーソル/向き）の単位ベクトル
@@ -245,7 +255,7 @@ Game.Projectiles = (function () {
       const pr = arr[i];
       const s = Game.Camera.worldToScreen(pr.x, pr.y);
       const ps = Game.Camera.worldToScreen(pr.prevX, pr.prevY);
-      const col = pr.kind === 'fire' ? '#ff7a3c' : pr.kind === 'frost' ? '#9fd8ff' : pr.kind === 'hex' ? '#c060ff' : pr.kind === 'venom' ? '#9fe04a' : pr.kind === 'tracer' ? '#ffd24a' : pr.kind === 'rocket' ? '#ff7a3c' : pr.kind === 'slash' ? '#cfefff' : pr.kind === 'pierce' || pr.kind === 'laser' ? '#7fe0ff' : pr.kind === 'chain' ? '#fff07a' : pr.kind === 'boomerang' ? '#caa86a' : '#ffe9a0';
+      const col = KIND_COLOR[pr.kind] || '#ffe9a0';
       const z = Game.Camera.zoom ? Game.Camera.zoom() : 1;
       if (pr.kind === 'slash') {
         // 飛ぶ斬撃: 進行方向に直交する三日月
@@ -273,9 +283,10 @@ Game.Projectiles = (function () {
         ctx.fillStyle = '#ff8a3c'; ctx.beginPath(); ctx.arc(ps.x, ps.y, 3, 0, Math.PI * 2); ctx.fill();
         continue;
       }
-      ctx.strokeStyle = col; ctx.lineWidth = pr.kind === 'tracer' ? 2.5 : pr.kind === 'bullet' ? 3 : 5; ctx.lineCap = 'round';
+      // 敵弾はやや太く描き、スマホ画面でも視認しやすく(回避猶予の公平性)
+      ctx.strokeStyle = col; ctx.lineWidth = pr.hostile ? 5 : pr.kind === 'tracer' ? 2.5 : pr.kind === 'bullet' ? 3 : 5; ctx.lineCap = 'round';
       ctx.beginPath(); ctx.moveTo(ps.x, ps.y); ctx.lineTo(s.x, s.y); ctx.stroke();
-      ctx.fillStyle = '#fff7d8'; ctx.beginPath(); ctx.arc(s.x, s.y, pr.kind === 'bullet' || pr.kind === 'tracer' ? 2.2 : 3.5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#fff7d8'; ctx.beginPath(); ctx.arc(s.x, s.y, pr.hostile ? 3.5 : pr.kind === 'bullet' || pr.kind === 'tracer' ? 2.2 : 3.5, 0, Math.PI * 2); ctx.fill();
     }
   }
 

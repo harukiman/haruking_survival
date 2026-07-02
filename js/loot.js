@@ -91,8 +91,10 @@ Game.Loot = (function () {
     return out;
   }
 
-  function rarityColor(slot) { return RARITY[(slot && slot.roll) ? slot.roll.rarity : 0].color; }
-  function rarityName(slot) { return RARITY[(slot && slot.roll) ? slot.roll.rarity : 0].name; }
+  // rarityを配列範囲にクランプ(異常データでも描画例外を出さない)
+  function rarityIdx(slot) { const r = (slot && slot.roll) ? slot.roll.rarity : 0; return Math.max(0, Math.min(RARITY.length - 1, r | 0)); }
+  function rarityColor(slot) { return RARITY[rarityIdx(slot)].color; }
+  function rarityName(slot) { return RARITY[rarityIdx(slot)].name; }
   function displayName(slot) {
     const def = Game.ITEMS[slot.id]; let name = def ? def.name : slot.id;
     if (slot.roll && slot.roll.affixes.length) name = slot.roll.affixes.map(function (a) { return a.name; }).join('') + name;

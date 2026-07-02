@@ -4,12 +4,28 @@ window.Game = window.Game || {};
 Game.Combat = (function () {
   const TS = Game.CFG.TILE_SIZE;
 
+  // 敵対モブが近接の間合いに居るか(コンボ中の採掘フォールバック防止用)
+  function hostileInRange(p, rangePx) {
+    const mobs = Game.state.mobs;
+    for (let i = 0; i < mobs.length; i++) {
+      const m = mobs[i];
+      if (!m.def.hostile) continue;
+      if (Math.hypot(m.x - p.x, m.y - p.y) <= rangePx + m.def.size * 0.5) return true;
+    }
+    return false;
+  }
+
   // 攻撃入力時に呼ぶ。命中したら true（採掘より優先）
   function tryAttack() {
     const p = Game.state.player;
-    if (p.attackCd > 0) return false;
-    const mobs = Game.state.mobs;
     const rangePx = Game.TUNE.ATTACK_RANGE * TS;
+    if (p.attackCd > 0) {
+      // 先行入力バッファ: CD残り~200ms(6tick)以内の入力は予約し、CD明けに自動発動(コンボが途切れない)
+      if (p.attackCd <= 6) p.attackBuf = true;
+      // 敵が間合いに居る間は true を返し、採掘へフォールバックさせない(連打中の入力食い/誤採掘防止)
+      return hostileInRange(p, rangePx);
+    }
+    const mobs = Game.state.mobs;
     // 飛ぶ斬撃などの projectile 武器: 標的の有無に関わらず発射
     const _slot = Game.Inventory.selectedSlot(), _def = _slot && Game.ITEMS[_slot.id];
     // 流星召喚武器（流星の杖）: 範囲内の最寄り敵の頭上へ流星を落とす。敵が居なければ向いた先へ

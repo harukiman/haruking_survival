@@ -65,6 +65,7 @@ Game.Player = (function () {
       const rl = Math.hypot(rx, ry) || 1; p.rollDX = rx / rl; p.rollDY = ry / rl;
       p.rolling = 12; p.rollCd = 45; p.invuln = Math.max(p.invuln || 0, 18); p.stamina = Math.max(0, p.stamina - 20); p.rollRewarded = false;
       Game.Audio.play('dash');
+      Game.Render.spawnParticles(p.x, p.y, '#ffffff', 6); // ロール開始の白い砂煙(無敵時間の始まりを視認)
     }
     if (dashing) { p.stamina = Math.max(0, p.stamina - 1.1); }
     else if (p.stamina < p.maxStamina) { p.stamina = Math.min(p.maxStamina, p.stamina + (moving ? 0.3 : 0.7)); }
@@ -128,6 +129,12 @@ Game.Player = (function () {
 
     if (p.invuln > 0) p.invuln--;
     if (p.attackCd > 0) p.attackCd--;
+    // 先行入力バッファ: CDが明けた瞬間に予約済みの一撃を自動発動(近接/杖のみ。銃はtryFire側で管理)
+    if (p.attackCd <= 0 && p.attackBuf) {
+      p.attackBuf = false;
+      const bufSel = Game.Inventory.selectedItemDef();
+      if (!bufSel || (bufSel.tool !== 'gun' && bufSel.tool !== 'warp' && !bufSel.throw)) Game.Combat.tryAttack();
+    }
     // リロード進行: 完了したら予備弾を消費してマガジンへ装填
     if (p.reloadCd > 0) {
       p.reloadCd--;

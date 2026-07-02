@@ -275,21 +275,30 @@ window.Game = window.Game || {};
   }
 
   function frame(now) {
-    let dt = now - last; last = now;
-    if (dt > 250) dt = 250;
-    acc += dt;
-    let steps = 0;
-    while (acc >= STEP && steps < 5) {
-      if (Game.state.hitstop > 0 && !Game.state.paused) { Game.state.hitstop--; acc -= STEP; steps++; continue; } // ヒットストップ: 強打の一瞬を凍結し重みを出す
-      update(); acc -= STEP; steps++;
+    // 例外ガード: 1フレームの例外でrAFチェーンが切れて無言フリーズするのを防ぐ
+    try {
+      let dt = now - last; last = now;
+      if (dt > 250) dt = 250;
+      acc += dt;
+      let steps = 0;
+      while (acc >= STEP && steps < 5) {
+        if (Game.state.hitstop > 0 && !Game.state.paused) { Game.state.hitstop--; acc -= STEP; steps++; continue; } // ヒットストップ: 強打の一瞬を凍結し重みを出す
+        update(); acc -= STEP; steps++;
+      }
+      const alpha = Game.state.paused ? 1 : acc / STEP;
+      Game.Render.draw(alpha);
+      Game.Audio.tickBGM();
+      Game.Net.tick();
+      updateFps(now);
+    } catch (e) {
+      frameErrCount++;
+      console.error('[frame]', e);
+      if (frameErrCount <= 3 && Game.UI && Game.UI.toast) { try { Game.UI.toast('エラーが発生しました(継続中): ' + e.message); } catch (_) {} }
+      acc = 0; // 壊れたフレームの負債を捨てて次フレームを綺麗に始める
     }
-    const alpha = Game.state.paused ? 1 : acc / STEP;
-    Game.Render.draw(alpha);
-    Game.Audio.tickBGM();
-    Game.Net.tick();
-    updateFps(now);
     requestAnimationFrame(frame);
   }
+  let frameErrCount = 0;
 
   function initTitle() {
     const btnContinue = document.getElementById('btn-continue');

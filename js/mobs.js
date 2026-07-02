@@ -26,7 +26,7 @@ Game.Mobs = (function () {
       // 個体差: 同じ種でも大きさ/色味/動き方を変えて一辺倒を避ける
       sizeVar: 0.86 + Math.random() * 0.30,          // 0.86〜1.16
       tint: Math.round((Math.random() - 0.5) * 38),  // 色の明暗揺らぎ -19〜+19
-      moveStyle: (function () { const r = Math.random(); return r < 0.36 ? 'direct' : r < 0.56 ? 'zigzag' : r < 0.72 ? 'strafe' : r < 0.86 ? 'pounce' : 'orbit'; })(),
+      moveStyle: pickMoveStyle(type, def),
       wobble: Math.random() * 6,
     };
     // 精鋭(elite)抽選: 非ボスの敵対モブが低確率で精鋭化（HP/攻撃UP・発光オーラ・確定レアドロップ）
@@ -188,7 +188,9 @@ Game.Mobs = (function () {
         // 近傍の歩ける床へ
         for (let a = 0; a < 6; a++) {
           const ox = stx + (Math.floor(Math.random() * 3) - 1), oy = sty + (Math.floor(Math.random() * 3) - 1);
-          if (Game.World.isWalkable(ox, oy)) { spawnMob(type, ox * TS + TS / 2, oy * TS + TS / 2); spawned++; break; }
+          const wxx = ox * TS + TS / 2, wyy = oy * TS + TS / 2;
+          if (Math.hypot(wxx - p.x, wyy - p.y) < 3.5 * TS) continue; // 至近湧きの不意打ち防止
+          if (Game.World.isWalkable(ox, oy)) { spawnMob(type, wxx, wyy); spawned++; break; }
         }
       }
     }
@@ -200,6 +202,22 @@ Game.Mobs = (function () {
   }
 
   function hasAffix(m, key) { return m.eliteAffix === key || m.eliteAffix2 === key; }
+
+  // 種族(シルエット)ごとに動き方を偏らせ、家族単位の個性を出す
+  // 獣=跳びかかり / 蛇=蛇行 / 蜘蛛=旋回 / 人型=直進・回り込み / 浮遊系=旋回・蛇行
+  function pickMoveStyle(type, def) {
+    const shape = def.shape || defaultShape(type);
+    const r = Math.random();
+    if (shape === 'beast') return r < 0.5 ? 'pounce' : r < 0.8 ? 'strafe' : 'direct';
+    if (shape === 'serpent') return r < 0.65 ? 'zigzag' : 'direct';
+    if (shape === 'spider') return r < 0.5 ? 'orbit' : r < 0.8 ? 'zigzag' : 'strafe';
+    if (shape === 'humanoid') return r < 0.45 ? 'direct' : r < 0.8 ? 'strafe' : 'zigzag';
+    if (shape === 'orb' || shape === 'wisp' || shape === 'bird' || shape === 'bat') return r < 0.5 ? 'orbit' : 'zigzag';
+    return r < 0.36 ? 'direct' : r < 0.56 ? 'zigzag' : r < 0.72 ? 'strafe' : r < 0.86 ? 'pounce' : 'orbit';
+  }
+
+  // 群れ連携(lite): 仲間が攻撃されると周囲の同族が呼応して駆けつける種族
+  const PACK_TYPES = { frost_wolf: 1, spider: 1, frost_spider: 1, bandit: 1, ember_imp: 1, void_drone: 1 };
 
   function makeChampionName() {
     const N = Game.CHAMPION_NAMES || { title: ['名もなき'], name: ['強者'] };
@@ -284,6 +302,7 @@ Game.Mobs = (function () {
       if (m.hurt > 0) m.hurt--;
       if (m.attackCd > 0) m.attackCd--;
       if (m.rangedCd > 0) m.rangedCd--;
+      if (m.alertT > 0) m.alertT--;
       // 状態異常(DoT/鈍足): 炎/毒は継続ダメージ、凍は moveMob で減速
       if (m.dot) {
         if (m.dot.slow > 0) m.dot.slow--;
@@ -319,7 +338,8 @@ Game.Mobs = (function () {
       }
 
       if (m.def.hostile) {
-        const aggro = (m.def.boss ? 22 : 13) * TS;
+        let aggro = (m.def.boss ? 22 : 13) * TS;
+        if (m.alertT > 0) aggro *= 1.7; // 群れ連携: 呼応中は遠くからでも駆けつける
         // 瞬間移動する敵: 一定間隔でプレイヤー近くへ blink(煙＋音)。間合いを潰す脅威
         if (m.def.blink && distP < aggro && distP > 2.4 * TS) {
           m.blinkCd = (m.blinkCd || m.def.blink.cd) - 1;
@@ -327,7 +347,8 @@ Game.Mobs = (function () {
             Game.Render.spawnParticles(m.x, m.y, m.def.color || '#b06ad0', 10);
             const ang = Math.atan2(dyp, dxp), nd = (1.6 + Math.random()) * TS;
             const nx = p.x - Math.cos(ang) * nd, ny = p.y - Math.sin(ang) * nd;
-            if (Game.World.isWalkable(nx, ny)) { m.x = nx; m.y = ny; m.prevX = nx; m.prevY = ny; }
+            // 修正: isWalkable はタイル座標を取る(旧: ピクセル座標を渡すバグで blink が常に不発/異常判定)
+            if (Game.World.isWalkable(Math.floor(nx / TS), Math.floor(ny / TS))) { m.x = nx; m.y = ny; m.prevX = nx; m.prevY = ny; }
             Game.Render.spawnParticles(m.x, m.y, '#fff', 8); Game.Audio.play('shift');
             m.blinkCd = m.def.blink.cd;
           }
@@ -356,7 +377,7 @@ Game.Mobs = (function () {
             m.hopPhase += 0.2; continue; // 溜め中は移動・他攻撃しない(回避猶予)
           }
           if ((m.slamCd || 0) > 0) m.slamCd--;
-          else if (distP < 6 * TS && Math.random() < (m.enraged ? 0.06 : 0.035)) { m.slam = m.enraged ? 14 : 18; m.slamR = (m.def.big ? 3 : 2.4); Game.Audio.play('whirl'); }
+          else if (distP < 6 * TS && Math.random() < (m.enraged ? 0.06 : 0.035)) { m.slam = m.enraged ? 14 : 18; m.slamMax = m.slam; m.slamR = (m.def.big ? 3 : 2.4); Game.Audio.play('whirl'); }
         }
         // 重量級の溜め叩きつけ(非ボス): ボスslamのテレグラフ描画を流用。回避ゲーで攻撃に幅
         if (m.def.pound && !m.def.boss) {
@@ -372,7 +393,7 @@ Game.Mobs = (function () {
             m.hopPhase += 0.2; continue;
           }
           if ((m.slamCd || 0) > 0) m.slamCd--;
-          else if (distP < 4.5 * TS && Math.random() < 0.03) { m.slam = 16; m.slamR = m.def.pound.r || 1.8; Game.Audio.play('whirl'); }
+          else if (distP < 4.5 * TS && Math.random() < 0.03) { m.slam = 16; m.slamMax = 16; m.slamR = m.def.pound.r || 1.8; Game.Audio.play('whirl'); }
         }
         // 突進する敵: 溜め(テレグラフ)→高速ダッシュで突っ込む。溜め中に避ければ回避可能
         if (m.def.charge) {
@@ -394,9 +415,19 @@ Game.Mobs = (function () {
           else if (distP < ch.range * TS && distP > 2 * TS) { m.charge = { phase: 'windup', t: ch.windup }; m.dir = Math.abs(dxp) > Math.abs(dyp) ? (dxp < 0 ? 'left' : 'right') : (dyp < 0 ? 'up' : 'down'); Game.Audio.play('whirl'); }
         }
         const rg = m.def.ranged;
+        // 射撃の予兆(照準): 約300ms 静止して構えてから撃つ。スマホでも反応できる猶予を保証
+        if (rg && m.aim != null) {
+          m.aim--;
+          m.dir = Math.abs(dxp) > Math.abs(dyp) ? (dxp < 0 ? 'left' : 'right') : (dyp < 0 ? 'up' : 'down');
+          if (m.aim <= 0) {
+            m.aim = null; m.rangedCd = rg.cd;
+            if (distP < (rg.range + 1.5) * TS) Game.Projectiles.enemyShoot(m, rg.dmg, rg.kind, rg.status);
+          }
+          m.hopPhase += 0.2; continue;
+        }
         // 遠距離魔法攻撃タイプ: 距離を取りつつ魔法弾を撃つ
         if (rg && distP < rg.range * TS && distP > (m.def.size * 0.5 + 14)) {
-          if ((m.rangedCd || 0) <= 0) { Game.Projectiles.enemyShoot(m, rg.dmg, rg.kind, rg.status); m.rangedCd = rg.cd; }
+          if ((m.rangedCd || 0) <= 0) { m.aim = 9; Game.Audio.play('whirl'); }
           if (distP < rg.range * TS * 0.5) moveMob(m, -dxp, -dyp, m.def.speed * 0.8);      // 近すぎ→離れる
           else if (distP > rg.range * TS * 0.82) moveMob(m, dxp, dyp, m.def.speed * 0.8);  // 遠い→寄る
           m.dir = Math.abs(dxp) > Math.abs(dyp) ? (dxp < 0 ? 'left' : 'right') : (dyp < 0 ? 'up' : 'down');
@@ -587,6 +618,11 @@ Game.Mobs = (function () {
       if (Game.Render.flash) Game.Render.flash('rgba(200,30,30,0.22)');
       if (Game.Render.shake) Game.Render.shake(9);
       Game.Audio.play('event_horde'); Game.Audio.play('thunder');
+      // 第二段階への転換をワンビートで劇化: 一瞬の静止＋BGMダック＋ライザー＋頭上表示
+      Game.state.hitstop = Math.max(Game.state.hitstop || 0, 4);
+      if (Game.Audio.cue) Game.Audio.cue('riser');
+      if (Game.Audio.duckBGM) { Game.Audio.duckBGM(0.35); setTimeout(function () { Game.Audio.duckBGM(1); }, 1200); }
+      if (Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - m.def.size, '激昂!!', '#ff5a4a', true);
       if (Game.UI && Game.UI.toast) Game.UI.toast('⚠ ' + (m.def.name || 'ボス') + ' が激昂した！');
     }
     // 棘鎧アフィックス: 被ダメの一定割合を反射
@@ -601,12 +637,22 @@ Game.Mobs = (function () {
     }
     // 大ダメージ/ボス被弾でも軽くシェイク
     if (!crit && (m.def.boss || dmg >= 16)) Game.Render.shake(m.def.boss ? 5 : 4);
-    // ヒットストップ: 会心/重い一撃で一瞬凍結し打撃の重みを演出(極短)
-    if (crit || dmg >= 22 || m.def.boss) Game.state.hitstop = Math.max(Game.state.hitstop || 0, crit ? 2 : 1);
+    // ヒットストップ: 打撃の重要度で2-4tick(会心>重打>通常)。軽打では発生させず乱発を防ぐ
+    const hs = (crit && m.def.boss) ? 4 : crit ? 3 : (dmg >= 22 || m.def.boss) ? 2 : 0;
+    if (hs) Game.state.hitstop = Math.max(Game.state.hitstop || 0, hs);
     const dx = m.x - fromX, dy = m.y - fromY, l = Math.hypot(dx, dy) || 1;
-    const kb = crit ? 11 : 7; // クリはノックバック強調
+    // ノックバックの一貫性: 重量級ほど仰け反りにくい(ボス0.35x/大型0.6x)。クリは強調
+    const kb = (crit ? 11 : 7) * (m.def.boss ? 0.35 : m.def.big ? 0.6 : 1);
     m.knockX = (dx / l) * kb; m.knockY = (dy / l) * kb;
     if (!m.def.hostile) m.fleeTimer = 180; // 動物は逃げる
+    // 群れ連携(lite): 狼/蜘蛛/山賊などは仲間の被弾に呼応し、周囲の同族が索敵範囲を広げて駆けつける
+    if (PACK_TYPES[m.type]) {
+      const all = Game.state.mobs;
+      for (let i = 0; i < all.length; i++) {
+        const o = all[i];
+        if (o !== m && o.type === m.type && Math.hypot(o.x - m.x, o.y - m.y) < 9 * TS) o.alertT = 240;
+      }
+    }
     Game.Audio.play('hit');
     if (m.hp <= 0) killMob(m);
   }
@@ -672,7 +718,8 @@ Game.Mobs = (function () {
     if (Game.Net.isConnected() && Game.Net.host) Game.Net.sendMobDeath(m.x, m.y, items);
     Game.Render.spawnParticles(m.x, m.y, m.def.color, m.def.boss ? 40 : 12);
     Game.Render.spawnBlood(m.x, m.y, m.def.boss ? 24 : 10);
-    // 撃破ヒットストップ風: 軽いシェイク(ボス/大型ほど強め)
+    // 撃破ヒットストップ＋軽いシェイク(格の高い敵ほど長く/強く)
+    Game.state.hitstop = Math.max(Game.state.hitstop || 0, (m.def.boss || m.champion) ? 4 : m.elite ? 3 : 2);
     if (Game.Render.shake) Game.Render.shake(m.def.boss ? 8 : m.def.big ? 5 : 3);
     Game.Player.gainXP(Math.round((m.def.xp || 1) * (1 + (Game.state.ngLevel || 0) * 0.2)) * (m.elite ? 3 : 1)); // 強い敵(NG)・精鋭ほど経験値増
     // バーツ(通貨)獲得: 敵の格に応じて。精鋭/チャンピオン/ボスほど多い
@@ -801,7 +848,7 @@ Game.Mobs = (function () {
       if (m.slam != null && m.slamR) {
         const z = Game.Camera.zoom ? Game.Camera.zoom() : 1;
         const rr = m.slamR * Game.CFG.TILE_SIZE * z;
-        const prog = 1 - m.slam / 18;
+        const prog = 1 - m.slam / (m.slamMax || 18);
         ctx.save();
         ctx.fillStyle = 'rgba(255,40,20,' + (0.1 + prog * 0.3).toFixed(3) + ')';
         ctx.beginPath(); ctx.arc(s.x, s.y, rr, 0, Math.PI * 2); ctx.fill();
@@ -822,6 +869,14 @@ Game.Mobs = (function () {
       }
       const r = m.def.size * 0.5 * (m.champion ? 1.55 : m.elite ? 1.3 : 1) * (m.sizeVar || 1);
       const hop = m.def.hop ? Math.abs(Math.sin(m.hopPhase)) * 5 : 0;
+      // 予兆(!マーク): 溜め/照準/突進構え中の敵の頭上に点滅警告。スマホでも一目で分かる
+      const windup = m.slam != null || m.aim != null || (m.charge && m.charge.phase === 'windup');
+      if (windup) {
+        ctx.fillStyle = (Game.state.tick % 8) < 4 ? '#ffd24a' : '#ff7a3c';
+        ctx.font = 'bold 15px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('!', s.x, s.y - r - hop - 14);
+        ctx.textAlign = 'left';
+      }
       ctx.save();
       // 精鋭/ボスのオーラ: 脈動する発光リング(ボスは自色で威圧、精鋭は金色)
       if (m.elite || m.bountyBoss || m.def.boss) {
@@ -857,6 +912,7 @@ Game.Mobs = (function () {
         else if (m.dot.poison > 0 && Game.state.tick % 12 < 6) bodyCol = '#7ad04a';
         else if (m.dot.slow > 0) bodyCol = '#8fd0ff';
       }
+      if (windup && (Game.state.tick % 6) < 3) bodyCol = shadeHex(bodyCol, 55); // 溜め中は体が明滅(構えの視認)
       ctx.fillStyle = m.hurt > 0 ? '#fff' : bodyCol;
       const shape = m.def.shape || defaultShape(m.type);
       let eyeY = -r * 0.3;

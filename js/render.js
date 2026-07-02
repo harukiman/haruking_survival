@@ -618,10 +618,13 @@ Game.Render = (function () {
       if (rarity >= 0 || precious) {
         const col = rarity >= 0 ? Game.Loot.rarityColor(d) : '#ffd24a';
         const pulse = 0.5 + Math.sin(t * 0.12 + i) * 0.5;
-        // 光柱（レア以上/高価品のみ）
+        // 光柱（レア以上/高価品のみ）。レジェンダリーは一段太く明るく＋白芯の二重柱で高揚感
         if (rarity >= 1 || precious) {
-          ctx.globalAlpha = 0.18 + pulse * 0.14;
-          ctx.drawImage(beamSprite(col), s.x - 6 * z, s.y - 46 * z, 12 * z, 50 * z);
+          const leg = rarity >= 3;
+          ctx.globalAlpha = (leg ? 0.30 : 0.18) + pulse * (leg ? 0.22 : 0.14);
+          const bw = leg ? 18 : 12, bh = leg ? 62 : 50;
+          ctx.drawImage(beamSprite(col), s.x - bw / 2 * z, s.y - (bh - 4) * z, bw * z, bh * z);
+          if (leg) { ctx.globalAlpha = 0.20 + pulse * 0.15; ctx.drawImage(beamSprite('#ffffff'), s.x - 4 * z, s.y - 58 * z, 8 * z, 62 * z); }
         }
         // 地面のグロー
         ctx.globalAlpha = (0.28 + pulse * 0.22) * (rarity >= 1 || precious ? 1 : 0.6);
