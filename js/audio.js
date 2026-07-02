@@ -251,13 +251,13 @@ Game.Audio = (function () {
     f.connect(g); g.connect(bgmGain);
     return { f: f, g: g };
   }
-  function startBGM() {
+  function startBGM(mood) {
     if (!enabled) return; ensure(); if (!ctx || bgm.started) return;
     bgm.started = true;
     bgm.buses = [makeBus(), makeBus()];
     bgm.bus = 0; bgm.buses[0].g.gain.value = 1;
     bgm.step = 0; bgm.bar = 0; bgm.nextStep = ctx.currentTime + 0.1;
-    setMood('day', true);
+    setMood(mood || 'day', true); // タイトル画面からは 'title' で開始できる
   }
 
   function setMood(mood, force) {

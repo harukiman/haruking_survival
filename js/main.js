@@ -324,6 +324,19 @@ window.Game = window.Game || {};
       if (this.disabled) return;
       continueGame();
     });
+    // タイトルBGM: 初回タップ(ユーザージェスチャ)で 'title' ムード開始。
+    // タイトル中は frame ループが未稼働のため専用インターバルで刻み、ゲーム開始後は frame に引き継いで停止
+    const titleBgmStart = function () {
+      document.removeEventListener('pointerdown', titleBgmStart);
+      const ts = document.getElementById('title-screen');
+      if (!ts || ts.classList.contains('hidden')) return; // すでにゲーム開始済みなら不要
+      Game.Audio.startBGM('title');
+      const iv = setInterval(function () {
+        if (running) { clearInterval(iv); return; }
+        Game.Audio.tickBGM();
+      }, 50);
+    };
+    document.addEventListener('pointerdown', titleBgmStart);
     // マルチプレイ
     const roomInput = document.getElementById('room-input');
     const roomCode = function () { return (roomInput.value.trim() || ('haru' + Math.floor(Math.random() * 9000 + 1000))); };
