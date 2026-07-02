@@ -214,10 +214,14 @@ Game.Projectiles = (function () {
       let hit = false;
       if (pr.hostile) {
         if (Math.hypot(pl.x - pr.x, pl.y - pr.y) < 13) {
-          Game.Survival.damage(pr.dmg, 'mob');
-          if (pr.status && Game.Status) for (const k in pr.status) Game.Status.add(k, pr.status[k]);
-          if (Game.Render.spawnHitDir) Game.Render.spawnHitDir(pr.prevX, pr.prevY); // 飛来方向を表示
-          Game.Render.spawnBlood(pl.x, pl.y, 4); hit = true;
+          if (Game.Survival.damage(pr.dmg, 'mob') !== false) {
+            if (pr.status && Game.Status) for (const k in pr.status) Game.Status.add(k, pr.status[k]);
+            if (Game.Render.spawnHitDir) Game.Render.spawnHitDir(pr.prevX, pr.prevY); // 飛来方向を表示
+            Game.Render.spawnBlood(pl.x, pl.y, 4); hit = true;
+          } else {
+            // 無敵中は弾をすり抜ける(消費しない・被弾演出/状態異常なし)。淡い残光のみ
+            Game.Render.spawnParticles(pl.x, pl.y, '#bfe8ff', 2);
+          }
         }
       } else if (pr.pierce) {
         // 貫通/斬撃/ブーメラン: 範囲内の未命中の敵すべてに当て、消えない

@@ -1,5 +1,7 @@
 // events.js — 動的ワールドイベント。emergent な「常に何かが起きる」サンドボックス演出
 //   流星群(夜): 星のかけらが降る / 物資投下(昼): 補給物資のクレートが落ちてくる
+//   流れ星(夜): 願いが小さな力に / 渡り鳥(昼): 未踏の方角を示す / 行商人の焚き火(夜): 灯りを訪ねて商い
+//   地鳴り(昼): 近くの鉱脈を告げる / 朝霧: 夜明けの露が作物を潤す
 window.Game = window.Game || {};
 
 Game.Events = (function () {
@@ -7,19 +9,41 @@ Game.Events = (function () {
   const COOLDOWN = 30 * 100;       // イベント間の最短間隔(約100秒)
   const LAND_EVERY = 130;          // 落下流星の間隔tick→1回で約5発
   const MAX_LAND = 6;
+  const STAR_DUR = 30 * 8;         // 流れ星(約8秒)
+  const FLOCK_DUR = 30 * 13;       // 渡り鳥(約13秒)
+  const MERCHANT_DUR = 30 * 75;    // 行商人の焚き火(約75秒)
+  const QUAKE_DUR = 30 * 45;       // 地鳴りの鉱脈マーカー(約45秒)
 
   const SUPPLY = ['bandage', 'cooked_meat', 'bread', 'torch', 'antidote'];
   const HORDE_POOL = ['zombie', 'skeleton', 'spider', 'slime', 'leech', 'bat', 'gazer', 'harpy', 'viper'];
+  const WISH_BUFFS = ['swiftness', 'regen_buff', 'wellfed'];   // 既存バフのみ・控えめな持続
+  const WISH_LABEL = { swiftness: '足取りが軽くなる', regen_buff: '傷が癒えていく', wellfed: '身体の芯が温かい' };
+  const DIR_NAMES = ['東', '南東', '南', '南西', '西', '北西', '北', '北東']; // atan2 の八分円順
+  const EVENT_NAME = { meteor: '☄️ 流星群', horde: '⚔️ 魔物の侵攻', supply: '📦 物資投下', star: '🌠 流れ星', flock: '🕊 渡り鳥', merchant: '🔥 行商人の焚き火', quake: '⛰ 地鳴りの残響' };
+  const EVENT_COLOR = { meteor: '#ffe27a', horde: '#ff6a5a', supply: '#caa86a', star: '#ffe9a0', flock: '#bfe0ff', merchant: '#ffab5a', quake: '#d8a05a' };
 
   let cd = 30 * 35;
   let active = null;
+  let lastFogDay = -1;
 
-  function reset() { cd = 30 * 35; active = null; }
+  function reset() { cd = 30 * 35; active = null; lastFogDay = -1; }
   function current() { return active; }
 
   function update() {
     const s = Game.state; if (!s || s.paused) return;
-    if (active) { active.type === 'meteor' ? tickMeteor(s) : active.type === 'supply' ? tickSupply(s) : tickHorde(s); return; }
+    if (active) {
+      switch (active.type) {
+        case 'meteor': tickMeteor(s); break;
+        case 'supply': tickSupply(s); break;
+        case 'horde': tickHorde(s); break;
+        case 'star': tickStar(s); break;
+        case 'flock': tickFlock(s); break;
+        case 'merchant': tickMerchant(s); break;
+        case 'quake': tickQuake(s); break;
+      }
+      return;
+    }
+    fogDawnCheck(s);
     if (cd > 0) { cd--; return; }
     if (s.worldName === 'light' && !s.bloodMoon && Game.DayNight) {
       const night = Game.DayNight.isNight();
@@ -27,16 +51,163 @@ Game.Events = (function () {
         const r = Math.random();
         if (r < 0.02) startMeteor();
         else if (r < 0.04) startHorde();
+        else if (r < 0.052) startStar();
+        else if (r < 0.062) startMerchant();
         else cd = 30 * 10;
       } else {
         const r = Math.random();
         if (r < 0.012) startGoldThief();
         else if (r < 0.027) startSupply();
+        else if (r < 0.038) startFlock();
+        else if (r < 0.046) startQuake();
         else cd = 30 * 10;
       }
     } else {
       cd = 30 * 6;
     }
+  }
+
+  // ---- 朝霧: 夜明け直後、晴れなら稀に霧へ(1日1回判定)。天候は save 対象なので永続 ----
+  function fogDawnCheck(s) {
+    if (s.worldName !== 'light' || s.bloodMoon || !s.weather) return;
+    const t = s.timeOfDay;
+    if (t < 0.225 || t > 0.25) return;
+    const day = Math.floor(s.tick / Game.DAY_LENGTH);
+    if (day === lastFogDay) return;
+    lastFogDay = day;
+    if (s.weather.type === 'clear' && Math.random() < 0.3) {
+      s.weather.type = 'fog';
+      s.weather.timer = 1500 + Math.floor(Math.random() * 1200);
+      if (Game.UI) Game.UI.toast('🌫 朝霧が立ちこめる… 露が作物を潤す静かな朝だ');
+      if (Game.Audio && Game.Audio.cue) Game.Audio.cue('swell');
+    }
+  }
+
+  // ---- 流れ星: 一筋の光が夜空を渡る。願いはささやかな力になる(既存バフ・控えめ) ----
+  function startStar() {
+    active = { type: 'star', t: STAR_DUR, wished: false };
+    if (Game.UI) Game.UI.toast('🌠 流れ星だ…！ 消える前に願いを込めよう');
+    if (Game.Audio && Game.Audio.cue) Game.Audio.cue('shimmer');
+  }
+
+  function tickStar(s) {
+    const a = active; a.t--;
+    if (!a.wished && a.t <= STAR_DUR - 50) {
+      a.wished = true;
+      if (Game.Status) {
+        const pick = WISH_BUFFS[Math.floor(Math.random() * WISH_BUFFS.length)];
+        Game.Status.apply(pick, pick === 'wellfed' ? 600 : 30 * 45);
+        if (Game.UI) Game.UI.toast('✨ 願いが届いた — ' + (WISH_LABEL[pick] || '') + '…');
+      }
+      if (Game.Audio) Game.Audio.play('relic_get');
+    }
+    if (a.t <= 0) { active = null; cd = COOLDOWN; }
+  }
+
+  // ---- 渡り鳥の群れ: 未踏の方角へ飛んでいく。探索の道しるべ＋心が和む(正気ほんの少し回復) ----
+  function unexploredDir() {
+    // discovered のセクター記録('world:kind:sx,sy')を八分円で数え、最も記録が薄い方角を選ぶ(O(記録数))
+    const s = Game.state, TS = Game.CFG.TILE_SIZE;
+    const psx = Math.floor(s.player.x / TS / 40), psy = Math.floor(s.player.y / TS / 40);
+    const cnt = [0, 0, 0, 0, 0, 0, 0, 0];
+    const disc = s.discovered || {};
+    for (const k in disc) {
+      const parts = k.split(':');
+      if (parts[0] !== s.worldName || !parts[2]) continue;
+      const xy = parts[2].split(',');
+      const dx = parseInt(xy[0], 10) - psx, dy = parseInt(xy[1], 10) - psy;
+      if (!dx && !dy) continue;
+      cnt[Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) & 7]++;
+    }
+    let best = Math.floor(Math.random() * 8);
+    for (let i = 0; i < 8; i++) if (cnt[i] < cnt[best]) best = i;
+    return best;
+  }
+
+  function startFlock() {
+    const oct = unexploredDir();
+    const ang = oct * Math.PI / 4;
+    const p = Game.state.player;
+    active = { type: 'flock', t: FLOCK_DUR, ang: ang, x: p.x - Math.cos(ang) * 400, y: p.y - Math.sin(ang) * 400 - 120, spd: 3.6 };
+    if (Game.TUNE) Game.state.sanity = Math.min(Game.TUNE.SANITY_MAX, Game.state.sanity + 3); // 心和む(控えめ)
+    if (Game.UI) Game.UI.toast('🕊 渡り鳥の群れだ… 鳥たちは' + DIR_NAMES[oct] + 'の彼方へ向かっていく');
+    if (Game.Audio && Game.Audio.cue) Game.Audio.cue('shimmer');
+  }
+
+  function tickFlock() {
+    const a = active; a.t--;
+    a.x += Math.cos(a.ang) * a.spd;
+    a.y += Math.sin(a.ang) * a.spd;
+    if (a.t <= 0) { active = null; cd = COOLDOWN; }
+  }
+
+  // ---- 行商人の焚き火: 夜だけ、近くに灯りがともる。訪ねれば旅商人と商いできる ----
+  function startMerchant() {
+    const p = Game.state.player, TS = Game.CFG.TILE_SIZE;
+    let mx = p.x + TS * 6, my = p.y;
+    for (let k = 0; k < 12; k++) {
+      const ang = Math.random() * Math.PI * 2, d = 6 + Math.random() * 3;
+      const tx = Math.floor(p.x / TS + Math.cos(ang) * d), ty = Math.floor(p.y / TS + Math.sin(ang) * d);
+      if (Game.World.isWalkable(tx, ty)) { mx = tx * TS + TS / 2; my = ty * TS + TS / 2; break; }
+    }
+    active = { type: 'merchant', t: MERCHANT_DUR, x: mx, y: my };
+    if (Game.UI) Game.UI.toast('🔥 遠くに焚き火の灯り… 行商人だ。夜が明ける前に訪ねよう');
+    if (Game.Audio) Game.Audio.play('event_supply');
+  }
+
+  function tickMerchant(s) {
+    const a = active; a.t--;
+    const p = s.player;
+    if (Math.hypot(p.x - a.x, p.y - a.y) < Game.CFG.TILE_SIZE * 1.7) {
+      active = null; cd = COOLDOWN;
+      if (Game.Audio) Game.Audio.play('relic_get');
+      if (Game.UI && Game.UI.openTrade) Game.UI.openTrade();
+      return;
+    }
+    if (a.t <= 0 || (Game.DayNight && !Game.DayNight.isNight())) {
+      if (Game.UI) Game.UI.toast('行商人は焚き火を消し、夜の中へ去っていった…');
+      active = null; cd = COOLDOWN;
+    }
+  }
+
+  // ---- 地鳴り: 微振動が近くの鉱脈を告げる。震源マーカーを辿れば鉱石がある(採掘は通常通り) ----
+  function startQuake() {
+    const s = Game.state, TS = Game.CFG.TILE_SIZE, O = Game.OBJ;
+    const ORE_SET = { [O.COAL_ORE]: 1, [O.IRON_ORE]: 1, [O.GOLD_ORE]: 1 };
+    const p = s.player;
+    if (Game.Render && Game.Render.shake) Game.Render.shake(6);
+    if (Game.Audio && Game.Audio.cue) Game.Audio.cue('impact');
+    // 一度きりの近傍走査(イベント開始時のみ・tick毎ではない)
+    const ptx = Math.floor(p.x / TS), pty = Math.floor(p.y / TS);
+    const R = 16;
+    let bx = 0, by = 0, bd = Infinity;
+    for (let dy = -R; dy <= R; dy++) {
+      for (let dx = -R; dx <= R; dx++) {
+        const d2 = dx * dx + dy * dy;
+        if (d2 < 9 || d2 >= bd) continue; // 至近は除外・より近いもののみ
+        if (ORE_SET[Game.World.objAt(ptx + dx, pty + dy)]) { bd = d2; bx = ptx + dx; by = pty + dy; }
+      }
+    }
+    if (bd < Infinity) {
+      active = { type: 'quake', t: QUAKE_DUR, lx: bx * TS + TS / 2, ly: by * TS + TS / 2 };
+      if (Game.UI) Game.UI.toast('⛰ 地鳴りだ… 近くの岩盤から鉱脈の響きがする。震源を探せ');
+    } else {
+      if (Game.UI) Game.UI.toast('⛰ 地鳴りがした… 大地の唸りはすぐに収まった');
+      cd = 30 * 40;
+    }
+  }
+
+  function tickQuake(s) {
+    const a = active; a.t--;
+    const p = s.player;
+    if (Math.hypot(p.x - a.lx, p.y - a.ly) < Game.CFG.TILE_SIZE * 2.2) {
+      if (Game.UI) Game.UI.toast('⛏ ここだ — 岩の下に鉱脈が眠っている');
+      if (Game.Render) Game.Render.spawnParticles(a.lx, a.ly, '#d8a05a', 10);
+      if (Game.Audio) Game.Audio.play('mine');
+      active = null; cd = COOLDOWN;
+      return;
+    }
+    if (a.t <= 0) { active = null; cd = COOLDOWN; }
   }
 
   // ---- 金喰い: 宝を抱えて逃げる稀少モブ。追って仕留めれば大量の金塊 ----
@@ -212,6 +383,59 @@ Game.Events = (function () {
         ctx.strokeStyle = '#5e3f23'; ctx.lineWidth = 2; ctx.strokeRect(s.x - 7, s.y - 7, 14, 14);
         ctx.beginPath(); ctx.moveTo(s.x - 7, s.y); ctx.lineTo(s.x + 7, s.y); ctx.moveTo(s.x, s.y - 7); ctx.lineTo(s.x, s.y + 7); ctx.stroke();
       }
+    } else if (active.type === 'star') {
+      // 流れ星: 画面上部を右から左へ渡る一筋の光(スクリーン座標・カメラ非依存で確実に見える)
+      const vv = Game.view;
+      const frac = 1 - active.t / STAR_DUR;
+      const sx = vv.w * (1.08 - frac * 1.22), sy = vv.h * (0.09 + frac * 0.07);
+      const tx2 = sx + 46, ty2 = sy - 13;
+      const grad = ctx.createLinearGradient(tx2, ty2, sx, sy);
+      grad.addColorStop(0, 'rgba(255,236,170,0)'); grad.addColorStop(1, 'rgba(255,246,210,0.9)');
+      ctx.strokeStyle = grad; ctx.lineWidth = 2.5; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(tx2, ty2); ctx.lineTo(sx, sy); ctx.stroke();
+      ctx.fillStyle = '#fff8dc';
+      ctx.beginPath(); ctx.arc(sx, sy, 2.6 + Math.sin(Game.state.tick * 0.5) * 0.7, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(255,240,180,0.28)';
+      ctx.beginPath(); ctx.arc(sx, sy, 7, 0, Math.PI * 2); ctx.fill();
+    } else if (active.type === 'flock') {
+      // 渡り鳥: V字編隊。羽ばたきは sin で表現
+      const a = active;
+      const flap = Math.sin(Game.state.tick * 0.35) * 3.2;
+      const ca = Math.cos(a.ang), sa = Math.sin(a.ang);
+      for (let i = 0; i < 9; i++) {
+        const row = Math.ceil(i / 2), side = (i % 2 === 0 ? 1 : -1) * (i === 0 ? 0 : 1);
+        const bx = a.x - ca * row * 16 + (-sa) * side * row * 11;
+        const by = a.y - sa * row * 16 + ca * side * row * 11;
+        const sc = cam.worldToScreen(bx, by);
+        if (sc.x < -30 || sc.x > Game.view.w + 30 || sc.y < -30 || sc.y > Game.view.h + 30) continue;
+        ctx.strokeStyle = 'rgba(40,52,70,0.75)'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(sc.x - 5, sc.y - Math.abs(flap) * 0.6);
+        ctx.quadraticCurveTo(sc.x, sc.y + flap, sc.x + 5, sc.y - Math.abs(flap) * 0.6);
+        ctx.stroke();
+      }
+    } else if (active.type === 'merchant') {
+      // 行商人の焚き火: ちらつく炎＋暖色の光＋商人の影
+      const a = active;
+      const sc = cam.worldToScreen(a.x, a.y);
+      const flick = 0.85 + Math.sin(Game.state.tick * 0.6) * 0.1 + Math.sin(Game.state.tick * 0.23) * 0.05;
+      const glow = ctx.createRadialGradient(sc.x, sc.y, 2, sc.x, sc.y, 46 * flick);
+      glow.addColorStop(0, 'rgba(255,170,80,0.30)'); glow.addColorStop(1, 'rgba(255,140,50,0)');
+      ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(sc.x, sc.y, 46 * flick, 0, Math.PI * 2); ctx.fill();
+      // 薪
+      ctx.strokeStyle = '#6a4a2a'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(sc.x - 7, sc.y + 4); ctx.lineTo(sc.x + 7, sc.y + 1); ctx.moveTo(sc.x - 6, sc.y + 1); ctx.lineTo(sc.x + 6, sc.y + 4); ctx.stroke();
+      // 炎(2枚重ね・ゆらぎ)
+      const fh = 11 * flick;
+      ctx.fillStyle = 'rgba(255,150,60,0.9)';
+      ctx.beginPath(); ctx.moveTo(sc.x - 5, sc.y + 2); ctx.quadraticCurveTo(sc.x + Math.sin(Game.state.tick * 0.4) * 2, sc.y - fh, sc.x + 5, sc.y + 2); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = 'rgba(255,220,120,0.9)';
+      ctx.beginPath(); ctx.moveTo(sc.x - 2.5, sc.y + 2); ctx.quadraticCurveTo(sc.x, sc.y - fh * 0.6, sc.x + 2.5, sc.y + 2); ctx.closePath(); ctx.fill();
+      // 商人の影(焚き火の傍らに座る)
+      ctx.fillStyle = 'rgba(52,40,58,0.9)';
+      ctx.beginPath(); ctx.arc(sc.x + 16, sc.y - 6, 4, 0, Math.PI * 2); ctx.fill(); // 頭
+      ctx.beginPath(); ctx.ellipse ? ctx.ellipse(sc.x + 16, sc.y + 2, 6, 7, 0, 0, Math.PI * 2) : ctx.arc(sc.x + 16, sc.y + 2, 6, 0, Math.PI * 2); ctx.fill(); // 胴
+      ctx.fillStyle = 'rgba(120,90,60,0.9)'; ctx.fillRect(sc.x + 24, sc.y - 2, 7, 6); // 荷袋
     }
 
     const v = Game.view;
@@ -223,14 +447,19 @@ Game.Events = (function () {
       g.addColorStop(1, 'rgba(150,10,10,' + pulse.toFixed(3) + ')');
       ctx.fillStyle = g; ctx.fillRect(0, 0, v.w, v.h);
     }
-    // 誘導マーカー: 報酬地点へ(侵攻は群れ自体が目標なのでマーカー無し)
-    const gcol = active.type === 'meteor' ? '#ffe27a' : active.type === 'horde' ? '#ff6a5a' : '#caa86a';
-    const targets = active.type === 'meteor' ? active.meteors.filter(function (m) { return m.land; }) : active.type === 'supply' ? active.crates : [];
+    // 誘導マーカー: 報酬地点へ(侵攻は群れ自体が目標・流れ星/渡り鳥は空の演出なのでマーカー無し)
+    const gcol = EVENT_COLOR[active.type] || '#caa86a';
+    const targets = active.type === 'meteor' ? active.meteors.filter(function (m) { return m.land; })
+      : active.type === 'supply' ? active.crates
+      : active.type === 'merchant' ? [{ lx: active.x, ly: active.y }]
+      : active.type === 'quake' ? [{ lx: active.lx, ly: active.ly }]
+      : [];
     for (let i = 0; i < targets.length; i++) drawGuide(ctx, cam, v, targets[i].lx, targets[i].ly, gcol);
 
-    // 上部バナー: イベント名＋残り時間
+    // 上部バナー: イベント名＋残り時間(流れ星/渡り鳥は一瞬の情景なのでバナー無しで静かに)
+    if (active.type === 'star' || active.type === 'flock') { ctx.restore(); return; }
     const secs = Math.max(0, Math.ceil(active.t / 30));
-    const ename = active.type === 'meteor' ? '☄️ 流星群' : active.type === 'horde' ? '⚔️ 魔物の侵攻' : '📦 物資投下';
+    const ename = EVENT_NAME[active.type] || 'イベント';
     const label = ename + '  残り ' + secs + 's';
     ctx.font = 'bold 15px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     const tw = ctx.measureText(label).width; const bw = tw + 28, bx = v.w / 2 - bw / 2, by = 6;
@@ -241,5 +470,19 @@ Game.Events = (function () {
     ctx.restore();
   }
 
-  return { update, draw, reset, current };
+  // デバッグ/検証用: イベントを即時発火(コンソール・スモークテストから)
+  function force(name) {
+    active = null;
+    if (name === 'meteor') startMeteor();
+    else if (name === 'supply') startSupply();
+    else if (name === 'horde') startHorde();
+    else if (name === 'star') startStar();
+    else if (name === 'flock') startFlock();
+    else if (name === 'merchant') startMerchant();
+    else if (name === 'quake') startQuake();
+    else if (name === 'goldthief') startGoldThief();
+    return active ? active.type : null;
+  }
+
+  return { update, draw, reset, current, force };
 })();

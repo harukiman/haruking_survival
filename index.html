@@ -12,7 +12,7 @@
 <meta property="og:type" content="website">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%234a8f3c'/%3E%3Crect x='10' y='6' width='12' height='8' fill='%23805333'/%3E%3Crect x='8' y='12' width='16' height='12' fill='%232f7d27'/%3E%3C/svg%3E">
 <title>Haruking Survival — 俯瞰サンドボックス</title>
-<link rel="stylesheet" href="css/style.css?v=235">
+<link rel="stylesheet" href="css/style.css?v=236">
 </head>
 <body>
 <div id="app">
@@ -23,26 +23,36 @@
     <div class="title-box">
       <h1 class="game-title"><span class="t-haru">HARUKING</span><span class="t-surv">SURVIVAL</span></h1>
       <p class="tagline"><span class="tg-1">光</span>と<span class="tg-2">影</span>、裂けた世界を渡り歩け<br><span class="tg-em">オープンワールド・サバイバルRPG</span></p>
-      <div class="seed-row">
-        <label>シード <input id="seed-input" type="text" placeholder="空欄でランダム" inputmode="numeric"></label>
+      <div class="cta-col">
+        <button id="btn-new" class="big-btn primary">はじめから</button>
+        <button id="btn-continue" class="big-btn alt">つづきから</button>
       </div>
-      <div class="diff-row" id="diff-row">
-        <button class="diff-btn" data-diff="peaceful">のんびり</button>
-        <button class="diff-btn selected" data-diff="normal">ふつう</button>
-        <button class="diff-btn" data-diff="hard">ハード</button>
+      <div class="world-setup">
+        <div class="diff-row" id="diff-row">
+          <button class="diff-btn" data-diff="peaceful">のんびり</button>
+          <button class="diff-btn selected" data-diff="normal">ふつう</button>
+          <button class="diff-btn" data-diff="hard">ハード</button>
+        </div>
+        <p id="diff-desc" class="diff-desc">標準のサバイバル</p>
+        <div class="seed-row">
+          <label>シード <input id="seed-input" type="text" placeholder="空欄でランダム" inputmode="numeric"></label>
+        </div>
       </div>
-      <p id="diff-desc" class="diff-desc">標準のサバイバル</p>
-      <button id="btn-new" class="big-btn">はじめから</button>
-      <button id="btn-continue" class="big-btn alt">つづきから</button>
-      <div class="mp-row">
-        <input id="name-input" type="text" placeholder="あなたの名前" maxlength="12">
-        <input id="room-input" type="text" placeholder="ルーム合言葉" maxlength="24">
-        <button id="btn-host" class="mp-btn">仲間を招く</button>
-        <button id="btn-join" class="mp-btn">参加する</button>
-      </div>
-      <p class="diff-desc">同じ合言葉で数人まで一緒に冒険（サーバー不要P2P）</p>
-      <p class="hint">PC: WASD/矢印=移動, 左クリック=採掘/攻撃, 右クリック=設置/対話/使用, 1-9=ホットバー, E=インベントリ, F=影渡り<br>スマホ: 画面左をなぞって移動(フローティングスティック), 右下ボタンで採掘・設置・影渡り・メニュー, ミニマップで大マップ</p>
-      <p class="hint" style="color:#b89ad8">★この世界には「光」と「影」の二相がある。夜の敵から<b>影の欠片</b>を集め<b>影鏡</b>を作れば、影の世界へ渡れる。影でしか採れぬ<b>影晶・光素</b>で最強装備を。ただし影に長居すると正気が削られる——光を絶やすな。</p>
+      <details class="title-acc">
+        <summary><span class="acc-ic">🌐</span>みんなで遊ぶ（サーバー不要P2P）</summary>
+        <div class="mp-row">
+          <input id="name-input" type="text" placeholder="あなたの名前" maxlength="12">
+          <input id="room-input" type="text" placeholder="ルーム合言葉" maxlength="24">
+          <button id="btn-host" class="mp-btn">仲間を招く</button>
+          <button id="btn-join" class="mp-btn">参加する</button>
+        </div>
+        <p class="diff-desc">同じ合言葉で数人まで一緒に冒険できる</p>
+      </details>
+      <details class="title-acc">
+        <summary><span class="acc-ic">❔</span>遊び方</summary>
+        <p class="hint">PC: WASD/矢印=移動, 左クリック=採掘/攻撃, 右クリック=設置/対話/使用, 1-9=ホットバー, E=インベントリ, F=影渡り<br>スマホ: 画面左をなぞって移動(フローティングスティック), 右下ボタンで採掘・設置・影渡り・メニュー, ミニマップで大マップ</p>
+        <p class="hint" style="color:#b89ad8">★この世界には「光」と「影」の二相がある。夜の敵から<b>影の欠片</b>を集め<b>影鏡</b>を作れば、影の世界へ渡れる。影でしか採れぬ<b>影晶・光素</b>で最強装備を。ただし影に長居すると正気が削られる——光を絶やすな。</p>
+      </details>
     </div>
   </div>
 
@@ -264,42 +274,42 @@
   } catch (e) { console.warn('Trystero load failed (multiplayer disabled):', e); }
 </script>
 
-<script src="js/config.js?v=235"></script>
-<script src="js/utils.js?v=235"></script>
-<script src="js/noise.js?v=235"></script>
-<script src="js/tiles.js?v=235"></script>
-<script src="js/worldgen.js?v=235"></script>
-<script src="js/settings.js?v=235"></script>
-<script src="js/icons.js?v=235"></script>
-<script src="js/world.js?v=235"></script>
-<script src="js/camera.js?v=235"></script>
-<script src="js/lighting.js?v=235"></script>
-<script src="js/render.js?v=235"></script>
-<script src="js/inventory.js?v=235"></script>
-<script src="js/loot.js?v=235"></script>
-<script src="js/crafting.js?v=235"></script>
-<script src="js/combat.js?v=235"></script>
-<script src="js/projectiles.js?v=235"></script>
-<script src="js/player.js?v=235"></script>
-<script src="js/survival.js?v=235"></script>
-<script src="js/status.js?v=235"></script>
-<script src="js/farming.js?v=235"></script>
-<script src="js/daynight.js?v=235"></script>
-<script src="js/events.js?v=235"></script>
-<script src="js/mobs.js?v=235"></script>
-<script src="js/input.js?v=235"></script>
-<script src="js/audio.js?v=235"></script>
-<script src="js/ui.js?v=235"></script>
-<script src="js/cutscene.js?v=235"></script>
-<script src="js/story.js?v=235"></script>
-<script src="js/net.js?v=235"></script>
-<script src="js/discovery.js?v=235"></script>
-<script src="js/rocket.js?v=235"></script>
-<script src="js/lore.js?v=235"></script>
-<script src="js/achievements.js?v=235"></script>
-<script src="js/bounty.js?v=235"></script>
-<script src="js/quests.js?v=235"></script>
-<script src="js/save.js?v=235"></script>
-<script src="js/main.js?v=235"></script>
+<script src="js/config.js?v=236"></script>
+<script src="js/utils.js?v=236"></script>
+<script src="js/noise.js?v=236"></script>
+<script src="js/tiles.js?v=236"></script>
+<script src="js/worldgen.js?v=236"></script>
+<script src="js/settings.js?v=236"></script>
+<script src="js/icons.js?v=236"></script>
+<script src="js/world.js?v=236"></script>
+<script src="js/camera.js?v=236"></script>
+<script src="js/lighting.js?v=236"></script>
+<script src="js/render.js?v=236"></script>
+<script src="js/inventory.js?v=236"></script>
+<script src="js/loot.js?v=236"></script>
+<script src="js/crafting.js?v=236"></script>
+<script src="js/combat.js?v=236"></script>
+<script src="js/projectiles.js?v=236"></script>
+<script src="js/player.js?v=236"></script>
+<script src="js/survival.js?v=236"></script>
+<script src="js/status.js?v=236"></script>
+<script src="js/farming.js?v=236"></script>
+<script src="js/daynight.js?v=236"></script>
+<script src="js/events.js?v=236"></script>
+<script src="js/mobs.js?v=236"></script>
+<script src="js/input.js?v=236"></script>
+<script src="js/audio.js?v=236"></script>
+<script src="js/ui.js?v=236"></script>
+<script src="js/cutscene.js?v=236"></script>
+<script src="js/story.js?v=236"></script>
+<script src="js/net.js?v=236"></script>
+<script src="js/discovery.js?v=236"></script>
+<script src="js/rocket.js?v=236"></script>
+<script src="js/lore.js?v=236"></script>
+<script src="js/achievements.js?v=236"></script>
+<script src="js/bounty.js?v=236"></script>
+<script src="js/quests.js?v=236"></script>
+<script src="js/save.js?v=236"></script>
+<script src="js/main.js?v=236"></script>
 </body>
 </html>

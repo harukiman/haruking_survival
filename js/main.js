@@ -303,6 +303,7 @@ window.Game = window.Game || {};
   function initTitle() {
     const btnContinue = document.getElementById('btn-continue');
     if (!Game.Save.hasSave()) { btnContinue.classList.add('disabled'); btnContinue.disabled = true; }
+    else { const cc = document.querySelector('.cta-col'); if (cc) cc.classList.add('has-save'); } // セーブ持ちには「つづきから」を主導線に
     // 難易度セレクタ
     let chosenDiff = 'normal';
     const diffBtns = document.querySelectorAll('#diff-row .diff-btn');

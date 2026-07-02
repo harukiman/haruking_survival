@@ -2,6 +2,12 @@
 window.Game = window.Game || {};
 
 Game.Survival = (function () {
+  // 警戒/快調フィードバックの再武装フラグ(セッション内。初回は盛大・以降は控えめ)
+  let stamWarned = false, stamCued = false;
+  let sanWarn1 = false, sanWarn2 = false, sanCued = false;
+  let wasWellfed = false, wellfedToasted = false;
+  let hungerCritCued = false;
+
   function update() {
     const p = Game.state.player;
 
@@ -21,9 +27,35 @@ Game.Survival = (function () {
       p.hungerTimer = 0;
       if (p.hunger > 0) { p.hunger--; Game.UI.refreshStats(); }
     }
-    // 空腹の危機警告(20を下回ったら一度・回復で再武装)。餓死前に気づける
+    // 空腹の危機警告(段階式・回復で再武装)。餓死前に必ず気づける
     if (p.hunger <= 20 && !p._hungerWarned) { p._hungerWarned = true; Game.UI.toast('🍖 お腹が空いた… 何か食べないと餓死する！'); if (Game.Audio) Game.Audio.play('lowhp'); }
     else if (p.hunger > 35 && p._hungerWarned) { p._hungerWarned = false; }
+    if (p.hunger <= 8 && !p._hungerCrit) {
+      p._hungerCrit = true;
+      Game.UI.toast('🍖 餓死寸前だ！ 今すぐ何か口にしろ！');
+      if (Game.Audio) Game.Audio.play('lowhp');
+      if (!hungerCritCued) { hungerCritCued = true; if (Game.Render && Game.Render.flash) Game.Render.flash('rgba(200,120,30,0.22)'); }
+    } else if (p.hunger > 25 && p._hungerCrit) { p._hungerCrit = false; }
+
+    // スタミナ切れの気づき(初回は音付き・以降はトーストのみ。回復で再武装)
+    if (p.stamina <= 10 && !stamWarned) {
+      stamWarned = true;
+      Game.UI.toast('💨 息が切れた… 少し歩みを緩めて呼吸を整えよう');
+      if (!stamCued && Game.Audio) { stamCued = true; Game.Audio.play('lowhp'); }
+    } else if (p.stamina > 45 && stamWarned) { stamWarned = false; }
+
+    // 満腹(wellfed)になった瞬間の快調フィードバック(初回は盛大・以降は控えめな輝きのみ)
+    const wfNow = !!(Game.Status && Game.Status.has('wellfed'));
+    if (wfNow && !wasWellfed) {
+      if (!wellfedToasted) {
+        wellfedToasted = true;
+        Game.UI.toast('🍗 満腹だ — 身体が温まり、傷の治りも早くなる');
+        if (Game.Audio && Game.Audio.cue) Game.Audio.cue('shimmer');
+      } else if (Game.Render && Game.Render.spawnParticles) {
+        Game.Render.spawnParticles(p.x, p.y - 8, '#e0b04a', 5);
+      }
+    }
+    wasWellfed = wfNow;
 
     // 回復 or 餓死
     p.regenTimer++;
@@ -74,6 +106,20 @@ Game.Survival = (function () {
         Game.UI.refreshWorld();
       }
       Game.state.sanity = Math.max(0, Game.state.sanity - drain);
+      // 正気の警告(段階式・初回のみ音とフラッシュ付き。40超で再武装)
+      const sn = Game.state.sanity;
+      if (sn < 30 && !sanWarn1) {
+        sanWarn1 = true;
+        Game.UI.toast('🧠 正気が揺らいでいる… 光のそばで心を鎮めよう');
+        if (!sanCued) { sanCued = true; if (Game.Audio) Game.Audio.play('lowhp'); if (Game.Render && Game.Render.flash) Game.Render.flash('rgba(120,60,180,0.16)'); }
+      }
+      if (sn < 12 && !sanWarn2) {
+        sanWarn2 = true;
+        Game.UI.toast('👁 闇が囁いている… 今すぐ光を！ 正気が尽きれば命が削れる');
+        if (Game.Audio) Game.Audio.play('lowhp');
+        if (Game.Render && Game.Render.flash) Game.Render.flash('rgba(110,40,170,0.26)');
+      }
+      if (sn > 40) { sanWarn1 = false; sanWarn2 = false; }
       if (Game.state.sanity < 10 && Game.Achievements) Game.Achievements.unlock('deep_sanity');
       const diff = Game.DIFFICULTIES[Game.state.difficulty] || Game.DIFFICULTIES.normal;
       if (diff.sanityKill && Game.state.sanity <= 0 && p.health > 0 && Game.state.tick % 50 === 0) damage(2, 'sanity');
@@ -135,7 +181,7 @@ Game.Survival = (function () {
         if (Game.Render.spawnParticles) Game.Render.spawnParticles(p.x, p.y, '#bfe8ff', 10);
         Game.Audio.play('dodge_just');
       }
-      return;
+      return false; // ブロック: 呼び出し側は状態異常/被弾演出も抑止すること
     }
     // 防具で軽減（飢餓・正気崩壊は無視）
     if (physical) {
@@ -148,6 +194,7 @@ Game.Survival = (function () {
     if (physical) { p.invuln = 30; Game.Audio.play('hurt'); if (Game.Render.hurtFlash) Game.Render.hurtFlash(); if (Game.Render.shake && amount >= 6) Game.Render.shake(Math.min(9, 3 + amount * 0.4)); }
     if (p.health <= 0) { p.health = 0; die(); }
     Game.UI.refreshStats();
+    return true; // ダメージ成立
   }
 
   const CAUSE_LABEL = { starve: '餓死', sanity: '正気の崩壊', status: '状態異常', thorns: '棘の反射', mob: '魔物の襲撃' };

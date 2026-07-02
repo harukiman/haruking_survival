@@ -454,13 +454,14 @@ Game.Mobs = (function () {
           moveMob(m, mvx, mvy, m.def.speed * 0.82 * spdM);
           // 接触攻撃
           if (distP < (m.def.size * 0.5 + 12) && m.attackCd <= 0) {
-            Game.Survival.damage(m.dmg || m.def.dmg, m.def.name || 'mob');
-            if (Game.Render.spawnHitDir) Game.Render.spawnHitDir(m.x, m.y); // 被弾方向インジケータ
-            if (m.def.inflict) for (const k in m.def.inflict) Game.Status.add(k, m.def.inflict[k]);
-            if (hasAffix(m, 'blazing')) Game.Status.add('burn', Game.ELITE_AFFIXES.blazing.burn); // 業火: 接触で炎上
-            m.attackCd = m.def.boss ? 30 : 42;
-            const kl = distP || 1;
-            p.x += (dxp / kl) * (m.def.boss ? 12 : 6); p.y += (dyp / kl) * (m.def.boss ? 12 : 6);
+            if (Game.Survival.damage(m.dmg || m.def.dmg, m.def.name || 'mob') !== false) {
+              if (Game.Render.spawnHitDir) Game.Render.spawnHitDir(m.x, m.y); // 被弾方向インジケータ
+              if (m.def.inflict) for (const k in m.def.inflict) Game.Status.add(k, m.def.inflict[k]);
+              if (hasAffix(m, 'blazing')) Game.Status.add('burn', Game.ELITE_AFFIXES.blazing.burn); // 業火: 接触で炎上
+              const kl = distP || 1;
+              p.x += (dxp / kl) * (m.def.boss ? 12 : 6); p.y += (dyp / kl) * (m.def.boss ? 12 : 6);
+            }
+            m.attackCd = m.def.boss ? 30 : 42; // 空振りでもCDは消費(連続判定スパム防止)
           }
         } else {
           wander(m);
