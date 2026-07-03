@@ -94,6 +94,18 @@ Game.Tiles = (function () {
       x.fillStyle = 'rgba(255,255,255,0.55)';
       for (let i = 0; i < 2; i++) x.fillRect(2 + rnd() * (TS - 4), 2 + rnd() * (TS - 4), 1.2, 1.2);
     }
+    // 古代都市の割れ石畳: 石畳の目地＋ひび＋苔の斑
+    if (id === Game.TILE.RUIN) {
+      x.strokeStyle = shade(base, -20); x.lineWidth = 1;
+      x.beginPath(); x.moveTo(0, TS / 2 + (rnd() - 0.5) * 3); x.lineTo(TS, TS / 2 + (rnd() - 0.5) * 3); x.stroke(); // 横目地
+      x.beginPath(); x.moveTo(TS / 2 + (rnd() - 0.5) * 3, 0); x.lineTo(TS / 2 + (rnd() - 0.5) * 3, TS); x.stroke(); // 縦目地
+      x.strokeStyle = shade(base, -30);
+      x.beginPath(); const cx0 = rnd() * TS; x.moveTo(cx0, 0); x.lineTo(cx0 + (rnd() - 0.5) * 8, TS * 0.5); x.lineTo(cx0 + (rnd() - 0.5) * 10, TS); x.stroke(); // ひび
+      x.fillStyle = 'rgba(90,120,70,0.35)'; // 苔
+      for (let i = 0; i < 2; i++) circle(x, 3 + rnd() * (TS - 6), 3 + rnd() * (TS - 6), 1.6);
+      x.fillStyle = shade(base, 14);
+      for (let i = 0; i < 2; i++) circle(x, 3 + rnd() * (TS - 6), 3 + rnd() * (TS - 6), 1);
+    }
     // 沼地は淀んだ水たまり＋気泡
     if (id === Game.TILE.SWAMP) {
       x.fillStyle = shade(base, -22);
@@ -105,7 +117,7 @@ Game.Tiles = (function () {
   }
 
   // 立ちオブジェクトの接地影（チャンクキャッシュにベイク＝毎フレーム負荷ゼロ）
-  const standing = { tree: 1, deadtree: 1, pine: 1, rock: 1, ore: 1, bush: 1, berry: 1, cactus: 1, flower: 1, sapling: 1, shadowtree: 1, shadowcrystal: 1, lumenore: 1, soulflower: 1, voidrock: 1, starore: 1, giantshroom: 1, glowshroom: 1, pmushroom: 1, obsidian: 1, sulfur: 1, barrel: 1, potted: 1, totem: 1, streetlamp: 1, torch: 1, lantern: 1, brazier: 1, stela: 1, sign: 1, campfire: 1, rocket_obj: 1, lumenlantern: 1, banner: 1, chair: 1, skytree: 1, skypillar: 1, windaltar: 1, returnaltar: 1 };
+  const standing = { tree: 1, deadtree: 1, pine: 1, rock: 1, ore: 1, bush: 1, berry: 1, cactus: 1, flower: 1, sapling: 1, shadowtree: 1, shadowcrystal: 1, lumenore: 1, soulflower: 1, voidrock: 1, starore: 1, giantshroom: 1, glowshroom: 1, pmushroom: 1, obsidian: 1, sulfur: 1, barrel: 1, potted: 1, totem: 1, streetlamp: 1, torch: 1, lantern: 1, brazier: 1, stela: 1, sign: 1, campfire: 1, rocket_obj: 1, lumenlantern: 1, banner: 1, chair: 1, skytree: 1, skypillar: 1, windaltar: 1, returnaltar: 1, ancientgate: 1, returngate: 1, ruincolumn: 1, ruinstatue: 1 };
   function contactShadow(x, rx) {
     x.fillStyle = 'rgba(0,0,0,0.22)';
     x.beginPath(); x.ellipse(TS / 2, TS - 4, rx || 10, 3.2, 0, 0, Math.PI * 2); x.fill();
@@ -484,6 +496,36 @@ Game.Tiles = (function () {
       x.fillStyle = '#e8c54a'; x.fillRect(4, 9, TS - 8, 6);
       x.strokeStyle = '#7a5a1a'; x.lineWidth = 1.5; x.strokeRect(4, 9, TS - 8, TS - 13);
       x.fillStyle = '#fff3c0'; x.fillRect(TS/2 - 2, 15, 4, 5);
+    } else if (r === 'ancientgate') {
+      // 古の門: 石の枠門＋黄金の紋様＋門内の琥珀色の揺らぎ
+      x.fillStyle = '#8a8270'; x.fillRect(4, 3, 6, TS - 4); x.fillRect(TS - 10, 3, 6, TS - 4); // 左右柱
+      x.fillStyle = '#9a9480'; x.fillRect(2, 2, TS - 4, 6); // 楣
+      x.fillStyle = 'rgba(224,207,144,0.5)'; x.fillRect(10, 8, TS - 20, TS - 10); // 門内の光
+      x.fillStyle = '#d8c078'; x.fillRect(10, 8, TS - 20, 2); // 紋様
+      x.strokeStyle = '#6a6250'; x.lineWidth = 1.5; x.strokeRect(4, 3, TS - 8, TS - 5);
+      x.fillStyle = '#f0e0a0'; circle(x, TS / 2, TS / 2, 2);
+    } else if (r === 'returngate') {
+      // 還りの門: 淡い石枠＋緑碧の帰路の光
+      x.fillStyle = '#a8a290'; x.fillRect(4, 3, 6, TS - 4); x.fillRect(TS - 10, 3, 6, TS - 4);
+      x.fillStyle = '#b8b29c'; x.fillRect(2, 2, TS - 4, 6);
+      x.fillStyle = 'rgba(160,208,180,0.5)'; x.fillRect(10, 8, TS - 20, TS - 10);
+      x.strokeStyle = '#7a7460'; x.lineWidth = 1.5; x.strokeRect(4, 3, TS - 8, TS - 5);
+      x.fillStyle = '#c0e8cf'; circle(x, TS / 2, TS / 2, 2);
+    } else if (r === 'ruincolumn') {
+      // 崩れた列柱: 折れた砂岩の柱
+      x.fillStyle = '#b0a888'; x.fillRect(TS / 2 - 6, 8, 12, TS - 12);
+      x.fillStyle = '#c8c0a0'; x.fillRect(TS / 2 - 4, 10, 5, TS - 16);
+      x.fillStyle = '#98906e'; x.fillRect(TS / 2 - 8, TS - 6, 16, 4); // 基壇
+      x.fillStyle = '#0c0a06'; x.globalAlpha = 0.22; x.fillRect(TS / 2 + 2, 12, 4, 3); x.fillRect(TS / 2 - 6, 20, 3, 4); x.globalAlpha = 1;
+      x.fillStyle = 'rgba(90,120,70,0.4)'; circle(x, TS / 2 - 4, TS - 9, 1.5); // 苔
+    } else if (r === 'ruinstatue') {
+      // 古の石像: 顔の欠けた立像
+      x.fillStyle = '#a89f80'; x.fillRect(TS / 2 - 7, TS - 8, 14, 6); // 台座
+      x.fillStyle = '#bcb492'; x.fillRect(TS / 2 - 5, 8, 10, TS - 14); // 胴
+      x.fillStyle = '#c8c0a0'; circle(x, TS / 2, 8, 5); // 頭
+      x.fillStyle = '#0c0a06'; x.globalAlpha = 0.28; x.fillRect(TS / 2 - 1, 6, 4, 4); x.globalAlpha = 1; // 欠けた顔
+      x.fillStyle = 'rgba(216,192,120,0.5)'; x.fillRect(TS / 2 - 4, 14, 8, 1.5); // 黄金の刻印
+      x.fillStyle = 'rgba(90,120,70,0.35)'; circle(x, TS / 2 + 3, TS - 6, 1.3);
     }
     objAtlas[id] = c;
   }

@@ -151,11 +151,75 @@ Game.WorldGen = (function () {
     return { ground: ground, obj: obj };
   }
 
+  // ===== 古代都市(エンクレーブ) — 光世界の別の固定座標に沈黙する遺構都市 =====
+  const RUIN_READY = true;
+  const RUIN_R = 40;         // 半径
+  const RUIN_DIST = 300;     // アンカーからの距離(空島=360と別方角・別距離で衝突回避)
+  let ruinMemo = null, ruinMemoSeed = null;
+  function ruinCenter(seed) {
+    if (ruinMemoSeed === seed && ruinMemo) return ruinMemo;
+    const a = spawnAnchor(seed);
+    const ang = U.hash3(31, 17, seed + 313) * Math.PI * 2 + Math.PI; // 空島と反対寄りの方角
+    ruinMemoSeed = seed;
+    ruinMemo = { tx: a.tx + Math.round(Math.cos(ang) * RUIN_DIST), ty: a.ty + Math.round(Math.sin(ang) * RUIN_DIST) };
+    const ang2 = U.hash3(5, 9, seed + 414) * Math.PI * 2;
+    ruinMemo.gx = ruinMemo.tx + Math.round(Math.cos(ang2) * 22); // 守番の神殿
+    ruinMemo.gy = ruinMemo.ty + Math.round(Math.sin(ang2) * 22);
+    return ruinMemo;
+  }
+  function inRuinCity(wx, wy, seed) {
+    if (!RUIN_READY) return false;
+    const C = ruinCenter(seed);
+    const dx = wx - C.tx, dy = wy - C.ty;
+    if (dx > RUIN_R || dx < -RUIN_R || dy > RUIN_R || dy < -RUIN_R) return false;
+    return dx * dx + dy * dy <= RUIN_R * RUIN_R;
+  }
+  function ruinArrival(seed) { const C = ruinCenter(seed); return { tx: C.tx, ty: C.ty + 2 }; }
+  function ruinReturnGate(seed) { const C = ruinCenter(seed); return { tx: C.tx, ty: C.ty }; }
+  function genRuinTile(wx, wy, seed) {
+    const C = ruinCenter(seed);
+    const dx = wx - C.tx, dy = wy - C.ty, d = Math.sqrt(dx * dx + dy * dy);
+    // 外縁: 沈んだ暗い水濠(都市を隔てる)
+    if (d > RUIN_R - 3) return { ground: T.DEEP_WATER, obj: O.NONE };
+    // 中央広場: 還りの門＋列柱の環
+    if (d <= 5.5) {
+      let obj = O.NONE;
+      if (dx === 0 && dy === 0) obj = O.RETURN_GATE;
+      else if (Math.abs(dx) === 3 && Math.abs(dy) === 3) obj = O.RUIN_COLUMN;
+      return { ground: T.RUIN, obj: obj };
+    }
+    // 守番の神殿: 宝箱＋巣＋石像の環(南が開口)
+    const tdx = wx - C.gx, tdy = wy - C.gy, td = Math.sqrt(tdx * tdx + tdy * tdy);
+    if (td <= 5.5) {
+      let obj = O.NONE;
+      if (tdx === 0 && tdy === 0) obj = O.TREASURE_CHEST;
+      else if (Math.abs(tdx) === 2 && tdy === 0) obj = O.SPAWNER;
+      else if (td > 4.2 && !(tdy > 2 && Math.abs(tdx) <= 1) && U.hash3(wx, wy, seed + 616) < 0.7) obj = O.RUIN_STATUE;
+      return { ground: T.RUIN, obj: obj };
+    }
+    // 街区: 石畳の道と崩れた建物・広場の緑・水路
+    const v = N.fbm(wx * 0.06, wy * 0.06, seed ^ 0x2c17, 4);
+    if (v < 0.40) return { ground: T.WATER, obj: O.NONE }; // 沈んだ水路
+    const grid = (Math.abs(wx % 6) <= 1 || Math.abs(wy % 6) <= 1); // 石畳の街路
+    const ground = (v > 0.72 && !grid) ? T.GRASS : T.RUIN; // 広場に苔・緑
+    const h = U.hash3(wx, wy, seed + 818);
+    let obj = O.NONE;
+    if (!grid) {
+      if (ground === T.GRASS) { if (h < 0.07) obj = O.BUSH; else if (h < 0.10) obj = O.RELIC_VEIN; else if (h < 0.13) obj = O.RUIN_STATUE; }
+      else { if (h < 0.10) obj = O.RUIN_COLUMN; else if (h < 0.15) obj = O.RELIC_VEIN; else if (h < 0.18) obj = O.RUIN_STATUE; else if (h < 0.21) obj = O.ROCK; }
+    }
+    return { ground: ground, obj: obj };
+  }
+
   function genTile(wx, wy, seed) {
     if (Game.state && Game.state.worldName === 'space') return genSpace(wx, wy, seed);
     // 空島エンクレーブ(光世界のみ)。バウンズ判定を最初に行い、外側は従来生成へフォールスルー
     if (!(Game.state && Game.state.worldName === 'shadow') && inSkyEnclave(wx, wy, seed)) {
       return genSkyTile(wx, wy, seed);
+    }
+    // 古代都市エンクレーブ(光世界のみ)
+    if (!(Game.state && Game.state.worldName === 'shadow') && inRuinCity(wx, wy, seed)) {
+      return genRuinTile(wx, wy, seed);
     }
     const tr = terrainAt(wx, wy, seed);
     let ground = tr.ground;
@@ -181,6 +245,14 @@ Game.WorldGen = (function () {
         !(Game.state && Game.state.worldName === 'shadow') &&
         U.hash3(wx, wy, seed + 77777) < 0.0006) {
       return { ground: ground, obj: O.WIND_ALTAR };
+    }
+
+    // 古の門（古代都市への門・草原/森・光世界のみ・未使用ハッシュ窓 seed+33333）
+    // 古の鍵を持って傍らに立つと沈黙の都市へ通じる
+    if (RUIN_READY && (ground === T.GRASS || ground === T.FOREST) &&
+        !(Game.state && Game.state.worldName === 'shadow') &&
+        U.hash3(wx, wy, seed + 33333) < 0.0005) {
+      return { ground: ground, obj: O.ANCIENT_GATE };
     }
 
     // ダンジョン（両世界・テーマ＆サイズ複数種: 遺跡/氷窟/砂の墳墓/溶岩工房）
@@ -370,7 +442,7 @@ Game.WorldGen = (function () {
         const t = genTile(tx, ty, seed);
         const walkable = t.obj === O.NONE &&
           (t.ground === T.GRASS || t.ground === T.SAND || t.ground === T.FOREST || t.ground === T.DIRT) &&
-          !inSkyEnclave(tx, ty, seed); // 空島の草地を初期スポーンに選ばない(海洋シード保険)
+          !inSkyEnclave(tx, ty, seed) && !inRuinCity(tx, ty, seed); // 空島/古代都市の草地を初期スポーンに選ばない
         if (walkable) return { tx, ty };
       }
     }
@@ -401,5 +473,6 @@ Game.WorldGen = (function () {
   }
 
   return { genTile, generateChunk, findSpawn, dungeonThemeAt, spawnAnchor,
-    inSkyEnclave, skyCenter, skyArrival, skyReturnAltar };
+    inSkyEnclave, skyCenter, skyArrival, skyReturnAltar,
+    inRuinCity, ruinCenter, ruinArrival, ruinReturnGate };
 })();

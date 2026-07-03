@@ -33,8 +33,8 @@ Game.CFG = {
 };
 
 // 地面レイヤー
-// CLOUD=空島の雲石(歩行可) / SKYVOID=空の虚(歩行不可・空島エンクレーブ限定)
-Game.TILE = { DEEP_WATER:0, WATER:1, SAND:2, GRASS:3, FOREST:4, DIRT:5, STONE:6, SNOW:7, DUNGEON_FLOOR:8, SWAMP:9, VOLCANIC:10, MUSHROOM:11, BLOOM:12, CLOUD:13, SKYVOID:14 };
+// CLOUD=空島の雲石(歩行可) / SKYVOID=空の虚(歩行不可・空島エンクレーブ限定) / RUIN=古代都市の割れ石畳(歩行可)
+Game.TILE = { DEEP_WATER:0, WATER:1, SAND:2, GRASS:3, FOREST:4, DIRT:5, STONE:6, SNOW:7, DUNGEON_FLOOR:8, SWAMP:9, VOLCANIC:10, MUSHROOM:11, BLOOM:12, CLOUD:13, SKYVOID:14, RUIN:15 };
 
 // オブジェクトレイヤー（0=なし、50番台=影世界固有、100番台=プレイヤー設置物）
 Game.OBJ = {
@@ -66,6 +66,8 @@ Game.OBJ = {
   GIANT_MUSHROOM:149, GLOW_SHROOM:150, WISH_ALTAR:151,
   // 空島(スカイエンクレーブ)
   WIND_ALTAR:152, RETURN_ALTAR:153, SKY_PILLAR:154, SKY_TREE:155, WIND_ORE:156,
+  // 古代都市(エンクレーブ)
+  ANCIENT_GATE:157, RETURN_GATE:158, RUIN_COLUMN:159, RELIC_VEIN:160, RUIN_STATUE:161,
 };
 
 // 地面の色（手続き描画のベース）
@@ -84,6 +86,7 @@ Game.TILE_COLOR = {
   [Game.TILE.MUSHROOM]:   '#3a2c4a',
   [Game.TILE.BLOOM]:      '#6cbf46',
   [Game.TILE.CLOUD]:      '#e4ecf2',
+  [Game.TILE.RUIN]:       '#b8b2a0',
   [Game.TILE.SKYVOID]:    '#7fb8dc',
 };
 
@@ -103,6 +106,7 @@ Game.SHADOW_TILE_COLOR = {
   [Game.TILE.MUSHROOM]:   '#241a36',
   [Game.TILE.BLOOM]:      '#352a52',
   [Game.TILE.CLOUD]:      '#4a4a68',
+  [Game.TILE.RUIN]:       '#4a4740',
   [Game.TILE.SKYVOID]:    '#181430',
 };
 
@@ -122,6 +126,7 @@ Game.SPACE_TILE_COLOR = {
   [Game.TILE.MUSHROOM]:   '#3e3a48',
   [Game.TILE.BLOOM]:      '#5e5a52',
   [Game.TILE.CLOUD]:      '#8a8a96',
+  [Game.TILE.RUIN]:       '#6a665c',
   [Game.TILE.SKYVOID]:    '#06070f',
 };
 
@@ -157,6 +162,9 @@ Game.LIGHT_LEVEL = {
   [Game.OBJ.WIND_ALTAR]: 7,
   [Game.OBJ.RETURN_ALTAR]: 7,
   [Game.OBJ.WIND_ORE]: 3,
+  [Game.OBJ.ANCIENT_GATE]: 5,
+  [Game.OBJ.RETURN_GATE]: 5,
+  [Game.OBJ.RELIC_VEIN]: 3,
 };
 
 // オブジェクトのメタ情報。solid=移動阻害, drops=破壊時ドロップ
@@ -251,6 +259,12 @@ Game.OBJ_META = {
   [Game.OBJ.SKY_PILLAR]:  { name:'風化した柱', solid:true, mineable:true, tool:'pickaxe', tier:2, hp:14, drops:[{item:'stone', n:[1,2]}], render:'skypillar' },
   [Game.OBJ.SKY_TREE]:    { name:'空の樹', solid:true, mineable:true, tool:'axe', tier:0, hp:7, drops:[{item:'wood', n:[2,3]},{item:'feather', n:[0,1]}], render:'skytree' },
   [Game.OBJ.WIND_ORE]:    { name:'風晶鉱', solid:true, mineable:true, tool:'pickaxe', tier:3, hp:16, drops:[{item:'wind_crystal', n:[1,2]}], render:'ore', oreColor:'#8fe8e0' },
+  // 古代都市(エンクレーブ)
+  [Game.OBJ.ANCIENT_GATE]:{ name:'古の門', solid:true, mineable:false, tool:null, tier:0, hp:999, light:5, drops:[], render:'ancientgate', ancientGate:true },
+  [Game.OBJ.RETURN_GATE]: { name:'還りの門', solid:true, mineable:false, tool:null, tier:0, hp:999, light:5, drops:[], render:'returngate', returnGate:true },
+  [Game.OBJ.RUIN_COLUMN]: { name:'崩れた列柱', solid:true, mineable:true, tool:'pickaxe', tier:2, hp:16, drops:[{item:'stone', n:[1,3]}], render:'ruincolumn' },
+  [Game.OBJ.RUIN_STATUE]: { name:'古の石像', solid:true, mineable:true, tool:'pickaxe', tier:3, hp:24, drops:[{item:'stone', n:[2,4]},{item:'relic_shard', n:[0,1]}], render:'ruinstatue' },
+  [Game.OBJ.RELIC_VEIN]:  { name:'遺物の鉱脈', solid:true, mineable:true, tool:'pickaxe', tier:3, hp:18, drops:[{item:'relic_shard', n:[1,2]}], render:'ore', oreColor:'#d8c078' },
 };
 
 // アイテム定義。place=設置するOBJ id, tool/tier=道具, food=空腹回復
@@ -507,6 +521,13 @@ Game.ITEMS = {
   wind_sword:    { name:'風鋼の剣', stack:1, color:'#9fe8e0', tool:'sword', tier:4, attack:12, special:{type:'brand', name:'風纏', dot:'frost', color:'#9fe8e0'}, flavor:'風鋼で鍛えた細身の剣。斬られた者は風に縛られ、足が鈍る。' },
   sky_cloak:     { name:'天羽織', stack:1, color:'#dfe8f4', armor:5, slot:'chest', warm:true, flavor:'雲鷹の羽根を織り込んだ羽織。空島の風雪すら柔らかく受け流す。' },
   cloud_boots:   { name:'雲の靴', stack:1, color:'#cfe0ec', relic:{moveSpd:0.08, staminaMax:20}, flavor:'雲を踏む感触の軽い靴。装身具として身につければ足取りが軽くなる。移動+8%・スタミナ+20。' },
+  // 古代都市の遺物
+  relic_shard:   { name:'遺物のかけら', stack:99, color:'#d8c078', flavor:'古代都市の石像や鉱脈から出る黄金の破片。文字とも紋様ともつかぬ刻印が走っている。' },
+  ancient_alloy: { name:'古代合金', stack:99, color:'#c8b884', flavor:'遺物のかけらを鉄と溶き合わせた失われた合金。時を経てなお錆びない。' },
+  gate_key:      { name:'古の鍵', stack:8, color:'#e0cf90', flavor:'古の門をひらく鍵。金鉱と光素を門の紋様に合わせて鋳た。掲げれば沈黙の都市へ通じる。' },
+  ruin_blade:    { name:'遺構の長剣', stack:1, color:'#cabf8a', tool:'sword', tier:4, attack:12, special:{type:'echo', name:'残響', pct:0.4, cd:60, color:'#e8dca0'}, flavor:'古代都市の兵が佩いた長剣。一撃が過去の残響を呼び、二度三度と斬り重なる。' },
+  warden_plate:  { name:'守番の胸甲', stack:1, color:'#b8ac82', armor:6, slot:'chest', flavor:'都市を永く守り続けた守番の鎧。重いが、古代合金ゆえの堅牢さは折り紙付き。' },
+  ancient_charm: { name:'古の護符', stack:1, color:'#e0cf90', relic:{maxHp:16, armor:1}, flavor:'刻印の護符。古の守りが宿り、身を固くする。装身具として最大HP+16・防御+1。' },
 };
 
 // クラフトレシピ。station=null は手作り、それ以外は近接が必要
@@ -681,6 +702,12 @@ Game.RECIPES = [
   { out:{id:'wind_sword', n:1}, in:{wind_steel:3, wood:1}, station:'crafting_table' },
   { out:{id:'sky_cloak', n:1}, in:{feather:6, wind_steel:2, string:2}, station:'crafting_table' },
   { out:{id:'cloud_boots', n:1}, in:{feather:3, wind_steel:1, hide:2}, station:'crafting_table' },
+  // 古代都市: 古の鍵で門をひらき、遺物のかけらを合金にして装備を鍛える
+  { out:{id:'gate_key', n:1}, in:{gold_ore:3, lumen:2}, station:'crafting_table' }, // 都市外で入手できる素材(門に入る前に作れる)
+  { out:{id:'ancient_alloy', n:1}, in:{relic_shard:2, iron:1}, station:'furnace' },
+  { out:{id:'ruin_blade', n:1}, in:{ancient_alloy:3, wood:1}, station:'crafting_table' },
+  { out:{id:'warden_plate', n:1}, in:{ancient_alloy:4, iron:2}, station:'crafting_table' },
+  { out:{id:'ancient_charm', n:1}, in:{relic_shard:4, gold_ore:2, lumen:1}, station:'crafting_table' },
 ];
 
 // 装備セット効果（head+chest が同セットで発動）
@@ -877,6 +904,10 @@ Game.MOBS = {
   wind_wisp:  { name:'風の精', hostile:true, hp:20, speed:1.5, color:'#bfe8e0', size:10, drops:[{item:'feather',n:[0,1]},{item:'wind_crystal',n:[0,1]},{item:'lumen',n:[0,1]}], dmg:5, xp:6, ghost:true, shape:'wisp', ranged:{dmg:6,range:7,cd:80,kind:'frost',status:{cold:150}} },
   cloud_hawk: { name:'雲鷹', hostile:true, hp:24, speed:2.2, color:'#dfe8f4', size:12, drops:[{item:'feather',n:[1,3]},{item:'raw_meat',n:[0,1]}], dmg:6, xp:7, shape:'bird', charge:{ range:5, windup:14, dashTicks:18, dashSpeed:5.6, dmg:10, cd:140 } },
   sky_warden: { name:'空島の番人', hostile:true, hp:140, speed:1.0, color:'#9fb8c8', size:18, drops:[{item:'wind_crystal',n:[2,4]},{item:'feather',n:[1,3]},{item:'lumen',n:[1,2]},{item:'stone',n:[2,4]}], dmg:10, xp:18, midboss:true, big:true, shape:'tall', pound:{r:2.0,cd:120}, summon:'wind_wisp', inflict:{cold:180} },
+  // 古代都市の守り手
+  sentinel_husk: { name:'哨士の亡骸', hostile:true, hp:60, speed:0.7, color:'#b8ac82', size:14, drops:[{item:'relic_shard',n:[0,1]},{item:'stone',n:[1,2]}], dmg:9, xp:9, shape:'tall', ranged:{dmg:7,range:7,cd:70,kind:'hex'} },
+  gloom_moth:  { name:'幽き蛾', hostile:true, hp:22, speed:2.0, color:'#9a8fb8', size:11, drops:[{item:'relic_shard',n:[0,1]},{item:'glow_spore',n:[0,1]}], dmg:6, xp:6, ghost:true, shape:'wisp', inflict:{poison:120} },
+  city_warden: { name:'古都の守番', hostile:true, hp:150, speed:1.0, color:'#c8bc8a', size:19, drops:[{item:'relic_shard',n:[3,5]},{item:'ancient_alloy',n:[1,2]},{item:'lumen',n:[1,2]},{item:'gold_ore',n:[1,2]}], dmg:11, xp:20, midboss:true, big:true, shape:'tall', pound:{r:2.1,cd:110}, summon:'sentinel_husk', inflict:{poison:150} },
 };
 
 // 防具スロット

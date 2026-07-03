@@ -227,7 +227,9 @@ Game.World = (function () {
       if (Game.state && Game.state.worldName === 'light' && Game.state.player &&
           Game.WorldGen && Game.WorldGen.inSkyEnclave) {
         const TS = Game.CFG.TILE_SIZE, p = Game.state.player;
-        if (Game.WorldGen.inSkyEnclave(Math.floor(p.x / TS), Math.floor(p.y / TS), Game.state.seed)) return 'sky';
+        const ptx = Math.floor(p.x / TS), pty = Math.floor(p.y / TS);
+        if (Game.WorldGen.inSkyEnclave(ptx, pty, Game.state.seed)) return 'sky';
+        if (Game.WorldGen.inRuinCity && Game.WorldGen.inRuinCity(ptx, pty, Game.state.seed)) return 'ruins';
       }
     } catch (e) {}
     return null;
@@ -254,9 +256,11 @@ Game.World = (function () {
     const D = Game.DANGER;
     if (!D) return 1;
     if (Game.state.worldName === 'space') return 3;
-    // 空島エンクレーブ(光世界): 深域級 band3 に固定(バイオーム/ダンジョン補正は適用しない)
+    // 空島/古代都市エンクレーブ(光世界): 深域級 band3 に固定(バイオーム/ダンジョン補正は適用しない)
     if (Game.state.worldName === 'light' && Game.WorldGen.inSkyEnclave &&
         Game.WorldGen.inSkyEnclave(tx, ty, Game.state.seed)) return 3;
+    if (Game.state.worldName === 'light' && Game.WorldGen.inRuinCity &&
+        Game.WorldGen.inRuinCity(tx, ty, Game.state.seed)) return 3;
     if (bandAnchorSeed !== Game.state.seed) {
       bandAnchor = Game.WorldGen.spawnAnchor ? Game.WorldGen.spawnAnchor(Game.state.seed) : { tx: 0, ty: 0 };
       bandAnchorSeed = Game.state.seed;

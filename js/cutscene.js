@@ -1349,6 +1349,77 @@ Game.Cutscene = (function () {
     ], cb, { subdued: true });
   }
 
+  // ===== 古代都市 到達/帰還ムービー(固有) — 砂金と苔翠、荘厳と郷愁の色彩 =====
+  function ruinBg(top, mid, bot) { const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, top); g.addColorStop(0.55, mid); g.addColorStop(1, bot); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); }
+  function pillar(x, base, h, w, col) { ctx.fillStyle = col; ctx.fillRect(x - w / 2, base - h, w, h); ctx.fillStyle = 'rgba(0,0,0,0.18)'; ctx.fillRect(x + w / 2 - 3, base - h, 3, h); ctx.fillStyle = col; ctx.fillRect(x - w / 2 - 4, base - h - 6, w + 8, 6); }
+  // 門がひらく
+  function scRuinGate(t, now) {
+    ruinBg('#6a5e3e', '#9a865a', '#3a3020');
+    ctx.fillStyle = '#241d10'; ctx.fillRect(0, H * 0.72, W, H); // 大地
+    const cx = W / 2, base = H * 0.72;
+    // 石の枠門
+    pillar(cx - 46, base, 150, 22, '#8a8270'); pillar(cx + 46, base, 150, 22, '#8a8270');
+    ctx.fillStyle = '#9a9480'; ctx.fillRect(cx - 62, base - 156, 124, 18); // 楣
+    // 門内の琥珀光(tで満ちる)
+    const gg = ctx.createLinearGradient(0, base - 150, 0, base); gg.addColorStop(0, 'rgba(240,224,150,' + (0.2 + t * 0.6) + ')'); gg.addColorStop(1, 'rgba(216,192,120,0.1)');
+    ctx.fillStyle = gg; ctx.fillRect(cx - 34, base - 148, 68, 148);
+    // 紋様の明滅
+    ctx.strokeStyle = 'rgba(216,192,120,' + (0.5 + 0.4 * Math.sin(now * 0.006)) + ')'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(cx, base - 74, 26, 0, Math.PI * 2); ctx.stroke();
+    drawWalkerFig(cx, base + 4, 1.7, '#0d0a04', 1, 0);
+  }
+  // 沈黙の大路をゆく
+  function scRuinStreet(t, now) {
+    ruinBg('#8a7a52', '#b8a878', '#5a5038');
+    // 遠近の列柱(両側、tで奥へ流れる)
+    for (let i = 0; i < 6; i++) {
+      const p = ((i / 6 + now * 0.00008 * (1 + t)) % 1);
+      const sc = 0.3 + p * 1.4, yy = H * 0.5 + p * H * 0.4;
+      pillar(W / 2 - (30 + p * 240), yy, 60 * sc, 12 * sc, '#a89f7e');
+      pillar(W / 2 + (30 + p * 240), yy, 60 * sc, 12 * sc, '#a89f7e');
+    }
+    // 苔むした石畳の道(中央)
+    ctx.fillStyle = '#6a6244'; ctx.beginPath(); ctx.moveTo(W / 2 - 30, H); ctx.lineTo(W / 2 + 30, H); ctx.lineTo(W / 2 + 8, H * 0.5); ctx.lineTo(W / 2 - 8, H * 0.5); ctx.fill();
+    ctx.globalAlpha = 0.2; ctx.fillStyle = '#3a5a2a'; for (let i = 0; i < 6; i++) { ctx.beginPath(); ctx.arc(W / 2 + (Math.sin(i * 2) * 20), H * 0.6 + i * 30, 4, 0, Math.PI * 2); ctx.fill(); } ctx.globalAlpha = 1;
+    drawWalkerFig(W / 2, H * 0.86, 1.6, '#20180c', 1, (now * 0.004 | 0) % 2 ? 2 : -2);
+  }
+  // 都市の全景がひらける
+  function scRuinReveal(t, now) {
+    ruinBg('#9a8a5a', '#c8b884', '#6a5e3e');
+    // 陽光
+    const sg = ctx.createRadialGradient(W * 0.28, H * 0.24, 4, W * 0.28, H * 0.24, 150);
+    sg.addColorStop(0, 'rgba(255,244,200,0.9)'); sg.addColorStop(1, 'rgba(255,244,200,0)'); ctx.fillStyle = sg; ctx.fillRect(0, 0, W, H);
+    // 都市のスカイライン(崩れた尖塔と円蓋)
+    const base = H * 0.72; ctx.fillStyle = '#7a6f4c';
+    for (let i = 0; i < 7; i++) { const bx = (i + 0.5) * W / 7, bh = 40 + ((i * 37) % 60) * (0.5 + t * 0.6); ctx.fillRect(bx - 16, base - bh, 32, bh); if (i % 2) { ctx.beginPath(); ctx.arc(bx, base - bh, 16, Math.PI, 0); ctx.fill(); } }
+    // 手前の列柱
+    pillar(W * 0.2, base + 20, 90, 16, '#b0a884'); pillar(W * 0.8, base + 20, 90, 16, '#b0a884');
+    ctx.fillStyle = '#2e2716'; ctx.fillRect(0, base + 18, W, H); // 手前の地面
+    // 水濠のきらめき
+    ctx.fillStyle = 'rgba(90,120,150,0.4)'; ctx.fillRect(0, base + 12, W, 8);
+  }
+  // 帰還: 門をくぐり大地へ戻る
+  function scRuinReturn(t, now) {
+    ruinBg('#b8a878', '#cfc196', '#7a8a5a');
+    const cx = W / 2, base = H * 0.7; pillar(cx - 44, base, 140, 20, '#a8a290'); pillar(cx + 44, base, 140, 20, '#a8a290');
+    ctx.fillStyle = 'rgba(160,208,180,' + (0.3 + t * 0.4) + ')'; ctx.fillRect(cx - 32, base - 138, 64, 138);
+    ctx.fillStyle = '#2e3418'; ctx.fillRect(0, base + 2, W, H);
+    drawWalkerFig(cx, base + 4, 1.5 + t * 0.4, '#20180c', 1, 0);
+  }
+
+  function playRuinArrival(cb) {
+    runScenes([
+      { d: 3000, draw: scRuinGate, text: '古の鍵をかざすと、門の紋様が金に燃えた。', onEnter: function () { if (Game.Audio.cineStart) Game.Audio.cineStart('mystic'); try { Game.Audio.play('portal'); } catch (e) {} if (Game.Audio.cue) Game.Audio.cue('boom'); } },
+      { d: 3200, draw: scRuinStreet, text: '誰もいない大路を、苔と沈黙だけが埋めている。', onEnter: function () { try { Game.Audio.play('ancient_hum'); } catch (e) {} if (Game.Audio.cue) Game.Audio.cue('choir'); } },
+      { d: 3400, draw: scRuinReveal, text: '——沈黙の都市が、崩れた尖塔ごとひらけた。', onEnter: function () { try { Game.Audio.play('portal_arrive'); } catch (e) {} if (Game.Audio.cue) Game.Audio.cue('swell'); } },
+    ], cb);
+  }
+  function playRuinReturn(cb) {
+    runScenes([
+      { d: 2800, draw: scRuinReturn, text: '門をくぐると、見慣れた大地の匂いが戻ってきた。', onEnter: function () { if (Game.Audio.cineStart) Game.Audio.cineStart('mystic'); try { Game.Audio.play('portal'); } catch (e) {} } },
+    ], cb, { subdued: true });
+  }
+
   // 断章データ(story.js)の fx キー → 専用描画。汎用章は scStory
   const STORYFX = {
     chr_dusk: scChrDusk, chr_carve: scChrCarve, chr_stones: scChrStones, chr_dawn: scChrDawn,
@@ -1372,5 +1443,5 @@ Game.Cutscene = (function () {
     });
     runScenes(scenes, cb, { subdued: subdued });
   }
-  return { play, playLaunch, playDiscovery, playBossIntro, playBossOutro, playStory, playSkyArrival, playSkyReturn, skip: finish, isPlaying: function () { return playing; } };
+  return { play, playLaunch, playDiscovery, playBossIntro, playBossOutro, playStory, playSkyArrival, playSkyReturn, playRuinArrival, playRuinReturn, skip: finish, isPlaying: function () { return playing; } };
 })();

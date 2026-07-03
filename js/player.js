@@ -502,6 +502,8 @@ Game.Player = (function () {
       if (o === O.WISH_ALTAR) { activateAltar(tx, ty); return; }
       if (o === O.WIND_ALTAR) { skyTravel(tx, ty); return; }
       if (o === O.RETURN_ALTAR) { skyReturn(); return; }
+      if (o === O.ANCIENT_GATE) { ruinTravel(tx, ty); return; }
+      if (o === O.RETURN_GATE) { ruinReturn(); return; }
       if (o === O.SHADOW_ALTAR) { Game.Mobs.summonBoss(tx, ty); return; }
       if (o === O.ENCHANT_TABLE) { Game.UI.openEnchant(); return; }
       if (o === O.BED) { sleep(); return; }
@@ -539,6 +541,40 @@ Game.Player = (function () {
     Game.Cutscene.playSkyReturn(function () {
       let dx, dy;
       if (td && td.skyFromTx != null) { dx = td.skyFromTx; dy = td.skyFromTy; }
+      else { dx = Game.state.spawn.tx; dy = Game.state.spawn.ty; }
+      Game.World.teleport(dx, dy);
+      Game.state.paused = false;
+    });
+  }
+
+  // ===== 古代都市への往還 =====
+  // 古の門: 「古の鍵」を掲げると固有ムービー→都市へテレポート。鍵未所持なら案内
+  function ruinTravel(tx, ty) {
+    if (Game.state.paused) return;
+    if (Game.Inventory.count('gate_key') <= 0) {
+      Game.UI.toast('古の門… 「古の鍵」を掲げれば都市へ通じる（金鉱3＋光素2で作れる）');
+      return;
+    }
+    Game.Inventory.remove('gate_key', 1);
+    Game.state.paused = true;
+    Game.Cutscene.playRuinArrival(function () {
+      const a = Game.WorldGen.ruinArrival(Game.state.seed);
+      const rg = Game.WorldGen.ruinReturnGate(Game.state.seed);
+      Game.World.setTileData(rg.tx, rg.ty, { ruinFromTx: tx, ruinFromTy: ty + 1 });
+      Game.World.teleport(a.tx, a.ty);
+      Game.state.paused = false;
+      if (Game.Story && Game.Story.unlock) Game.Story.unlock('ruincity', true); // 記憶回廊「沈黙の都」
+    });
+  }
+  // 還りの門: 短い帰還ムービー→出発した地上の門脇へ(記録が無ければスポーンへ)
+  function ruinReturn() {
+    if (Game.state.paused) return;
+    const rg = Game.WorldGen.ruinReturnGate(Game.state.seed);
+    const td = Game.World.getTileData(rg.tx, rg.ty);
+    Game.state.paused = true;
+    Game.Cutscene.playRuinReturn(function () {
+      let dx, dy;
+      if (td && td.ruinFromTx != null) { dx = td.ruinFromTx; dy = td.ruinFromTy; }
       else { dx = Game.state.spawn.tx; dy = Game.state.spawn.ty; }
       Game.World.teleport(dx, dy);
       Game.state.paused = false;
