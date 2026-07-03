@@ -283,7 +283,7 @@ Game.Player = (function () {
     if (p.attackCd <= 0 && p.attackBuf) {
       p.attackBuf = false;
       const bufSel = Game.Inventory.selectedItemDef();
-      if (!bufSel || (bufSel.tool !== 'gun' && bufSel.tool !== 'warp' && !bufSel.throw)) Game.Combat.tryAttack();
+      if (!bufSel || (bufSel.tool !== 'gun' && bufSel.tool !== 'warp' && bufSel.tool !== 'grapple' && !bufSel.throw)) Game.Combat.tryAttack();
     }
     // リロード進行: 完了したら予備弾を消費してマガジンへ装填
     if (p.reloadCd > 0) {
@@ -303,6 +303,7 @@ Game.Player = (function () {
       if (sel && sel.tool === 'gun') { tryFire(sel); mining.active = false; }
       else if (sel && sel.tool === 'staff') { tryStaff(sel); mining.active = false; }
       else if (sel && sel.tool === 'warp') { tryWarp(); mining.active = false; }
+      else if (sel && sel.tool === 'grapple') { tryGrapple(); mining.active = false; }
       else if (sel && sel.throw) { tryThrow(sel); mining.active = false; }
       else if (Game.Combat.tryAttack()) { mining.active = false; mining.progress = 0; }
       else mineTick();
@@ -922,6 +923,40 @@ Game.Player = (function () {
     p.x = tx; p.y = ty; p.prevX = tx; p.prevY = ty;
     Game.Render.spawnParticles(tx, ty, '#d8b0ff', 10);
     p.attackCd = 24; Game.Audio.play('shift');
+  }
+
+  // グラップリングフック: 狙った方向へ最大12タイル先の固形(壁/木/岩)に鉤を打ち、その手前まで一気に手繰り寄せる。
+  // 水やギャップを越える爽快な移動。固形が無ければ空振り(短い前進のみ)。
+  function tryGrapple() {
+    const p = Game.state.player;
+    if (p.attackCd > 0) return;
+    let dx = 0, dy = 0; const it = Game.Input.intent;
+    if (it.usePointer && it.mouseTile) { dx = (it.mouseTile.tx * TS + TS / 2) - p.x; dy = (it.mouseTile.ty * TS + TS / 2) - p.y; }
+    if (Math.abs(dx) < 1 && Math.abs(dy) < 1) { if (p.dir === 'up') dy = -1; else if (p.dir === 'down') dy = 1; else if (p.dir === 'left') dx = -1; else dx = 1; }
+    const len = Math.hypot(dx, dy) || 1; const ux = dx / len, uy = dy / len;
+    const MAX = 12;
+    // 手前から外側へ走査し、最初の固形タイルを鉤の着点に。その1タイル手前が着地点
+    let anchorS = 0;
+    for (let s = 2; s <= MAX; s++) {
+      const cx = p.x + ux * s * TS, cy = p.y + uy * s * TS;
+      const tx = Math.floor(cx / TS), ty = Math.floor(cy / TS);
+      if (!Game.World.isWalkable(tx, ty)) { anchorS = s; break; }
+    }
+    if (!anchorS) { Game.UI.toast && (p.grapMiss = (p.grapMiss || 0) + 1); Game.Audio.play('dash'); p.attackCd = 14; return; } // 空振り
+    // 着地点: 鉤の1タイル手前で歩ける最遠地点
+    let land = null;
+    for (let s = anchorS - 1; s >= 1; s--) {
+      const cx = p.x + ux * s * TS, cy = p.y + uy * s * TS;
+      if (Game.World.isWalkable(Math.floor(cx / TS), Math.floor(cy / TS))) { land = { x: cx, y: cy }; break; }
+    }
+    if (!land) { Game.Audio.play('dash'); p.attackCd = 14; return; }
+    // 鉤の線を描く演出(発射→着点)
+    const ax = p.x + ux * anchorS * TS, ay = p.y + uy * anchorS * TS;
+    if (Game.Render.spawnLightning) Game.Render.spawnLightning(p.x, p.y, ax, ay); // 鉤の索(既存の線描画を流用)
+    Game.Render.spawnParticles(ax, ay, '#ccb088', 8);
+    p.x = land.x; p.y = land.y; p.prevX = land.x; p.prevY = land.y;
+    Game.Render.spawnParticles(land.x, land.y, '#e8d0a0', 10);
+    p.attackCd = 20; Game.Audio.play('dash'); if (Game.Audio.cue) Game.Audio.cue('shimmer');
   }
 
   function equipFromInventory(idx) {
