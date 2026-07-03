@@ -23,8 +23,11 @@ Game.Mobs = (function () {
     const plv = (Game.state.player && Game.state.player.level) || 1;
     const bossMult = def.boss ? 2.4 * (1 + Math.min(1.8, (plv - 1) * 0.035))
                    : def.midboss ? 1.7 * (1 + Math.min(1.0, (plv - 1) * 0.02)) : 1;
-    const hp = Math.round(def.hp * mult * bandMult * bossMult);
-    const dmgMult = mult * bandMult * (diff.dmgMult != null ? diff.dmgMult : 1);
+    // 通常の敵対もプレイヤーLvで緩やかに強化(成長で雑魚化しすぎない)。+2%/Lv・最大+70%。ダメージは+1.2%/Lv・最大+45%
+    const lvHp = (def.hostile && !def.boss && !def.midboss) ? 1 + Math.min(0.7, (plv - 1) * 0.02) : 1;
+    const lvDmg = (def.hostile && !def.boss && !def.midboss) ? 1 + Math.min(0.45, (plv - 1) * 0.012) : 1;
+    const hp = Math.round(def.hp * mult * bandMult * bossMult * lvHp);
+    const dmgMult = mult * bandMult * lvDmg * (diff.dmgMult != null ? diff.dmgMult : 1);
     Game.state._mobId = (Game.state._mobId || 0) + 1;
     const m = {
       id: Game.state._mobId, type: type, def: def,
