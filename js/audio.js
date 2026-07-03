@@ -45,8 +45,15 @@ Game.Audio = (function () {
     sky:      { root: 349.23, scale: [0, 2, 4, 6, 7, 9, 11],  bpm: 76,  wave: 'sine', cut: 2400, kick: false, bassEvery: 16, arp: [0, 4, 6, 11, 9, 7], arpEvery: 4, noteVol: 0.045, bassVol: 0.028, kickVol: 0, prog: [0, 2, 7, 4],  bell: true, send: 2.2, pulse: 0.035, padDetune: 11, padVol: 0.021 }, // 空島=澄んだ浮遊感(リディアン・ベルリード・キックレス柔パルス・残響たっぷり)
     ruins:    { root: 220.00, scale: [0, 2, 3, 5, 7, 9, 10],  bpm: 66,  wave: 'triangle', cut: 1400, kick: false, bassEvery: 8, arp: [0, 3, 7, 10, 9, 7], arpEvery: 4, noteVol: 0.048, bassVol: 0.04, kickVol: 0, prog: [0, -2, 3, -2], pluck: true, drone: 0.045, heartbeat: 0.075 },                    // 古代都市=荘厳と郷愁(ドリアン・深いドローン+爪弾き・遠い鼓動)
     rift:     { root: 233.08, scale: [0, 1, 3, 6, 7, 10],     bpm: 70,  wave: 'sine', cut: 1100, kick: false, bassEvery: 8, arp: [0, 7, 6, 10, 7, 1], arpEvery: 4, noteVol: 0.036, bassVol: 0.03, kickVol: 0, prog: [0, 1, 0, -6],  sub: 0.06, hatRandom: true, swell: 0.05 },                          // 狭間=不穏(b2/三全音の色彩・サブパルス・不規則ハット・ノイズスウェル)
+    // ボス専用クラシック系(強さ5段階)。弦(sawtooth)+ドローン+聖歌スウェルで荘厳。上位ほど速く/濃く/劇的に
+    boss1:    { root: 196.00, scale: [0, 2, 3, 5, 7, 8, 10],  bpm: 94,  wave: 'sawtooth', cut: 1500, kick: true,  bassEvery: 4, arp: [0, 3, 7, 3, 0, 7, 3, 10], arpEvery: 2, noteVol: 0.044, bassVol: 0.05, kickVol: 0.07, prog: [0, -2, 5, 3],  drone: 0.05, padDetune: 8, padVol: 0.02 },      // C級=荘厳だが抑制(自然短調・弦+ドローン)
+    boss2:    { root: 174.61, scale: [0, 2, 3, 5, 7, 8, 10],  bpm: 106, wave: 'sawtooth', cut: 1700, kick: true,  bassEvery: 2, arp: [0, 3, 7, 10, 7, 3, 5, 3], arpEvery: 1, noteVol: 0.042, bassVol: 0.055, kickVol: 0.09, prog: [0, 3, -2, 5], drone: 0.05, padDetune: 9, padVol: 0.022 },     // B級=駆り立てる弦
+    boss3:    { root: 164.81, scale: [0, 2, 3, 5, 7, 8, 11],  bpm: 114, wave: 'sawtooth', cut: 1900, kick: true,  bassEvery: 2, arp: [0, 3, 7, 8, 11, 8, 7, 3], arpEvery: 1, noteVol: 0.04,  bassVol: 0.058, kickVol: 0.10, prog: [0, 5, 3, 7],  drone: 0.06, swell: 0.05, padDetune: 10, padVol: 0.024 },  // A級=壮麗(和声短調・聖歌スウェル)
+    boss4:    { root: 155.56, scale: [0, 2, 3, 5, 7, 8, 11],  bpm: 122, wave: 'sawtooth', cut: 2100, kick: true,  bassEvery: 2, arp: [0, 7, 3, 8, 11, 7, 10, 11], arpEvery: 1, noteVol: 0.04, bassVol: 0.06, kickVol: 0.12, prog: [0, 3, 7, -2], drone: 0.06, swell: 0.06, padDetune: 11, padVol: 0.026 },   // S級=英雄的で激烈
+    boss5:    { root: 146.83, scale: [0, 1, 3, 5, 7, 8, 11],  bpm: 134, wave: 'sawtooth', cut: 2300, kick: true,  bassEvery: 1, arp: [0, 3, 7, 11, 8, 7, 3, 1], arpEvery: 1, noteVol: 0.04, bassVol: 0.066, kickVol: 0.13, prog: [0, -1, 5, 7], drone: 0.07, swell: 0.07, heartbeat: 0.06, padDetune: 12, padVol: 0.028 }, // ラスボス=最高潮(b2の緊張・聖歌・鼓動・ダブルベース)
   };
-  const MOOD_GENRE = { title: 'meadow', day: 'animepop', night: 'city', shadow: 'classic', cave: 'classic', boss: 'edm', space: 'space', desert: 'desert', snow: 'snow', meadow: 'meadow', sky: 'sky', ruins: 'ruins', rift: 'rift' };
+  const MOOD_GENRE = { title: 'meadow', day: 'animepop', night: 'city', shadow: 'classic', cave: 'classic', boss: 'edm', space: 'space', desert: 'desert', snow: 'snow', meadow: 'meadow', sky: 'sky', ruins: 'ruins', rift: 'rift',
+    boss1: 'boss1', boss2: 'boss2', boss3: 'boss3', boss4: 'boss4', boss5: 'boss5' };
 
   function ensure() {
     if (!ctx) {
@@ -623,11 +630,19 @@ Game.Audio = (function () {
     let mood = 'day';
     const mobs = Game.state.mobs;
     let boss = false, tier = 0;
+    let bossLvl = 0; // 1..5 のボスBGM段階(0=非ボス)
     for (let i = 0; i < mobs.length; i++) {
-      // 交戦中(engaged)のボスのみボスBGMに移行。離脱で通常曲へ戻り、再接近で再びボス曲に切替わる
-      if (mobs[i].def.boss && mobs[i].engaged !== false) { boss = true; const tt = mobs[i].def.tier || 1; if (tt > tier) tier = tt; }
+      const m = mobs[i];
+      // 交戦中(engaged)のボス/中ボスのみボスBGMに移行。離脱で通常曲へ戻り、再接近で再びボス曲に
+      if (m.engaged === false) continue;
+      if (m.def.boss) {
+        const tt = m.def.tier || 1; if (tt > tier) tier = tt; boss = true;
+        // ラスボス(終焉の王)は最高段階5、tier4=4, ...tier1=1
+        const lv = (m.type === 'endbringer') ? 5 : Math.max(1, Math.min(4, tt));
+        if (lv > bossLvl) bossLvl = lv;
+      } else if (m.def.midboss && bossLvl < 1) { bossLvl = 1; boss = true; } // 中ボス(D)は段階1
     }
-    bgm.intensity = boss ? Math.min(1, tier / 4) : 0; // C=0.25 B=0.5 A=0.75 S=1.0
+    bgm.intensity = boss ? Math.min(1, (bossLvl || 1) / 5) : 0;
     const TS = Game.CFG.TILE_SIZE, p = Game.state.player;
     // エリアムード(空島/古代都市/狭間): 優先度は boss > エリア > バイオーム/昼夜。
     // World 側が currentAreaMood() を公開していない間は従来と完全に同一挙動
@@ -638,7 +653,7 @@ Game.Audio = (function () {
         if (am && MOOD_GENRE[am]) areaMood = am;
       } catch (e) {}
     }
-    if (boss) mood = 'boss';
+    if (boss) mood = 'boss' + (bossLvl || 1); // 強さ別クラシックBGM(boss1..boss5)
     else if (areaMood) mood = areaMood;
     else if (Game.state.worldName === 'space') mood = 'space';
     else if (Game.state.worldName === 'shadow') mood = 'shadow';
