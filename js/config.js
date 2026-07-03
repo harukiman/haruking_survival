@@ -33,7 +33,8 @@ Game.CFG = {
 };
 
 // 地面レイヤー
-Game.TILE = { DEEP_WATER:0, WATER:1, SAND:2, GRASS:3, FOREST:4, DIRT:5, STONE:6, SNOW:7, DUNGEON_FLOOR:8, SWAMP:9, VOLCANIC:10, MUSHROOM:11, BLOOM:12 };
+// CLOUD=空島の雲石(歩行可) / SKYVOID=空の虚(歩行不可・空島エンクレーブ限定)
+Game.TILE = { DEEP_WATER:0, WATER:1, SAND:2, GRASS:3, FOREST:4, DIRT:5, STONE:6, SNOW:7, DUNGEON_FLOOR:8, SWAMP:9, VOLCANIC:10, MUSHROOM:11, BLOOM:12, CLOUD:13, SKYVOID:14 };
 
 // オブジェクトレイヤー（0=なし、50番台=影世界固有、100番台=プレイヤー設置物）
 Game.OBJ = {
@@ -63,6 +64,8 @@ Game.OBJ = {
   OBSIDIAN:143, SULFUR_VENT:144,
   BANNER:145, BRAZIER:146, BARREL:147, POTTED_PLANT:148,
   GIANT_MUSHROOM:149, GLOW_SHROOM:150, WISH_ALTAR:151,
+  // 空島(スカイエンクレーブ)
+  WIND_ALTAR:152, RETURN_ALTAR:153, SKY_PILLAR:154, SKY_TREE:155, WIND_ORE:156,
 };
 
 // 地面の色（手続き描画のベース）
@@ -80,6 +83,8 @@ Game.TILE_COLOR = {
   [Game.TILE.VOLCANIC]:   '#2a1812',
   [Game.TILE.MUSHROOM]:   '#3a2c4a',
   [Game.TILE.BLOOM]:      '#6cbf46',
+  [Game.TILE.CLOUD]:      '#e4ecf2',
+  [Game.TILE.SKYVOID]:    '#7fb8dc',
 };
 
 // 影世界の地面パレット（同じTILE idを別色で描画）
@@ -97,6 +102,8 @@ Game.SHADOW_TILE_COLOR = {
   [Game.TILE.VOLCANIC]:   '#1a1020',
   [Game.TILE.MUSHROOM]:   '#241a36',
   [Game.TILE.BLOOM]:      '#352a52',
+  [Game.TILE.CLOUD]:      '#4a4a68',
+  [Game.TILE.SKYVOID]:    '#181430',
 };
 
 // 宇宙の地面パレット（虚空＝ほぼ黒、小惑星＝灰）
@@ -114,11 +121,14 @@ Game.SPACE_TILE_COLOR = {
   [Game.TILE.VOLCANIC]:   '#3a342e',
   [Game.TILE.MUSHROOM]:   '#3e3a48',
   [Game.TILE.BLOOM]:      '#5e5a52',
+  [Game.TILE.CLOUD]:      '#8a8a96',
+  [Game.TILE.SKYVOID]:    '#06070f',
 };
 
 Game.SOLID_TILE = {
   [Game.TILE.DEEP_WATER]: true,  // 移動不可
   [Game.TILE.WATER]: false,      // 浅瀬は通れる（減速は今回省略）
+  [Game.TILE.SKYVOID]: true,     // 空の虚: 落ちる先は無い(移動不可)。橋を架ければ渡れる
 };
 
 // 発光オブジェクトの光量（lighting で使用）
@@ -144,6 +154,9 @@ Game.LIGHT_LEVEL = {
   [Game.OBJ.BRAZIER]: 9,
   [Game.OBJ.GIANT_MUSHROOM]: 6,
   [Game.OBJ.GLOW_SHROOM]: 4,
+  [Game.OBJ.WIND_ALTAR]: 7,
+  [Game.OBJ.RETURN_ALTAR]: 7,
+  [Game.OBJ.WIND_ORE]: 3,
 };
 
 // オブジェクトのメタ情報。solid=移動阻害, drops=破壊時ドロップ
@@ -230,6 +243,14 @@ Game.OBJ_META = {
   [Game.OBJ.BRAZIER]:    { name:'かがり火', solid:false, mineable:true, tool:null, tier:0, hp:3, light:9, drops:[{item:'brazier', n:[1,1]}], render:'brazier', cook:true },
   [Game.OBJ.BARREL]:     { name:'樽', solid:true, mineable:true, tool:null, tier:0, hp:3, drops:[{item:'barrel', n:[1,1]}], render:'barrel' },
   [Game.OBJ.POTTED_PLANT]:{ name:'植木鉢', solid:false, mineable:true, tool:null, tier:0, hp:2, drops:[{item:'potted_plant', n:[1,1]}], render:'potted' },
+  // ===== 空島(スカイエンクレーブ) =====
+  // 風の祭壇: 空島への門(破壊不可)。風の羽根を持って傍らに立つと空へ昇る
+  [Game.OBJ.WIND_ALTAR]:  { name:'風の祭壇', solid:true, mineable:false, tool:null, tier:0, hp:999, light:7, drops:[], render:'windaltar', windAltar:true },
+  // 帰還の祭壇: 空島の中心。傍らに立つと大地へ還る(破壊不可)
+  [Game.OBJ.RETURN_ALTAR]:{ name:'帰還の祭壇', solid:true, mineable:false, tool:null, tier:0, hp:999, light:7, drops:[], render:'returnaltar', returnAltar:true },
+  [Game.OBJ.SKY_PILLAR]:  { name:'風化した柱', solid:true, mineable:true, tool:'pickaxe', tier:2, hp:14, drops:[{item:'stone', n:[1,2]}], render:'skypillar' },
+  [Game.OBJ.SKY_TREE]:    { name:'空の樹', solid:true, mineable:true, tool:'axe', tier:0, hp:7, drops:[{item:'wood', n:[2,3]},{item:'feather', n:[0,1]}], render:'skytree' },
+  [Game.OBJ.WIND_ORE]:    { name:'風晶鉱', solid:true, mineable:true, tool:'pickaxe', tier:3, hp:16, drops:[{item:'wind_crystal', n:[1,2]}], render:'ore', oreColor:'#8fe8e0' },
 };
 
 // アイテム定義。place=設置するOBJ id, tool/tier=道具, food=空腹回復
@@ -478,6 +499,14 @@ Game.ITEMS = {
   fang_war:      { name:'戦神の牙', stack:1, color:'#e05a4a', relic:{atk:3}, flavor:'戦神に捧げられた牙。攻撃に重みが宿る。攻撃力+3。' },
   band_power:    { name:'力の腕輪', stack:1, color:'#ff8a4a', relic:{atk:4}, flavor:'大地を割った闘士の腕輪。膂力の残響が宿る。攻撃+4。' },
   crest_guard:   { name:'守護の紋章', stack:1, color:'#9fd8ff', relic:{armor:3, hp:10}, flavor:'最初の裂け目を食い止めた盾の紋章。防御+3・最大HP+10。' },
+  // ===== 空島(スカイエンクレーブ)関連 =====
+  feather:       { name:'羽根', stack:99, color:'#e8ecf4', flavor:'空を征く者たちの落とし物。軽く、しなやかで、風をよく憶えている。' },
+  wind_crystal:  { name:'風晶', stack:99, color:'#8fe8e0', flavor:'空島の岩肌に実る青碧の結晶。耳を寄せると、遠い風の唸りが聞こえる。' },
+  wind_steel:    { name:'風鋼', stack:99, color:'#9fc8c8', flavor:'風晶と鉄を吹き合わせた軽い鋼。刃にすれば風を纏う。' },
+  wind_feather:  { name:'風の羽根', stack:8, color:'#cfe8ff', flavor:'羽根に光素を編み込んだ祈りの道具。風の祭壇の傍らで掲げれば、風があなたを空へ運ぶ。' },
+  wind_sword:    { name:'風鋼の剣', stack:1, color:'#9fe8e0', tool:'sword', tier:4, attack:12, special:{type:'brand', name:'風纏', dot:'frost', color:'#9fe8e0'}, flavor:'風鋼で鍛えた細身の剣。斬られた者は風に縛られ、足が鈍る。' },
+  sky_cloak:     { name:'天羽織', stack:1, color:'#dfe8f4', armor:5, slot:'chest', warm:true, flavor:'雲鷹の羽根を織り込んだ羽織。空島の風雪すら柔らかく受け流す。' },
+  cloud_boots:   { name:'雲の靴', stack:1, color:'#cfe0ec', relic:{moveSpd:0.08, staminaMax:20}, flavor:'雲を踏む感触の軽い靴。装身具として身につければ足取りが軽くなる。移動+8%・スタミナ+20。' },
 };
 
 // クラフトレシピ。station=null は手作り、それ以外は近接が必要
@@ -645,6 +674,13 @@ Game.RECIPES = [
   { out:{id:'crescent_twinblade', n:1}, in:{iron:6, lumen:2, shadow_shard:3}, station:'crafting_table' },
   { out:{id:'laser_rifle', n:1}, in:{iron:8, lumen:3, gold_bar:2}, station:'crafting_table' },
   { out:{id:'railgun', n:1}, in:{iron:12, star_metal:2, lumen:4}, station:'crafting_table' },
+  // ===== 空島(スカイエンクレーブ) =====
+  // 風の羽根: ハーピー/雲鷹の羽根と光素で編む(空島への鍵)。光素は氷窟/水晶洞や影世界で採れる
+  { out:{id:'wind_feather', n:1}, in:{feather:5, lumen:2}, station:'crafting_table' },
+  { out:{id:'wind_steel', n:1}, in:{wind_crystal:2, iron:1}, station:'furnace' },
+  { out:{id:'wind_sword', n:1}, in:{wind_steel:3, wood:1}, station:'crafting_table' },
+  { out:{id:'sky_cloak', n:1}, in:{feather:6, wind_steel:2, string:2}, station:'crafting_table' },
+  { out:{id:'cloud_boots', n:1}, in:{feather:3, wind_steel:1, hide:2}, station:'crafting_table' },
 ];
 
 // 装備セット効果（head+chest が同セットで発動）
@@ -827,7 +863,7 @@ Game.MOBS = {
   troll:    { name:'森のトロル', hostile:true, hp:70, speed:0.85, color:'#6a8a4a', size:30, drops:[{item:'raw_meat',n:[2,4]},{item:'hide',n:[1,3]},{item:'bone',n:[1,2]}], dmg:11, xp:12, big:true, shape:'tall', pound:{r:2.2,cd:110} },
   bog_horror:{ name:'沼の怪異', hostile:true, hp:50, speed:0.9, color:'#5a6a3a', size:22, drops:[{item:'guts',n:[1,3]},{item:'string',n:[0,1]}], dmg:8, xp:9, shape:'blob', inflict:{infection:300}, deathBurst:{r:2.2,dmg:7,status:{poison:240}} },
   // ===== P40 バイオーム多様化: 新通常モブ =====
-  harpy:    { name:'ハーピー', hostile:true, hp:12, speed:2.4, color:'#a06a9a', size:10, drops:[{item:'string',n:[0,1]},{item:'bone',n:[0,1]}], dmg:4, xp:4, ghost:true, shape:'wisp', ranged:{dmg:5,range:6,cd:80,kind:'hex'} },
+  harpy:    { name:'ハーピー', hostile:true, hp:12, speed:2.4, color:'#a06a9a', size:10, drops:[{item:'string',n:[0,1]},{item:'bone',n:[0,1]},{item:'feather',n:[1,2]}], dmg:4, xp:4, ghost:true, shape:'wisp', ranged:{dmg:5,range:6,cd:80,kind:'hex'} },
   dune_serpent:{ name:'砂蛇', hostile:true, hp:14, speed:2.0, color:'#cda050', size:10, drops:[{item:'chitin',n:[0,1]},{item:'hide',n:[0,1]}], dmg:5, xp:4, shape:'spiky', inflict:{poison:220} },
   frost_wolf:{ name:'雪狼', hostile:true, hp:16, speed:2.1, color:'#cfe0ee', size:11, drops:[{item:'hide',n:[1,2]},{item:'raw_meat',n:[0,1]}], dmg:5, xp:4, inflict:{cold:200} },
   mud_crawler:{ name:'沼の這う者', hostile:true, hp:18, speed:0.85, color:'#6a5a3a', size:12, drops:[{item:'guts',n:[0,1]},{item:'string',n:[0,1]}], dmg:4, xp:4, shape:'blob', inflict:{infection:260} },
@@ -837,6 +873,10 @@ Game.MOBS = {
   shadow_knight:{ name:'影の騎士', hostile:true, hp:110, speed:1.1, color:'#4a3f6a', size:14, drops:[{item:'shadow_crystal',n:[1,2]},{item:'shadow_core',n:[0,1]},{item:'iron_ore',n:[1,3]}], dmg:10, xp:16, midboss:true, shadow:true, shape:'humanoid', pound:{r:1.7,cd:120} },
   stone_warden:{ name:'石の番人', hostile:true, hp:150, speed:0.6, color:'#7a7d82', size:18, drops:[{item:'stone',n:[4,8]},{item:'iron_ore',n:[2,4]},{item:'gold_ore',n:[1,2]}], dmg:11, xp:16, midboss:true, big:true, shape:'tall', pound:{r:2.1,cd:110} },
   broodmother: { name:'毒の母蟲', hostile:true, hp:95, speed:1.2, color:'#7a9a3a', size:15, drops:[{item:'chitin',n:[2,4]},{item:'string',n:[2,4]},{item:'glow_spore',n:[1,2]}], dmg:8, xp:15, midboss:true, shape:'spider', summon:'spider', ranged:{dmg:6,range:6,cd:90,kind:'venom',status:{poison:240}}, inflict:{poison:180} },
+  // ===== 空島(スカイエンクレーブ)固有モブ: エンクレーブ内でのみ湧く(band3級) =====
+  wind_wisp:  { name:'風の精', hostile:true, hp:20, speed:1.5, color:'#bfe8e0', size:10, drops:[{item:'feather',n:[0,1]},{item:'wind_crystal',n:[0,1]},{item:'lumen',n:[0,1]}], dmg:5, xp:6, ghost:true, shape:'wisp', ranged:{dmg:6,range:7,cd:80,kind:'frost',status:{cold:150}} },
+  cloud_hawk: { name:'雲鷹', hostile:true, hp:24, speed:2.2, color:'#dfe8f4', size:12, drops:[{item:'feather',n:[1,3]},{item:'raw_meat',n:[0,1]}], dmg:6, xp:7, shape:'bird', charge:{ range:5, windup:14, dashTicks:18, dashSpeed:5.6, dmg:10, cd:140 } },
+  sky_warden: { name:'空島の番人', hostile:true, hp:140, speed:1.0, color:'#9fb8c8', size:18, drops:[{item:'wind_crystal',n:[2,4]},{item:'feather',n:[1,3]},{item:'lumen',n:[1,2]},{item:'stone',n:[2,4]}], dmg:10, xp:18, midboss:true, big:true, shape:'tall', pound:{r:2.0,cd:120}, summon:'wind_wisp', inflict:{cold:180} },
 };
 
 // 防具スロット
@@ -945,6 +985,7 @@ Game.ITEM_GLYPH = {
   chitin:'🦂', bone_club:'🦴', gold_sword:'⚔️', war_hammer:'🔨', crystal_blade:'⚔️', chitin_spear:'🔱',
   gold_helmet:'⛑️', gold_chest:'🛡️', crystal_helmet:'🪖', crystal_chest:'🛡️', star_helmet:'⛑️', chitin_armor:'🦺',
   sand_greatsword:'⚔️', magma_hammer:'🔨', pharaoh_crown:'👑', mind_tome:'📖', wisdom_tome:'📗', xp_orb:'🔮', expand_pouch:'🎒',
+  feather:'🪶', wind_crystal:'💠', wind_steel:'🌀', wind_feather:'🪶', wind_sword:'🗡️', sky_cloak:'🧥', cloud_boots:'👢',
   ring_crit:'💍', amulet_swift:'📿', fang_vamp:'🦷', heart_regen:'❤️‍🔥', eye_xp:'👁️', band_power:'💪', crest_guard:'🛡️',
   energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️', prism_blade:'⚔️', dragon_fang:'⚔️', colossus_blade:'⚔️', mire_scythe:'⚔️', magma_maul:'🔨', starcore_greatsword:'⚔️', voidcore_blade:'⚔️', spore_scythe:'⚔️', star_aegis:'🛡️', void_helm:'⛑️',
 };

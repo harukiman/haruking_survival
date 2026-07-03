@@ -203,10 +203,11 @@ Game.Input = (function () {
   const padPrev = [];
   let padIdle = 0; // 右スティックを離してからの経過フレーム(自動照準切替用)
   // ===== ゲームパッドのボタン割当(再割当可能・Settings保存) =====
-  const PAD_DEF = { mine: 0, fire: 7, place: 2, shift: 3, roll: 1, hotbarPrev: 4, hotbarNext: 5, dash: 6, inv: 9, map: 11 };
+  const PAD_DEF = { mine: 0, fire: 7, place: 2, shift: 3, roll: 1, hotbarPrev: 4, hotbarNext: 5, dash: 6, inv: 9, map: 11, stats: 10, opts: 8 };
   const PAD_ACTIONS = [
     ['mine', '採掘/攻撃'], ['fire', '照準で攻撃'], ['place', '設置/対話'], ['shift', '影渡り'], ['roll', '回避ロール'],
     ['hotbarPrev', 'ホットバー←'], ['hotbarNext', 'ホットバー→'], ['dash', '走る'], ['inv', 'インベントリ'], ['map', '大マップ'],
+    ['stats', 'ステータス&スキル'], ['opts', '設定メニュー'],
   ];
   function PB(a) { const m = Game.Settings && Game.Settings.get && Game.Settings.get('padbinds'); return (m && m[a] != null) ? m[a] : PAD_DEF[a]; }
   function padLabel(a) { const b = PB(a); return 'ボタン' + b; }
@@ -257,6 +258,29 @@ Game.Input = (function () {
       if (padIdle > 8) { cursor.active = false; mouse.inside = false; mouse.moved = false; }
     }
 
+    // ===== メニュー中: 十字キー/左スティック=フォーカス移動 ×=決定 ○=戻る L1/R1=タブ =====
+    const menuRoot = Game.UI && Game.UI.padMenuRoot && Game.UI.padMenuRoot();
+    if (menuRoot) {
+      if (edge(12)) Game.UI.padNav('up');
+      if (edge(13)) Game.UI.padNav('down');
+      if (edge(14)) Game.UI.padNav('left');
+      if (edge(15)) Game.UI.padNav('right');
+      const nd = stickNavDir(ax, ay); // 左スティック: 初回即時→ディレイ→リピート
+      if (nd) Game.UI.padNav(nd);
+      if (edge(PB('mine'))) Game.UI.padNav('ok');              // ×=決定
+      if (PB('mine') !== 1 && edge(1)) Game.UI.padNav('back'); // ○=戻る/閉じる(メニュー中は固定)
+      if (edge(PB('hotbarPrev'))) Game.UI.padNav('tabprev');   // L1=タブ←
+      if (edge(PB('hotbarNext'))) Game.UI.padNav('tabnext');   // R1=タブ→
+      if (edge(PB('fire'))) clickAtCursor();                    // R2=右スティックカーソルでクリック(従来共存)
+      if (edge(PB('inv'))) Game.UI.toggleInventory();
+      if (edge(PB('map'))) Game.UI.toggleBigMap();
+      if (edge(PB('stats'))) Game.UI.toggleStats();
+      if (edge(PB('opts'))) Game.UI.toggleOptions();
+      for (let i = 0; i < gp.buttons.length; i++) padPrev[i] = gp.buttons[i] && gp.buttons[i].pressed;
+      return;
+    }
+    navHeld = null; navHeldT = 0; // メニューを閉じたらリピート状態を破棄
+
     // 採掘/攻撃(押しっぱ)。カーソル非使用時は向いている方向へ
     if (btn(PB('mine'))) out.mine = true;
     // 照準で攻撃: メニュー上ならボタン押下、フィールドなら採掘/攻撃(カーソル位置 or 向き方向)
@@ -277,17 +301,35 @@ Game.Input = (function () {
     if (edge(PB('inv'))) Game.UI.toggleInventory();
     // 大マップ開閉(エッジ)
     if (edge(PB('map'))) Game.UI.toggleBigMap();
+    // ステータス&スキル(エッジ)
+    if (edge(PB('stats'))) Game.UI.toggleStats();
+    // 設定メニュー(エッジ)
+    if (edge(PB('opts'))) Game.UI.toggleOptions();
     // 他ボタンのprev更新（エッジ漏れ防止）
-    [8, 10, 16].forEach(function (i) { padPrev[i] = btn(i); });
+    [16].forEach(function (i) { padPrev[i] = btn(i); });
   }
 
-  // カーソル位置のDOM要素がボタンならクリック（メニュー操作）
+  // 左スティックのメニューナビ: 方向が変わったら即時1回、押し続けで約0.5秒後からリピート
+  let navHeld = null, navHeldT = 0;
+  function stickNavDir(ax, ay) {
+    let d = null;
+    if (Math.hypot(ax, ay) > 0.5) d = Math.abs(ax) > Math.abs(ay) ? (ax < 0 ? 'left' : 'right') : (ay < 0 ? 'up' : 'down');
+    if (!d) { navHeld = null; navHeldT = 0; return null; }
+    if (d !== navHeld) { navHeld = d; navHeldT = 0; return d; }
+    navHeldT++;
+    if (navHeldT > 15 && navHeldT % 5 === 0) return d; // 30Hz: 0.5秒ディレイ→毎秒6回
+    return null;
+  }
+
+  // カーソル位置のDOM要素をアクティベート（メニュー操作: ボタン/スロット/行に対応）
   function clickAtCursor() {
     if (!cursor.active) return;
     const el = document.elementFromPoint(cursor.x, cursor.y);
-    if (el && (el.tagName === 'BUTTON' || el.closest('button'))) {
-      (el.tagName === 'BUTTON' ? el : el.closest('button')).click();
-    }
+    if (!el || !el.closest) return;
+    const t = el.closest('button, .slot, .craft-row, .eq-cell, .sk-branch-name, .dbtn, input');
+    if (!t) return;
+    if (Game.UI && Game.UI.padActivateEl) Game.UI.padActivateEl(t);
+    else if (t.click) t.click();
   }
 
   function poll() {

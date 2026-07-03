@@ -210,6 +210,29 @@ Game.World = (function () {
     Game.UI.updateMinimap();
   }
 
+  // 同一世界内テレポート(空島の祭壇など)。位置替え＋足元救済＋チャンク/ミニマップ更新
+  function teleport(tx, ty) {
+    const TS = Game.CFG.TILE_SIZE, p = Game.state.player;
+    p.x = tx * TS + TS / 2; p.y = ty * TS + TS / 2;
+    p.prevX = p.x; p.prevY = p.y;
+    if (!isWalkable(tx, ty)) nudgeToWalkable();
+    updateChunks(Math.floor(p.x / TS), Math.floor(p.y / TS));
+    Game.UI.updateMinimap();
+  }
+
+  // エリア別BGMムード(audio.js updateMood が参照するフック)。該当エリア外は null。
+  // 防御的: WorldGen 側の実装有無/例外に依らず安全に null を返す
+  function currentAreaMood() {
+    try {
+      if (Game.state && Game.state.worldName === 'light' && Game.state.player &&
+          Game.WorldGen && Game.WorldGen.inSkyEnclave) {
+        const TS = Game.CFG.TILE_SIZE, p = Game.state.player;
+        if (Game.WorldGen.inSkyEnclave(Math.floor(p.x / TS), Math.floor(p.y / TS), Game.state.seed)) return 'sky';
+      }
+    } catch (e) {}
+    return null;
+  }
+
   // 影の深層: 原点からの距離（タイル）
   function depthOf() {
     const TS = Game.CFG.TILE_SIZE, p = Game.state.player;
@@ -231,6 +254,9 @@ Game.World = (function () {
     const D = Game.DANGER;
     if (!D) return 1;
     if (Game.state.worldName === 'space') return 3;
+    // 空島エンクレーブ(光世界): 深域級 band3 に固定(バイオーム/ダンジョン補正は適用しない)
+    if (Game.state.worldName === 'light' && Game.WorldGen.inSkyEnclave &&
+        Game.WorldGen.inSkyEnclave(tx, ty, Game.state.seed)) return 3;
     if (bandAnchorSeed !== Game.state.seed) {
       bandAnchor = Game.WorldGen.spawnAnchor ? Game.WorldGen.spawnAnchor(Game.state.seed) : { tx: 0, ty: 0 };
       bandAnchorSeed = Game.state.seed;
@@ -277,6 +303,6 @@ Game.World = (function () {
     getTileData, setTileData, clearTileData,
     isWalkable, updateChunks, toChunkCoord, rescueStuck: nudgeToWalkable,
     setActiveWorld, shift, setObjBothWorlds, resonate, depthOf, inDepths, travelTo,
-    dangerBandAt, dangerBandName,
+    dangerBandAt, dangerBandName, teleport, currentAreaMood,
   };
 })();

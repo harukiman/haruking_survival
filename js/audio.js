@@ -40,8 +40,13 @@ Game.Audio = (function () {
     desert:   { root: 277.18, scale: [0, 1, 4, 5, 7, 8, 11],  bpm: 100, wave: 'triangle', cut: 1900, kick: true, bassEvery: 4, arp: [0, 4, 5, 8, 7, 4], arpEvery: 2, noteVol: 0.04, bassVol: 0.045, kickVol: 0.06, prog: [0, 1, 0, -4] }, // 砂漠=エキゾチック(ダブルハーモニック)
     snow:     { root: 261.63, scale: [0, 2, 4, 7, 9],         bpm: 66,  wave: 'sine', cut: 1200, kick: false, bassEvery: 8, arp: [0, 7, 9, 4, 7, 2], arpEvery: 2, noteVol: 0.04, bassVol: 0.038, kickVol: 0,     prog: [0, -3, 5, 0] },   // 雪原=静謐(ペンタ)
     meadow:   { root: 329.63, scale: [0, 2, 4, 7, 9],         bpm: 84,  wave: 'triangle', cut: 1700, kick: false, bassEvery: 8, arp: [0, 4, 7, 9, 7, 4], arpEvery: 2, noteVol: 0.042, bassVol: 0.04, kickVol: 0, prog: [0, -3, 5, 7] },   // 花の野=穏やかな田園(明るいペンタ)
+    // 新エリア3種(空島/古代都市/狭間) — 拡張フィールド(bell/pluck/drone/heartbeat/pulse/sub/hatRandom/swell/send/padDetune/padVol)は
+    // tickBGM 側で存在チェックして使う。未指定ジャンルは従来と完全に同じ挙動
+    sky:      { root: 349.23, scale: [0, 2, 4, 6, 7, 9, 11],  bpm: 76,  wave: 'sine', cut: 2400, kick: false, bassEvery: 16, arp: [0, 4, 6, 11, 9, 7], arpEvery: 4, noteVol: 0.045, bassVol: 0.028, kickVol: 0, prog: [0, 2, 7, 4],  bell: true, send: 2.2, pulse: 0.035, padDetune: 11, padVol: 0.021 }, // 空島=澄んだ浮遊感(リディアン・ベルリード・キックレス柔パルス・残響たっぷり)
+    ruins:    { root: 220.00, scale: [0, 2, 3, 5, 7, 9, 10],  bpm: 66,  wave: 'triangle', cut: 1400, kick: false, bassEvery: 8, arp: [0, 3, 7, 10, 9, 7], arpEvery: 4, noteVol: 0.048, bassVol: 0.04, kickVol: 0, prog: [0, -2, 3, -2], pluck: true, drone: 0.045, heartbeat: 0.075 },                    // 古代都市=荘厳と郷愁(ドリアン・深いドローン+爪弾き・遠い鼓動)
+    rift:     { root: 233.08, scale: [0, 1, 3, 6, 7, 10],     bpm: 70,  wave: 'sine', cut: 1100, kick: false, bassEvery: 8, arp: [0, 7, 6, 10, 7, 1], arpEvery: 4, noteVol: 0.036, bassVol: 0.03, kickVol: 0, prog: [0, 1, 0, -6],  sub: 0.06, hatRandom: true, swell: 0.05 },                          // 狭間=不穏(b2/三全音の色彩・サブパルス・不規則ハット・ノイズスウェル)
   };
-  const MOOD_GENRE = { title: 'meadow', day: 'animepop', night: 'city', shadow: 'classic', cave: 'classic', boss: 'edm', space: 'space', desert: 'desert', snow: 'snow', meadow: 'meadow' };
+  const MOOD_GENRE = { title: 'meadow', day: 'animepop', night: 'city', shadow: 'classic', cave: 'classic', boss: 'edm', space: 'space', desert: 'desert', snow: 'snow', meadow: 'meadow', sky: 'sky', ruins: 'ruins', rift: 'rift' };
 
   function ensure() {
     if (!ctx) {
@@ -249,6 +254,23 @@ Game.Audio = (function () {
       case 'relic_get': sbeep(880, 0.09, 'sine', 0.07, 0); sbeep(1175, 0.09, 'sine', 0.06, 0.06); sbeep(1568, 0.14, 'triangle', 0.06, 0.12); if (ctx) sparkle(1568, 0.045); break;
       // 低HP警告: 鈍い鼓動(長めスロットル)
       case 'lowhp': if (throttled('lowhp', 1.1)) { beep(82, 0.12, 'sine', 0.11); sbeep(62, 0.16, 'sine', 0.09, 0.16); } break;
+      // ポータル起動: 上昇ウーッシュ(サインの駆け上がり+高域ノイズ)＋きらめき
+      case 'portal': if (throttled('portal', 0.3)) { ensure(); if (ctx) {
+        const tp = ctx.currentTime;
+        if (voiceOk()) { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(180, tp); o.frequency.exponentialRampToValueAtTime(1400, tp + 0.7); g.gain.setValueAtTime(0.0001, tp); g.gain.linearRampToValueAtTime(0.07, tp + 0.5); g.gain.exponentialRampToValueAtTime(0.0001, tp + 0.8); o.connect(g); g.connect(sfxGain); if (sendIn) g.connect(sendIn); reg(o); o.start(tp); o.stop(tp + 0.85); }
+        noisePiece(tp, 0.7, 0.05, 'highpass', 1800, 0.7, false);
+        sparkle(1175, 0.05);
+      } } break;
+      // ポータル到着: 柔らかなブルーム(重ねサイン)＋チャイム
+      case 'portal_arrive': ensure(); if (ctx) { sbeep(523.25, 0.5, 'sine', 0.05, 0); sbeep(659.25, 0.5, 'sine', 0.045, 0.05); sbeep(783.99, 0.6, 'sine', 0.04, 0.1); sparkle(1568, 0.05); subThump(120, 60, 0.3, 0.06); } break;
+      // 風の一薙ぎ(空島モブ用): 空気感のあるバンドパス+高域ノイズ
+      case 'wind_gust': if (throttled('wgust', 0.25)) { ensure(); if (ctx) { noisePiece(ctx.currentTime, 0.5, 0.06, 'bandpass', 700, 0.8, false); noisePiece(ctx.currentTime + 0.08, 0.4, 0.04, 'highpass', 2200, 0.6, false); } } break;
+      // 古代の低い石の共鳴(古代都市用): 沈むサイン＋こもったノイズ+残響
+      case 'ancient_hum': if (throttled('ahum', 0.8)) { ensure(); if (ctx) {
+        const ta = ctx.currentTime;
+        if (voiceOk()) { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(72, ta); o.frequency.linearRampToValueAtTime(66, ta + 1.1); g.gain.setValueAtTime(0.0001, ta); g.gain.linearRampToValueAtTime(0.08, ta + 0.35); g.gain.exponentialRampToValueAtTime(0.0001, ta + 1.2); o.connect(g); g.connect(sfxGain); if (sendIn) g.connect(sendIn); reg(o); o.start(ta); o.stop(ta + 1.25); }
+        noisePiece(ta, 0.9, 0.03, 'lowpass', 300, 0.8, false);
+      } } break;
     }
   }
 
@@ -326,6 +348,103 @@ Game.Audio = (function () {
     o.connect(g); g.connect(bgm.buses[bgm.bus].f);
     reg(o); o.start(when); o.stop(when + dur + 0.03);
   }
+  // ---- 新エリア用ボイス(sky/ruins/rift)。拡張フィールドを持つジャンルのみ tickBGM から呼ばれる ----
+  // ベル音(空島): サイン基音+非整数倍音(2.76x)の金属的きらめき。send倍率でたっぷりの残響
+  function bellTone(freq, dur, vol, when, send) {
+    if (!voiceOk() || vol <= 0) return;
+    const bus = bgm.buses[bgm.bus];
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, when);
+    g.gain.exponentialRampToValueAtTime(vol, when + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, when + dur);
+    const o1 = ctx.createOscillator(), o2 = ctx.createOscillator();
+    o1.type = 'sine'; o1.frequency.value = freq;
+    o2.type = 'sine'; o2.frequency.value = freq * 2.76;
+    const g2 = ctx.createGain(); g2.gain.value = 0.35;
+    o1.connect(g); o2.connect(g2); g2.connect(g); g.connect(bus.f);
+    if (sendIn) { const sg = ctx.createGain(); sg.gain.value = send || 1; g.connect(sg); sg.connect(sendIn); }
+    reg(o1); o1.start(when); o1.stop(when + dur + 0.05);
+    o2.start(when); o2.stop(when + dur + 0.05);
+  }
+  // プラック音(古代都市): 急峻に閉じるフィルタの爪弾き。郷愁のモチーフ用
+  function pluckTone(freq, dur, vol, when) {
+    if (!voiceOk() || vol <= 0) return;
+    const bus = bgm.buses[bgm.bus];
+    const f = ctx.createBiquadFilter(); f.type = 'lowpass';
+    f.frequency.setValueAtTime(2400, when);
+    f.frequency.exponentialRampToValueAtTime(480, when + Math.min(0.18, dur));
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, when);
+    g.gain.exponentialRampToValueAtTime(vol, when + 0.006);
+    g.gain.exponentialRampToValueAtTime(0.0001, when + dur);
+    const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = freq;
+    o.connect(f); f.connect(g); g.connect(bus.f);
+    if (sendIn) g.connect(sendIn);
+    reg(o); o.start(when); o.stop(when + dur + 0.03);
+  }
+  // ドローン(古代都市): 小節まるごと持続する深い低音(デチューン2osc・ゆっくり満ちる)
+  function droneTone(freq, dur, vol, when) {
+    if (!voiceOk() || vol <= 0) return;
+    const bus = bgm.buses[bgm.bus];
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, when);
+    g.gain.linearRampToValueAtTime(vol, when + dur * 0.25);
+    g.gain.exponentialRampToValueAtTime(0.0001, when + dur);
+    const o1 = ctx.createOscillator(), o2 = ctx.createOscillator();
+    o1.type = 'triangle'; o2.type = 'sine';
+    o1.frequency.value = freq; o2.frequency.value = freq;
+    o1.detune.value = -6; o2.detune.value = 6;
+    o1.connect(g); o2.connect(g); g.connect(bus.f);
+    reg(o1); o1.start(when); o1.stop(when + dur + 0.05);
+    o2.start(when); o2.stop(when + dur + 0.05);
+  }
+  // 遠い鼓動(古代都市): 低く沈む lub-dub の片打ち
+  function heartbeatKick(when, vol) {
+    if (!voiceOk() || vol <= 0) return;
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(88, when); o.frequency.exponentialRampToValueAtTime(36, when + 0.18);
+    g.gain.setValueAtTime(vol, when); g.gain.exponentialRampToValueAtTime(0.0001, when + 0.22);
+    o.connect(g); g.connect(bgmGain);
+    reg(o); o.start(when); o.stop(when + 0.25);
+  }
+  // 柔らかな脈(空島): キックの代わりのごく静かなタップ
+  function softPulse(when, vol) {
+    if (!voiceOk() || vol <= 0) return;
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(220, when); o.frequency.exponentialRampToValueAtTime(110, when + 0.1);
+    g.gain.setValueAtTime(0.0001, when); g.gain.linearRampToValueAtTime(vol, when + 0.03); g.gain.exponentialRampToValueAtTime(0.0001, when + 0.25);
+    o.connect(g); g.connect(bgmGain);
+    reg(o); o.start(when); o.stop(when + 0.28);
+  }
+  // サブパルス(狭間): 地の底で規則的に脈打つ低いサイン
+  function subPulseTone(freq, dur, vol, when) {
+    if (!voiceOk() || vol <= 0) return;
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = 'sine'; o.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, when);
+    g.gain.linearRampToValueAtTime(vol, when + 0.04);
+    g.gain.exponentialRampToValueAtTime(0.0001, when + dur);
+    o.connect(g); g.connect(bgmGain);
+    reg(o); o.start(when); o.stop(when + dur + 0.03);
+  }
+  // フィルタノイズスウェル(狭間): ゆっくり満ちて引く不穏な息遣い
+  function noiseSwellBgm(when, dur, vol) {
+    if (!ctx || !noiseBuf || !voiceOk() || vol <= 0) return;
+    const src = ctx.createBufferSource(); src.buffer = noiseBuf; src.loop = true;
+    const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 1.1;
+    f.frequency.setValueAtTime(300, when);
+    f.frequency.exponentialRampToValueAtTime(1400, when + dur * 0.6);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, when);
+    g.gain.linearRampToValueAtTime(vol, when + dur * 0.55);
+    g.gain.exponentialRampToValueAtTime(0.0001, when + dur);
+    src.connect(f); f.connect(g); g.connect(bgmGain);
+    if (sendIn) g.connect(sendIn);
+    reg(src); src.start(when, Math.random()); src.stop(when + dur + 0.05);
+  }
+
   function kickDrum(when, vol) {
     if (!voiceOk() || vol <= 0) return;
     const osc = ctx.createOscillator(), g = ctx.createGain();
@@ -355,6 +474,14 @@ Game.Audio = (function () {
       // キック(ボス強度でブースト＋8ステップ目にダブル)
       if (G.kick && st % 2 === 0) kickDrum(when, G.kickVol * (1 + 0.5 * inten));
       if (G.kick && inten >= 0.5 && st % 8 === 7) kickDrum(when, G.kickVol * 0.7);
+      // 新エリア拡張リズム(該当フィールドを持つジャンルのみ発火・既存ジャンルは不変)
+      if (G.heartbeat && st % 8 === 0) heartbeatKick(when, G.heartbeat);                      // 遠い鼓動: lub
+      if (G.heartbeat && st % 8 === 1) heartbeatKick(when, G.heartbeat * 0.6);                // dub
+      if (G.pulse && st % 8 === 0) softPulse(when, G.pulse);                                  // 空島: 柔らかな脈
+      if (G.sub && st % 4 === 0) subPulseTone(rootNow / 4, stepDur * 2.4, G.sub, when);       // 狭間: サブパルス
+      if (G.drone && st === 0) droneTone(rootNow / 4, stepDur * 16, G.drone, when);           // 古代都市: 小節ドローン
+      if (G.swell && st === 0 && vrnd() < 0.6) noiseSwellBgm(when, stepDur * 12, G.swell);    // 狭間: ノイズスウェル(シード変奏で時々)
+      if (G.hatRandom && vrnd() < 0.34) bgmHat(when, 0.016 + vrnd() * 0.014);                 // 狭間: 不規則ハット
       // スネア(ボス戦のみ・ランクで強く): 裏の4/12ステップ
       if (inten > 0.25 && (st === 4 || st === 12)) bgmSnare(when, 0.035 + 0.045 * inten);
       // ベース
@@ -370,7 +497,10 @@ Game.Audio = (function () {
         if (r < 0.12 && st % 8 !== 0) { /* 休符 */ }
         else {
           if (r > 0.85) oct = oct === 1 ? 2 : 1; // たまに跳躍
-          tone(rootNow * oct * Math.pow(2, deg / 12), stepDur * 0.9, G.wave, G.noteVol, when);
+          const fq = rootNow * oct * Math.pow(2, deg / 12);
+          if (G.bell) bellTone(fq, stepDur * 3.2, G.noteVol, when, G.send);      // 空島: まばらなベルリード(長い余韻)
+          else if (G.pluck) pluckTone(fq, stepDur * 1.6, G.noteVol, when);       // 古代都市: 爪弾きモチーフ
+          else tone(fq, stepDur * 0.9, G.wave, G.noteVol, when);
         }
       }
       // パッド和音(半小節ごと): デチューン付き持続和音＋センド残響で厚みと奥行き
@@ -381,8 +511,9 @@ Game.Audio = (function () {
           const semi = ci === 0 ? (G.scale[0] || 0) : ci === 1 ? (G.scale[2] != null ? G.scale[2] : 4) : (G.scale[4] != null ? G.scale[4] : 7);
           const o = ctx.createOscillator(), g = ctx.createGain();
           o.type = 'sine'; o.frequency.value = rootNow * Math.pow(2, semi / 12);
-          o.detune.value = ci === 1 ? 4 : ci === 2 ? -4 : 0;
-          g.gain.setValueAtTime(0.0001, when); g.gain.linearRampToValueAtTime(0.016, when + 0.4); g.gain.exponentialRampToValueAtTime(0.0001, when + stepDur * 8);
+          const pdet = G.padDetune || 4; // 空島などはデチューン広め=空気感(既定4=従来通り)
+          o.detune.value = ci === 1 ? pdet : ci === 2 ? -pdet : 0;
+          g.gain.setValueAtTime(0.0001, when); g.gain.linearRampToValueAtTime(G.padVol || 0.016, when + 0.4); g.gain.exponentialRampToValueAtTime(0.0001, when + stepDur * 8);
           o.connect(g); g.connect(bus.f); if (sendIn) g.connect(sendIn);
           reg(o); o.start(when); o.stop(when + stepDur * 8 + 0.05);
         }
@@ -497,7 +628,17 @@ Game.Audio = (function () {
     }
     bgm.intensity = boss ? Math.min(1, tier / 4) : 0; // C=0.25 B=0.5 A=0.75 S=1.0
     const TS = Game.CFG.TILE_SIZE, p = Game.state.player;
+    // エリアムード(空島/古代都市/狭間): 優先度は boss > エリア > バイオーム/昼夜。
+    // World 側が currentAreaMood() を公開していない間は従来と完全に同一挙動
+    let areaMood = null;
+    if (!boss && Game.World && Game.World.currentAreaMood) {
+      try {
+        const am = Game.World.currentAreaMood();
+        if (am && MOOD_GENRE[am]) areaMood = am;
+      } catch (e) {}
+    }
     if (boss) mood = 'boss';
+    else if (areaMood) mood = areaMood;
     else if (Game.state.worldName === 'space') mood = 'space';
     else if (Game.state.worldName === 'shadow') mood = 'shadow';
     else {
@@ -526,6 +667,8 @@ Game.Audio = (function () {
     heroic:   { chord: [65.41, 82.41, 98.00, 130.81], hi: 659.25 },   // Cメジャー: 勝利・高揚
     mystic:   { chord: [61.74, 92.50, 110.00, 146.83], hi: 587.33 },  // 浮遊する神秘(sus)
     tense:    { chord: [61.74, 73.42, 87.31, 123.47], hi: 493.88 },   // 減和音: 不穏・ボス登場
+    aerial:   { chord: [87.31, 130.81, 174.61, 220.00], hi: 698.46 }, // Fメジャー開放和音: 空・光・浮遊(空島到着ムービー)
+    liminal:  { chord: [61.74, 65.41, 92.50, 123.47], hi: 466.16 },   // 短2度+三全音クラスタ: 狭間の不気味さ(到着ムービー)
   };
   function cineStart(mood) {
     if (!enabled) return; ensure(); if (!ctx) return;

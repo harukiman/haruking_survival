@@ -72,6 +72,28 @@ Game.Tiles = (function () {
         circle(x, px, py, 1.4);
       }
     }
+    // 雲石(空島): ふんわりした明部の丸みと柔らかな陰影で雲らしさをベイク
+    if (id === Game.TILE.CLOUD) {
+      x.fillStyle = shade(base, 12);
+      for (let i = 0; i < 4; i++) { x.beginPath(); x.ellipse(4 + rnd() * (TS - 8), 4 + rnd() * (TS - 8), 5 + rnd() * 4, 3 + rnd() * 2, 0, 0, Math.PI * 2); x.fill(); }
+      x.fillStyle = shade(base, -10); x.globalAlpha = 0.5;
+      for (let i = 0; i < 2; i++) { x.beginPath(); x.ellipse(6 + rnd() * (TS - 12), TS - 8 + rnd() * 4, 6, 2.5, 0, 0, Math.PI * 2); x.fill(); }
+      x.globalAlpha = 1;
+      x.fillStyle = 'rgba(255,255,255,0.5)';
+      for (let i = 0; i < 3; i++) circle(x, 3 + rnd() * (TS - 6), 3 + rnd() * (TS - 6), 1.2);
+    }
+    // 空の虚(空島の下界): 縦グラデの空＋遠景の雲＋流れる雲影をベイク
+    if (id === Game.TILE.SKYVOID) {
+      const sg = x.createLinearGradient(0, 0, 0, TS);
+      sg.addColorStop(0, shade(base, 14)); sg.addColorStop(1, shade(base, -26));
+      x.fillStyle = sg; x.fillRect(0, 0, TS, TS); // ベース+斑点を空グラデで上書き
+      x.fillStyle = 'rgba(255,255,255,0.30)';
+      for (let i = 0; i < 3; i++) { const yy = 4 + rnd() * (TS - 8); x.beginPath(); x.ellipse(4 + rnd() * (TS - 8), yy, 6 + rnd() * 5, 2 + rnd() * 1.5, 0, 0, Math.PI * 2); x.fill(); }
+      x.fillStyle = 'rgba(20,40,70,0.16)'; // 雲影(遠くの雲が落とす影)
+      for (let i = 0; i < 2; i++) { x.beginPath(); x.ellipse(4 + rnd() * (TS - 8), 6 + rnd() * (TS - 10), 7, 2.4, 0, 0, Math.PI * 2); x.fill(); }
+      x.fillStyle = 'rgba(255,255,255,0.55)';
+      for (let i = 0; i < 2; i++) x.fillRect(2 + rnd() * (TS - 4), 2 + rnd() * (TS - 4), 1.2, 1.2);
+    }
     // 沼地は淀んだ水たまり＋気泡
     if (id === Game.TILE.SWAMP) {
       x.fillStyle = shade(base, -22);
@@ -83,7 +105,7 @@ Game.Tiles = (function () {
   }
 
   // 立ちオブジェクトの接地影（チャンクキャッシュにベイク＝毎フレーム負荷ゼロ）
-  const standing = { tree: 1, deadtree: 1, pine: 1, rock: 1, ore: 1, bush: 1, berry: 1, cactus: 1, flower: 1, sapling: 1, shadowtree: 1, shadowcrystal: 1, lumenore: 1, soulflower: 1, voidrock: 1, starore: 1, giantshroom: 1, glowshroom: 1, pmushroom: 1, obsidian: 1, sulfur: 1, barrel: 1, potted: 1, totem: 1, streetlamp: 1, torch: 1, lantern: 1, brazier: 1, stela: 1, sign: 1, campfire: 1, rocket_obj: 1, lumenlantern: 1, banner: 1, chair: 1 };
+  const standing = { tree: 1, deadtree: 1, pine: 1, rock: 1, ore: 1, bush: 1, berry: 1, cactus: 1, flower: 1, sapling: 1, shadowtree: 1, shadowcrystal: 1, lumenore: 1, soulflower: 1, voidrock: 1, starore: 1, giantshroom: 1, glowshroom: 1, pmushroom: 1, obsidian: 1, sulfur: 1, barrel: 1, potted: 1, totem: 1, streetlamp: 1, torch: 1, lantern: 1, brazier: 1, stela: 1, sign: 1, campfire: 1, rocket_obj: 1, lumenlantern: 1, banner: 1, chair: 1, skytree: 1, skypillar: 1, windaltar: 1, returnaltar: 1 };
   function contactShadow(x, rx) {
     x.fillStyle = 'rgba(0,0,0,0.22)';
     x.beginPath(); x.ellipse(TS / 2, TS - 4, rx || 10, 3.2, 0, 0, Math.PI * 2); x.fill();
@@ -417,6 +439,46 @@ Game.Tiles = (function () {
       x.fillStyle = '#c8a0ff';
       x.beginPath(); x.moveTo(TS/2,5); x.lineTo(TS/2+7,TS/2); x.lineTo(TS/2,TS-5); x.lineTo(TS/2-7,TS/2); x.closePath(); x.fill();
       x.fillStyle = '#fff'; circle(x, TS/2, TS/2, 2.4);
+    } else if (r === 'windaltar') {
+      // 風の祭壇: 青碧の台座＋渦巻く風のリング＋白金の光球
+      x.fillStyle = '#8fa8b4'; x.fillRect(5, 14, TS - 10, TS - 18);
+      x.fillStyle = '#b8ccd4'; x.fillRect(7, 10, TS - 14, 7);
+      x.strokeStyle = '#5f7a86'; x.lineWidth = 2; x.strokeRect(6, 11, TS - 12, TS - 16);
+      x.strokeStyle = 'rgba(143,232,224,0.8)'; x.lineWidth = 1.6;
+      x.beginPath(); x.arc(TS / 2, 9, 6, 0.4, Math.PI * 1.6); x.stroke();
+      x.beginPath(); x.arc(TS / 2, 9, 3.6, Math.PI * 1.2, Math.PI * 2.6); x.stroke();
+      x.fillStyle = 'rgba(244,234,208,0.4)'; circle(x, TS / 2, 9, 6.5);
+      x.fillStyle = '#f4ead0'; circle(x, TS / 2, 9, 2.8);
+      x.fillStyle = '#ffffff'; circle(x, TS / 2, 8, 1.2);
+    } else if (r === 'returnaltar') {
+      // 帰還の祭壇: 白い台座＋下向きの光の雫(大地への帰路)
+      x.fillStyle = '#d8e2e8'; x.fillRect(5, 14, TS - 10, TS - 18);
+      x.fillStyle = '#eef4f6'; x.fillRect(7, 10, TS - 14, 7);
+      x.strokeStyle = '#9fb4be'; x.lineWidth = 2; x.strokeRect(6, 11, TS - 12, TS - 16);
+      x.fillStyle = 'rgba(127,216,208,0.45)'; circle(x, TS / 2, 9, 6);
+      x.fillStyle = '#7fd8d0';
+      x.beginPath(); x.moveTo(TS / 2, 4); x.lineTo(TS / 2 + 3.4, 10); x.lineTo(TS / 2, 14); x.lineTo(TS / 2 - 3.4, 10); x.closePath(); x.fill();
+      x.fillStyle = '#ffffff'; circle(x, TS / 2, 9, 1.3);
+    } else if (r === 'skypillar') {
+      // 風化した柱: 欠けた白亜の石柱＋青碧の苔
+      x.fillStyle = '#b0bcc4'; x.fillRect(TS / 2 - 6, 6, 12, TS - 10);
+      x.fillStyle = '#cdd8de'; x.fillRect(TS / 2 - 4, 8, 5, TS - 14);
+      x.fillStyle = '#98a6ae'; x.fillRect(TS / 2 - 8, 4, 16, 4); // 笠石
+      x.fillStyle = '#8a98a0'; x.fillRect(TS / 2 - 8, TS - 6, 16, 4); // 基壇
+      x.fillStyle = '#0c141c'; x.globalAlpha = 0.25; // 欠け
+      x.fillRect(TS / 2 + 2, 10, 4, 3); x.fillRect(TS / 2 - 6, 18, 3, 4); x.globalAlpha = 1;
+      x.fillStyle = 'rgba(127,216,190,0.55)'; // 風苔
+      circle(x, TS / 2 - 4, TS - 9, 1.6); circle(x, TS / 2 + 3, 14, 1.3);
+    } else if (r === 'skytree') {
+      // 空の樹: 白い幹＋青碧がかった透ける葉冠＋漂う光胞子
+      x.fillStyle = '#c4ccd4'; x.fillRect(TS / 2 - 3, TS - 12, 6, 12);
+      x.fillStyle = '#dfe8ec'; x.fillRect(TS / 2 - 1, TS - 12, 2, 12);
+      x.fillStyle = '#4f9a8e'; circle(x, TS / 2 + 1, TS / 2, 12);
+      x.fillStyle = '#6fc0b0'; circle(x, TS / 2, TS / 2 - 2, 11);
+      x.fillStyle = '#9fe0d0'; circle(x, TS / 2 - 3, TS / 2 - 5, 6);
+      x.fillStyle = '#d8fff4'; circle(x, TS / 2 - 5, TS / 2 - 7, 2.6);
+      x.fillStyle = 'rgba(255,255,255,0.75)';
+      circle(x, TS / 2 + 6, TS / 2 - 8, 1.1); circle(x, TS / 2 - 9, TS / 2 + 1, 1.0);
     } else if (r === 'tchest') {
       x.fillStyle = '#b58a2a'; x.fillRect(4, 9, TS - 8, TS - 13);
       x.fillStyle = '#e8c54a'; x.fillRect(4, 9, TS - 8, 6);

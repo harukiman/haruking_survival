@@ -135,6 +135,12 @@ Game.UI = (function () {
     // モバイル端末ならタッチUI表示
     if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
       el.touch.classList.remove('hidden');
+    } else {
+      // デスクトップ(非タッチ): マウスだけで全操作が完結するよう操作ボタン＋移動パッドを表示
+      // (各ボタンは mousedown/click ハンドラ済み。パッド接続時は body.has-pad が非表示化)
+      document.body.classList.add('desktop');
+      el.touch.classList.remove('hidden');
+      const dp = document.getElementById('dpad'); if (dp) dp.classList.remove('hidden');
     }
   }
 
@@ -925,6 +931,8 @@ Game.UI = (function () {
         '<div class="hk"><b>影渡り</b> F（影鏡が必要）</div>' +
         '<div class="hk"><b>インベントリ</b> E　<b>ステ/スキル</b> C　<b>大マップ</b> N/Tab</div>' +
         '<div class="hk"><b>ホットバー</b> 1-9　<b>サウンド</b> M　<b>設定</b> P/Esc</div>' +
+        '<div class="hk"><b>PCマウスだけでも遊べる</b>: 画面の移動パッド＋右下ボタン(採掘/設置/回避/走る/影渡り/袋)をクリック。キーボードは補助</div>' +
+        '<div class="hk"><b>パッドのメニュー操作</b>: 十字キー/左スティック=カーソル移動 ／ ×=決定 ／ ○=閉じる ／ L1・R1=タブ切替 ／ SHARE=設定 ／ L3=ステータス ／ 右スティック+R2=ポインタでも操作可</div>' +
         '</div>' : '') + '</div>';
     c.querySelectorAll('.opt-slider').forEach(function (sl) {
       sl.addEventListener('input', function () {
@@ -2013,6 +2021,131 @@ Game.UI = (function () {
     saveTimer = setTimeout(function () { if (saveEl) saveEl.style.opacity = '0'; }, 1100);
   }
 
+  // ===== ゲームパッド メニューナビ（フォーカスリング / 十字キー・左スティック操作） =====
+  // どのオーバーレイでも汎用に効く: 可視の操作要素を集めて方向で最寄りへフォーカス移動
+  const PAD_FOCUS_SEL = 'button, .slot, input[type="range"], .craft-row, .eq-cell.filled, .sk-branch-name, [data-focusable]';
+  const PAD_CLOSERS = {
+    'inv-screen': function () { toggleInventory(); },
+    'options-screen': function () { toggleOptions(); },
+    'stats-screen': closeStats, 'chest-screen': closeChest, 'trade-screen': closeTrade,
+    'story-screen': closeStory, 'quest-screen': closeQuest, 'enchant-screen': closeEnchant, 'lore-screen': closeLore,
+  };
+  let padFocusEl = null, padLastPt = null;
+  function padMenuRoot() {
+    // 最後（=最前面）の可視オーバーレイをナビ対象にする
+    const list = document.querySelectorAll('.overlay:not(.hidden)');
+    return list.length ? list[list.length - 1] : null;
+  }
+  function padRect(n) {
+    const r = n.getBoundingClientRect();
+    return (r.width < 4 || r.height < 4) ? null : r;
+  }
+  function padFocusables(root) {
+    const out = [];
+    root.querySelectorAll(PAD_FOCUS_SEL).forEach(function (n) {
+      if (n.disabled || n.classList.contains('disabled')) return;
+      const r = padRect(n); if (!r) return;
+      out.push({ el: n, x: r.left + r.width / 2, y: r.top + r.height / 2 });
+    });
+    return out;
+  }
+  function padSetFocus(n) {
+    if (padFocusEl && padFocusEl !== n) padFocusEl.classList.remove('pad-focus');
+    padFocusEl = n; if (!n) return;
+    n.classList.add('pad-focus');
+    const r = n.getBoundingClientRect();
+    padLastPt = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    try { n.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch (e) {}
+  }
+  function padNearestPt(list, pt) {
+    let best = list[0], bd = Infinity;
+    list.forEach(function (c) { const d = Math.hypot(c.x - pt.x, c.y - pt.y); if (d < bd) { bd = d; best = c; } });
+    return best;
+  }
+  const PAD_DIRV = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
+  function padMove(list, cur, dir) {
+    // 進行方向にあり、直交方向のずれが小さい要素を優先（グリッド対応）
+    const v = PAD_DIRV[dir];
+    let best = null, bs = Infinity;
+    list.forEach(function (c) {
+      if (c.el === cur.el) return;
+      const dx = c.x - cur.x, dy = c.y - cur.y;
+      const fwd = dx * v[0] + dy * v[1];
+      if (fwd < 4) return; // 後方・同列は対象外
+      const ortho = Math.abs(dx * v[1]) + Math.abs(dy * v[0]);
+      const score = fwd + ortho * 2.6;
+      if (score < bs) { bs = score; best = c; }
+    });
+    return best;
+  }
+  function padActivateEl(n) {
+    if (!n) return;
+    if (n.tagName === 'INPUT' && n.type !== 'range') { try { n.focus(); } catch (e) {} return; }
+    if (n.tagName === 'INPUT') return; // スライダーは左右キーで調整
+    // インベントリ格子は pointerdown/up タップ仕様(2連タップ=使用/装備)を合成イベントで踏襲
+    if (n.classList.contains('slot') && n.parentElement && n.parentElement.id === 'inv-grid') {
+      try {
+        const r = n.getBoundingClientRect(); const x = r.left + r.width / 2, y = r.top + r.height / 2;
+        n.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX: x, clientY: y }));
+        window.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, clientX: x, clientY: y }));
+        return;
+      } catch (e) { /* PointerEvent 未対応環境は click へフォールバック */ }
+    }
+    n.click();
+  }
+  function padTab(root, dir) {
+    const tabs = root.querySelectorAll('.craft-tabs .craft-tab');
+    if (!tabs.length) return false;
+    let on = 0; tabs.forEach(function (t, i) { if (t.classList.contains('on')) on = i; });
+    const n = (on + dir + tabs.length) % tabs.length;
+    tabs[n].click();
+    const root2 = padMenuRoot(); // 再描画後の新タブへフォーカスを貼り直す
+    if (root2) { const t2 = root2.querySelectorAll('.craft-tabs .craft-tab'); if (t2[n]) padSetFocus(t2[n]); }
+    return true;
+  }
+  // 入口: 'up'|'down'|'left'|'right'|'ok'|'back'|'tabprev'|'tabnext'
+  function padNav(cmd) {
+    const root = padMenuRoot(); if (!root) return false;
+    if (cmd === 'back') {
+      const closer = PAD_CLOSERS[root.id];
+      padSetFocus(null);
+      if (closer) { Game.Audio.play('select'); closer(); }
+      return true;
+    }
+    if (cmd === 'tabprev' || cmd === 'tabnext') return padTab(root, cmd === 'tabnext' ? 1 : -1);
+    const list = padFocusables(root);
+    if (!list.length) return false;
+    let cur = null;
+    if (padFocusEl && padFocusEl.isConnected && root.contains(padFocusEl)) {
+      const r = padRect(padFocusEl);
+      if (r) cur = { el: padFocusEl, x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    }
+    if (!cur) { // 初回 or 再描画で消失: 直前位置に最も近い要素へ復帰
+      padSetFocus(padLastPt ? padNearestPt(list, padLastPt).el : list[0].el);
+      Game.Audio.play('cursor');
+      return true;
+    }
+    if (cmd === 'ok') {
+      padActivateEl(cur.el);
+      if (!padFocusEl || !padFocusEl.isConnected) { // 再描画された画面へフォーカスを貼り直す
+        const root2 = padMenuRoot();
+        if (root2 && padLastPt) { const l2 = padFocusables(root2); if (l2.length) padSetFocus(padNearestPt(l2, padLastPt).el); }
+      }
+      return true;
+    }
+    if (cur.el.tagName === 'INPUT' && cur.el.type === 'range' && (cmd === 'left' || cmd === 'right')) {
+      const mn = +cur.el.min || 0, mx = +cur.el.max || 100;
+      const step = Math.max(1, Math.round((mx - mn) / 20));
+      cur.el.value = Math.max(mn, Math.min(mx, (+cur.el.value) + (cmd === 'right' ? step : -step)));
+      cur.el.dispatchEvent(new Event('input', { bubbles: true }));
+      Game.Audio.play('cursor');
+      return true;
+    }
+    const nxt = padMove(list, cur, cmd);
+    if (nxt) { padSetFocus(nxt.el); Game.Audio.play('cursor'); }
+    return true;
+  }
+
   return {
     init, showGameUI, refreshHotbar, refreshStats, refreshInventory,
     refreshCraft, refreshAll, toggleInventory, toast, updateMinimap,
@@ -2020,5 +2153,6 @@ Game.UI = (function () {
     showLore, closeLore, refreshQuest, openQuest, closeQuest, refreshBounty, showEnding, showDeath, showIntro, refreshNet, refreshStatus,
     toggleOptions, openEnchant, closeEnchant, flashSave, flashHotbarItem, flashCombo, refreshContext, refreshAmmo,
     toggleBigMap, isBigMapOpen, updateBigMap, openStats, closeStats, toggleStats, renderStats, refreshBossBar, openTrade, closeTrade, openShop, openStory, closeStory,
+    padNav, padMenuRoot, padActivateEl,
   };
 })();

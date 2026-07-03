@@ -69,8 +69,94 @@ Game.WorldGen = (function () {
     return 'ruin';
   }
 
+  // ===== 空島(スカイエンクレーブ) =====
+  // 光世界の seed 決定論的な固定座標に浮かぶ隔離領域。中心=スポーンアンカーから約360タイル、半径 SKY_R。
+  // genTile の最初でバウンズ判定し、外側は既存生成に一切触れない(バイト同一維持)。
+  // SKY_READY: 空島の到達導線(祭壇interact→ムービー→テレポート)と固有モブが未実装の間は false。
+  //   false の間は inSkyEnclave が常に false を返し、エンクレーブ生成・風の祭壇スポーンを完全に無効化(inert scaffold)。
+  const SKY_READY = false;
+  const SKY_R = 48;          // エンクレーブ半径(タイル)
+  const SKY_DIST = 360;      // アンカーからの距離
+  let skyMemo = null, skyMemoSeed = null;
+  function skyCenter(seed) {
+    if (skyMemoSeed === seed && skyMemo) return skyMemo;
+    const a = spawnAnchor(seed);
+    const ang = U.hash3(11, 22, seed + 909) * Math.PI * 2;
+    skyMemoSeed = seed;
+    skyMemo = {
+      tx: a.tx + Math.round(Math.cos(ang) * SKY_DIST),
+      ty: a.ty + Math.round(Math.sin(ang) * SKY_DIST),
+    };
+    // 番人の宝殿: 中心から seed 決定論的な方角に浮かぶ小島
+    const ang2 = U.hash3(3, 7, seed + 606) * Math.PI * 2;
+    skyMemo.gx = skyMemo.tx + Math.round(Math.cos(ang2) * 27);
+    skyMemo.gy = skyMemo.ty + Math.round(Math.sin(ang2) * 27);
+    return skyMemo;
+  }
+  // 純幾何のバウンズ判定(worldName 非依存)。呼び出し側で光世界に限定する
+  function inSkyEnclave(wx, wy, seed) {
+    if (!SKY_READY) return false; // 未完成の間は無効(scaffoldを完全にinert化)
+    const C = skyCenter(seed);
+    const dx = wx - C.tx, dy = wy - C.ty;
+    if (dx > SKY_R || dx < -SKY_R || dy > SKY_R || dy < -SKY_R) return false;
+    return dx * dx + dy * dy <= SKY_R * SKY_R;
+  }
+  // 到達ムービー後の着地点(帰還の祭壇のすぐ南)
+  function skyArrival(seed) { const C = skyCenter(seed); return { tx: C.tx, ty: C.ty + 2 }; }
+  // 帰還の祭壇のタイル座標(帰路 tileData の格納先)
+  function skyReturnAltar(seed) { const C = skyCenter(seed); return { tx: C.tx, ty: C.ty }; }
+
+  function genSkyTile(wx, wy, seed) {
+    const C = skyCenter(seed);
+    const dx = wx - C.tx, dy = wy - C.ty;
+    const d = Math.sqrt(dx * dx + dy * dy);
+    // 外縁リング: 空の虚(不可侵の境界。地上との間を隔てる)
+    if (d > SKY_R - 3) return { ground: T.SKYVOID, obj: O.NONE };
+    // 到着プラットフォーム: 中心の円島。帰還の祭壇＋四隅の風化した柱
+    if (d <= 5.5) {
+      let obj = O.NONE;
+      if (dx === 0 && dy === 0) obj = O.RETURN_ALTAR;
+      else if (Math.abs(dx) === 3 && Math.abs(dy) === 3) obj = O.SKY_PILLAR;
+      return { ground: T.CLOUD, obj: obj };
+    }
+    // 番人の宝殿: 宝箱＋魔物の巣(番人が湧く)＋柱の環(南が開口)
+    const tdx = wx - C.gx, tdy = wy - C.gy;
+    const td = Math.sqrt(tdx * tdx + tdy * tdy);
+    if (td <= 5.5) {
+      let obj = O.NONE;
+      if (tdx === 0 && tdy === 0) obj = O.TREASURE_CHEST;
+      else if (Math.abs(tdx) === 2 && tdy === 0) obj = O.SPAWNER;
+      else if (td > 4.2 && !(tdy > 2 && Math.abs(tdx) <= 1)) {
+        if (U.hash3(wx, wy, seed + 515) < 0.7) obj = O.SKY_PILLAR;
+      }
+      return { ground: T.CLOUD, obj: obj };
+    }
+    // 浮島クラスタ: 低周波ノイズで島/虚を刻む。高コアは草地(空石の草原)
+    const v = N.fbm(wx * 0.05, wy * 0.05, seed ^ 0x51ab, 4);
+    if (v < 0.55) return { ground: T.SKYVOID, obj: O.NONE };
+    const ground = v > 0.66 ? T.GRASS : T.CLOUD;
+    const h = U.hash3(wx, wy, seed + 777);
+    let obj = O.NONE;
+    if (ground === T.GRASS) {
+      if (h < 0.09) obj = O.SKY_TREE;
+      else if (h < 0.12) obj = O.BUSH;
+      else if (h < 0.16) obj = O.FLOWER;
+      else if (h < 0.19) obj = O.WIND_ORE;
+    } else {
+      if (h < 0.05) obj = O.SKY_TREE;
+      else if (h < 0.10) obj = O.WIND_ORE;
+      else if (h < 0.13) obj = O.SKY_PILLAR;
+      else if (h < 0.15) obj = O.ROCK;
+    }
+    return { ground: ground, obj: obj };
+  }
+
   function genTile(wx, wy, seed) {
     if (Game.state && Game.state.worldName === 'space') return genSpace(wx, wy, seed);
+    // 空島エンクレーブ(光世界のみ)。バウンズ判定を最初に行い、外側は従来生成へフォールスルー
+    if (!(Game.state && Game.state.worldName === 'shadow') && inSkyEnclave(wx, wy, seed)) {
+      return genSkyTile(wx, wy, seed);
+    }
     const tr = terrainAt(wx, wy, seed);
     let ground = tr.ground;
     const e = tr.e; // サボテン配置(乾燥帯判定)で使用
@@ -87,6 +173,14 @@ Game.WorldGen = (function () {
     // 古の祭壇（さらに低確率・陸地）— 触れると一時的な祝福を授かる探索報酬
     if (walkableGround && U.hash3(wx, wy, seed + 24601) < 0.0004) {
       return { ground: ground, obj: O.WISH_ALTAR };
+    }
+
+    // 風の祭壇（空島への門・高標高の石場/雪原・光世界のみ・未使用ハッシュ窓 seed+77777）
+    // 風の羽根を持って傍らに立つと空島エンクレーブへ昇れる
+    if (SKY_READY && (ground === T.STONE || ground === T.SNOW) &&
+        !(Game.state && Game.state.worldName === 'shadow') &&
+        U.hash3(wx, wy, seed + 77777) < 0.0006) {
+      return { ground: ground, obj: O.WIND_ALTAR };
     }
 
     // ダンジョン（両世界・テーマ＆サイズ複数種: 遺跡/氷窟/砂の墳墓/溶岩工房）
@@ -275,7 +369,8 @@ Game.WorldGen = (function () {
         const ty = Math.round(Math.sin(ang) * r);
         const t = genTile(tx, ty, seed);
         const walkable = t.obj === O.NONE &&
-          (t.ground === T.GRASS || t.ground === T.SAND || t.ground === T.FOREST || t.ground === T.DIRT);
+          (t.ground === T.GRASS || t.ground === T.SAND || t.ground === T.FOREST || t.ground === T.DIRT) &&
+          !inSkyEnclave(tx, ty, seed); // 空島の草地を初期スポーンに選ばない(海洋シード保険)
         if (walkable) return { tx, ty };
       }
     }
@@ -305,5 +400,6 @@ Game.WorldGen = (function () {
     return { tx: 0, ty: 0 };
   }
 
-  return { genTile, generateChunk, findSpawn, dungeonThemeAt, spawnAnchor };
+  return { genTile, generateChunk, findSpawn, dungeonThemeAt, spawnAnchor,
+    inSkyEnclave, skyCenter, skyArrival, skyReturnAltar };
 })();

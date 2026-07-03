@@ -531,6 +531,17 @@ body.shadow-mode #app::after {
 /* コントローラ接続中はタッチUIを隠す */
 body.has-pad #touch-controls { display: none !important; }
 
+/* ===== パッド メニューフォーカスリング（十字キー/左スティック操作の現在位置） ===== */
+.pad-focus { outline: 3px solid #3ee0ff !important; outline-offset: 2px;
+  box-shadow: 0 0 0 1px rgba(0,10,20,0.7), 0 0 12px rgba(62,224,255,0.65) !important;
+  border-radius: 8px; position: relative; z-index: 1; }
+
+/* ===== デスクトップ(非タッチ・非パッド): マウスだけで全操作できるよう操作ボタン＋移動パッドを表示 ===== */
+body.desktop #action-btns { transform: scale(calc(var(--btn-scale, 1) * 0.88)); }
+body.desktop #dpad { opacity: .8; }
+body.desktop .abtn, body.desktop .dbtn { cursor: pointer; }
+body.desktop .abtn:hover, body.desktop .dbtn:hover { filter: brightness(1.18); }
+
 /* 文脈アクションボタン: 出現時に控えめにふわっと（連続表示でも煩くない） */
 #context-action { animation: ctxPop .16s ease; }
 #context-action:active { transform: translateX(-50%) scale(0.94) !important; }
