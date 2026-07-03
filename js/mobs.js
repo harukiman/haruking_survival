@@ -18,7 +18,12 @@ Game.Mobs = (function () {
     const band = (DZ && Game.World.dangerBandAt) ? Game.World.dangerBandAt(Math.floor(wx / TS), Math.floor(wy / TS)) : 1;
     const bandOver = Math.max(0, band - 1);
     const bandMult = (DZ && def.hostile && !def.boss) ? 1 + Math.min(DZ.STAT_MAX, DZ.STAT_PER * bandOver) : 1;
-    const hp = Math.round(def.hp * mult * bandMult);
+    // ボス強化(ユーザー指示: 脆すぎ→大幅強化)。プレイヤーLvに応じてHPが伸び、成長しても歯応えを保つ。
+    // ダメージは据え置き(タンク化のみ)。中ボスは控えめ。
+    const plv = (Game.state.player && Game.state.player.level) || 1;
+    const bossMult = def.boss ? 2.4 * (1 + Math.min(1.8, (plv - 1) * 0.035))
+                   : def.midboss ? 1.7 * (1 + Math.min(1.0, (plv - 1) * 0.02)) : 1;
+    const hp = Math.round(def.hp * mult * bandMult * bossMult);
     const dmgMult = mult * bandMult * (diff.dmgMult != null ? diff.dmgMult : 1);
     Game.state._mobId = (Game.state._mobId || 0) + 1;
     const m = {
