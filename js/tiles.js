@@ -132,7 +132,7 @@ Game.Tiles = (function () {
   }
 
   // 立ちオブジェクトの接地影（チャンクキャッシュにベイク＝毎フレーム負荷ゼロ）
-  const standing = { tree: 1, deadtree: 1, pine: 1, rock: 1, ore: 1, bush: 1, berry: 1, cactus: 1, flower: 1, sapling: 1, shadowtree: 1, shadowcrystal: 1, lumenore: 1, soulflower: 1, voidrock: 1, starore: 1, giantshroom: 1, glowshroom: 1, pmushroom: 1, obsidian: 1, sulfur: 1, barrel: 1, potted: 1, totem: 1, streetlamp: 1, torch: 1, lantern: 1, brazier: 1, stela: 1, sign: 1, campfire: 1, rocket_obj: 1, lumenlantern: 1, banner: 1, chair: 1, skytree: 1, skypillar: 1, windaltar: 1, returnaltar: 1, ancientgate: 1, returngate: 1, ruincolumn: 1, ruinstatue: 1, rifttear: 1, riftreturn: 1, riftspire: 1 };
+  const standing = { tree: 1, deadtree: 1, pine: 1, rock: 1, ore: 1, bush: 1, berry: 1, cactus: 1, flower: 1, sapling: 1, shadowtree: 1, shadowcrystal: 1, lumenore: 1, soulflower: 1, voidrock: 1, starore: 1, giantshroom: 1, glowshroom: 1, pmushroom: 1, obsidian: 1, sulfur: 1, barrel: 1, potted: 1, totem: 1, streetlamp: 1, torch: 1, lantern: 1, brazier: 1, stela: 1, sign: 1, campfire: 1, rocket_obj: 1, lumenlantern: 1, banner: 1, chair: 1, skytree: 1, skypillar: 1, windaltar: 1, returnaltar: 1, ancientgate: 1, returngate: 1, ruincolumn: 1, ruinstatue: 1, rifttear: 1, riftreturn: 1, riftspire: 1, waypoint: 1 };
   function contactShadow(x, rx) {
     x.fillStyle = 'rgba(0,0,0,0.22)';
     x.beginPath(); x.ellipse(TS / 2, TS - 4, rx || 10, 3.2, 0, 0, Math.PI * 2); x.fill();
@@ -557,6 +557,12 @@ Game.Tiles = (function () {
       x.fillStyle = '#7a5aa8'; x.beginPath(); x.moveTo(TS / 2, 4); x.lineTo(TS / 2 + 6, TS / 2 + 4); x.lineTo(TS / 2, TS - 4); x.lineTo(TS / 2 - 6, TS / 2 + 4); x.closePath(); x.fill();
       x.fillStyle = '#a888e0'; x.beginPath(); x.moveTo(TS / 2, 6); x.lineTo(TS / 2 + 3, TS / 2 + 2); x.lineTo(TS / 2, TS - 8); x.closePath(); x.fill();
       x.fillStyle = 'rgba(232,208,255,0.9)'; circle(x, TS / 2 - 1, TS / 2 - 2, 1.4);
+    } else if (r === 'waypoint') {
+      // 道標の石: 積み石の上に水青の浮遊クリスタル
+      x.fillStyle = '#6a6660'; x.fillRect(TS / 2 - 7, TS - 8, 14, 6); x.fillStyle = '#7a746c'; x.fillRect(TS / 2 - 5, TS - 12, 10, 5);
+      x.fillStyle = '#7fd0e0'; x.beginPath(); x.moveTo(TS / 2, 4); x.lineTo(TS / 2 + 5, TS / 2 - 1); x.lineTo(TS / 2, TS - 12); x.lineTo(TS / 2 - 5, TS / 2 - 1); x.closePath(); x.fill();
+      x.fillStyle = '#c8f0f8'; x.beginPath(); x.moveTo(TS / 2, 6); x.lineTo(TS / 2 + 2.5, TS / 2 - 2); x.lineTo(TS / 2, TS - 14); x.closePath(); x.fill();
+      x.fillStyle = 'rgba(200,240,248,0.9)'; circle(x, TS / 2, TS / 2 - 3, 1.4);
     }
     objAtlas[id] = c;
   }

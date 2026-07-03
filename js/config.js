@@ -70,6 +70,8 @@ Game.OBJ = {
   ANCIENT_GATE:157, RETURN_GATE:158, RUIN_COLUMN:159, RELIC_VEIN:160, RUIN_STATUE:161,
   // 狭間(エンクレーブ)
   RIFT_TEAR:162, RIFT_RETURN:163, RIFT_SPIRE:164, VOID_VEIN:165,
+  // ファストトラベル
+  WAYPOINT_STONE:166,
 };
 
 // 地面の色（手続き描画のベース）
@@ -178,6 +180,7 @@ Game.LIGHT_LEVEL = {
   [Game.OBJ.RIFT_RETURN]: 6,
   [Game.OBJ.RIFT_SPIRE]: 3,
   [Game.OBJ.VOID_VEIN]: 4,
+  [Game.OBJ.WAYPOINT_STONE]: 4,
 };
 
 // オブジェクトのメタ情報。solid=移動阻害, drops=破壊時ドロップ
@@ -283,6 +286,8 @@ Game.OBJ_META = {
   [Game.OBJ.RIFT_RETURN]: { name:'還りの裂け目', solid:true, mineable:false, tool:null, tier:0, hp:999, light:6, drops:[], render:'riftreturn', riftReturn:true },
   [Game.OBJ.RIFT_SPIRE]:  { name:'狭間の尖晶', solid:true, mineable:true, tool:'pickaxe', tier:3, hp:18, drops:[{item:'void_shard', n:[0,1]}], render:'riftspire' },
   [Game.OBJ.VOID_VEIN]:   { name:'虚無の鉱脈', solid:true, mineable:true, tool:'pickaxe', tier:4, hp:20, drops:[{item:'void_shard', n:[1,2]}], render:'ore', oreColor:'#b088e8' },
+  // 道標の石: 触れると登録済みの道標へ瞬間移動できる(ファストトラベル)。壊すと回収
+  [Game.OBJ.WAYPOINT_STONE]:{ name:'道標の石', solid:true, mineable:true, tool:'pickaxe', tier:1, hp:8, light:4, drops:[{item:'waypoint_stone', n:[1,1]}], render:'waypoint', waypoint:true },
 };
 
 // アイテム定義。place=設置するOBJ id, tool/tier=道具, food=空腹回復
@@ -316,6 +321,7 @@ Game.ITEMS = {
   crafting_table:{ name:'作業台', stack:99, color:'#b5803f', place:Game.OBJ.CRAFTING_TABLE },
   furnace:     { name:'かまど', stack:99, color:'#5a5a5e', place:Game.OBJ.FURNACE },
   torch:       { name:'たいまつ', stack:99, color:'#ffcf6b', place:Game.OBJ.TORCH },
+  waypoint_stone:{ name:'道標の石', stack:16, color:'#7fd0e0', place:Game.OBJ.WAYPOINT_STONE, flavor:'光素を宿した道標。置いた場所どうしを結び、触れれば登録済みの道標へ瞬時に渡れる。広い世界を自在に巡れ。' },
   chest:       { name:'チェスト', stack:99, color:'#a9762f', place:Game.OBJ.CHEST },
   // 食料・素材
   berry:       { name:'木の実', stack:32, color:'#c0307a', food:12 },
@@ -567,6 +573,7 @@ Game.RECIPES = [
   { out:{id:'stone_axe', n:1}, in:{wood:2, stone:3}, station:'crafting_table' },
   { out:{id:'furnace', n:1}, in:{stone:8}, station:'crafting_table' },
   { out:{id:'chest', n:1}, in:{wood:8}, station:'crafting_table' },
+  { out:{id:'waypoint_stone', n:2}, in:{stone:8, lumen:1}, station:'crafting_table' }, // ファストトラベルの道標
   { out:{id:'iron', n:1}, in:{iron_ore:1, coal:1}, station:'furnace' },
   { out:{id:'iron_pickaxe', n:1}, in:{iron:3, wood:2}, station:'crafting_table' },
   // 武器・道具

@@ -418,6 +418,7 @@ Game.Player = (function () {
         if (sl) Game.state.drops.push({ id: sl.id, count: sl.count, x: tx * TS + TS / 2, y: ty * TS + TS / 2 });
       });
     }
+    if (obj === Game.OBJ.WAYPOINT_STONE) removeWaypoint(tx, ty); // 道標を壊したら登録解除
     if (meta.dualPlaced) Game.World.setObjBothWorlds(tx, ty, Game.OBJ.NONE);
     else Game.World.setObj(tx, ty, Game.OBJ.NONE);
     Game.Net.broadcastEdit(tx, ty, Game.OBJ.NONE, Game.state.worldName);
@@ -506,6 +507,7 @@ Game.Player = (function () {
       if (o === O.RETURN_GATE) { ruinReturn(); return; }
       if (o === O.RIFT_TEAR) { riftTravel(tx, ty); return; }
       if (o === O.RIFT_RETURN) { riftReturn(); return; }
+      if (o === O.WAYPOINT_STONE) { if (Game.UI.openWaypoints) Game.UI.openWaypoints(); return; }
       if (o === O.SHADOW_ALTAR) { Game.Mobs.summonBoss(tx, ty); return; }
       if (o === O.ENCHANT_TABLE) { Game.UI.openEnchant(); return; }
       if (o === O.BED) { sleep(); return; }
@@ -581,6 +583,35 @@ Game.Player = (function () {
       Game.World.teleport(dx, dy);
       Game.state.paused = false;
     });
+  }
+
+  // ===== 道標(ファストトラベル) =====
+  const BIOME_NAME = { 0: '海辺', 1: '水辺', 2: '砂浜', 3: '草原', 4: '森', 5: '荒地', 6: '岩場', 7: '雪原', 8: '地下', 9: '沼地', 10: '火山', 11: '茸の森', 12: '花野', 13: '空島', 15: '古代都市', 16: '狭間' };
+  function registerWaypoint(tx, ty) {
+    if (!Game.state.waypoints) Game.state.waypoints = [];
+    const world = Game.state.worldName;
+    if (Game.state.waypoints.some(function (w) { return w.tx === tx && w.ty === ty && w.world === world; })) return;
+    const g = Game.World.groundAt(tx, ty);
+    const wl = world === 'shadow' ? '影・' : world === 'space' ? '宇宙・' : '';
+    const n = Game.state.waypoints.filter(function (w) { return w.world === world; }).length + 1;
+    const name = wl + (BIOME_NAME[g] || '道標') + ' ' + n;
+    Game.state.waypoints.push({ tx: tx, ty: ty, world: world, name: name });
+    Game.UI.toast('道標「' + name + '」を登録した');
+    if (Game.Audio.cue) Game.Audio.cue('shimmer');
+  }
+  function removeWaypoint(tx, ty) {
+    if (!Game.state.waypoints) return;
+    const world = Game.state.worldName;
+    Game.state.waypoints = Game.state.waypoints.filter(function (w) { return !(w.tx === tx && w.ty === ty && w.world === world); });
+  }
+  // 道標へ瞬間移動。同一世界のみ(異世界は影渡り/門で)。演出付き
+  function travelToWaypoint(wp) {
+    if (!wp || Game.state.paused) return;
+    if (wp.world !== Game.state.worldName) { Game.UI.toast('別の世界の道標へは直接渡れない'); return; }
+    Game.Audio.play('dash'); if (Game.Render.spawnParticles) Game.Render.spawnParticles(Game.state.player.x, Game.state.player.y, '#7fd0e0', 16);
+    Game.World.teleport(wp.tx, wp.ty);
+    if (Game.Render.spawnParticles) Game.Render.spawnParticles(Game.state.player.x, Game.state.player.y, '#c8f0f8', 16);
+    if (Game.Audio.cue) Game.Audio.cue('shimmer');
   }
 
   // ===== 狭間への往還(影世界内で完結) =====
@@ -694,6 +725,7 @@ Game.Player = (function () {
     else Game.World.setObj(t.tx, t.ty, def.place);
     if (def.place === Game.OBJ.CHEST) Game.World.setTileData(t.tx, t.ty, { chest: new Array(27).fill(null) });
     if (def.place === Game.OBJ.SAPLING) Game.World.setTileData(t.tx, t.ty, { sapling: { timer: 0 } });
+    if (def.place === Game.OBJ.WAYPOINT_STONE) registerWaypoint(t.tx, t.ty);
     Game.Net.broadcastEdit(t.tx, t.ty, def.place, Game.state.worldName);
     Game.Inventory.remove(sel.id, 1);
     Game.Audio.play('place');
@@ -1198,7 +1230,7 @@ Game.Player = (function () {
 
   return {
     makeDefault, spawnAt, update, targetTile, mining, playerTile, breakBlock,
-    interact, useNearby, gainXP, totalArmor, setBonus, sleep, equipSelectedArmor, equipFromInventory, equipRelic, unequipSlot, applyEquipStats, bossesDefeated, bossTitle,
+    interact, useNearby, gainXP, totalArmor, setBonus, sleep, equipSelectedArmor, equipFromInventory, equipRelic, unequipSlot, applyEquipStats, bossesDefeated, bossTitle, travelToWaypoint,
     effAttack, attackCooldown, levelDmgBonus, levelArmorBonus, spendStat, unlockSkill, respec,
     skillBonus, skillFlag, canUnlock, currentWeaponAtk, equippedArmorAt, xpForLevel,
     reloadCurrent, magLoaded, magCap, selGunId, contextAction,

@@ -175,6 +175,7 @@ window.Game = window.Game || {};
     Game.state.visitedBiomes = data.visitedBiomes || {};
     Game.state.questIndex = data.questIndex || 0;
     Game.state.questDone = data.questDone || {};
+    Game.state.waypoints = data.waypoints || [];
     Game.state.reunified = !!data.reunified;
     Game.state.difficulty = data.difficulty || 'normal';
     Game.state.zoom = data.zoom || 1;

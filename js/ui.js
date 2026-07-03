@@ -117,6 +117,7 @@ Game.UI = (function () {
     { const sbtn = document.getElementById('btn-inv-story'); if (sbtn) sbtn.addEventListener('click', function () { el.invScreen.classList.add('hidden'); Game.Audio.play('select'); openStory(); }); } // インベントリから記憶回廊を開く
     document.getElementById('btn-close-chest').addEventListener('click', closeChest);
     var ct = document.getElementById('btn-close-trade'); if (ct) ct.addEventListener('click', closeTrade);
+    var cw = document.getElementById('btn-close-waypoint'); if (cw) cw.addEventListener('click', closeWaypoints);
     var cst = document.getElementById('btn-close-story'); if (cst) cst.addEventListener('click', closeStory);
     var cm = document.getElementById('chest-multi'); if (cm) cm.addEventListener('click', toggleChestMulti);
     var cds = document.getElementById('chest-deposit-sel'); if (cds) cds.addEventListener('click', depositSelected);
@@ -255,6 +256,39 @@ Game.UI = (function () {
   }
   function openTrade() { const sc = document.getElementById('trade-screen'); if (!sc) return; shopMode = false; const title = sc.querySelector('h2'); if (title) title.textContent = '旅の商人 🧳'; sc.classList.remove('hidden'); Game.state.paused = true; rollTradeStock(); lastBoughtIdx = -1; lastCurShown = null; refreshTrade(); }
   function closeTrade() { const sc = document.getElementById('trade-screen'); if (sc) sc.classList.add('hidden'); Game.state.paused = false; shopMode = false; }
+
+  // ===== 道標(ファストトラベル) =====
+  function openWaypoints() {
+    const sc = document.getElementById('waypoint-screen'); if (!sc) return;
+    sc.classList.remove('hidden'); Game.state.paused = true; renderWaypoints();
+  }
+  function closeWaypoints() { const sc = document.getElementById('waypoint-screen'); if (sc) sc.classList.add('hidden'); Game.state.paused = false; }
+  function renderWaypoints() {
+    const body = document.getElementById('waypoint-body'); if (!body) return;
+    const wps = (Game.state.waypoints || []);
+    const TS = Game.CFG.TILE_SIZE, p = Game.state.player, wn = Game.state.worldName;
+    let h = '<p class="hint" style="margin:2px 0 10px">触れた道標から、同じ世界の別の道標へ瞬時に渡れる。道標の石を各地に置いて世界を自在に巡ろう。</p>';
+    if (!wps.length) { h += '<p style="opacity:.7;padding:8px">まだ道標がない。「道標の石」を作って各地に設置しよう。</p>'; }
+    else {
+      h += '<div class="wp-list">';
+      wps.forEach(function (w, i) {
+        const here = w.world === wn && Math.abs(w.tx - Math.floor(p.x / TS)) <= 1 && Math.abs(w.ty - Math.floor(p.y / TS)) <= 1;
+        const other = w.world !== wn;
+        const dist = w.world === wn ? Math.round(Math.hypot(w.tx - p.x / TS, w.ty - p.y / TS)) + ' 歩' : '別の世界';
+        h += '<button class="wp-row" data-i="' + i + '"' + (here || other ? ' disabled' : '') + '>' +
+          '<span class="wp-nm">🧭 ' + esc(w.name) + '</span>' +
+          '<span class="wp-d">' + (here ? '現在地' : dist) + '</span></button>';
+      });
+      h += '</div>';
+    }
+    body.innerHTML = h;
+    body.querySelectorAll('.wp-row').forEach(function (b) {
+      b.addEventListener('click', function () {
+        const w = wps[parseInt(b.getAttribute('data-i'), 10)]; if (!w) return;
+        closeWaypoints(); Game.Player.travelToWaypoint(w); refreshAll();
+      });
+    });
+  }
 
   // 記憶回廊(物語ギャラリー)
   function openStory() { const sc = document.getElementById('story-screen'); if (!sc) return; sc.classList.remove('hidden'); Game.state.paused = true; renderStory(); }
@@ -2163,7 +2197,7 @@ Game.UI = (function () {
     openChest, openSharedChest, closeChest, refreshChest, refreshWorld,
     showLore, closeLore, refreshQuest, openQuest, closeQuest, refreshBounty, showEnding, showDeath, showIntro, refreshNet, refreshStatus,
     toggleOptions, openEnchant, closeEnchant, flashSave, flashHotbarItem, flashCombo, refreshContext, refreshAmmo,
-    toggleBigMap, isBigMapOpen, updateBigMap, openStats, closeStats, toggleStats, renderStats, refreshBossBar, openTrade, closeTrade, openShop, openStory, closeStory,
+    toggleBigMap, isBigMapOpen, updateBigMap, openStats, closeStats, toggleStats, renderStats, refreshBossBar, openTrade, closeTrade, openShop, openStory, closeStory, openWaypoints, closeWaypoints,
     padNav, padMenuRoot, padActivateEl,
   };
 })();
