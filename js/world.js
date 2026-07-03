@@ -224,12 +224,15 @@ Game.World = (function () {
   // 防御的: WorldGen 側の実装有無/例外に依らず安全に null を返す
   function currentAreaMood() {
     try {
-      if (Game.state && Game.state.worldName === 'light' && Game.state.player &&
-          Game.WorldGen && Game.WorldGen.inSkyEnclave) {
+      if (Game.state && Game.state.player && Game.WorldGen && Game.WorldGen.inSkyEnclave) {
         const TS = Game.CFG.TILE_SIZE, p = Game.state.player;
         const ptx = Math.floor(p.x / TS), pty = Math.floor(p.y / TS);
-        if (Game.WorldGen.inSkyEnclave(ptx, pty, Game.state.seed)) return 'sky';
-        if (Game.WorldGen.inRuinCity && Game.WorldGen.inRuinCity(ptx, pty, Game.state.seed)) return 'ruins';
+        if (Game.state.worldName === 'light') {
+          if (Game.WorldGen.inSkyEnclave(ptx, pty, Game.state.seed)) return 'sky';
+          if (Game.WorldGen.inRuinCity && Game.WorldGen.inRuinCity(ptx, pty, Game.state.seed)) return 'ruins';
+        } else if (Game.state.worldName === 'shadow') {
+          if (Game.WorldGen.inRiftVoid && Game.WorldGen.inRiftVoid(ptx, pty, Game.state.seed)) return 'rift';
+        }
       }
     } catch (e) {}
     return null;
@@ -261,6 +264,9 @@ Game.World = (function () {
         Game.WorldGen.inSkyEnclave(tx, ty, Game.state.seed)) return 3;
     if (Game.state.worldName === 'light' && Game.WorldGen.inRuinCity &&
         Game.WorldGen.inRuinCity(tx, ty, Game.state.seed)) return 3;
+    // 狭間(影世界): 最難関 band4
+    if (Game.state.worldName === 'shadow' && Game.WorldGen.inRiftVoid &&
+        Game.WorldGen.inRiftVoid(tx, ty, Game.state.seed)) return 4;
     if (bandAnchorSeed !== Game.state.seed) {
       bandAnchor = Game.WorldGen.spawnAnchor ? Game.WorldGen.spawnAnchor(Game.state.seed) : { tx: 0, ty: 0 };
       bandAnchorSeed = Game.state.seed;

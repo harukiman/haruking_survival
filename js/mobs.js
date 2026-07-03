@@ -119,6 +119,11 @@ Game.Mobs = (function () {
         if (!diff.spawnHostiles) continue;
         spawnMob(Math.random() < 0.55 ? 'sentinel_husk' : 'gloom_moth', wx, wy); return;
       }
+      // 狭間エンクレーブ(影世界): 狭間の亡霊/反響の幻を湧かせる。番人は巣が担当
+      if (Game.state.worldName === 'shadow' && Game.WorldGen.inRiftVoid && Game.WorldGen.inRiftVoid(tx, ty, Game.state.seed)) {
+        if (!diff.spawnHostiles) continue;
+        spawnMob(Math.random() < 0.55 ? 'rift_wraith' : 'echo_phantom', wx, wy); return;
+      }
       if (shadowWorld) {
         if (!diff.spawnHostiles) continue; // のんびり: 影世界でも敵なし
         // 影世界は固有の敵が常時出現。深層では徘徊者も
@@ -221,6 +226,7 @@ Game.Mobs = (function () {
         else if (theme && DZ && DZ.DUNGEON_POOLS[theme]) pool = DZ.DUNGEON_POOLS[theme]; // 遺跡=低/氷窟・墳墓=中/工房・水晶洞=高
         else if (Game.state.worldName === 'light' && Game.WorldGen.inSkyEnclave && Game.WorldGen.inSkyEnclave(stx, sty, Game.state.seed)) pool = ['wind_wisp', 'cloud_hawk', 'wind_wisp']; // 空島の番人の宝殿=風の精/雲鷹
         else if (Game.state.worldName === 'light' && Game.WorldGen.inRuinCity && Game.WorldGen.inRuinCity(stx, sty, Game.state.seed)) pool = ['sentinel_husk', 'gloom_moth', 'sentinel_husk']; // 古代都市の神殿=哨士/幽き蛾
+        else if (Game.state.worldName === 'shadow' && Game.WorldGen.inRiftVoid && Game.WorldGen.inRiftVoid(stx, sty, Game.state.seed)) pool = ['rift_wraith', 'echo_phantom', 'rift_wraith']; // 狭間の巣=亡霊/反響の幻
         else if (g === Game.TILE.SNOW) pool = ['frost_wisp', 'frost_wisp', 'cursed_armor', 'ice_bear'];
         else if (g === Game.TILE.SAND) pool = ['scorpion', 'scorpion', 'dust_mage', 'cursed_armor', 'golem'];
         else pool = ['zombie', 'skeleton', 'spider', 'cursed_armor', 'golem', 'ember_imp', 'bog_horror'];
@@ -234,6 +240,8 @@ Game.Mobs = (function () {
         if (!type && Game.state.worldName === 'light' && Game.WorldGen.inSkyEnclave && Game.WorldGen.inSkyEnclave(stx, sty, Game.state.seed) && Math.random() < 0.05 && countType('sky_warden') === 0) type = 'sky_warden';
         // 古都の守番(中ボスD): 神殿の巣が守護個体として稀に召喚(1体まで)
         if (!type && Game.state.worldName === 'light' && Game.WorldGen.inRuinCity && Game.WorldGen.inRuinCity(stx, sty, Game.state.seed) && Math.random() < 0.05 && countType('city_warden') === 0) type = 'city_warden';
+        // 狭間の番人(中ボスD): 狭間の巣が守護個体として稀に召喚(1体まで)
+        if (!type && Game.state.worldName === 'shadow' && Game.WorldGen.inRiftVoid && Game.WorldGen.inRiftVoid(stx, sty, Game.state.seed) && Math.random() < 0.05 && countType('rift_keeper') === 0) type = 'rift_keeper';
         if (!type) type = pool[Math.floor(Math.random() * pool.length)];
         // 近傍の歩ける床へ
         for (let a = 0; a < 6; a++) {

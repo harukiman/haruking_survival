@@ -504,6 +504,8 @@ Game.Player = (function () {
       if (o === O.RETURN_ALTAR) { skyReturn(); return; }
       if (o === O.ANCIENT_GATE) { ruinTravel(tx, ty); return; }
       if (o === O.RETURN_GATE) { ruinReturn(); return; }
+      if (o === O.RIFT_TEAR) { riftTravel(tx, ty); return; }
+      if (o === O.RIFT_RETURN) { riftReturn(); return; }
       if (o === O.SHADOW_ALTAR) { Game.Mobs.summonBoss(tx, ty); return; }
       if (o === O.ENCHANT_TABLE) { Game.UI.openEnchant(); return; }
       if (o === O.BED) { sleep(); return; }
@@ -575,6 +577,39 @@ Game.Player = (function () {
     Game.Cutscene.playRuinReturn(function () {
       let dx, dy;
       if (td && td.ruinFromTx != null) { dx = td.ruinFromTx; dy = td.ruinFromTy; }
+      else { dx = Game.state.spawn.tx; dy = Game.state.spawn.ty; }
+      Game.World.teleport(dx, dy);
+      Game.state.paused = false;
+    });
+  }
+
+  // ===== 狭間への往還(影世界内で完結) =====
+  // 狭間の裂け目: 「虚ろな鍵」を掲げると固有ムービー→狭間へテレポート(影世界内)
+  function riftTravel(tx, ty) {
+    if (Game.state.paused) return;
+    if (Game.Inventory.count('void_key') <= 0) {
+      Game.UI.toast('狭間の裂け目… 「虚ろな鍵」を掲げれば世界の隙間へ落ちる（影核1＋光素3で作れる）');
+      return;
+    }
+    Game.Inventory.remove('void_key', 1);
+    Game.state.paused = true;
+    Game.Cutscene.playRiftArrival(function () {
+      const a = Game.WorldGen.riftArrival(Game.state.seed);
+      const rt = Game.WorldGen.riftReturnTear(Game.state.seed);
+      Game.World.setTileData(rt.tx, rt.ty, { riftFromTx: tx, riftFromTy: ty + 1 });
+      Game.World.teleport(a.tx, a.ty);
+      Game.state.paused = false;
+      if (Game.Story && Game.Story.unlock) Game.Story.unlock('riftvoid', true); // 記憶回廊「世界の隙間」
+    });
+  }
+  function riftReturn() {
+    if (Game.state.paused) return;
+    const rt = Game.WorldGen.riftReturnTear(Game.state.seed);
+    const td = Game.World.getTileData(rt.tx, rt.ty);
+    Game.state.paused = true;
+    Game.Cutscene.playRiftReturn(function () {
+      let dx, dy;
+      if (td && td.riftFromTx != null) { dx = td.riftFromTx; dy = td.riftFromTy; }
       else { dx = Game.state.spawn.tx; dy = Game.state.spawn.ty; }
       Game.World.teleport(dx, dy);
       Game.state.paused = false;

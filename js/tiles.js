@@ -106,6 +106,21 @@ Game.Tiles = (function () {
       x.fillStyle = shade(base, 14);
       for (let i = 0; i < 2; i++) circle(x, 3 + rnd() * (TS - 6), 3 + rnd() * (TS - 6), 1);
     }
+    // 狭間の足場: 虹色にゆらぐ割れた地＋亀裂
+    if (id === Game.TILE.RIFT) {
+      x.fillStyle = shade(base, 16); for (let i = 0; i < 3; i++) circle(x, 3 + rnd() * (TS - 6), 3 + rnd() * (TS - 6), 1.4);
+      x.strokeStyle = 'rgba(176,136,232,0.5)'; x.lineWidth = 1;
+      x.beginPath(); const rx = rnd() * TS; x.moveTo(rx, 0); x.lineTo(rx + (rnd() - 0.5) * 10, TS * 0.5); x.lineTo(rx + (rnd() - 0.5) * 12, TS); x.stroke();
+      x.fillStyle = 'rgba(120,232,220,0.3)'; circle(x, 4 + rnd() * (TS - 8), 4 + rnd() * (TS - 8), 1.2); // 虹の斑
+      x.fillStyle = 'rgba(232,160,255,0.3)'; circle(x, 4 + rnd() * (TS - 8), 4 + rnd() * (TS - 8), 1.1);
+    }
+    // 狭間の淵: ほぼ黒い虚に、渦巻く紫の裂け目
+    if (id === Game.TILE.RIFTVOID) {
+      x.fillStyle = shade(base, -8); x.fillRect(0, 0, TS, TS);
+      x.strokeStyle = 'rgba(140,100,200,0.4)'; x.lineWidth = 1.2;
+      x.beginPath(); x.arc(TS / 2 + (rnd() - 0.5) * 8, TS / 2 + (rnd() - 0.5) * 8, 5 + rnd() * 4, rnd() * 6, rnd() * 6 + 3); x.stroke();
+      x.fillStyle = 'rgba(200,160,255,0.5)'; for (let i = 0; i < 2; i++) x.fillRect(2 + rnd() * (TS - 4), 2 + rnd() * (TS - 4), 1, 1);
+    }
     // 沼地は淀んだ水たまり＋気泡
     if (id === Game.TILE.SWAMP) {
       x.fillStyle = shade(base, -22);
@@ -117,7 +132,7 @@ Game.Tiles = (function () {
   }
 
   // 立ちオブジェクトの接地影（チャンクキャッシュにベイク＝毎フレーム負荷ゼロ）
-  const standing = { tree: 1, deadtree: 1, pine: 1, rock: 1, ore: 1, bush: 1, berry: 1, cactus: 1, flower: 1, sapling: 1, shadowtree: 1, shadowcrystal: 1, lumenore: 1, soulflower: 1, voidrock: 1, starore: 1, giantshroom: 1, glowshroom: 1, pmushroom: 1, obsidian: 1, sulfur: 1, barrel: 1, potted: 1, totem: 1, streetlamp: 1, torch: 1, lantern: 1, brazier: 1, stela: 1, sign: 1, campfire: 1, rocket_obj: 1, lumenlantern: 1, banner: 1, chair: 1, skytree: 1, skypillar: 1, windaltar: 1, returnaltar: 1, ancientgate: 1, returngate: 1, ruincolumn: 1, ruinstatue: 1 };
+  const standing = { tree: 1, deadtree: 1, pine: 1, rock: 1, ore: 1, bush: 1, berry: 1, cactus: 1, flower: 1, sapling: 1, shadowtree: 1, shadowcrystal: 1, lumenore: 1, soulflower: 1, voidrock: 1, starore: 1, giantshroom: 1, glowshroom: 1, pmushroom: 1, obsidian: 1, sulfur: 1, barrel: 1, potted: 1, totem: 1, streetlamp: 1, torch: 1, lantern: 1, brazier: 1, stela: 1, sign: 1, campfire: 1, rocket_obj: 1, lumenlantern: 1, banner: 1, chair: 1, skytree: 1, skypillar: 1, windaltar: 1, returnaltar: 1, ancientgate: 1, returngate: 1, ruincolumn: 1, ruinstatue: 1, rifttear: 1, riftreturn: 1, riftspire: 1 };
   function contactShadow(x, rx) {
     x.fillStyle = 'rgba(0,0,0,0.22)';
     x.beginPath(); x.ellipse(TS / 2, TS - 4, rx || 10, 3.2, 0, 0, Math.PI * 2); x.fill();
@@ -526,6 +541,22 @@ Game.Tiles = (function () {
       x.fillStyle = '#0c0a06'; x.globalAlpha = 0.28; x.fillRect(TS / 2 - 1, 6, 4, 4); x.globalAlpha = 1; // 欠けた顔
       x.fillStyle = 'rgba(216,192,120,0.5)'; x.fillRect(TS / 2 - 4, 14, 8, 1.5); // 黄金の刻印
       x.fillStyle = 'rgba(90,120,70,0.35)'; circle(x, TS / 2 + 3, TS - 6, 1.3);
+    } else if (r === 'rifttear') {
+      // 狭間の裂け目: 縦に裂けた虚空＋紫と青碧の縁光
+      x.fillStyle = '#0a0614'; x.beginPath(); x.moveTo(TS / 2, 2); x.lineTo(TS / 2 + 7, TS / 2); x.lineTo(TS / 2, TS - 2); x.lineTo(TS / 2 - 7, TS / 2); x.closePath(); x.fill();
+      x.strokeStyle = '#b088e8'; x.lineWidth = 2; x.stroke();
+      x.strokeStyle = 'rgba(120,232,220,0.7)'; x.lineWidth = 1; x.beginPath(); x.moveTo(TS / 2, 4); x.lineTo(TS / 2, TS - 4); x.stroke();
+      x.fillStyle = '#e8d0ff'; circle(x, TS / 2, TS / 2, 1.6);
+    } else if (r === 'riftreturn') {
+      // 還りの裂け目: 淡い縁光の裂け目
+      x.fillStyle = '#120a1e'; x.beginPath(); x.moveTo(TS / 2, 2); x.lineTo(TS / 2 + 6, TS / 2); x.lineTo(TS / 2, TS - 2); x.lineTo(TS / 2 - 6, TS / 2); x.closePath(); x.fill();
+      x.strokeStyle = '#a0d0c0'; x.lineWidth = 2; x.stroke();
+      x.fillStyle = '#d0ffe8'; circle(x, TS / 2, TS / 2, 1.4);
+    } else if (r === 'riftspire') {
+      // 狭間の尖晶: 宙に浮く紫の結晶柱
+      x.fillStyle = '#7a5aa8'; x.beginPath(); x.moveTo(TS / 2, 4); x.lineTo(TS / 2 + 6, TS / 2 + 4); x.lineTo(TS / 2, TS - 4); x.lineTo(TS / 2 - 6, TS / 2 + 4); x.closePath(); x.fill();
+      x.fillStyle = '#a888e0'; x.beginPath(); x.moveTo(TS / 2, 6); x.lineTo(TS / 2 + 3, TS / 2 + 2); x.lineTo(TS / 2, TS - 8); x.closePath(); x.fill();
+      x.fillStyle = 'rgba(232,208,255,0.9)'; circle(x, TS / 2 - 1, TS / 2 - 2, 1.4);
     }
     objAtlas[id] = c;
   }

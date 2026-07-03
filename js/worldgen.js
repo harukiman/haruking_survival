@@ -211,8 +211,65 @@ Game.WorldGen = (function () {
     return { ground: ground, obj: obj };
   }
 
+  // ===== 狭間(エンクレーブ) — 影世界の別座標にひらく、二相のあわいの裂け目 =====
+  const RIFT_READY = true;
+  const RIFT_R = 34;
+  const RIFT_DIST = 260;
+  let riftMemo = null, riftMemoSeed = null;
+  function riftCenter(seed) {
+    if (riftMemoSeed === seed && riftMemo) return riftMemo;
+    const a = spawnAnchor(seed);
+    const ang = U.hash3(41, 13, seed + 717) * Math.PI * 2 + Math.PI * 0.5;
+    riftMemoSeed = seed;
+    riftMemo = { tx: a.tx + Math.round(Math.cos(ang) * RIFT_DIST), ty: a.ty + Math.round(Math.sin(ang) * RIFT_DIST) };
+    const ang2 = U.hash3(7, 3, seed + 818) * Math.PI * 2;
+    riftMemo.gx = riftMemo.tx + Math.round(Math.cos(ang2) * 19);
+    riftMemo.gy = riftMemo.ty + Math.round(Math.sin(ang2) * 19);
+    return riftMemo;
+  }
+  // 狭間は影世界に属する(影からのみ入れる=二相のあわい)
+  function inRiftVoid(wx, wy, seed) {
+    if (!RIFT_READY) return false;
+    const C = riftCenter(seed);
+    const dx = wx - C.tx, dy = wy - C.ty;
+    if (dx > RIFT_R || dx < -RIFT_R || dy > RIFT_R || dy < -RIFT_R) return false;
+    return dx * dx + dy * dy <= RIFT_R * RIFT_R;
+  }
+  function riftArrival(seed) { const C = riftCenter(seed); return { tx: C.tx, ty: C.ty + 2 }; }
+  function riftReturnTear(seed) { const C = riftCenter(seed); return { tx: C.tx, ty: C.ty }; }
+  function genRiftTile(wx, wy, seed) {
+    const C = riftCenter(seed);
+    const dx = wx - C.tx, dy = wy - C.ty, d = Math.sqrt(dx * dx + dy * dy);
+    if (d > RIFT_R - 3) return { ground: T.RIFTVOID, obj: O.NONE }; // 淵
+    if (d <= 5.5) {
+      let obj = O.NONE;
+      if (dx === 0 && dy === 0) obj = O.RIFT_RETURN;
+      else if (Math.abs(dx) === 3 && Math.abs(dy) === 3) obj = O.RIFT_SPIRE;
+      return { ground: T.RIFT, obj: obj };
+    }
+    const tdx = wx - C.gx, tdy = wy - C.gy, td = Math.sqrt(tdx * tdx + tdy * tdy);
+    if (td <= 5) {
+      let obj = O.NONE;
+      if (tdx === 0 && tdy === 0) obj = O.TREASURE_CHEST;
+      else if (Math.abs(tdx) === 2 && tdy === 0) obj = O.SPAWNER;
+      else if (td > 3.8 && !(tdy > 2 && Math.abs(tdx) <= 1) && U.hash3(wx, wy, seed + 717) < 0.6) obj = O.RIFT_SPIRE;
+      return { ground: T.RIFT, obj: obj };
+    }
+    // 割れた足場が虚に浮かぶ(高ノイズ=足場、低=淵)
+    const v = N.fbm(wx * 0.055, wy * 0.055, seed ^ 0x71fd, 4);
+    if (v < 0.5) return { ground: T.RIFTVOID, obj: O.NONE };
+    const h = U.hash3(wx, wy, seed + 919);
+    let obj = O.NONE;
+    if (h < 0.06) obj = O.RIFT_SPIRE; else if (h < 0.13) obj = O.VOID_VEIN; else if (h < 0.16) obj = O.ROCK;
+    return { ground: T.RIFT, obj: obj };
+  }
+
   function genTile(wx, wy, seed) {
     if (Game.state && Game.state.worldName === 'space') return genSpace(wx, wy, seed);
+    // 狭間エンクレーブ(影世界のみ)。二相のあわいゆえ影からのみ入れる
+    if (Game.state && Game.state.worldName === 'shadow' && inRiftVoid(wx, wy, seed)) {
+      return genRiftTile(wx, wy, seed);
+    }
     // 空島エンクレーブ(光世界のみ)。バウンズ判定を最初に行い、外側は従来生成へフォールスルー
     if (!(Game.state && Game.state.worldName === 'shadow') && inSkyEnclave(wx, wy, seed)) {
       return genSkyTile(wx, wy, seed);
@@ -355,6 +412,11 @@ Game.WorldGen = (function () {
     }
 
     if (shadow) {
+      // 狭間の裂け目（影世界のみ・未使用ハッシュ窓 seed+55555）。虚ろな鍵を掲げると狭間へ落ちる
+      if (RIFT_READY && (ground === T.FOREST || ground === T.GRASS || ground === T.STONE) &&
+          U.hash3(wx, wy, seed + 55555) < 0.0006) {
+        return { ground: ground, obj: O.RIFT_TEAR };
+      }
       // 深層は鉱脈が濃くなる
       const deep = Math.max(Math.abs(wx), Math.abs(wy)) >= Game.TUNE.DEEP_THRESHOLD;
       if (ground === T.FOREST || ground === T.GRASS) {
@@ -474,5 +536,6 @@ Game.WorldGen = (function () {
 
   return { genTile, generateChunk, findSpawn, dungeonThemeAt, spawnAnchor,
     inSkyEnclave, skyCenter, skyArrival, skyReturnAltar,
-    inRuinCity, ruinCenter, ruinArrival, ruinReturnGate };
+    inRuinCity, ruinCenter, ruinArrival, ruinReturnGate,
+    inRiftVoid, riftCenter, riftArrival, riftReturnTear };
 })();

@@ -1420,6 +1420,68 @@ Game.Cutscene = (function () {
     ], cb, { subdued: true });
   }
 
+  // ===== 狭間 到達/帰還ムービー(固有) — 紫と青碧の不穏なあわい =====
+  function riftBg2() { const g = ctx.createLinearGradient(0, 0, W, H); g.addColorStop(0, '#0a0614'); g.addColorStop(0.5, '#241038'); g.addColorStop(1, '#08040e'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); }
+  // 裂け目がひらく
+  function scRiftOpen(t, now) {
+    riftBg2();
+    const cx = W / 2, cy = H / 2;
+    // 縦に裂ける虚空(tで広がる)
+    const wdt = 6 + t * 90;
+    const rg = ctx.createLinearGradient(cx - wdt, 0, cx + wdt, 0); rg.addColorStop(0, '#0a0614'); rg.addColorStop(0.5, '#b088e8'); rg.addColorStop(1, '#0a0614');
+    ctx.fillStyle = rg; ctx.beginPath(); ctx.moveTo(cx, cy - H * 0.5); ctx.lineTo(cx + wdt, cy); ctx.lineTo(cx, cy + H * 0.5); ctx.lineTo(cx - wdt, cy); ctx.fill();
+    ctx.strokeStyle = 'rgba(120,232,220,' + (0.5 + 0.4 * Math.sin(now * 0.008)) + ')'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(cx, cy - H * 0.5); ctx.lineTo(cx, cy + H * 0.5); ctx.stroke();
+    // 吸い込まれる粒子
+    ctx.fillStyle = 'rgba(200,160,255,0.8)';
+    for (let i = 0; i < 20; i++) { const a = i * 0.9 + now * 0.003; const r = (1 - ((i * 0.05 + now * 0.0009) % 1)) * 160; ctx.fillRect(cx + Math.cos(a) * r, cy + Math.sin(a) * r * 0.6, 2, 2); }
+    drawWalkerFig(cx, cy + H * 0.4, 1.5, '#1a1030', 1, 0);
+  }
+  // あわいを落ちてゆく
+  function scRiftFall(t, now) {
+    riftBg2();
+    // 上へ流れる割れた足場の影(=落下)
+    ctx.fillStyle = 'rgba(122,90,168,0.5)';
+    for (let i = 0; i < 8; i++) { const yy = ((i * 120 - now * (0.14 + t * 0.2)) % (H + 120) + H + 120) % (H + 120) - 60; const xx = (i * 71) % W; ctx.save(); ctx.translate(xx, yy); ctx.rotate(i); ctx.fillRect(-18, -6, 36, 12); ctx.restore(); }
+    ctx.fillStyle = 'rgba(232,208,255,0.7)'; for (let i = 0; i < 14; i++) { const yy = ((i * 60 - now * 0.3) % H + H) % H; ctx.fillRect((i * 53) % W, yy, 1.5, 6); } // 流れる光条
+    const fy = H * (0.3 + t * 0.4); ctx.save(); ctx.translate(W / 2, fy); ctx.rotate(Math.sin(now * 0.004) * 0.3); drawWalkerFig(0, 0, 1.5, '#241840', 1, 0); ctx.restore();
+  }
+  // あわいがひらける
+  function scRiftReveal(t, now) {
+    riftBg2();
+    // 宙に浮く割れた足場群
+    const plats = [[0.3, 0.55, 1], [0.62, 0.45, 0.9], [0.8, 0.62, 1.1], [0.16, 0.66, 0.85], [0.5, 0.7, 1.2]];
+    for (let i = 0; i < plats.length; i++) {
+      const ix = plats[i][0] * W, iy = plats[i][1] * H + (1 - t) * 50, sc = plats[i][2];
+      ctx.fillStyle = '#3a2a52'; ctx.beginPath(); ctx.ellipse(ix, iy, 32 * sc, 9 * sc, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#1a1030'; ctx.beginPath(); ctx.moveTo(ix - 28 * sc, iy); ctx.lineTo(ix + 28 * sc, iy); ctx.lineTo(ix, iy + 30 * sc); ctx.fill();
+      ctx.fillStyle = '#a888e0'; ctx.beginPath(); ctx.moveTo(ix, iy - 18 * sc); ctx.lineTo(ix + 3 * sc, iy - 4 * sc); ctx.lineTo(ix - 3 * sc, iy - 4 * sc); ctx.fill(); // 尖晶
+    }
+    // 遠くの巨大な裂け目
+    ctx.strokeStyle = 'rgba(176,136,232,0.6)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(W * 0.72, 0); ctx.lineTo(W * 0.76, H); ctx.stroke();
+    ctx.fillStyle = 'rgba(120,232,220,0.15)'; ctx.fillRect(0, 0, W, H);
+  }
+  function scRiftReturn(t, now) {
+    riftBg2();
+    const cx = W / 2, cy = H / 2, wdt = 90 - t * 84;
+    const rg = ctx.createLinearGradient(cx - wdt - 1, 0, cx + wdt + 1, 0); rg.addColorStop(0, '#0a0614'); rg.addColorStop(0.5, '#7fd8c0'); rg.addColorStop(1, '#0a0614');
+    ctx.fillStyle = rg; ctx.beginPath(); ctx.moveTo(cx, cy - H * 0.5); ctx.lineTo(cx + wdt + 1, cy); ctx.lineTo(cx, cy + H * 0.5); ctx.lineTo(cx - wdt - 1, cy); ctx.fill();
+    drawWalkerFig(cx, cy + H * 0.35, 1.5 + t * 0.3, '#241840', 1, 0);
+  }
+
+  function playRiftArrival(cb) {
+    runScenes([
+      { d: 3000, draw: scRiftOpen, text: '虚ろな鍵をかざすと、空間が縦に裂けた。', shake: 0.3, onEnter: function () { if (Game.Audio.cineStart) Game.Audio.cineStart('liminal'); try { Game.Audio.play('portal'); } catch (e) {} if (Game.Audio.cue) Game.Audio.cue('crack'); } },
+      { d: 3200, draw: scRiftFall, text: '光でも影でもない、あわいを落ちてゆく。', shake: 0.2, onEnter: function () { if (Game.Audio.cue) Game.Audio.cue('riser'); } },
+      { d: 3400, draw: scRiftReveal, text: '——世界の隙間に、割れた足場が浮かんでいた。', onEnter: function () { try { Game.Audio.play('portal_arrive'); } catch (e) {} if (Game.Audio.cue) Game.Audio.cue('shimmer'); } },
+    ], cb);
+  }
+  function playRiftReturn(cb) {
+    runScenes([
+      { d: 2800, draw: scRiftReturn, text: '裂け目が閉じ、影の大地の冷気が戻ってきた。', onEnter: function () { if (Game.Audio.cineStart) Game.Audio.cineStart('liminal'); try { Game.Audio.play('portal'); } catch (e) {} } },
+    ], cb, { subdued: true });
+  }
+
   // 断章データ(story.js)の fx キー → 専用描画。汎用章は scStory
   const STORYFX = {
     chr_dusk: scChrDusk, chr_carve: scChrCarve, chr_stones: scChrStones, chr_dawn: scChrDawn,
@@ -1443,5 +1505,5 @@ Game.Cutscene = (function () {
     });
     runScenes(scenes, cb, { subdued: subdued });
   }
-  return { play, playLaunch, playDiscovery, playBossIntro, playBossOutro, playStory, playSkyArrival, playSkyReturn, playRuinArrival, playRuinReturn, skip: finish, isPlaying: function () { return playing; } };
+  return { play, playLaunch, playDiscovery, playBossIntro, playBossOutro, playStory, playSkyArrival, playSkyReturn, playRuinArrival, playRuinReturn, playRiftArrival, playRiftReturn, skip: finish, isPlaying: function () { return playing; } };
 })();

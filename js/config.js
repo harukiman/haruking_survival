@@ -34,7 +34,7 @@ Game.CFG = {
 
 // 地面レイヤー
 // CLOUD=空島の雲石(歩行可) / SKYVOID=空の虚(歩行不可・空島エンクレーブ限定) / RUIN=古代都市の割れ石畳(歩行可)
-Game.TILE = { DEEP_WATER:0, WATER:1, SAND:2, GRASS:3, FOREST:4, DIRT:5, STONE:6, SNOW:7, DUNGEON_FLOOR:8, SWAMP:9, VOLCANIC:10, MUSHROOM:11, BLOOM:12, CLOUD:13, SKYVOID:14, RUIN:15 };
+Game.TILE = { DEEP_WATER:0, WATER:1, SAND:2, GRASS:3, FOREST:4, DIRT:5, STONE:6, SNOW:7, DUNGEON_FLOOR:8, SWAMP:9, VOLCANIC:10, MUSHROOM:11, BLOOM:12, CLOUD:13, SKYVOID:14, RUIN:15, RIFT:16, RIFTVOID:17 };
 
 // オブジェクトレイヤー（0=なし、50番台=影世界固有、100番台=プレイヤー設置物）
 Game.OBJ = {
@@ -68,6 +68,8 @@ Game.OBJ = {
   WIND_ALTAR:152, RETURN_ALTAR:153, SKY_PILLAR:154, SKY_TREE:155, WIND_ORE:156,
   // 古代都市(エンクレーブ)
   ANCIENT_GATE:157, RETURN_GATE:158, RUIN_COLUMN:159, RELIC_VEIN:160, RUIN_STATUE:161,
+  // 狭間(エンクレーブ)
+  RIFT_TEAR:162, RIFT_RETURN:163, RIFT_SPIRE:164, VOID_VEIN:165,
 };
 
 // 地面の色（手続き描画のベース）
@@ -87,6 +89,8 @@ Game.TILE_COLOR = {
   [Game.TILE.BLOOM]:      '#6cbf46',
   [Game.TILE.CLOUD]:      '#e4ecf2',
   [Game.TILE.RUIN]:       '#b8b2a0',
+  [Game.TILE.RIFT]:       '#3a2a52',
+  [Game.TILE.RIFTVOID]:   '#120a1e',
   [Game.TILE.SKYVOID]:    '#7fb8dc',
 };
 
@@ -107,6 +111,8 @@ Game.SHADOW_TILE_COLOR = {
   [Game.TILE.BLOOM]:      '#352a52',
   [Game.TILE.CLOUD]:      '#4a4a68',
   [Game.TILE.RUIN]:       '#4a4740',
+  [Game.TILE.RIFT]:       '#2a1e3e',
+  [Game.TILE.RIFTVOID]:   '#0a0614',
   [Game.TILE.SKYVOID]:    '#181430',
 };
 
@@ -127,6 +133,8 @@ Game.SPACE_TILE_COLOR = {
   [Game.TILE.BLOOM]:      '#5e5a52',
   [Game.TILE.CLOUD]:      '#8a8a96',
   [Game.TILE.RUIN]:       '#6a665c',
+  [Game.TILE.RIFT]:       '#33284a',
+  [Game.TILE.RIFTVOID]:   '#0e0a18',
   [Game.TILE.SKYVOID]:    '#06070f',
 };
 
@@ -134,6 +142,7 @@ Game.SOLID_TILE = {
   [Game.TILE.DEEP_WATER]: true,  // 移動不可
   [Game.TILE.WATER]: false,      // 浅瀬は通れる（減速は今回省略）
   [Game.TILE.SKYVOID]: true,     // 空の虚: 落ちる先は無い(移動不可)。橋を架ければ渡れる
+  [Game.TILE.RIFTVOID]: true,    // 狭間の淵: 世界の裂け目(移動不可)
 };
 
 // 発光オブジェクトの光量（lighting で使用）
@@ -165,6 +174,10 @@ Game.LIGHT_LEVEL = {
   [Game.OBJ.ANCIENT_GATE]: 5,
   [Game.OBJ.RETURN_GATE]: 5,
   [Game.OBJ.RELIC_VEIN]: 3,
+  [Game.OBJ.RIFT_TEAR]: 6,
+  [Game.OBJ.RIFT_RETURN]: 6,
+  [Game.OBJ.RIFT_SPIRE]: 3,
+  [Game.OBJ.VOID_VEIN]: 4,
 };
 
 // オブジェクトのメタ情報。solid=移動阻害, drops=破壊時ドロップ
@@ -265,6 +278,11 @@ Game.OBJ_META = {
   [Game.OBJ.RUIN_COLUMN]: { name:'崩れた列柱', solid:true, mineable:true, tool:'pickaxe', tier:2, hp:16, drops:[{item:'stone', n:[1,3]}], render:'ruincolumn' },
   [Game.OBJ.RUIN_STATUE]: { name:'古の石像', solid:true, mineable:true, tool:'pickaxe', tier:3, hp:24, drops:[{item:'stone', n:[2,4]},{item:'relic_shard', n:[0,1]}], render:'ruinstatue' },
   [Game.OBJ.RELIC_VEIN]:  { name:'遺物の鉱脈', solid:true, mineable:true, tool:'pickaxe', tier:3, hp:18, drops:[{item:'relic_shard', n:[1,2]}], render:'ore', oreColor:'#d8c078' },
+  // 狭間(エンクレーブ)
+  [Game.OBJ.RIFT_TEAR]:   { name:'狭間の裂け目', solid:true, mineable:false, tool:null, tier:0, hp:999, light:6, drops:[], render:'rifttear', riftTear:true },
+  [Game.OBJ.RIFT_RETURN]: { name:'還りの裂け目', solid:true, mineable:false, tool:null, tier:0, hp:999, light:6, drops:[], render:'riftreturn', riftReturn:true },
+  [Game.OBJ.RIFT_SPIRE]:  { name:'狭間の尖晶', solid:true, mineable:true, tool:'pickaxe', tier:3, hp:18, drops:[{item:'void_shard', n:[0,1]}], render:'riftspire' },
+  [Game.OBJ.VOID_VEIN]:   { name:'虚無の鉱脈', solid:true, mineable:true, tool:'pickaxe', tier:4, hp:20, drops:[{item:'void_shard', n:[1,2]}], render:'ore', oreColor:'#b088e8' },
 };
 
 // アイテム定義。place=設置するOBJ id, tool/tier=道具, food=空腹回復
@@ -528,6 +546,13 @@ Game.ITEMS = {
   ruin_blade:    { name:'遺構の長剣', stack:1, color:'#cabf8a', tool:'sword', tier:4, attack:12, special:{type:'echo', name:'残響', pct:0.4, cd:60, color:'#e8dca0'}, flavor:'古代都市の兵が佩いた長剣。一撃が過去の残響を呼び、二度三度と斬り重なる。' },
   warden_plate:  { name:'守番の胸甲', stack:1, color:'#b8ac82', armor:6, slot:'chest', flavor:'都市を永く守り続けた守番の鎧。重いが、古代合金ゆえの堅牢さは折り紙付き。' },
   ancient_charm: { name:'古の護符', stack:1, color:'#e0cf90', relic:{maxHp:16, armor:1}, flavor:'刻印の護符。古の守りが宿り、身を固くする。装身具として最大HP+16・防御+1。' },
+  // 狭間の遺物
+  void_shard:    { name:'虚無晶', stack:99, color:'#b088e8', flavor:'狭間の裂け目に結晶した虚。覗き込むと、光でも影でもない色が渦を巻いている。' },
+  void_alloy:    { name:'虚無合金', stack:99, color:'#8f6fc8', flavor:'虚無晶と影晶を溶き合わせた金属。存在と非在のあわいで、わずかに揺らいでいる。' },
+  void_key:      { name:'虚ろな鍵', stack:8, color:'#c0a0f0', flavor:'狭間の裂け目をひらく鍵。影核と光素を撚り合わせ、二相のあわいの形に鋳た。掲げれば世界の隙間へ落ちる。' },
+  rift_blade:    { name:'狭間の裂刃', stack:1, color:'#b088e8', tool:'sword', tier:5, attack:14, special:{type:'shock', name:'裂雷', pct:0.5, cd:70, color:'#c0a0f0'}, flavor:'二相のあわいで鍛えた刃。斬撃が空間ごと裂き、近くの敵へ雷光が奔る。' },
+  void_shroud:   { name:'虚無の外套', stack:1, color:'#7a5aa8', armor:6, slot:'chest', sanityResist:0.3, flavor:'狭間の布で織った外套。正気を蝕む影の囁きを、あわいの静けさが和らげる。正気耐性+30%。' },
+  rift_charm:    { name:'狭間の護符', stack:1, color:'#c0a0f0', relic:{maxHp:12, moveSpd:0.05}, flavor:'あわいの護符。存在が薄れるぶん、身は軽い。装身具として最大HP+12・移動+5%。' },
 };
 
 // クラフトレシピ。station=null は手作り、それ以外は近接が必要
@@ -708,6 +733,12 @@ Game.RECIPES = [
   { out:{id:'ruin_blade', n:1}, in:{ancient_alloy:3, wood:1}, station:'crafting_table' },
   { out:{id:'warden_plate', n:1}, in:{ancient_alloy:4, iron:2}, station:'crafting_table' },
   { out:{id:'ancient_charm', n:1}, in:{relic_shard:4, gold_ore:2, lumen:1}, station:'crafting_table' },
+  // 狭間: 虚ろな鍵で裂け目をひらき、虚無晶を合金にして最上位装備を鍛える(影核=影世界要素で後半ゲート)
+  { out:{id:'void_key', n:1}, in:{shadow_core:1, lumen:3}, station:'crafting_table' },
+  { out:{id:'void_alloy', n:1}, in:{void_shard:2, shadow_crystal:1}, station:'furnace' },
+  { out:{id:'rift_blade', n:1}, in:{void_alloy:3, shadow_steel:1}, station:'enchant_table' },
+  { out:{id:'void_shroud', n:1}, in:{void_alloy:4, shadow_crystal:2}, station:'crafting_table' },
+  { out:{id:'rift_charm', n:1}, in:{void_shard:4, lumen:2}, station:'crafting_table' },
 ];
 
 // 装備セット効果（head+chest が同セットで発動）
@@ -908,6 +939,10 @@ Game.MOBS = {
   sentinel_husk: { name:'哨士の亡骸', hostile:true, hp:60, speed:0.7, color:'#b8ac82', size:14, drops:[{item:'relic_shard',n:[0,1]},{item:'stone',n:[1,2]}], dmg:9, xp:9, shape:'tall', ranged:{dmg:7,range:7,cd:70,kind:'hex'} },
   gloom_moth:  { name:'幽き蛾', hostile:true, hp:22, speed:2.0, color:'#9a8fb8', size:11, drops:[{item:'relic_shard',n:[0,1]},{item:'glow_spore',n:[0,1]}], dmg:6, xp:6, ghost:true, shape:'wisp', inflict:{poison:120} },
   city_warden: { name:'古都の守番', hostile:true, hp:150, speed:1.0, color:'#c8bc8a', size:19, drops:[{item:'relic_shard',n:[3,5]},{item:'ancient_alloy',n:[1,2]},{item:'lumen',n:[1,2]},{item:'gold_ore',n:[1,2]}], dmg:11, xp:20, midboss:true, big:true, shape:'tall', pound:{r:2.1,cd:110}, summon:'sentinel_husk', inflict:{poison:150} },
+  // 狭間の住人
+  rift_wraith: { name:'狭間の亡霊', hostile:true, hp:70, speed:1.2, color:'#a888e0', size:14, drops:[{item:'void_shard',n:[0,1]},{item:'shadow_shard',n:[0,1]}], dmg:11, xp:11, ghost:true, shape:'wisp', ranged:{dmg:8,range:8,cd:65,kind:'hex',status:{sanity:0}} },
+  echo_phantom:{ name:'反響の幻', hostile:true, hp:30, speed:2.4, color:'#c0a0f0', size:12, drops:[{item:'void_shard',n:[0,1]}], dmg:8, xp:8, ghost:true, shape:'orb', charge:{ range:6, windup:12, dashTicks:16, dashSpeed:6.2, dmg:12, cd:130 } },
+  rift_keeper: { name:'狭間の番人', hostile:true, hp:180, speed:1.1, color:'#9a7ad0', size:20, drops:[{item:'void_shard',n:[3,5]},{item:'void_alloy',n:[1,2]},{item:'shadow_core',n:[0,1]},{item:'lumen',n:[1,2]}], dmg:13, xp:24, midboss:true, big:true, shape:'tall', pound:{r:2.2,cd:100}, summon:'echo_phantom', ranged:{dmg:9,range:9,cd:80,kind:'hex'} },
 };
 
 // 防具スロット
