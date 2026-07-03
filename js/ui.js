@@ -1161,6 +1161,13 @@ Game.UI = (function () {
     const shadow = wn === 'shadow';
     let label = wn === 'space' ? '宇宙' : shadow ? '影の世界' : '光の世界';
     if (shadow && Game.World.inDepths()) label = '影の深層';
+    // エリア(エンクレーブ)内はその名を表示
+    if (Game.WorldGen.inSkyEnclave && Game.state.player) {
+      const TS = Game.CFG.TILE_SIZE, ptx = Math.floor(Game.state.player.x / TS), pty = Math.floor(Game.state.player.y / TS), sd = Game.state.seed;
+      if (!shadow && wn === 'light' && Game.WorldGen.inSkyEnclave(ptx, pty, sd)) label = '空島';
+      else if (!shadow && wn === 'light' && Game.WorldGen.inRuinCity && Game.WorldGen.inRuinCity(ptx, pty, sd)) label = '古代都市';
+      else if (shadow && Game.WorldGen.inRiftVoid && Game.WorldGen.inRiftVoid(ptx, pty, sd)) label = '狭間';
+    }
     if (Game.state.ngLevel > 0) label += ' NG+' + Game.state.ngLevel;
     el.world.textContent = label;
     el.world.className = wn === 'space' ? 'world-space' : shadow ? 'world-shadow' : 'world-light';

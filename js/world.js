@@ -218,6 +218,7 @@ Game.World = (function () {
     if (!isWalkable(tx, ty)) nudgeToWalkable();
     updateChunks(Math.floor(p.x / TS), Math.floor(p.y / TS));
     Game.UI.updateMinimap();
+    if (Game.UI.refreshWorld) Game.UI.refreshWorld(); // エリア名(空島/古代都市/狭間)のHUD更新
   }
 
   // エリア別BGMムード(audio.js updateMood が参照するフック)。該当エリア外は null。
