@@ -999,19 +999,22 @@ Game.Render = (function () {
   const floaters = [];
   function spawnFloat(wx, wy, text, color, big) {
     if (Game.Settings && !Game.Settings.get('dmgNumbers')) return;
-    floaters.push({ x: wx + (Math.random() - 0.5) * 8, y: wy, vy: -0.7, life: big ? 60 : 38, max: big ? 60 : 38, text: '' + text, color: color || '#fff', big: !!big });
+    // 弾む放物運動: 上へ跳ね、横に少し散り、重力で落ちる(手応えのあるポップ)
+    floaters.push({ x: wx + (Math.random() - 0.5) * 10, y: wy, vx: (Math.random() - 0.5) * 0.9, vy: big ? -2.0 : -1.6, life: big ? 66 : 46, max: big ? 66 : 46, text: '' + text, color: color || '#fff', big: !!big });
   }
   function drawFloaters(ctx) {
     if (!floaters.length) return;
     const z = Game.Camera.zoom();
-    ctx.textAlign = 'center';
+    ctx.textAlign = 'center'; ctx.lineJoin = 'round';
     for (let i = floaters.length - 1; i >= 0; i--) {
-      const f = floaters[i]; f.y += f.vy; f.life--;
+      const f = floaters[i]; f.vy += 0.07; f.x += f.vx; f.y += f.vy; f.vx *= 0.96; f.life--;
       if (f.life <= 0) { floaters.splice(i, 1); continue; }
       const s = Game.Camera.worldToScreen(f.x, f.y);
-      ctx.globalAlpha = Math.min(1, f.life / (f.max * 0.5));
-      ctx.font = '700 ' + Math.round((f.big ? 20 : 13) * z) + 'px -apple-system,sans-serif';
-      ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,0.7)';
+      const t = 1 - f.life / f.max; // 0(出現)→1(消滅)
+      const pop = t < 0.16 ? 0.5 + (t / 0.16) * 0.62 : 1.12 - Math.min(0.12, (t - 0.16) * 0.16); // 出だしに弾む→落ち着く
+      ctx.globalAlpha = t > 0.7 ? Math.max(0, 1 - (t - 0.7) / 0.3) : 1;
+      ctx.font = '800 ' + Math.max(6, Math.round((f.big ? 21 : 13) * z * pop)) + 'px -apple-system,sans-serif';
+      ctx.lineWidth = 3.5; ctx.strokeStyle = 'rgba(0,0,0,0.75)';
       ctx.strokeText(f.text, s.x, s.y); ctx.fillStyle = f.color; ctx.fillText(f.text, s.x, s.y);
       ctx.globalAlpha = 1;
     }
