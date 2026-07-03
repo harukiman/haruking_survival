@@ -16,7 +16,7 @@ Game.Icons = (function () {
   function classify(id, def) {
     if (!def) return 'misc';
     if (def.tool === 'gun') return 'gun';
-    if (def.tool === 'staff' || def.tool === 'warp') return 'staff';
+    if (def.tool === 'staff' || def.tool === 'warp' || def.tool === 'grapple') return 'staff';
     if (def.tool === 'pickaxe') return 'pickaxe';
     if (def.tool === 'axe') return 'axe';
     if (def.tool === 'hoe') return 'hoe';
