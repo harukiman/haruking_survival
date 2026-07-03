@@ -43,6 +43,8 @@ Game.Save = (function () {
       questIndex: s.questIndex || 0,
       questDone: s.questDone || {},
       waypoints: s.waypoints || [],
+      explored: s.explored || {},
+      mapMarks: s.mapMarks || [],
       reunified: !!s.reunified,
       worlds: { light: dumpWorld(s.worlds.light), shadow: dumpWorld(s.worlds.shadow), space: dumpWorld(s.worlds.space) },
       player: {

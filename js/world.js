@@ -99,9 +99,14 @@ Game.World = (function () {
   function updateChunks(centerTx, centerTy) {
     const ccx = toChunkCoord(centerTx), ccy = toChunkCoord(centerTy);
     const R = Game.CFG.LOAD_RADIUS;
+    // 探索済み記録(フォグ・オブ・ウォー用): 周囲のチャンクを世界別に記録。世界地図はこれのみ描画
+    if (!Game.state.explored) Game.state.explored = {};
+    const ex = Game.state.explored[Game.state.worldName] || (Game.state.explored[Game.state.worldName] = {});
     for (let dy = -R; dy <= R; dy++)
-      for (let dx = -R; dx <= R; dx++)
+      for (let dx = -R; dx <= R; dx++) {
         getChunk(ccx + dx, ccy + dy);
+        ex[(ccx + dx) + ',' + (ccy + dy)] = 1;
+      }
 
     // 遠方を破棄（seed再現可能なので安全）
     const keep = R + 2;

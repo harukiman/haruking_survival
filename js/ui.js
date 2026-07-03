@@ -81,6 +81,13 @@ Game.UI = (function () {
     if (opBtn) opBtn.addEventListener('click', function (e) { e.stopPropagation(); cycleBigMapOpacity(); });
     const clBtn = document.getElementById('bigmap-close');
     if (clBtn) clBtn.addEventListener('click', function (e) { e.stopPropagation(); if (bigMapOpen) toggleBigMap(); });
+    // 世界地図: ズーム切替
+    const zmBtn = document.getElementById('bigmap-zoom');
+    if (zmBtn) zmBtn.addEventListener('click', function (e) { e.stopPropagation(); bigMapZoom = (bigMapZoom + 1) % BM_SPANS.length; zmBtn.textContent = bigMapZoom === 0 ? '🔍 近景' : '🔍 広域'; updateBigMap(); });
+    // マーカー設置モード + 地図タップ
+    const mkBtn = document.getElementById('bigmap-mark');
+    if (mkBtn) mkBtn.addEventListener('click', function (e) { e.stopPropagation(); bigMapMarkMode = !bigMapMarkMode; mkBtn.classList.toggle('on', bigMapMarkMode); mkBtn.textContent = bigMapMarkMode ? '📍 設置中…' : '📍 マーク'; });
+    if (el.bigmap) el.bigmap.addEventListener('click', function (e) { if (bigMapMarkMode) { e.stopPropagation(); onBigMapTap(e); } });
     // ステータス画面: レベルバッジをタップで開く
     const lb = document.getElementById('level-badge');
     if (lb) lb.addEventListener('click', toggleStats);
@@ -685,21 +692,46 @@ Game.UI = (function () {
     el2.innerHTML = h; legendBuilt = true;
   }
 
+  // 世界地図のズーム(0=近景120 / 1=広域360)。探索済みチャンクのみ描画(フォグ・オブ・ウォー)
+  let bigMapZoom = 0, bigMapMarkMode = false;
+  const BM_SPANS = [120, 360];
+  // 地図タップ: マーク設置モードなら、その世界座標にマーカーを置く(近くの既存マークは削除でトグル)
+  function onBigMapTap(e) {
+    if (!bigMapMarkMode || !Game.state) { return; }
+    const size = el.bigmap.width, span = BM_SPANS[bigMapZoom], scale = size / span;
+    const rect = el.bigmap.getBoundingClientRect();
+    const px = (e.clientX - rect.left) * (size / rect.width), py = (e.clientY - rect.top) * (size / rect.height);
+    const TS = Game.CFG.TILE_SIZE, p = Game.state.player;
+    const ptx = Math.floor(p.x / TS), pty = Math.floor(p.y / TS), half = span / 2;
+    const wtx = Math.round(ptx - half + px / scale), wty = Math.round(pty - half + py / scale);
+    if (!Game.state.mapMarks) Game.state.mapMarks = [];
+    const world = Game.state.worldName;
+    // 近く(6タイル以内)の既存マークがあれば削除(トグル)
+    const near = Game.state.mapMarks.findIndex(function (m) { return m.world === world && Math.abs(m.tx - wtx) <= 6 && Math.abs(m.ty - wty) <= 6; });
+    if (near >= 0) { Game.state.mapMarks.splice(near, 1); toast('マーカーを削除'); }
+    else { if (Game.state.mapMarks.length >= 30) Game.state.mapMarks.shift(); Game.state.mapMarks.push({ tx: wtx, ty: wty, world: world }); toast('マーカーを設置'); Game.Audio.play('cursor'); }
+    updateBigMap(); updateMinimap();
+  }
   function updateBigMap() {
     if (!bmCtx || !bigMapOpen || !Game.state) return;
-    const size = el.bigmap.width, span = 120; // 120タイル四方の俯瞰
+    const size = el.bigmap.width, span = BM_SPANS[bigMapZoom];
     const scale = size / span;
-    const p = Game.state.player, TS = Game.CFG.TILE_SIZE;
+    const p = Game.state.player, TS = Game.CFG.TILE_SIZE, CS = Game.CFG.CHUNK_SIZE;
     const ptx = Math.floor(p.x / TS), pty = Math.floor(p.y / TS);
     const half = span / 2;
     const palette = Game.state.worldName === 'shadow' ? Game.SHADOW_TILE_COLOR
       : (Game.state.worldName === 'space' && Game.SPACE_TILE_COLOR) ? Game.SPACE_TILE_COLOR : Game.TILE_COLOR;
-    bmCtx.clearRect(0, 0, size, size);
-    // 2タイルおきにサンプリングして負荷を抑える
-    const stepT = 2;
+    const ex = (Game.state.explored && Game.state.explored[Game.state.worldName]) || {};
+    // 背景=未探索フォグ
+    bmCtx.fillStyle = '#0a0e16'; bmCtx.fillRect(0, 0, size, size);
+    // サンプリング間隔はズームに応じて調整(負荷一定)
+    const stepT = Math.max(2, Math.round(span / 90));
     for (let y = 0; y < span; y += stepT) {
       for (let x = 0; x < span; x += stepT) {
-        const t = Game.WorldGen.genTile(ptx - half + x, pty - half + y, Game.state.seed);
+        const wtx = ptx - half + x, wty = pty - half + y;
+        const cx = Math.floor(wtx / CS), cy = Math.floor(wty / CS);
+        if (!ex[cx + ',' + cy]) continue; // 未探索は描かない(フォグ)
+        const t = Game.WorldGen.genTile(wtx, wty, Game.state.seed);
         bmCtx.fillStyle = palette[t.ground] || '#333';
         bmCtx.fillRect(x * scale, y * scale, scale * stepT + 0.6, scale * stepT + 0.6);
       }
@@ -714,6 +746,21 @@ Game.UI = (function () {
       if (mx < 0 || my < 0 || mx > size || my > size) continue;
       drawLandmark(bmCtx, mx, my, kind);
     }
+    // 道標(ファストトラベル)を水色の菱形で
+    (Game.state.waypoints || []).forEach(function (w) {
+      if (w.world !== Game.state.worldName) return;
+      const mx = (w.tx - (ptx - half)) * scale, my = (w.ty - (pty - half)) * scale;
+      if (mx < 0 || my < 0 || mx > size || my > size) return;
+      bmCtx.fillStyle = '#7fd0e0'; bmCtx.save(); bmCtx.translate(mx, my); bmCtx.rotate(Math.PI / 4); bmCtx.fillRect(-3, -3, 6, 6); bmCtx.restore();
+    });
+    // プレイヤーが置いたマーカー(赤ピン)
+    (Game.state.mapMarks || []).forEach(function (m) {
+      if (m.world !== Game.state.worldName) return;
+      const mx = (m.tx - (ptx - half)) * scale, my = (m.ty - (pty - half)) * scale;
+      if (mx < -6 || my < -6 || mx > size + 6 || my > size + 6) return;
+      bmCtx.fillStyle = '#ff4a5a'; bmCtx.beginPath(); bmCtx.moveTo(mx, my); bmCtx.lineTo(mx - 4, my - 8); bmCtx.lineTo(mx + 4, my - 8); bmCtx.closePath(); bmCtx.fill();
+      bmCtx.fillStyle = '#fff'; bmCtx.beginPath(); bmCtx.arc(mx, my - 6, 1.6, 0, Math.PI * 2); bmCtx.fill();
+    });
     // 敵/ボスドット
     const TS2 = Game.CFG.TILE_SIZE, mobs = Game.state.mobs;
     for (let i = 0; i < mobs.length; i++) {
