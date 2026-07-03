@@ -197,6 +197,17 @@ Game.Render = (function () {
         ctx.fillStyle = i % 3 === 0 ? '#c884f0' : '#7a4fb0';
         ctx.beginPath(); ctx.arc(x, y, sz, 0, Math.PI * 2); ctx.fill();
       }
+      // 狭間: 昇る虚無の破片＋虹色のグリッチ粒(影世界の裂け目内のみ)
+      if (g === Game.TILE.RIFT || g === Game.TILE.RIFTVOID) {
+        for (let i = 0; i < 12; i++) {
+          const ph = t * 0.02 + i * 0.7;
+          const x = ((i * 143) % w + Math.sin(ph) * 24 + w) % w;
+          const y = h - ((i * 61 + t * (0.4 + (i % 3) * 0.2)) % (h + 40));
+          const gl = 0.4 + Math.sin(t * 0.07 + i) * 0.5;
+          ctx.globalAlpha = Math.max(0, gl) * 0.6; ctx.fillStyle = i % 3 === 0 ? '#c0a0f0' : (i % 3 === 1 ? '#7fd8c0' : '#e8d0ff');
+          ctx.save(); ctx.translate(x, y); ctx.rotate(i + t * 0.02); ctx.fillRect(-2, -1, 4, 2); ctx.restore();
+        }
+      }
       // 不穏な脈動ヴィネット(画面の縁が影に侵される)
       const vg = ctx.createRadialGradient(w / 2, h / 2, h * 0.28, w / 2, h / 2, h * 0.72);
       const vp = 0.22 + Math.sin(t * 0.03) * 0.06;
@@ -243,6 +254,21 @@ Game.Render = (function () {
           ctx.globalAlpha = 0.5; ctx.fillStyle = cols[i % cols.length];
           ctx.fillRect(x, y, 3, 2);
         }
+      } else if (g === Game.TILE.CLOUD) {
+        // 空島: ゆっくり昇る光の綿毛＋きらめき
+        for (let i = 0; i < 10; i++) {
+          const ph = t * 0.014 + i * 0.8;
+          const x = ((i * 129) % w + Math.sin(ph) * 20 + w) % w;
+          const y = h - ((i * 79 + t * (0.35 + (i % 3) * 0.1)) % (h + 40));
+          const gl = 0.4 + Math.sin(t * 0.05 + i) * 0.4;
+          ctx.globalAlpha = Math.max(0, gl) * 0.5; ctx.fillStyle = i % 3 === 0 ? '#ffffff' : '#cfeefb';
+          ctx.beginPath(); ctx.arc(x, y, 1.6 + (i % 3) * 0.6, 0, Math.PI * 2); ctx.fill();
+        }
+      } else if (g === Game.TILE.RUIN) {
+        // 古代都市: 斜光に舞う塵＋稀にきらめく黄金の粒
+        ctx.fillStyle = '#cabf8a';
+        for (let i = 0; i < 9; i++) { const x = ((i * 133 + t * 0.4) % (w + 30)) - 15; const y = ((i * 71) % h + Math.sin(t * 0.02 + i) * 14 + h) % h; ctx.globalAlpha = 0.14; ctx.fillRect(x, y, 2, 2); }
+        for (let i = 0; i < 4; i++) { const gl = Math.sin(t * 0.06 + i * 2); if (gl > 0.6) { const x = ((i * 197) % w + w) % w, y = ((i * 113) % h + h) % h; ctx.globalAlpha = (gl - 0.6) * 1.6; ctx.fillStyle = '#f0e0a0'; ctx.fillRect(x, y, 2, 2); } }
       }
       // 日中の蝶（明るい biome の生命感・羽ばたきアニメ）
       if (!night && (g === Game.TILE.GRASS || g === Game.TILE.FOREST || g === Game.TILE.BLOOM)) {
