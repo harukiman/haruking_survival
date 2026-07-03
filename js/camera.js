@@ -9,12 +9,22 @@ Game.Camera = (function () {
     return { w: Game.view.w, h: Game.view.h };
   }
 
+  const camLA = { x: 0, y: 0 }; // 進行方向への先読みオフセット(平滑)
   function follow(alpha) {
     const p = Game.state.player;
     const px = p.prevX + (p.x - p.prevX) * alpha;
     const py = p.prevY + (p.y - p.prevY) * alpha;
-    Game.state.camera.x = px;
-    Game.state.camera.y = py;
+    // 先読みカメラ: 動いている方向を少し先に見せる(進む先が見えて手触りが軽快に)
+    if (Game.Settings && Game.Settings.get('lookAhead') === false) { camLA.x = 0; camLA.y = 0; }
+    else {
+      const laMax = TS * 2.4;
+      const tvx = Math.max(-laMax, Math.min(laMax, (p.x - p.prevX) * 9));
+      const tvy = Math.max(-laMax, Math.min(laMax, (p.y - p.prevY) * 9));
+      camLA.x += (tvx - camLA.x) * 0.055;
+      camLA.y += (tvy - camLA.y) * 0.055;
+    }
+    Game.state.camera.x = px + camLA.x;
+    Game.state.camera.y = py + camLA.y;
   }
 
   function zoom() { return Game.state.zoom || 1; }

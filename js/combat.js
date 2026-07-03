@@ -108,6 +108,12 @@ Game.Combat = (function () {
     if (aoe) {
       for (let i = 0; i < mobs.length; i++) { const m = mobs[i]; if (m.def.friendly) continue; if (Math.hypot(m.x - p.x, m.y - p.y) <= rangePx + m.def.size * 0.5) targets.push(m); }
     } else targets.push(best);
+    // アタックの踏み込み(ランジ): 標的方向へ少し踏み込み、当てた手応えを出す(壁は尊重)
+    if (best) {
+      const ldx = best.x - p.x, ldy = best.y - p.y, ll = Math.hypot(ldx, ldy) || 1;
+      const step = Math.min(6, ll * 0.22), nx = p.x + ldx / ll * step, ny = p.y + ldy / ll * step;
+      if (Game.World.isWalkable(Math.floor(nx / TS), Math.floor(ny / TS))) { p.x = nx; p.y = ny; }
+    }
     const canDirect = !(Game.Net.isConnected() && !Game.Net.host); // マルチのゲスト中は直接ダメージ不可
     for (let i = 0; i < targets.length; i++) {
       const tg = targets[i];
