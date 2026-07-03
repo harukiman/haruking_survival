@@ -6,7 +6,7 @@ Game.Settings = (function () {
   const DEF = {
     bgmVol: 60, sfxVol: 90, brightness: 100,
     btnSize: 100, btnOpacity: 92, joySens: 100,
-    leftHanded: false, joyFollow: true, dmgNumbers: true, showFps: false, screenShake: true, lowHpWarn: true, ambient: true, homeCompass: true,
+    leftHanded: false, joyFollow: true, dmgNumbers: true, showFps: false, screenShake: true, lowHpWarn: true, ambient: true, homeCompass: true, peerCompass: true,
     keybinds: { up: 'w', down: 's', left: 'a', right: 'd', mine: ' ', place: 'q', use: 'g', inv: 'e', stats: 'c', map: 'n', roll: 'r', dash: 'shift', shift: 'f' },
     padbinds: { mine: 0, fire: 7, place: 2, shift: 3, roll: 1, hotbarPrev: 4, hotbarNext: 5, dash: 6, inv: 9, map: 11, stats: 10, opts: 8 },
   };

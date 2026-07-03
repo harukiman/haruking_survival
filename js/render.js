@@ -144,6 +144,7 @@ Game.Render = (function () {
     drawDanger(ctx);
     drawHitDir(ctx);
     drawHomeCompass(ctx);
+    drawPeerCompass(ctx);
     drawFlash(ctx);
   }
 
@@ -175,6 +176,40 @@ Game.Render = (function () {
       ctx.fillText('拠点 ' + Math.round(distTiles), 0, -14);
     }
     ctx.restore();
+  }
+
+  // 仲間コンパス(MP): 同じ世界の仲間(最大3人)の方向と距離を常時表示。設定でON/OFF
+  const PEER_COLS = ['#5fd0ff', '#ffd86b', '#ff8ad8', '#8affa0'];
+  function drawPeerCompass(ctx) {
+    if (Game.Settings && Game.Settings.get('peerCompass') === false) return;
+    const st = Game.state; if (!st || st.paused) return;
+    if (!Game.Net || !Game.Net.isConnected()) return;
+    const peers = Game.Net.getPeers(); if (!peers) return;
+    const TS = Game.CFG.TILE_SIZE, p = st.player, v = Game.view, margin = 30;
+    let idx = 0;
+    for (const id in peers) {
+      if (idx >= 3) break;
+      const pe = peers[id]; if (!pe || pe.world !== st.worldName || pe.tx == null) continue;
+      const col = PEER_COLS[idx % PEER_COLS.length]; idx++;
+      const dx = pe.tx - p.x, dy = pe.ty - p.y, distTiles = Math.hypot(dx, dy) / TS;
+      const sc = Game.Camera.worldToScreen(pe.tx, pe.ty);
+      ctx.save();
+      if (sc.x >= margin && sc.x <= v.w - margin && sc.y >= margin && sc.y <= v.h - margin) {
+        // 画面内: アバター上に名前+距離のみ(ドットはpeer描画側)。近ければコンパス不要
+      } else {
+        const cx = v.w / 2, cy = v.h / 2, ddx = sc.x - cx, ddy = sc.y - cy;
+        const ex = v.w / 2 - margin, ey = v.h / 2 - margin;
+        const scale = Math.min(ex / Math.max(Math.abs(ddx), 1), ey / Math.max(Math.abs(ddy), 1));
+        const ax = cx + ddx * scale, ay = cy + ddy * scale, ang = Math.atan2(ddy, ddx);
+        ctx.translate(ax, ay); ctx.rotate(ang);
+        ctx.globalAlpha = 0.8; ctx.fillStyle = col; ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(12, 0); ctx.lineTo(-7, -8); ctx.lineTo(-7, 8); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.rotate(-ang);
+        ctx.globalAlpha = 0.9; ctx.fillStyle = '#eaf4ff'; ctx.font = '9px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText((pe.name || '仲間') + ' ' + Math.round(distTiles), 0, -14);
+      }
+      ctx.restore();
+    }
   }
 
   // 環境アンビエントパーティクル（蛍/葉/砂塵/影の粒子）。軽量・低透明度

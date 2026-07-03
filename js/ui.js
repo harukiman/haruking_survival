@@ -987,6 +987,7 @@ Game.UI = (function () {
       toggle('lowHpWarn', '🩸 低HP警告') +
       toggle('ambient', '🌿 環境演出') +
       toggle('homeCompass', '🧭 帰路コンパス') +
+      toggle('peerCompass', '👥 仲間コンパス(MP)') +
       toggle('showFps', '📈 FPS表示') +
       '<div class="opt-row"><button id="opt-story" class="map-btn" style="width:100%">📖 記憶回廊（物語）を開く</button></div>' +
       // ===== 操作キー設定(リバインド) =====
