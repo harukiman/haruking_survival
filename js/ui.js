@@ -225,6 +225,7 @@ Game.UI = (function () {
     { id: 'energy_cell', n: 10, price: 2 }, { id: 'rocket_ammo', n: 2, price: 3 },
     { id: 'bomb', n: 2, price: 2 }, { id: 'poison_flask', n: 2, price: 2 }, { id: 'flash_bomb', n: 2, price: 2 },
     { id: 'pumpkin_seeds', n: 2, price: 1 }, { id: 'tomato_seeds', n: 3, price: 1 },
+    { id: 'strawberry_seeds', n: 3, price: 1 }, { id: 'corn_seeds', n: 3, price: 1 },
     { id: 'banner', n: 1, price: 1 }, { id: 'brazier', n: 1, price: 2 }, { id: 'barrel', n: 1, price: 1 }, { id: 'potted_plant', n: 1, price: 1 },
     { id: 'glow_spore', n: 3, price: 2 }, { id: 'obsidian', n: 2, price: 3 }, { id: 'sulfur', n: 3, price: 2 }, { id: 'luminous_cap', n: 3, price: 2 },
     { id: 'xp_orb', n: 1, price: 3 },

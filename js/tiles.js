@@ -132,7 +132,7 @@ Game.Tiles = (function () {
   }
 
   // 立ちオブジェクトの接地影（チャンクキャッシュにベイク＝毎フレーム負荷ゼロ）
-  const standing = { tree: 1, deadtree: 1, pine: 1, rock: 1, ore: 1, bush: 1, berry: 1, cactus: 1, flower: 1, sapling: 1, shadowtree: 1, shadowcrystal: 1, lumenore: 1, soulflower: 1, voidrock: 1, starore: 1, giantshroom: 1, glowshroom: 1, pmushroom: 1, obsidian: 1, sulfur: 1, barrel: 1, potted: 1, totem: 1, streetlamp: 1, torch: 1, lantern: 1, brazier: 1, stela: 1, sign: 1, campfire: 1, rocket_obj: 1, lumenlantern: 1, banner: 1, chair: 1, skytree: 1, skypillar: 1, windaltar: 1, returnaltar: 1, ancientgate: 1, returngate: 1, ruincolumn: 1, ruinstatue: 1, rifttear: 1, riftreturn: 1, riftspire: 1, waypoint: 1 };
+  const standing = { tree: 1, deadtree: 1, pine: 1, rock: 1, ore: 1, bush: 1, berry: 1, cactus: 1, flower: 1, sapling: 1, shadowtree: 1, shadowcrystal: 1, lumenore: 1, soulflower: 1, voidrock: 1, starore: 1, giantshroom: 1, glowshroom: 1, pmushroom: 1, obsidian: 1, sulfur: 1, barrel: 1, potted: 1, totem: 1, streetlamp: 1, torch: 1, lantern: 1, brazier: 1, stela: 1, sign: 1, campfire: 1, rocket_obj: 1, lumenlantern: 1, banner: 1, chair: 1, skytree: 1, skypillar: 1, windaltar: 1, returnaltar: 1, ancientgate: 1, returngate: 1, ruincolumn: 1, ruinstatue: 1, rifttear: 1, riftreturn: 1, riftspire: 1, waypoint: 1, stonewall: 1, hedge: 1, fountain: 1, lanternpost: 1, flowerbed: 1, scarecrow: 1, woodstairs: 1, trellis: 1 };
   function contactShadow(x, rx) {
     x.fillStyle = 'rgba(0,0,0,0.22)';
     x.beginPath(); x.ellipse(TS / 2, TS - 4, rx || 10, 3.2, 0, 0, Math.PI * 2); x.fill();
@@ -143,6 +143,7 @@ Game.Tiles = (function () {
     if (!meta) return;
     const c = mk(), x = c.getContext('2d');
     const r = meta.render;
+    const rnd = U.rng(id * 77 + 5); // 追加オブジェクト描画用の共有シード乱数(既存branchは各自のrndでシャドウ)
     if (standing[r]) contactShadow(x, r === 'tree' || r === 'pine' || r === 'shadowtree' || r === 'giantshroom' ? 11 : r === 'flower' || r === 'sapling' || r === 'soulflower' || r === 'glowshroom' ? 5 : 9);
     if (r === 'tree') {
       x.fillStyle = '#57351b'; x.fillRect(TS / 2 - 3, TS - 12, 6, 12); // 幹の陰
@@ -557,6 +558,37 @@ Game.Tiles = (function () {
       x.fillStyle = '#7a5aa8'; x.beginPath(); x.moveTo(TS / 2, 4); x.lineTo(TS / 2 + 6, TS / 2 + 4); x.lineTo(TS / 2, TS - 4); x.lineTo(TS / 2 - 6, TS / 2 + 4); x.closePath(); x.fill();
       x.fillStyle = '#a888e0'; x.beginPath(); x.moveTo(TS / 2, 6); x.lineTo(TS / 2 + 3, TS / 2 + 2); x.lineTo(TS / 2, TS - 8); x.closePath(); x.fill();
       x.fillStyle = 'rgba(232,208,255,0.9)'; circle(x, TS / 2 - 1, TS / 2 - 2, 1.4);
+    } else if (r === 'stonewall') {
+      x.fillStyle = '#8a8e92'; x.fillRect(1, 3, TS - 2, TS - 5); x.fillStyle = '#6a6e72';
+      for (let by = 4; by < TS - 2; by += 6) { const off = ((by / 6) | 0) % 2 ? 5 : 0; for (let bx = 1 + off; bx < TS; bx += 10) x.strokeRect(bx, by, 9, 5); }
+      x.strokeStyle = '#5a5e62'; x.lineWidth = 1; x.strokeRect(1, 3, TS - 2, TS - 5);
+    } else if (r === 'hedge') {
+      x.fillStyle = '#3a7d33'; x.fillRect(1, 4, TS - 2, TS - 6);
+      x.fillStyle = '#4f9a44'; for (let i = 0; i < 14; i++) circle(x, 3 + rnd() * (TS - 6), 4 + rnd() * (TS - 8), 2.4);
+      x.fillStyle = '#68b85a'; for (let i = 0; i < 8; i++) circle(x, 3 + rnd() * (TS - 6), 4 + rnd() * (TS - 8), 1.4);
+    } else if (r === 'fountain') {
+      x.fillStyle = '#9aa0a4'; circle(x, TS / 2, TS / 2 + 2, 12); x.fillStyle = '#6fbfe0'; circle(x, TS / 2, TS / 2 + 2, 9);
+      x.fillStyle = '#bfe8f4'; circle(x, TS / 2, TS / 2 + 2, 5); x.fillStyle = '#8a9094'; x.fillRect(TS / 2 - 1.5, TS / 2 - 8, 3, 10);
+      x.fillStyle = 'rgba(200,240,255,0.8)'; circle(x, TS / 2, TS / 2 - 9, 2.5); circle(x, TS / 2 - 4, TS / 2 - 4, 1.4); circle(x, TS / 2 + 4, TS / 2 - 4, 1.4);
+    } else if (r === 'lanternpost') {
+      x.fillStyle = '#5a4a32'; x.fillRect(TS / 2 - 2, 8, 4, TS - 10);
+      x.fillStyle = '#3a3226'; x.fillRect(TS / 2 - 5, 4, 10, 7); x.fillStyle = '#ffe9a0'; x.fillRect(TS / 2 - 3, 5, 6, 5);
+      x.fillStyle = 'rgba(255,220,120,0.5)'; circle(x, TS / 2, 8, 6);
+    } else if (r === 'flowerbed') {
+      x.fillStyle = '#6a4a2a'; x.fillRect(2, TS - 12, TS - 4, 10); x.strokeStyle = '#4a3320'; x.strokeRect(2, TS - 12, TS - 4, 10);
+      const fc = ['#ff9ec4', '#ffe07a', '#c79ae6', '#ffffff']; for (let i = 0; i < 6; i++) { x.fillStyle = fc[i % 4]; circle(x, 5 + rnd() * (TS - 10), TS - 10 + rnd() * 4, 2); }
+    } else if (r === 'scarecrow') {
+      x.fillStyle = '#8a6a3a'; x.fillRect(TS / 2 - 1.5, 6, 3, TS - 8); x.fillRect(6, 12, TS - 12, 3); // 十字
+      x.fillStyle = '#d8c070'; circle(x, TS / 2, 8, 5); // 麦わら頭
+      x.fillStyle = '#b04a3a'; x.fillRect(TS / 2 - 6, 14, 12, 8); // 服
+      x.fillStyle = '#2a2a2a'; x.fillRect(TS / 2 - 2, 7, 1.5, 1.5); x.fillRect(TS / 2 + 1, 7, 1.5, 1.5);
+    } else if (r === 'woodstairs') {
+      x.fillStyle = '#b07a40'; for (let i = 0; i < 3; i++) x.fillRect(2, TS - 5 - i * 6, TS - 4 - i * 5, 5);
+      x.strokeStyle = '#8a5a30'; for (let i = 0; i < 3; i++) x.strokeRect(2, TS - 5 - i * 6, TS - 4 - i * 5, 5);
+    } else if (r === 'trellis') {
+      x.strokeStyle = '#8a7a4a'; x.lineWidth = 2; for (let gx = 4; gx < TS; gx += 6) { x.beginPath(); x.moveTo(gx, 3); x.lineTo(gx, TS - 3); x.stroke(); }
+      for (let gy = 5; gy < TS; gy += 6) { x.beginPath(); x.moveTo(3, gy); x.lineTo(TS - 3, gy); x.stroke(); }
+      x.fillStyle = '#4f9a44'; for (let i = 0; i < 5; i++) circle(x, 3 + rnd() * (TS - 6), 3 + rnd() * (TS - 6), 1.6);
     } else if (r === 'waypoint') {
       // 道標の石: 積み石の上に水青の浮遊クリスタル
       x.fillStyle = '#6a6660'; x.fillRect(TS / 2 - 7, TS - 8, 14, 6); x.fillStyle = '#7a746c'; x.fillRect(TS / 2 - 5, TS - 12, 10, 5);

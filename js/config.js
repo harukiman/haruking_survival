@@ -72,6 +72,8 @@ Game.OBJ = {
   RIFT_TEAR:162, RIFT_RETURN:163, RIFT_SPIRE:164, VOID_VEIN:165,
   // ファストトラベル
   WAYPOINT_STONE:166,
+  // 建築・農業の拡張
+  STONE_WALL:167, HEDGE:168, FOUNTAIN:169, LANTERN_POST:170, FLOWERBED:171, SCARECROW:172, WOOD_STAIRS:173, TRELLIS:174,
 };
 
 // 地面の色（手続き描画のベース）
@@ -181,6 +183,8 @@ Game.LIGHT_LEVEL = {
   [Game.OBJ.RIFT_SPIRE]: 3,
   [Game.OBJ.VOID_VEIN]: 4,
   [Game.OBJ.WAYPOINT_STONE]: 4,
+  [Game.OBJ.LANTERN_POST]: 8,
+  [Game.OBJ.FOUNTAIN]: 2,
 };
 
 // オブジェクトのメタ情報。solid=移動阻害, drops=破壊時ドロップ
@@ -288,6 +292,15 @@ Game.OBJ_META = {
   [Game.OBJ.VOID_VEIN]:   { name:'虚無の鉱脈', solid:true, mineable:true, tool:'pickaxe', tier:4, hp:20, drops:[{item:'void_shard', n:[1,2]}], render:'ore', oreColor:'#b088e8' },
   // 道標の石: 触れると登録済みの道標へ瞬間移動できる(ファストトラベル)。壊すと回収
   [Game.OBJ.WAYPOINT_STONE]:{ name:'道標の石', solid:true, mineable:true, tool:'pickaxe', tier:1, hp:8, light:4, drops:[{item:'waypoint_stone', n:[1,1]}], render:'waypoint', waypoint:true },
+  // 建築・農業の拡張
+  [Game.OBJ.STONE_WALL]:  { name:'石壁', solid:true, mineable:true, tool:'pickaxe', tier:0, hp:14, drops:[{item:'stone_wall', n:[1,1]}], render:'stonewall' },
+  [Game.OBJ.HEDGE]:       { name:'生垣', solid:true, mineable:true, tool:'axe', tier:0, hp:6, drops:[{item:'hedge', n:[1,1]}], render:'hedge' },
+  [Game.OBJ.FOUNTAIN]:    { name:'噴水', solid:true, mineable:true, tool:'pickaxe', tier:0, hp:20, light:2, drops:[{item:'fountain', n:[1,1]}], render:'fountain', regenAura:true },
+  [Game.OBJ.LANTERN_POST]:{ name:'ランタン柱', solid:true, mineable:true, tool:null, tier:0, hp:6, light:8, drops:[{item:'lantern_post', n:[1,1]}], render:'lanternpost' },
+  [Game.OBJ.FLOWERBED]:   { name:'花壇', solid:false, mineable:true, tool:null, tier:0, hp:3, drops:[{item:'flowerbed', n:[1,1]}], render:'flowerbed' },
+  [Game.OBJ.SCARECROW]:   { name:'かかし', solid:true, mineable:true, tool:null, tier:0, hp:5, drops:[{item:'scarecrow', n:[1,1]}], render:'scarecrow', cropBoost:true },
+  [Game.OBJ.WOOD_STAIRS]: { name:'木の階段', solid:false, mineable:true, tool:'axe', tier:0, hp:5, drops:[{item:'wood_stairs', n:[1,1]}], render:'woodstairs' },
+  [Game.OBJ.TRELLIS]:     { name:'つる棚', solid:false, mineable:true, tool:'axe', tier:0, hp:5, drops:[{item:'trellis', n:[1,1]}], render:'trellis' },
 };
 
 // アイテム定義。place=設置するOBJ id, tool/tier=道具, food=空腹回復
@@ -485,6 +498,21 @@ Game.ITEMS = {
   brazier:       { name:'かがり火', stack:16, color:'#ff8a3a', place:Game.OBJ.BRAZIER },
   barrel:        { name:'樽', stack:16, color:'#8a5a30', place:Game.OBJ.BARREL },
   potted_plant:  { name:'植木鉢', stack:16, color:'#7a9a4a', place:Game.OBJ.POTTED_PLANT },
+  // 建築拡張
+  stone_wall:    { name:'石壁', stack:99, color:'#9a9ea2', place:Game.OBJ.STONE_WALL },
+  hedge:         { name:'生垣', stack:99, color:'#4a8f3c', place:Game.OBJ.HEDGE },
+  fountain:      { name:'噴水', stack:8, color:'#8fd0e0', place:Game.OBJ.FOUNTAIN, flavor:'水を湛えた石の噴水。傍らでは体力が少しずつ癒える。' },
+  lantern_post:  { name:'ランタン柱', stack:16, color:'#ffe9a0', place:Game.OBJ.LANTERN_POST },
+  flowerbed:     { name:'花壇', stack:16, color:'#ff9ec4', place:Game.OBJ.FLOWERBED },
+  scarecrow:     { name:'かかし', stack:8, color:'#c8a850', place:Game.OBJ.SCARECROW, flavor:'畑の守り手。近くの作物の育ちが早まる。' },
+  wood_stairs:   { name:'木の階段', stack:99, color:'#b07a40', place:Game.OBJ.WOOD_STAIRS },
+  trellis:       { name:'つる棚', stack:16, color:'#8a9a5a', place:Game.OBJ.TRELLIS },
+  // 農業拡張
+  watering_can:  { name:'じょうろ', stack:1, color:'#7fb8d8', waterCan:true, flavor:'水をやると、まわりの作物がひと回り育つ。使うほどに畑は豊かに。' },
+  strawberry_seeds:{ name:'いちごの種', stack:99, color:'#c86a7a', plant:Game.OBJ.WHEAT, crop:{harvest:'strawberry', seeds:'strawberry_seeds', color:'#e0405a'} },
+  strawberry:    { name:'いちご', stack:99, color:'#e0405a', food:14, buff:{type:'regen', dur:400} },
+  corn_seeds:    { name:'とうもろこしの種', stack:99, color:'#c0b04a', plant:Game.OBJ.WHEAT, crop:{harvest:'corn', seeds:'corn_seeds', color:'#e8c84a'} },
+  corn:          { name:'とうもろこし', stack:99, color:'#e8c84a', food:20 },
   // 魔法武器（ボスドロップのレア）
   warp_staff:    { name:'ワープの杖', stack:1, color:'#b06ad0', tool:'warp', flavor:'空間を歪め、一瞬で間合いを詰める/離す。' },
   grapple_hook:  { name:'鉤縄', stack:1, color:'#c8a860', tool:'grapple', flavor:'狙った先の壁や木に鉤を打ち、一気に手繰り寄せる。水や谷を飛び越え、どこへでも。' },
@@ -577,6 +605,17 @@ Game.RECIPES = [
   { out:{id:'chest', n:1}, in:{wood:8}, station:'crafting_table' },
   { out:{id:'waypoint_stone', n:2}, in:{stone:8, lumen:1}, station:'crafting_table' }, // ファストトラベルの道標
   { out:{id:'grapple_hook', n:1}, in:{iron:3, string:2, wood:2}, station:'crafting_table' }, // 鉤縄(traversal)
+  // 建築拡張
+  { out:{id:'stone_wall', n:4}, in:{stone:4}, station:'crafting_table' },
+  { out:{id:'hedge', n:4}, in:{wood:2, moonleaf:1}, station:'crafting_table' },
+  { out:{id:'fountain', n:1}, in:{stone:12, lumen:1}, station:'crafting_table' },
+  { out:{id:'lantern_post', n:2}, in:{wood:2, iron:1, coal:1}, station:'crafting_table' },
+  { out:{id:'flowerbed', n:2}, in:{wood:1, moonleaf:2}, station:'crafting_table' },
+  { out:{id:'scarecrow', n:1}, in:{wood:3, wheat:2, string:1}, station:'crafting_table' },
+  { out:{id:'wood_stairs', n:4}, in:{wood:3}, station:'crafting_table' },
+  { out:{id:'trellis', n:2}, in:{wood:4}, station:'crafting_table' },
+  // 農業拡張
+  { out:{id:'watering_can', n:1}, in:{iron:2, wood:1}, station:'crafting_table' },
   { out:{id:'stasis_glass', n:1}, in:{lumen:2, shadow_crystal:1, gold_ore:1}, station:'enchant_table' }, // 時止めの砂時計
   { out:{id:'iron', n:1}, in:{iron_ore:1, coal:1}, station:'furnace' },
   { out:{id:'iron_pickaxe', n:1}, in:{iron:3, wood:2}, station:'crafting_table' },
@@ -1044,6 +1083,7 @@ Game.STARTER_ITEMS = [
 Game.ITEM_GLYPH = {
   wood:'🪵', shadow_wood:'🪵', stone:'🪨', stone_block:'🧱', wood_block:'🟫', coal:'⚫', iron_ore:'🪨', iron:'🔩', gold_ore:'🟡', gold_bar:'🟨',
   apple:'🍎', berry:'🫐', cactus:'🌵', raw_meat:'🥩', cooked_meat:'🍖', rotten_meat:'🤢', guts:'🩸', wheat:'🌾', wheat_seeds:'🌱', bread:'🍞', moonleaf:'🍃', fish:'🐟',
+  strawberry:'🍓', strawberry_seeds:'🌱', corn:'🌽', corn_seeds:'🌱', watering_can:'🪣', scarecrow:'🎃', fountain:'⛲',
   frog_legs:'🐸', cooked_frog:'🍗', snake_meat:'🐍', cooked_snake:'🍢', swamp_stew:'🍲',
   carrot:'🥕', carrot_seeds:'🌱', pumpkin:'🎃', pumpkin_seeds:'🌱', tomato:'🍅', tomato_seeds:'🌱', veg_salad:'🥗', pumpkin_pie:'🥧', veg_stew:'🍲', hearty_stew:'🍲',
   hide:'🟤', leather:'🟫', bone:'🦴', string:'🧵', slime_ball:'🟢', flower:'🌸', sapling:'🌱', glow_spore:'🍄', obsidian:'⬛', sulfur:'🟡', obsidian_blade:'🗡️', luminous_cap:'🍄', mushroom_soup:'🍲', mire_incense:'🕯️', lava_shard:'🔥', spore_sac:'🟣', flower_tea:'🍵', end_key:'🗝️', endblade:'⚔️', coin_charm:'🪙', shop_bell:'🔔', kokuhen:'🔮',

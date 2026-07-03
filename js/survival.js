@@ -149,7 +149,8 @@ Game.Survival = (function () {
     const TS = Game.CFG.TILE_SIZE, p = Game.state.player;
     const ptx = Math.floor(p.x / TS), pty = Math.floor(p.y / TS);
     for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) {
-      if (Game.World.objAt(ptx + dx, pty + dy) === Game.OBJ.HEALING_TOTEM) return true;
+      const o = Game.World.objAt(ptx + dx, pty + dy);
+      if (o === Game.OBJ.HEALING_TOTEM || o === Game.OBJ.FOUNTAIN) return true; // 噴水も癒しの水辺
     }
     return false;
   }

@@ -586,6 +586,19 @@ Game.Player = (function () {
     });
   }
 
+  // じょうろ: 周囲2タイルの作物を1段階育てる(気持ちよい世話ループ)
+  function waterNearbyCrops() {
+    const p = Game.state.player, ptx = Math.floor(p.x / TS), pty = Math.floor(p.y / TS);
+    let n = 0;
+    for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) {
+      const tx = ptx + dx, ty = pty + dy;
+      const d = Game.World.getTileData(tx, ty);
+      if (d && d.crop && d.crop.stage < 3) { d.crop.stage++; d.crop.timer = 0; n++; if (Game.Render.spawnParticles) Game.Render.spawnParticles(tx * TS + TS / 2, ty * TS + TS / 2, '#7fb8d8', 5); }
+    }
+    if (n > 0) { Game.Audio.play('place'); Game.UI.toast('水をやった — ' + n + '株が育った'); }
+    else Game.UI.toast('近くに育つ作物がない');
+  }
+
   // ===== 道標(ファストトラベル) =====
   const BIOME_NAME = { 0: '海辺', 1: '水辺', 2: '砂浜', 3: '草原', 4: '森', 5: '荒地', 6: '岩場', 7: '雪原', 8: '地下', 9: '沼地', 10: '火山', 11: '茸の森', 12: '花野', 13: '空島', 15: '古代都市', 16: '狭間' };
   function registerWaypoint(tx, ty) {
@@ -695,6 +708,7 @@ Game.Player = (function () {
       return;
     }
     if (def.shift) { Game.World.shift(); return; }
+    if (def.waterCan) { waterNearbyCrops(); return; }
     if (def.respec) { const n = respec(); Game.Inventory.remove(sel.id, 1); Game.UI.toast('記憶の書を読んだ — スキルを振り直した（' + n + 'P返却）'); Game.UI.refreshAll(); return; }
     if (def.food || def.cures || def.buff || def.skillTome || def.xpGain || def.invExpand || def.summonBoss || def.opensShop || def.recall || def.stasis) { Game.Inventory.useSelected(); return; }
     if (def.armor) { equipSelectedArmor(); return; }

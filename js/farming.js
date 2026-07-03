@@ -68,13 +68,23 @@ Game.Farming = (function () {
   }
 
   // 成長更新（main から定期呼び出し）
+  function scarecrowNear(tx, ty) {
+    for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) {
+      if (Game.World.objAt(tx + dx, ty + dy) === Game.OBJ.SCARECROW) return true;
+    }
+    return false;
+  }
   function update() {
     const daytime = Game.Lighting.ambientDarkness() < 0.3;
     const wet = wetBoost();
     let ripeSfx = false;
     Game.state.tileData.forEach(function (d, key) {
       if (d.crop && d.crop.stage < MAX_STAGE) {
-        d.crop.timer += (daytime ? 30 : 10) + wet; // 昼の方が早い＋潤いボーナス
+        let boost = 0;
+        // かかしが近く(半径3)にあると育ちが早まる
+        const kp = key.split(','); const ktx = parseInt(kp[0], 10), kty = parseInt(kp[1], 10);
+        if (scarecrowNear(ktx, kty)) boost = 22;
+        d.crop.timer += (daytime ? 30 : 10) + wet + boost; // 昼の方が早い＋潤いボーナス＋かかし
         if (d.crop.timer >= Game.TUNE.CROP_GROW_TICKS) {
           d.crop.timer = 0; d.crop.stage++;
           ripeSfx = stageFeedback(key, d.crop.stage >= MAX_STAGE, ripeSfx);
