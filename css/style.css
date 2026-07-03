@@ -741,3 +741,8 @@ body.cinematic #quest-tracker, body.cinematic #bounty-tracker, body.cinematic #e
 body.cinematic #hint-pill, body.cinematic #toast, body.cinematic .toast, body.cinematic #boss-bar {
   display: none !important;
 }
+
+/* 被弾時のHPバー揺れ */
+@keyframes hpShake { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-3px); } 40% { transform: translateX(3px); } 60% { transform: translateX(-2px); } 80% { transform: translateX(2px); } }
+.hp-shake { animation: hpShake .38s ease-in-out; }
+@media (prefers-reduced-motion: reduce) { .hp-shake { animation: none; } }

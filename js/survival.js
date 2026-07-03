@@ -192,6 +192,7 @@ Game.Survival = (function () {
     p.deathCause = source; // 死因追跡（直近のダメージ源）
     if (Game.Render.spawnFloat) Game.Render.spawnFloat(p.x, p.y - 16, '-' + amount, '#ff6a6a');
     if (physical) { p.invuln = 30; Game.Audio.play('hurt'); if (Game.Render.hurtFlash) Game.Render.hurtFlash(); if (Game.Render.shake && amount >= 6) Game.Render.shake(Math.min(9, 3 + amount * 0.4)); }
+    if (Game.UI.shakeHealthBar) Game.UI.shakeHealthBar(); // HPバーを揺らして被弾を明確に
     if (p.health <= 0) { p.health = 0; die(); }
     Game.UI.refreshStats();
     return true; // ダメージ成立

@@ -1237,6 +1237,16 @@ Game.UI = (function () {
     } else badge.classList.add('hidden');
   }
 
+  // 被弾時にHPバーを揺らす(視認性・手応え)
+  let hpShakeT = null;
+  function shakeHealthBar() {
+    const wrap = document.getElementById('health-bar'); if (!wrap) return;
+    const bar = wrap.parentElement && wrap.parentElement.parentElement; // .bar-wrap
+    const el2 = bar || wrap;
+    el2.classList.remove('hp-shake'); void el2.offsetWidth; el2.classList.add('hp-shake');
+    clearTimeout(hpShakeT); hpShakeT = setTimeout(function () { el2.classList.remove('hp-shake'); }, 400);
+  }
+
   function refreshWorld() {
     if (!el.world) return;
     const wn = Game.state.worldName;
@@ -2263,7 +2273,7 @@ Game.UI = (function () {
     openChest, openSharedChest, closeChest, refreshChest, refreshWorld,
     showLore, closeLore, refreshQuest, openQuest, closeQuest, refreshBounty, showEnding, showDeath, showIntro, refreshNet, refreshStatus,
     toggleOptions, openEnchant, closeEnchant, flashSave, flashHotbarItem, flashCombo, refreshContext, refreshAmmo,
-    toggleBigMap, isBigMapOpen, updateBigMap, openStats, closeStats, toggleStats, renderStats, refreshBossBar, openTrade, closeTrade, openShop, openStory, closeStory, openWaypoints, closeWaypoints,
+    toggleBigMap, isBigMapOpen, updateBigMap, openStats, closeStats, toggleStats, renderStats, refreshBossBar, openTrade, closeTrade, openShop, openStory, closeStory, openWaypoints, closeWaypoints, shakeHealthBar,
     padNav, padMenuRoot, padActivateEl,
   };
 })();

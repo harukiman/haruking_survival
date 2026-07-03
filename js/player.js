@@ -1247,7 +1247,13 @@ Game.Player = (function () {
         if (dist < 22 && Game.state.tick % 60 === 0) Game.UI.toast('インベントリがいっぱい！');
         continue;
       }
-      if (dist < PR * 2.2) { d.x += dx * 0.18; d.y += dy * 0.18; }
+      // 吸い込み演出: 近いほど加速する掃除機式の引き寄せ(気持ちよい回収)
+      const magR = PR * 4;
+      if (dist < magR) {
+        const pull = 0.10 + (1 - dist / magR) * 0.42;
+        d.x += dx * pull; d.y += dy * pull;
+        d.suck = Math.min(1, (d.suck || 0) + 0.12); // 描画側で尾/縮小に使える
+      }
       if (dist < 16) {
         if (d.roll) {
           if (Game.Inventory.addInstance(d)) {
