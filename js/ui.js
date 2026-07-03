@@ -114,6 +114,7 @@ Game.UI = (function () {
 
     document.getElementById('btn-close-inv').addEventListener('click', toggleInventory);
     { const sb = document.getElementById('btn-sort-inv'); if (sb) sb.addEventListener('click', function () { Game.Inventory.autoSort(); Game.Audio.play('select'); refreshInventory(); refreshHotbar(); }); }
+    { const gb = document.getElementById('btn-give-bts'); if (gb) gb.addEventListener('click', function () { if (Game.Net && Game.Net.giveBts) Game.Net.giveBts(Math.min(100, Game.state.player.bts || 0)); }); }
     { const sbtn = document.getElementById('btn-inv-story'); if (sbtn) sbtn.addEventListener('click', function () { el.invScreen.classList.add('hidden'); Game.Audio.play('select'); openStory(); }); } // インベントリから記憶回廊を開く
     document.getElementById('btn-close-chest').addEventListener('click', closeChest);
     var ct = document.getElementById('btn-close-trade'); if (ct) ct.addEventListener('click', closeTrade);
@@ -1734,6 +1735,7 @@ Game.UI = (function () {
     if (!el.invScreen.classList.contains('hidden')) {
       invSelected = -1; refreshInventory();
       const bi = document.getElementById('btn-inv'); if (bi) bi.classList.remove('craft-new'); // クラフト解禁バッジは開いたら消灯
+      const gb = document.getElementById('btn-give-bts'); if (gb) gb.classList.toggle('hidden', !(Game.Net && Game.Net.isConnected())); // バーツ受け渡しはMP時のみ
     }
     refreshAmmo(); // オーバーレイ開閉で弾薬HUDの表示/非表示を即反映
   }

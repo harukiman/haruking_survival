@@ -7,7 +7,7 @@ window.Game = window.Game || {};
 Game.Net = (function () {
   let room = null;
   let sendPos = null, sendEdit = null, sendHello = null, sendWorld = null, sendChat = null;
-  let sendMobsA = null, sendHitA = null, sendReadyA = null, sendGiveA = null;
+  let sendMobsA = null, sendHitA = null, sendReadyA = null, sendGiveA = null, sendBtsA = null;
   let pendingDeaths = [], pendingLaunch = false, pendingDiscovery = null, pendingCutEnd = false;
   let isHost = false, connected = false, mobInterval = null;
   let originalHost = false; // 自分がルーム作成者か（分裂解消の優先権）
@@ -81,6 +81,17 @@ Game.Net = (function () {
       else Game.Inventory.add(d.id, d.count || 1);
       Game.UI.refreshAll && Game.UI.refreshAll();
       Game.UI.toast((peers[id] && peers[id].name || '仲間') + ' から ' + (Game.ITEMS[d.id] ? Game.ITEMS[d.id].name : d.id) + ' を受け取った');
+    }));
+    const a11 = room.makeAction('gbts');  sendBtsA = a11[0];
+    a11[1](safe('gbts', function (d, id) { // バーツ受け取り。受け取り側のレベルで減衰を計算(低Lvほど強い・最大90%)
+      if (!Game.state) return;
+      const p = Game.state.player; const amt = Math.max(0, Math.floor(d.amt || 0));
+      const lv = p.level || 1;
+      const decay = 0.9 * Math.max(0, Math.min(1, (21 - lv) / 20)); // Lv1→0.9(90%)、Lv21+→0
+      const got = Math.max(0, Math.floor(amt * (1 - decay)));
+      p.bts = (p.bts || 0) + got;
+      Game.UI.refreshAll && Game.UI.refreshAll();
+      Game.UI.toast((peers[id] && peers[id].name || '仲間') + ' から ' + got + ' バーツを受け取った' + (decay > 0.01 ? '（Lv' + lv + 'の減衰 -' + Math.round(decay * 100) + '%）' : ''));
     }));
     a9[1](safe('ready', function (d, id) { // client→host: 発射準備 / 発見通知
       if (!isHost) return;
@@ -336,8 +347,23 @@ Game.Net = (function () {
     return true;
   }
 
+  // バーツ(通貨)を最寄りの仲間へ。減衰は受け取り側のレベルで計算するため、こちらは全額を送り全額を差し引く
+  function giveBts(amount) {
+    if (!connected || !sendBtsA) return false;
+    const p = Game.state.player; amount = Math.max(0, Math.floor(amount || 0));
+    if ((p.bts || 0) < amount || amount <= 0) { Game.UI.toast('バーツが足りません'); return false; }
+    let best = null, bd = Infinity;
+    for (const id in peers) { const pe = peers[id]; if (pe.tx == null || pe.world !== Game.state.worldName) continue; const d = Math.hypot(pe.tx - p.x, pe.ty - p.y); if (d < bd) { bd = d; best = id; } }
+    if (!best) { Game.UI.toast('近くに同じ世界の仲間がいません'); return false; }
+    try { sendBtsA({ amt: amount }, best); } catch (e) { return false; }
+    p.bts -= amount;
+    Game.UI.refreshAll && Game.UI.refreshAll();
+    Game.UI.toast((peers[best].name || '仲間') + ' に ' + amount + ' バーツを渡した（受取側のLvで減衰）');
+    return true;
+  }
+
   // テスト用フック（本番動作には未使用）: ホスト無音状態を注入してウォッチドッグを即時評価
   function _simHostSilence() { lastHostSeen = Date.now() - HOST_TIMEOUT - 1; watchdogTick(); }
 
-  return { available, start, leave, tick, broadcastEdit, getPeers, peerCount, isConnected, setName, chat, sendMobsSnapshot, sendHit, sendMobDeath, sendLaunchReady, broadcastLaunch, broadcastDiscovery, giveItem, statusText, _simHostSilence, get host() { return isHost; } };
+  return { available, start, leave, tick, broadcastEdit, getPeers, peerCount, isConnected, setName, chat, sendMobsSnapshot, sendHit, sendMobDeath, sendLaunchReady, broadcastLaunch, broadcastDiscovery, giveItem, giveBts, statusText, _simHostSilence, get host() { return isHost; } };
 })();
