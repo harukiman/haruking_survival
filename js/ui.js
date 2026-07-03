@@ -992,6 +992,19 @@ Game.UI = (function () {
       toggle('lookAhead', '🎥 先読みカメラ') +
       toggle('showFps', '📈 FPS表示') +
       '<div class="opt-row"><button id="opt-story" class="map-btn" style="width:100%">📖 記憶回廊（物語）を開く</button></div>' +
+      // ===== マルチプレイ(ゲーム中に招待・参加できるシームレス導線) =====
+      (Game.Net && Game.Net.available && Game.Net.available() ?
+        (Game.Net.isConnected() ?
+          '<div class="opt-mp"><div class="opt-kb-head">🌐 マルチプレイ中 — ' + esc((Game.Net.statusText && Game.Net.statusText()) || '接続中') + '</div>' +
+          '<div class="opt-row"><button id="opt-mp-code" class="map-btn" style="width:100%">合言葉: ' + esc(Game.Net.currentCode ? Game.Net.currentCode() : '—') + '（タップでコピー）</button></div>' +
+          '<div class="opt-row"><button id="opt-mp-leave" class="map-btn" style="width:100%">👋 退出してソロに戻る</button></div></div>'
+          :
+          '<div class="opt-mp"><div class="opt-kb-head">🌐 マルチプレイ（このまま招待/参加）</div>' +
+          '<div class="opt-row"><input id="opt-mp-name" type="text" placeholder="あなたの名前" maxlength="12" class="opt-mp-input"></div>' +
+          '<div class="opt-row"><input id="opt-mp-room" type="text" placeholder="合言葉（空欄で自動生成）" maxlength="24" class="opt-mp-input"></div>' +
+          '<div class="opt-row mp-btns"><button id="opt-mp-host" class="map-btn">仲間を招く</button><button id="opt-mp-join" class="map-btn">参加する</button></div>' +
+          '<div class="hk" style="opacity:.7">今の世界のまま仲間を招けます。参加は同じ合言葉を入力</div></div>')
+        : '') +
       // ===== 操作キー設定(リバインド) =====
       (Game.Input && Game.Input.BIND_ACTIONS ?
         '<div class="opt-keybinds"><div class="opt-kb-head">⌨ 操作キー設定 <button id="kb-reset" class="map-btn">初期化</button></div>' +
@@ -1059,6 +1072,17 @@ Game.UI = (function () {
     if (ostry) ostry.addEventListener('click', function () { toggleOptions(); openStory(); });
     const hh = document.getElementById('opt-help-head');
     if (hh) hh.addEventListener('click', function () { optHelpOpen = !optHelpOpen; renderOptions(); });
+    // マルチプレイ(ゲーム中の招待/参加/退出)
+    const genCode = function () { const rm = document.getElementById('opt-mp-room'); let c = rm && rm.value.trim(); if (!c) c = 'haru' + Math.floor(Math.random() * 9000 + 1000); return c; };
+    const applyName = function () { const nm = document.getElementById('opt-mp-name'); const n = nm && nm.value.trim(); if (n && Game.Net.setName) Game.Net.setName(n); };
+    const mpHost = document.getElementById('opt-mp-host');
+    if (mpHost) mpHost.addEventListener('click', function () { if (!Game.Net.available()) { toast('マルチプレイ準備中'); return; } applyName(); const c = genCode(); const rm = document.getElementById('opt-mp-room'); if (rm) rm.value = c; Game.Net.start(c, true); toast('仲間を招いています — 合言葉: ' + c); renderOptions(); });
+    const mpJoin = document.getElementById('opt-mp-join');
+    if (mpJoin) mpJoin.addEventListener('click', function () { if (!Game.Net.available()) { toast('マルチプレイ準備中'); return; } const rm = document.getElementById('opt-mp-room'); const c = rm && rm.value.trim(); if (!c) { toast('合言葉を入力してください'); return; } applyName(); Game.Net.start(c, false); toast('参加中… 合言葉: ' + c); renderOptions(); });
+    const mpLeave = document.getElementById('opt-mp-leave');
+    if (mpLeave) mpLeave.addEventListener('click', function () { if (Game.Net.leave) Game.Net.leave(); toast('マルチプレイを退出しました'); renderOptions(); });
+    const mpCode = document.getElementById('opt-mp-code');
+    if (mpCode) mpCode.addEventListener('click', function () { const c = Game.Net.currentCode ? Game.Net.currentCode() : ''; if (c && navigator.clipboard) { navigator.clipboard.writeText(c).then(function () { toast('合言葉をコピーしました'); }, function () {}); } });
   }
 
   // ===== エンチャント台 =====

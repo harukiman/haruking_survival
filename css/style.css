@@ -746,3 +746,9 @@ body.cinematic #hint-pill, body.cinematic #toast, body.cinematic .toast, body.ci
 @keyframes hpShake { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-3px); } 40% { transform: translateX(3px); } 60% { transform: translateX(-2px); } 80% { transform: translateX(2px); } }
 .hp-shake { animation: hpShake .38s ease-in-out; }
 @media (prefers-reduced-motion: reduce) { .hp-shake { animation: none; } }
+
+/* オプション内のマルチプレイ導線 */
+.opt-mp { margin: 10px 0; padding: 10px; background: rgba(20,40,60,0.4); border: 1px solid #2c4258; border-radius: 10px; }
+.opt-mp-input { width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid #33455e; background: #10182a; color: #e8edf2; font-size: .9rem; }
+.opt-mp .mp-btns { display: flex; gap: 8px; }
+.opt-mp .mp-btns .map-btn { flex: 1; }

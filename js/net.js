@@ -29,6 +29,7 @@ Game.Net = (function () {
   function getPeers() { return peers; }
   function peerCount() { return connected ? Object.keys(peers).length : 0; }
   function isConnected() { return connected; }
+  function currentCode() { return lastCode || ''; }
   function setName(n) { if (n) { myName = n; if (connected && sendHello) try { sendHello({ name: myName }); } catch (e) {} } }
 
   // 受信ハンドラ防御: 不正パケット1つでセッションが死なないように
@@ -365,5 +366,5 @@ Game.Net = (function () {
   // テスト用フック（本番動作には未使用）: ホスト無音状態を注入してウォッチドッグを即時評価
   function _simHostSilence() { lastHostSeen = Date.now() - HOST_TIMEOUT - 1; watchdogTick(); }
 
-  return { available, start, leave, tick, broadcastEdit, getPeers, peerCount, isConnected, setName, chat, sendMobsSnapshot, sendHit, sendMobDeath, sendLaunchReady, broadcastLaunch, broadcastDiscovery, giveItem, giveBts, statusText, _simHostSilence, get host() { return isHost; } };
+  return { available, start, leave, tick, broadcastEdit, getPeers, peerCount, isConnected, setName, chat, sendMobsSnapshot, sendHit, sendMobDeath, sendLaunchReady, broadcastLaunch, broadcastDiscovery, giveItem, giveBts, statusText, currentCode, _simHostSilence, get host() { return isHost; } };
 })();
