@@ -3,6 +3,9 @@ window.Game = window.Game || {};
 
 Game.Achievements = (function () {
   Game.ACHIEVEMENTS = {
+    reach_sky:     { name:'雲の岸へ', desc:'風の祭壇から空島へ昇った' },
+    reach_ruins:   { name:'沈黙の都へ', desc:'古の門から古代都市へ渡った' },
+    reach_rift:    { name:'世界の隙間へ', desc:'裂け目から狭間へ落ちた' },
     first_wood:    { name:'最初の一歩', desc:'木材を手に入れた' },
     first_craft:   { name:'職人の目覚め', desc:'初めてクラフトした' },
     first_night:   { name:'夜を越えて', desc:'夜の敵を倒した' },

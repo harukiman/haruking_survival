@@ -531,7 +531,7 @@ Game.Player = (function () {
       Game.World.setTileData(ra.tx, ra.ty, { skyFromTx: tx, skyFromTy: ty + 1 });
       Game.World.teleport(a.tx, a.ty);
       Game.state.paused = false;
-      if (Game.Story && Game.Story.unlock) Game.Story.unlock('skyisles', true); // 記憶回廊「雲の岸」
+      if (Game.Story && Game.Story.unlock) Game.Story.unlock('skyisles', true); if (Game.Achievements) Game.Achievements.unlock('reach_sky'); // 記憶回廊「雲の岸」
     });
   }
   // 帰還の祭壇: 短い降下ムービー→出発した地上の祭壇脇へ戻る(記録が無ければスポーンへ)
@@ -565,7 +565,7 @@ Game.Player = (function () {
       Game.World.setTileData(rg.tx, rg.ty, { ruinFromTx: tx, ruinFromTy: ty + 1 });
       Game.World.teleport(a.tx, a.ty);
       Game.state.paused = false;
-      if (Game.Story && Game.Story.unlock) Game.Story.unlock('ruincity', true); // 記憶回廊「沈黙の都」
+      if (Game.Story && Game.Story.unlock) Game.Story.unlock('ruincity', true); if (Game.Achievements) Game.Achievements.unlock('reach_ruins'); // 記憶回廊「沈黙の都」
     });
   }
   // 還りの門: 短い帰還ムービー→出発した地上の門脇へ(記録が無ければスポーンへ)
@@ -599,7 +599,7 @@ Game.Player = (function () {
       Game.World.setTileData(rt.tx, rt.ty, { riftFromTx: tx, riftFromTy: ty + 1 });
       Game.World.teleport(a.tx, a.ty);
       Game.state.paused = false;
-      if (Game.Story && Game.Story.unlock) Game.Story.unlock('riftvoid', true); // 記憶回廊「世界の隙間」
+      if (Game.Story && Game.Story.unlock) Game.Story.unlock('riftvoid', true); if (Game.Achievements) Game.Achievements.unlock('reach_rift'); // 記憶回廊「世界の隙間」
     });
   }
   function riftReturn() {
