@@ -175,6 +175,16 @@ Game.Inventory = (function () {
       Game.UI.toast(def.name + ' を読んだ — スキルポイント +1');
       Game.UI.refreshAll(); return true;
     }
+    // 時止めの砂時計: 一定時間すべての敵を静止させる
+    if (def && def.stasis) {
+      remove(sl.id, 1);
+      Game.state.mobFreeze = def.stasis;
+      Game.Audio.play('enchant'); if (Game.Audio.cue) Game.Audio.cue('shimmer');
+      if (Game.Render.flash) Game.Render.flash('rgba(180,220,255,0.4)');
+      if (Game.Render.spawnParticles) Game.Render.spawnParticles(p.x, p.y, '#cfeeff', 20);
+      Game.UI.toast(def.name + ' — 時が止まった');
+      Game.UI.refreshAll(); return true;
+    }
     // 経験の宝珠: 大量の経験値
     if (def && def.xpGain) {
       remove(sl.id, 1); Game.Player.gainXP(def.xpGain); Game.Audio.play('enchant');

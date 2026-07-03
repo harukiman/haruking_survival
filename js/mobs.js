@@ -384,6 +384,7 @@ Game.Mobs = (function () {
 
     const mobs = Game.state.mobs;
     const p = Game.state.player;
+    if (Game.state.mobFreeze > 0) Game.state.mobFreeze--; // 時止め残り
 
     if (Game.state.tick % TUNE.SPAWN_INTERVAL === 0) { trySpawn(); if (Game.state.bloodMoon) trySpawn(); }
     if (Game.state.tick % 80 === 0) spawnerSpawn();
@@ -439,6 +440,10 @@ Game.Mobs = (function () {
         continue; // 遠方なので通常AI/攻撃はスキップ
       }
       if (named) m.engaged = true; // 交戦圏内: ゲージ＆ボスBGMを起動
+
+      // 時止め(砂時計): 敵は動かず攻撃もしない。プレイヤーの攻撃は通る(damageMobは別経路)
+      if (Game.state.mobFreeze > 0) { m.frozen = true; continue; }
+      m.frozen = false;
 
       // 精鋭アフィックス: 再生(不死) — 毎秒 最大HPの一定割合を回復
       if (hasAffix(m, 'regened') && m.hp < m.maxHp && Game.state.tick % 30 === 0) {

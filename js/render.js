@@ -183,6 +183,17 @@ Game.Render = (function () {
     const s = Game.state; if (!s || s.paused) return;
     const v = Game.view, w = v.w, h = v.h, t = s.tick, world = s.worldName;
     const TS = Game.CFG.TILE_SIZE, p = s.player;
+    // 時止め: 画面全体に氷青のヴィネット＋漂う霜片(演出)
+    if (s.mobFreeze > 0) {
+      ctx.save();
+      const fade = Math.min(1, s.mobFreeze / 20);
+      const fg = ctx.createRadialGradient(w / 2, h / 2, h * 0.2, w / 2, h / 2, h * 0.75);
+      fg.addColorStop(0, 'rgba(180,220,255,0.04)'); fg.addColorStop(1, 'rgba(150,200,255,' + (0.22 * fade).toFixed(3) + ')');
+      ctx.fillStyle = fg; ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = 'rgba(220,240,255,0.7)';
+      for (let i = 0; i < 14; i++) { const x = ((i * 97 + t * 0.6) % (w + 20)) - 10; const y = ((i * 71 + Math.sin(t * 0.03 + i) * 10) % h + h) % h; ctx.globalAlpha = 0.5 * fade; ctx.fillRect(x, y, 2, 2); }
+      ctx.restore();
+    }
     const g = Game.World.groundAt(Math.floor(p.x / TS), Math.floor(p.y / TS));
     const night = Game.DayNight.isNight();
     ctx.save();
