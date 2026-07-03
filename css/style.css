@@ -310,11 +310,11 @@ body.left-handed #action-btns { right: auto; left: calc(12px + max(var(--ex,10px
 #boss-bar.enraged #boss-bar-track { border-color: #ff4a4a; box-shadow: 0 0 14px rgba(255,40,40,0.6); }
 #boss-bar.enraged #boss-bar-name { color: #ff8a7a; text-shadow: 0 2px 4px #000, 0 0 10px rgba(255,40,40,0.8); }
 @keyframes enragePulse { from { filter: brightness(1); } to { filter: brightness(1.4); } }
-#quest-tracker { position: absolute; bottom: 66px; left: 50%; transform: translateX(-50%); z-index: 18;
+#quest-tracker { position: absolute; bottom: calc(94px + max(var(--ey,16px), env(safe-area-inset-bottom))); left: 50%; transform: translateX(-50%); z-index: 18;
   background: rgba(8,12,20,0.7); border: 1px solid #3a4a64; color: #ffe9a0; font-size: .8rem;
   padding: 5px 14px; border-radius: 20px; max-width: 64vw; white-space: nowrap; overflow: hidden;
   text-overflow: ellipsis; pointer-events: auto; cursor: pointer; }
-#bounty-tracker { position: absolute; bottom: 96px; left: 50%; transform: translateX(-50%); z-index: 18;
+#bounty-tracker { position: absolute; bottom: calc(124px + max(var(--ey,16px), env(safe-area-inset-bottom))); left: 50%; transform: translateX(-50%); z-index: 18;
   background: rgba(20,14,8,0.72); border: 1px solid #6a5224; color: #ffd86b; font-size: .8rem;
   padding: 5px 14px; border-radius: 20px; max-width: 64vw; white-space: nowrap; overflow: hidden;
   text-overflow: ellipsis; pointer-events: none; }
@@ -372,8 +372,8 @@ body.left-handed #action-btns { right: auto; left: calc(12px + max(var(--ex,10px
 .ending-box .ending-stats div:nth-child(3) { animation-delay: 1.85s; }
 @media (max-width: 560px) {
   /* スマホ: 目標/賞金首ピルは左下に寄せ、右下ボタン群・ホットバーと重ねない */
-  #quest-tracker { left: calc(8px + max(var(--ex,10px), env(safe-area-inset-left))); transform: none; bottom: 56px; font-size: .7rem; padding: 4px 11px; max-width: 58vw; }
-  #bounty-tracker { left: calc(8px + max(var(--ex,10px), env(safe-area-inset-left))); transform: none; bottom: 86px; font-size: .7rem; padding: 4px 11px; max-width: 58vw; }
+  #quest-tracker { left: calc(8px + max(var(--ex,10px), env(safe-area-inset-left))); transform: none; bottom: calc(96px + max(var(--ey,16px), env(safe-area-inset-bottom))); font-size: .7rem; padding: 4px 11px; max-width: 58vw; }
+  #bounty-tracker { left: calc(8px + max(var(--ex,10px), env(safe-area-inset-left))); transform: none; bottom: calc(124px + max(var(--ey,16px), env(safe-area-inset-bottom))); font-size: .7rem; padding: 4px 11px; max-width: 58vw; }
   .ending-box h1 { font-size: 1.3rem; }
 }
 /* 影世界モードの全体トーン */
@@ -593,8 +593,8 @@ body.desktop .abtn:hover, body.desktop .dbtn:hover { filter: brightness(1.18); }
   .abtn { min-height: 46px; }
   .abtn.small { min-height: 44px; }
   .abtn.main { min-height: 52px; }
-  #quest-tracker { bottom: 54px; }
-  #bounty-tracker { bottom: 84px; }
+  #quest-tracker { bottom: calc(88px + max(var(--ey,16px), env(safe-area-inset-bottom))); }
+  #bounty-tracker { bottom: calc(116px + max(var(--ey,16px), env(safe-area-inset-bottom))); }
 }
 /* 横画面の小さい端末 */
 @media (max-height: 460px) {
@@ -733,3 +733,11 @@ body.desktop .abtn:hover, body.desktop .dbtn:hover { filter: brightness(1.18); }
 .wp-row:disabled { opacity: .5; cursor: default; }
 .wp-nm { font-weight: 700; }
 .wp-d { font-size: .78rem; color: #9fc0e0; }
+
+/* ムービー(カットシーン)中はHUDの一時ポップアップ・トラッカーを隠し、映像に集中させる */
+body.cinematic #context-action, body.cinematic #hb-iteminfo, body.cinematic #ammo-hud,
+body.cinematic #combo-hud, body.cinematic #autosave-ind, body.cinematic #status-pop,
+body.cinematic #quest-tracker, body.cinematic #bounty-tracker, body.cinematic #event-banner,
+body.cinematic #hint-pill, body.cinematic #toast, body.cinematic .toast, body.cinematic #boss-bar {
+  display: none !important;
+}

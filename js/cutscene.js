@@ -68,6 +68,7 @@ Game.Cutscene = (function () {
     if (cv && cv.parentNode) cv.parentNode.removeChild(cv);
     if (skipBtn && skipBtn.parentNode) skipBtn.parentNode.removeChild(skipBtn);
     curScenes = null; lastSc = null; prevDraw = null; grainPat = null;
+    document.body.classList.remove('cinematic');
     if (onDone) onDone();
   }
 
@@ -558,6 +559,7 @@ Game.Cutscene = (function () {
     cv.addEventListener('pointerdown', onPointerDown);
     cv.addEventListener('pointerup', onPointerUp);
     cv.addEventListener('pointercancel', onPointerCancel);
+    document.body.classList.add('cinematic'); // ムービー中: HUDの一時ポップアップを隠す
     t0 = performance.now();
     raf = requestAnimationFrame(sceneFrame);
   }
