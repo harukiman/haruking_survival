@@ -51,9 +51,11 @@ Game.Audio = (function () {
     boss3:    { root: 164.81, scale: [0, 2, 3, 5, 7, 8, 11],  bpm: 114, wave: 'sawtooth', cut: 1900, kick: true,  bassEvery: 2, arp: [0, 3, 7, 8, 11, 8, 7, 3], arpEvery: 1, noteVol: 0.04,  bassVol: 0.058, kickVol: 0.10, prog: [0, 5, 3, 7],  drone: 0.06, swell: 0.05, padDetune: 10, padVol: 0.024 },  // A級=壮麗(和声短調・聖歌スウェル)
     boss4:    { root: 155.56, scale: [0, 2, 3, 5, 7, 8, 11],  bpm: 122, wave: 'sawtooth', cut: 2100, kick: true,  bassEvery: 2, arp: [0, 7, 3, 8, 11, 7, 10, 11], arpEvery: 1, noteVol: 0.04, bassVol: 0.06, kickVol: 0.12, prog: [0, 3, 7, -2], drone: 0.06, swell: 0.06, padDetune: 11, padVol: 0.026 },   // S級=英雄的で激烈
     boss5:    { root: 146.83, scale: [0, 1, 3, 5, 7, 8, 11],  bpm: 134, wave: 'sawtooth', cut: 2300, kick: true,  bassEvery: 1, arp: [0, 3, 7, 11, 8, 7, 3, 1], arpEvery: 1, noteVol: 0.04, bassVol: 0.066, kickVol: 0.13, prog: [0, -1, 5, 7], drone: 0.07, swell: 0.07, heartbeat: 0.06, padDetune: 12, padVol: 0.028 }, // ラスボス=最高潮(b2の緊張・聖歌・鼓動・ダブルベース)
+    // 影の世界=光と別ゲーの音。ロクリアン的な不協・深いドローン+サブ・不規則ハットで常に不穏
+    shadowrealm: { root: 155.56, scale: [0, 1, 3, 5, 6, 8, 10], bpm: 68, wave: 'triangle', cut: 1150, kick: false, bassEvery: 8, arp: [0, 3, 6, 8, 6, 3], arpEvery: 4, noteVol: 0.04, bassVol: 0.046, kickVol: 0, prog: [0, -4, 1, -2], drone: 0.065, sub: 0.05, hatRandom: true, swell: 0.045 },
   };
-  const MOOD_GENRE = { title: 'meadow', day: 'animepop', night: 'city', shadow: 'classic', cave: 'classic', boss: 'edm', space: 'space', desert: 'desert', snow: 'snow', meadow: 'meadow', sky: 'sky', ruins: 'ruins', rift: 'rift',
-    boss1: 'boss1', boss2: 'boss2', boss3: 'boss3', boss4: 'boss4', boss5: 'boss5' };
+  const MOOD_GENRE = { title: 'meadow', day: 'animepop', night: 'city', shadow: 'shadowrealm', cave: 'classic', boss: 'edm', space: 'space', desert: 'desert', snow: 'snow', meadow: 'meadow', sky: 'sky', ruins: 'ruins', rift: 'rift',
+    boss1: 'boss1', boss2: 'boss2', boss3: 'boss3', boss4: 'boss4', boss5: 'boss5', shadowrealm: 'shadowrealm' };
 
   function ensure() {
     if (!ctx) {

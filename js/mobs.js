@@ -461,6 +461,7 @@ Game.Mobs = (function () {
 
       if (m.def.hostile) {
         let aggro = (m.def.boss ? 22 : 13) * TS;
+        if (Game.state.worldName === 'shadow') aggro *= 1.5; // 影の世界=別ゲーの緊張感。敵はより遠くから執拗に追う
         if (m.alertT > 0) aggro *= 1.7; // 群れ連携: 呼応中は遠くからでも駆けつける
         // 瞬間移動する敵: 一定間隔でプレイヤー近くへ blink(煙＋音)。間合いを潰す脅威
         if (m.def.blink && distP < aggro && distP > 2.4 * TS) {
