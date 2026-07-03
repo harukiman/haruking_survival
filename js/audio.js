@@ -57,7 +57,7 @@ Game.Audio = (function () {
 
   function ensure() {
     if (!ctx) {
-      try { ctx = new (window.AudioContext || window.webkitAudioContext)(); }
+      try { ctx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'interactive' }); } // 行動→音の遅延を最小化
       catch (e) { enabled = false; return; }
       master = ctx.createGain(); master.gain.value = 0.9;
       // マスターにコンプレッサを挿入し全体を引き締め・パンチを出す(気持ちよさ向上)
@@ -104,7 +104,7 @@ Game.Audio = (function () {
     osc.type = type || 'square';
     osc.frequency.setValueAtTime(freq, t0);
     g.gain.setValueAtTime(0.0001, t0);
-    g.gain.exponentialRampToValueAtTime(vol || 0.12, t0 + 0.01);
+    g.gain.exponentialRampToValueAtTime(vol || 0.12, t0 + 0.003); // 鋭いアタック(パンチのある立ち上がり)
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
     osc.connect(g); g.connect(sfxGain);
     reg(osc); osc.start(t0); osc.stop(t0 + dur + 0.02);
