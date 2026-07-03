@@ -817,7 +817,7 @@ Game.UI = (function () {
       ammoEl = document.getElementById('ammo-hud');
       if (!ammoEl) {
         ammoEl = document.createElement('div'); ammoEl.id = 'ammo-hud';
-        ammoEl.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:calc(74px + env(safe-area-inset-bottom));z-index:55;background:rgba(16,24,42,.82);border:1px solid #33455e;border-radius:9px;padding:4px 11px;font-size:.82rem;color:#e8edf2;pointer-events:none;display:none;white-space:nowrap';
+        ammoEl.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:calc(74px + max(var(--ey,16px), env(safe-area-inset-bottom)));z-index:55;background:rgba(16,24,42,.82);border:1px solid #33455e;border-radius:9px;padding:4px 11px;font-size:.82rem;color:#e8edf2;pointer-events:none;display:none;white-space:nowrap';
         (document.getElementById('app') || document.body).appendChild(ammoEl);
       }
     }
@@ -1935,7 +1935,7 @@ Game.UI = (function () {
       ctxBtn = document.getElementById('context-action');
       if (!ctxBtn) {
         ctxBtn = document.createElement('button'); ctxBtn.id = 'context-action';
-        ctxBtn.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:calc(154px + env(safe-area-inset-bottom));z-index:57;background:rgba(28,40,64,.94);border:1px solid #5a78a8;border-radius:12px;padding:12px 20px;min-height:48px;font-size:1rem;color:#eaf2ff;font-weight:700;box-shadow:0 3px 12px rgba(0,0,0,.4);display:none;cursor:pointer';
+        ctxBtn.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:calc(154px + max(var(--ey,16px), env(safe-area-inset-bottom)));z-index:57;background:rgba(28,40,64,.94);border:1px solid #5a78a8;border-radius:12px;padding:12px 20px;min-height:48px;font-size:1rem;color:#eaf2ff;font-weight:700;box-shadow:0 3px 12px rgba(0,0,0,.4);display:none;cursor:pointer';
         (document.getElementById('app') || document.body).appendChild(ctxBtn);
         ctxBtn.addEventListener('click', function (e) { e.stopPropagation(); Game.Audio.play('select'); Game.Player.useNearby(); });
       }
@@ -1957,7 +1957,7 @@ Game.UI = (function () {
       hbInfoEl = document.getElementById('hb-iteminfo');
       if (!hbInfoEl) {
         hbInfoEl = document.createElement('div'); hbInfoEl.id = 'hb-iteminfo';
-        hbInfoEl.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:calc(118px + env(safe-area-inset-bottom));z-index:56;background:rgba(14,20,36,.9);border:1px solid #3a4c66;border-radius:10px;padding:6px 13px;max-width:86vw;text-align:center;pointer-events:none;opacity:0;transition:opacity .2s;backdrop-filter:blur(2px)';
+        hbInfoEl.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:calc(118px + max(var(--ey,16px), env(safe-area-inset-bottom)));z-index:56;background:rgba(14,20,36,.9);border:1px solid #3a4c66;border-radius:10px;padding:6px 13px;max-width:86vw;text-align:center;pointer-events:none;opacity:0;transition:opacity .2s;backdrop-filter:blur(2px)';
         (document.getElementById('app') || document.body).appendChild(hbInfoEl);
       }
     }
@@ -2004,7 +2004,7 @@ Game.UI = (function () {
   function flashSave(reason) {
     if (!saveEl) {
       saveEl = document.createElement('div'); saveEl.id = 'autosave-ind';
-      saveEl.style.cssText = 'position:fixed;right:calc(10px + env(safe-area-inset-right));bottom:calc(10px + env(safe-area-inset-bottom));z-index:60;background:rgba(16,24,42,.82);color:#9fd8a0;border:1px solid #33455e;border-radius:8px;padding:5px 9px;font-size:.72rem;pointer-events:none;opacity:0;transition:opacity .35s;backdrop-filter:blur(2px)';
+      saveEl.style.cssText = 'position:fixed;right:calc(10px + max(var(--ex,10px), env(safe-area-inset-right)));bottom:calc(10px + max(var(--ey,16px), env(safe-area-inset-bottom)));z-index:60;background:rgba(16,24,42,.82);color:#9fd8a0;border:1px solid #33455e;border-radius:8px;padding:5px 9px;font-size:.72rem;pointer-events:none;opacity:0;transition:opacity .35s;backdrop-filter:blur(2px)';
       (document.getElementById('app') || document.body).appendChild(saveEl);
     }
     saveEl.textContent = '💾 オートセーブ';
