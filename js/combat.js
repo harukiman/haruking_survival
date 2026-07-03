@@ -119,6 +119,8 @@ Game.Combat = (function () {
       const tg = targets[i];
       if (!canDirect) { Game.Net.sendHit(tg.id, dmg, p.x, p.y); Game.Render.spawnBlood(tg.x, tg.y, 4); }
       else Game.Mobs.damageMob(tg, dmg, p.x, p.y, isCrit);
+      // 命中スパーク(打撃の手応え): 接触点に白い火花。会心は強め
+      if (Game.Render.spawnImpact) Game.Render.spawnImpact((p.x + tg.x) / 2, (p.y + tg.y) / 2, isCrit ? '#fff0a0' : '#ffffff');
     }
     // 上位武器の特殊効果(雷鳴/残光/衝撃波/吸命/纏い)。ホスト/ソロのみ(ゲストはダメージ権限なし)
     let kills = 0;
