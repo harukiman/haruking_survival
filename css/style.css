@@ -532,9 +532,15 @@ body.shadow-mode #app::after {
 body.has-pad #touch-controls { display: none !important; }
 
 /* ===== パッド メニューフォーカスリング（十字キー/左スティック操作の現在位置） ===== */
-.pad-focus { outline: 3px solid #3ee0ff !important; outline-offset: 2px;
-  box-shadow: 0 0 0 1px rgba(0,10,20,0.7), 0 0 12px rgba(62,224,255,0.65) !important;
-  border-radius: 8px; position: relative; z-index: 1; }
+.pad-focus { outline: 3px solid #3ee0ff !important; outline-offset: 1px;
+  box-shadow: 0 0 0 2px #0a1420, 0 0 16px 3px rgba(62,224,255,0.85), inset 0 0 0 2px rgba(62,224,255,0.35) !important;
+  background-color: rgba(62,224,255,0.16) !important; /* 縁が切れる要素でも中の色で位置が分かる */
+  border-radius: 8px; position: relative; z-index: 3;
+  animation: padPulse 1s ease-in-out infinite; }
+@keyframes padPulse { 0%,100% { box-shadow: 0 0 0 2px #0a1420, 0 0 16px 3px rgba(62,224,255,0.85), inset 0 0 0 2px rgba(62,224,255,0.35); } 50% { box-shadow: 0 0 0 2px #0a1420, 0 0 22px 5px rgba(62,224,255,1), inset 0 0 0 2px rgba(62,224,255,0.55); } }
+@media (prefers-reduced-motion: reduce) { .pad-focus { animation: none; } }
+/* スキルツリー等の scroll コンテナで outline が切れないよう、フォーカス中は overflow を可視化 */
+#stats-body .pad-focus, .sk-node.pad-focus { z-index: 5; }
 
 /* ===== デスクトップ(非タッチ・非パッド): マウスだけで全操作できるよう操作ボタン＋移動パッドを表示 ===== */
 body.desktop #action-btns { transform: scale(calc(var(--btn-scale, 1) * 0.88)); }

@@ -2105,6 +2105,19 @@ Game.UI = (function () {
     const r = n.getBoundingClientRect();
     padLastPt = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
     try { n.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch (e) {}
+    // コントローラ: インベントリ格子にカーソルを合わせたらそのアイテムの詳細を表示
+    if (n.classList.contains('slot') && n.parentElement && n.parentElement.id === 'inv-grid' && n.dataset.index != null) {
+      const idx = parseInt(n.dataset.index, 10);
+      if (invSelected !== idx) { invSelected = idx; if (typeof renderInvDetail === 'function') renderInvDetail(); }
+    }
+  }
+  // 再描画後に、直前のカーソル位置(padLastPt)に最も近い要素へフォーカスを貼り直す
+  function padRefocus() {
+    const root = padMenuRoot(); if (!root || !padLastPt) return;
+    // DOM 差し替えが同期完了していない場合に備え次フレームでも試行
+    const doit = function () { const l = padFocusables(root); if (l.length) padSetFocus(padNearestPt(l, padLastPt).el); };
+    doit();
+    try { requestAnimationFrame(doit); } catch (e) {}
   }
   function padNearestPt(list, pt) {
     let best = list[0], bd = Infinity;
@@ -2131,16 +2144,16 @@ Game.UI = (function () {
     if (!n) return;
     if (n.tagName === 'INPUT' && n.type !== 'range') { try { n.focus(); } catch (e) {} return; }
     if (n.tagName === 'INPUT') return; // スライダーは左右キーで調整
-    // インベントリ格子は pointerdown/up タップ仕様(2連タップ=使用/装備)を合成イベントで踏襲
-    if (n.classList.contains('slot') && n.parentElement && n.parentElement.id === 'inv-grid') {
-      try {
-        const r = n.getBoundingClientRect(); const x = r.left + r.width / 2, y = r.top + r.height / 2;
-        n.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX: x, clientY: y }));
-        window.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, clientX: x, clientY: y }));
-        return;
-      } catch (e) { /* PointerEvent 未対応環境は click へフォールバック */ }
+    // インベントリ格子: ×で直接 装備/使用/ホットバー装備(invPrimaryAction)。2連タップ不要でコントローラでも確実に
+    if (n.classList.contains('slot') && n.parentElement && n.parentElement.id === 'inv-grid' && n.dataset.index != null) {
+      const idx = parseInt(n.dataset.index, 10);
+      invSelected = idx;
+      if (invPrimaryAction(idx)) { Game.Audio.play('select'); }
+      else { renderInvDetail(); } // 装備/使用できない素材等は詳細表示のみ
+      padRefocus(); return;
     }
     n.click();
+    padRefocus(); // スキルツリー等: クリックで再描画されてもフォーカスを近い要素へ貼り直す
   }
   function padTab(root, dir) {
     const tabs = root.querySelectorAll('.craft-tabs .craft-tab');
