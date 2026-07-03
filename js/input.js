@@ -286,8 +286,10 @@ Game.Input = (function () {
     // 照準で攻撃: メニュー上ならボタン押下、フィールドなら採掘/攻撃(カーソル位置 or 向き方向)
     if (btn(PB('fire'))) { out.mine = true; if (cursor.active) { mouse.x = cursor.x; mouse.y = cursor.y; mouse.inside = true; mouse.moved = true; } }
     if (edge(PB('fire'))) clickAtCursor();
-    // 設置/対話(エッジ)
-    if (edge(PB('place'))) placeQueued = true;
+    // □=万能アクション(エッジ): 近隣のチェスト/ベッド/祭壇/石碑/NPC対話 → 無ければ手持ち使用(食料/乗物)/設置。
+    // コントローラのみで開く・使う・乗る・食べる・設置の全てを1ボタンで完結させる(useNearbyがinteractを内包)
+    if (edge(PB('place'))) useQueued = true;
+    // △長押し等が要らないよう、△(shift)以外の空きは作らない。設置専用が要る上級者はPCのK/右クリックで
     // 影渡り(エッジ)
     if (edge(PB('shift'))) Game.World.shift();
     // 回避ロール(エッジ)

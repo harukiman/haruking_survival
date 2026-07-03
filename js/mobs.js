@@ -69,6 +69,8 @@ Game.Mobs = (function () {
         m.auraRGB = [255, 90, 200]; // チャンピオン専用カラー
       }
     }
+    // ボス/中ボス/チャンピオンはアリーナ(出現地点)を記録: 遠方離脱時にここへ帰還し再戦可能にする
+    if (def.boss || def.midboss || m.champion) { m.homeX = m.x; m.homeY = m.y; }
     Game.state.mobs.push(m);
     // 中ボス(ランクD)の出現通知＋効果音
     if (def.midboss && Game.UI && Game.UI.toast && !(Game.Net.isConnected() && !Game.Net.host)) {
@@ -394,8 +396,25 @@ Game.Mobs = (function () {
       const dxp = p.x - m.x, dyp = p.y - m.y;
       const distP = Math.hypot(dxp, dyp);
 
-      // 遠すぎたら消滅
-      if (distP > TUNE.DESPAWN_TILES * TS) { mobs.splice(i, 1); continue; }
+      // 遠すぎたら消滅。ただしボス/中ボス/チャンピオンは消さず、アリーナへ帰還させて再戦を可能にする
+      // (従来は28タイルで無条件消滅→画面外に出た瞬間ボスが永久消滅し、再エンカウント不能だった)
+      const named = (m.def.boss || m.def.midboss || m.champion);
+      if (distP > TUNE.DESPAWN_TILES * TS) {
+        if (!named) { mobs.splice(i, 1); continue; }
+        if (m.homeX == null) { m.homeX = m.x; m.homeY = m.y; }
+        // 地域を完全に離れた(アリーナから90タイル超)場合はボスも消滅させ MOB_CAP を圧迫しない。
+        // 近距離の離脱(画面外程度)では消さず再戦可能に保つ、が両立の肝
+        if (Math.hypot(p.x - m.homeX, p.y - m.homeY) > 90 * TS) { mobs.splice(i, 1); continue; }
+        // 離脱中: 非交戦(ゲージ/ボスBGMを解除)、アリーナへ戻る、HPを緩やかに全快させ仕切り直す
+        m.engaged = false;
+        const hx = m.homeX - m.x, hy = m.homeY - m.y, hd = Math.hypot(hx, hy);
+        if (hd > 60 * TS) { m.x = m.homeX; m.y = m.homeY; } // 画面外で見失った場合はアリーナへ即帰還
+        else if (hd > TS) { const sp = (m.def.speed || 1) * 0.7; m.x += hx / hd * sp; m.y += hy / hd * sp; }
+        if (Game.state.tick % 12 === 0 && m.hp < m.maxHp) m.hp = Math.min(m.maxHp, m.hp + Math.max(1, Math.round(m.maxHp * 0.02)));
+        m.enraged = m.hp <= m.maxHp * 0.3 ? m.enraged : false; // 全快したら激昂フェーズも解除
+        continue; // 遠方なので通常AI/攻撃はスキップ
+      }
+      if (named) m.engaged = true; // 交戦圏内: ゲージ＆ボスBGMを起動
 
       // 精鋭アフィックス: 再生(不死) — 毎秒 最大HPの一定割合を回復
       if (hasAffix(m, 'regened') && m.hp < m.maxHp && Game.state.tick % 30 === 0) {

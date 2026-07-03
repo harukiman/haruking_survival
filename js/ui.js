@@ -179,10 +179,13 @@ Game.UI = (function () {
   function refreshBossBar() {
     if (!bbEl) { bbEl = document.getElementById('boss-bar'); bbName = document.getElementById('boss-bar-name'); bbFill = document.getElementById('boss-bar-fill'); }
     if (!bbEl || !Game.state) return;
+    // 交戦中(engaged)のボスのみ表示: 離脱でバーが消え、再接近で再表示される
+    // (engaged はモブ更新が交戦距離 BOSS_ENGAGE_TILES 内で立てるフラグ。undefined=まだ更新前は近接扱い)
+    const eng = function (m) { return m.engaged !== false; };
     const mobs = Game.state.mobs; let boss = null;
-    for (let i = 0; i < mobs.length; i++) { const m = mobs[i]; if (m.def && m.def.boss) { if (!boss || m.maxHp > boss.maxHp) boss = m; } }
+    for (let i = 0; i < mobs.length; i++) { const m = mobs[i]; if (m.def && m.def.boss && eng(m)) { if (!boss || m.maxHp > boss.maxHp) boss = m; } }
     // ボスが居なければ チャンピオン or 中ボス をバー表示
-    if (!boss) { for (let i = 0; i < mobs.length; i++) { const m = mobs[i]; if (m.champion || (m.def && m.def.midboss)) { if (!boss || m.maxHp > boss.maxHp) boss = m; } } }
+    if (!boss) { for (let i = 0; i < mobs.length; i++) { const m = mobs[i]; if ((m.champion || (m.def && m.def.midboss)) && eng(m)) { if (!boss || m.maxHp > boss.maxHp) boss = m; } } }
     if (!boss) { if (!bbEl.classList.contains('hidden')) bbEl.classList.add('hidden'); bbEl.classList.remove('champion'); return; }
     bbEl.classList.remove('hidden');
     const isChamp = (!boss.def.boss && !boss.def.midboss) || boss.bountyBoss;

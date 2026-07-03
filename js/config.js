@@ -896,7 +896,8 @@ Game.TUNE = {
   CHAMPION_HP_MULT: 1.6,      // チャンピオン追加HP倍率
   CHAMPION_DMG_MULT: 1.2,     // チャンピオン追加攻撃倍率
   SPAWN_INTERVAL: 100,        // tick ごとにスポーン試行（密度を抑えめに）
-  DESPAWN_TILES: 28,          // この距離超で消滅
+  DESPAWN_TILES: 28,          // この距離超で消滅（通常モブのみ。ボス/中ボス/チャンピオンは消えずアリーナへ帰還）
+  BOSS_ENGAGE_TILES: 30,      // ボス戦の交戦距離: この内でゲージ＆ボスBGMが起動、離脱で解除・再接近で再起動
   CROP_GROW_TICKS: 1400,      // 1段階の成長 tick
   COOK_TICKS: 200,            // 精錬1個あたり tick
   SHIFT_COOLDOWN: 120,        // 世界シフトのクールダウン tick

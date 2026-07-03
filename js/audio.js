@@ -624,7 +624,8 @@ Game.Audio = (function () {
     const mobs = Game.state.mobs;
     let boss = false, tier = 0;
     for (let i = 0; i < mobs.length; i++) {
-      if (mobs[i].def.boss) { boss = true; const tt = mobs[i].def.tier || 1; if (tt > tier) tier = tt; }
+      // 交戦中(engaged)のボスのみボスBGMに移行。離脱で通常曲へ戻り、再接近で再びボス曲に切替わる
+      if (mobs[i].def.boss && mobs[i].engaged !== false) { boss = true; const tt = mobs[i].def.tier || 1; if (tt > tier) tier = tt; }
     }
     bgm.intensity = boss ? Math.min(1, tier / 4) : 0; // C=0.25 B=0.5 A=0.75 S=1.0
     const TS = Game.CFG.TILE_SIZE, p = Game.state.player;
