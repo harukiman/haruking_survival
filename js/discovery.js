@@ -8,6 +8,7 @@ Game.Discovery = (function () {
     if (o === O.RESONANCE_CORE || o === O.SEAL_WALL) return 'vault';
     if (o === O.STELA) return 'stela';
     if (o === O.WISH_ALTAR) return 'altar';
+    if (o === O.WIND_ALTAR || o === O.ANCIENT_GATE || o === O.RIFT_TEAR) return 'portal'; // 異界への門(空島/古代都市/狭間)
     if (o === O.TREASURE_CHEST) return Game.state.worldName === 'space' ? 'cosmic' : 'treasure';
     return null;
   }
@@ -34,7 +35,7 @@ Game.Discovery = (function () {
     }
   }
 
-  const KIND_LABEL = { dungeon: 'ダンジョン', vault: '封印遺跡', stela: '石碑', treasure: '宝の在り処', cosmic: '星の宝', boss: '強敵', altar: '古の祭壇' };
+  const KIND_LABEL = { dungeon: 'ダンジョン', vault: '封印遺跡', stela: '石碑', treasure: '宝の在り処', cosmic: '星の宝', boss: '強敵', altar: '古の祭壇', portal: '異界への門' };
 
   // 同種は「世界＋40タイル区画」ごとに地図記録は一度きり。
   // 発見ムービー(全画面演出)は「種別ごと初回のみ」。2回目以降は控えめなトーストだけで中断しない。

@@ -360,6 +360,7 @@ Game.Cutscene = (function () {
     cosmic:   { title: '星の遺物', sub: '宇宙の彼方、未知の宝が眠る', col: '#7fc8ff', icon: '✨', audio: 'swell' },
     boss:     { title: '強大な気配', sub: '空気が張り詰める——強敵が現れた', col: '#ff5a4a', icon: '💀', audio: 'impact' },
     altar:    { title: '古の祭壇', sub: '触れし者に、つかの間の祝福を', col: '#ffe27a', icon: '⛩️', audio: 'choir' },
+    portal:   { title: '異界への門', sub: '鍵を掲げれば、見知らぬ地平へ通じる', col: '#c0a0f0', icon: '🌀', audio: 'swell' },
   };
   function playDiscovery(kind, cb) {
     const d = DISCOVERY[kind] || DISCOVERY.dungeon;
