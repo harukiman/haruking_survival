@@ -500,11 +500,49 @@ Game.Player = (function () {
       if (o === O.BOUNTY_BOARD) { Game.Bounty.open(tx, ty); return; }
       if (o === O.STELA) { Game.Lore.read(tx, ty); return; }
       if (o === O.WISH_ALTAR) { activateAltar(tx, ty); return; }
+      if (o === O.WIND_ALTAR) { skyTravel(tx, ty); return; }
+      if (o === O.RETURN_ALTAR) { skyReturn(); return; }
       if (o === O.SHADOW_ALTAR) { Game.Mobs.summonBoss(tx, ty); return; }
       if (o === O.ENCHANT_TABLE) { Game.UI.openEnchant(); return; }
       if (o === O.BED) { sleep(); return; }
     }
     interact(); // 近隣に対話対象が無ければ通常操作（手持ち使用/設置など）
+  }
+
+  // ===== 空島(スカイエンクレーブ)への往還 =====
+  // 風の祭壇: 「風の羽根」を掲げると固有ムービー→空島へテレポート。羽根未所持ならレシピを案内
+  function skyTravel(tx, ty) {
+    if (Game.state.paused) return;
+    if (Game.Inventory.count('wind_feather') <= 0) {
+      Game.UI.toast('風の祭壇… 「風の羽根」を掲げれば空へ昇れそうだ（羽根5＋光素2で作れる）');
+      if (Game.Story && Game.Story.hintRecipe) Game.Story.hintRecipe('wind_feather');
+      return;
+    }
+    Game.Inventory.remove('wind_feather', 1);
+    Game.state.paused = true;
+    Game.Cutscene.playSkyArrival(function () {
+      const a = Game.WorldGen.skyArrival(Game.state.seed);
+      // 帰還祭壇のタイルデータに出発地を刻む(セーブされる=リロード後も正しい場所へ戻る)
+      const ra = Game.WorldGen.skyReturnAltar(Game.state.seed);
+      Game.World.setTileData(ra.tx, ra.ty, { skyFromTx: tx, skyFromTy: ty + 1 });
+      Game.World.teleport(a.tx, a.ty);
+      Game.state.paused = false;
+      if (Game.Story && Game.Story.unlock) Game.Story.unlock('skyisles', true); // 記憶回廊「雲の岸」
+    });
+  }
+  // 帰還の祭壇: 短い降下ムービー→出発した地上の祭壇脇へ戻る(記録が無ければスポーンへ)
+  function skyReturn() {
+    if (Game.state.paused) return;
+    const ra = Game.WorldGen.skyReturnAltar(Game.state.seed);
+    const td = Game.World.getTileData(ra.tx, ra.ty);
+    Game.state.paused = true;
+    Game.Cutscene.playSkyReturn(function () {
+      let dx, dy;
+      if (td && td.skyFromTx != null) { dx = td.skyFromTx; dy = td.skyFromTy; }
+      else { dx = Game.state.spawn.tx; dy = Game.state.spawn.ty; }
+      Game.World.teleport(dx, dy);
+      Game.state.paused = false;
+    });
   }
 
   function interact() {

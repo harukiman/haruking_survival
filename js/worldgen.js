@@ -74,7 +74,7 @@ Game.WorldGen = (function () {
   // genTile の最初でバウンズ判定し、外側は既存生成に一切触れない(バイト同一維持)。
   // SKY_READY: 空島の到達導線(祭壇interact→ムービー→テレポート)と固有モブが未実装の間は false。
   //   false の間は inSkyEnclave が常に false を返し、エンクレーブ生成・風の祭壇スポーンを完全に無効化(inert scaffold)。
-  const SKY_READY = false;
+  const SKY_READY = true;
   const SKY_R = 48;          // エンクレーブ半径(タイル)
   const SKY_DIST = 360;      // アンカーからの距離
   let skyMemo = null, skyMemoSeed = null;

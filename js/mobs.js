@@ -109,6 +109,11 @@ Game.Mobs = (function () {
       const DZ = Game.DANGER;
       const band = (DZ && Game.World.dangerBandAt) ? Game.World.dangerBandAt(tx, ty) : 1;
       let type = null;
+      // 空島エンクレーブ(光世界): 昼夜問わず固有の飛来モブ(風の精/雲鷹)を湧かせる。番人は巣が担当
+      if (Game.state.worldName === 'light' && Game.WorldGen.inSkyEnclave && Game.WorldGen.inSkyEnclave(tx, ty, Game.state.seed)) {
+        if (!diff.spawnHostiles) continue;
+        spawnMob(Math.random() < 0.5 ? 'wind_wisp' : 'cloud_hawk', wx, wy); return;
+      }
       if (shadowWorld) {
         if (!diff.spawnHostiles) continue; // のんびり: 影世界でも敵なし
         // 影世界は固有の敵が常時出現。深層では徘徊者も
@@ -209,6 +214,7 @@ Game.Mobs = (function () {
         else if (Game.state.worldName === 'space') { pool = (Math.random() < 0.04 && countType('star_guardian') === 0) ? ['star_guardian'] : ['void_drone', 'void_drone', 'astral_serpent', 'void_jelly']; }
         else if (Game.state.worldName === 'shadow') pool = (theme && DZ && DZ.DUNGEON_POOLS.shadow) ? DZ.DUNGEON_POOLS.shadow : ['wraith', 'watcher', 'hex_caster', 'gazer']; // 影神殿=最高危険帯
         else if (theme && DZ && DZ.DUNGEON_POOLS[theme]) pool = DZ.DUNGEON_POOLS[theme]; // 遺跡=低/氷窟・墳墓=中/工房・水晶洞=高
+        else if (Game.state.worldName === 'light' && Game.WorldGen.inSkyEnclave && Game.WorldGen.inSkyEnclave(stx, sty, Game.state.seed)) pool = ['wind_wisp', 'cloud_hawk', 'wind_wisp']; // 空島の番人の宝殿=風の精/雲鷹
         else if (g === Game.TILE.SNOW) pool = ['frost_wisp', 'frost_wisp', 'cursed_armor', 'ice_bear'];
         else if (g === Game.TILE.SAND) pool = ['scorpion', 'scorpion', 'dust_mage', 'cursed_armor', 'golem'];
         else pool = ['zombie', 'skeleton', 'spider', 'cursed_armor', 'golem', 'ember_imp', 'bog_horror'];
@@ -218,6 +224,8 @@ Game.Mobs = (function () {
           const tb = DZ.DUNGEON_BOSS[theme];
           if (Math.random() < 0.03 && countType(tb) === 0) type = tb;
         }
+        // 空島の番人(中ボスD): 宝殿の巣が守護個体として稀に召喚(1体まで)
+        if (!type && Game.state.worldName === 'light' && Game.WorldGen.inSkyEnclave && Game.WorldGen.inSkyEnclave(stx, sty, Game.state.seed) && Math.random() < 0.05 && countType('sky_warden') === 0) type = 'sky_warden';
         if (!type) type = pool[Math.floor(Math.random() * pool.length)];
         // 近傍の歩ける床へ
         for (let a = 0; a < 6; a++) {

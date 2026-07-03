@@ -1271,6 +1271,84 @@ Game.Cutscene = (function () {
     drawWalkerFig(W * 0.18, hz + 34, 1.8, '#0b120d', 1, 0);
   }
 
+  // ===== 空島 到達/帰還ムービー(固有) — 白金と青碧の色彩設計 =====
+  function skyBg(top, mid, bot) { const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, top); g.addColorStop(0.55, mid); g.addColorStop(1, bot); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); }
+  function cloudBlob(x, y, s, a) { ctx.globalAlpha = a; ctx.fillStyle = '#eef5fb'; for (let i = 0; i < 5; i++) { const ox = (i - 2) * s * 0.5, oy = Math.sin(i * 1.7) * s * 0.18; ctx.beginPath(); ctx.ellipse(x + ox, y + oy, s * 0.5, s * 0.34, 0, 0, Math.PI * 2); ctx.fill(); } ctx.globalAlpha = 1; }
+  // 祭壇の風が渦を巻いて立ちのぼる
+  function scSkyAltar(t, now) {
+    const hz = H * 0.7;
+    skyBg('#b7a26a', '#d9c98f', '#8a7a5a'); // 夕映えの高地
+    ctx.fillStyle = '#2a2418'; ctx.fillRect(0, hz, W, H - hz); // 大地
+    // 祭壇(石)
+    const cx = W / 2; ctx.fillStyle = '#4a4636'; ctx.fillRect(cx - 26, hz - 34, 52, 40); ctx.fillStyle = '#5c5844'; ctx.fillRect(cx - 32, hz - 8, 64, 12);
+    // 渦巻く風(白い弧が上昇しながら回る)
+    ctx.strokeStyle = 'rgba(245,248,235,0.7)'; ctx.lineWidth = 2;
+    for (let i = 0; i < 7; i++) {
+      const p = ((now * 0.0009 + i / 7) % 1);
+      const yy = hz - 20 - p * (hz - 40) * (0.4 + t * 0.9);
+      const rad = (1 - p) * 40 + 6, a0 = now * 0.004 + i;
+      ctx.globalAlpha = (1 - p) * 0.8 * Math.min(1, t * 1.5);
+      ctx.beginPath(); ctx.arc(cx + Math.cos(a0) * rad * 0.4, yy, rad, a0, a0 + 2.2); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+    drawWalkerFig(cx, hz + 4, 1.7, '#0d0b06', 1, 0); // 祭壇の傍らの旅人
+  }
+  // 雲を貫いて昇る
+  function scSkyAscend(t, now) {
+    skyBg('#7fb8dc', '#a9d4ec', '#dfeef8');
+    // 下へ流れる雲の筋(=上昇のパララックス)
+    for (let i = 0; i < 10; i++) {
+      const sp = 0.06 + (i % 3) * 0.03;
+      const yy = ((i * 90 + now * sp * (1 + t * 2)) % (H + 120)) - 60;
+      cloudBlob((i * 71 % W), yy, 70 + (i % 3) * 26, 0.5);
+    }
+    // 上昇する小さな人影(中心、少しずつ上へ)
+    const fy = H * (0.8 - t * 0.5);
+    ctx.globalAlpha = 1; drawWalkerFig(W / 2, fy, 1.5 + t * 0.5, '#20303c', 1, 0);
+    // 光条
+    ctx.globalAlpha = 0.25 + 0.2 * Math.sin(now * 0.005); ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.moveTo(W / 2, 0); ctx.lineTo(W / 2 - 60, H); ctx.lineTo(W / 2 + 60, H); ctx.fill(); ctx.globalAlpha = 1;
+  }
+  // 雲海のうえに浮島の群れがひらける
+  function scSkyReveal(t, now) {
+    skyBg('#8fd0e8', '#bfe8f2', '#eaf7fb');
+    // 太陽グロー
+    const sg = ctx.createRadialGradient(W * 0.72, H * 0.28, 4, W * 0.72, H * 0.28, 140);
+    sg.addColorStop(0, 'rgba(255,250,220,0.9)'); sg.addColorStop(1, 'rgba(255,250,220,0)');
+    ctx.fillStyle = sg; ctx.fillRect(0, 0, W, H);
+    // 雲海
+    for (let i = 0; i < 8; i++) cloudBlob((i * 97 + (now * 0.01) % W) % W, H * 0.72 + (i % 2) * 26, 90, 0.7);
+    // 浮島(手前ほど大きく、tで迫り上がる)
+    const isl = [[0.3, 0.5, 1], [0.6, 0.42, 0.8], [0.8, 0.6, 1.2], [0.15, 0.66, 0.9]];
+    for (let i = 0; i < isl.length; i++) {
+      const ix = isl[i][0] * W, iy = isl[i][1] * H + (1 - t) * 60, sc = isl[i][2];
+      ctx.fillStyle = '#2f7d47'; ctx.beginPath(); ctx.ellipse(ix, iy, 34 * sc, 10 * sc, 0, 0, Math.PI * 2); ctx.fill(); // 草地の天面
+      ctx.fillStyle = '#8a7150'; ctx.beginPath(); ctx.moveTo(ix - 30 * sc, iy); ctx.lineTo(ix + 30 * sc, iy); ctx.lineTo(ix, iy + 34 * sc); ctx.fill(); // 岩の底
+      ctx.fillStyle = '#d8ecdf'; ctx.fillRect(ix - 3 * sc, iy - 20 * sc, 6 * sc, 20 * sc); // 風化した柱
+    }
+  }
+  // 帰還: 雲の切れ間から緑の大地が近づく
+  function scSkyDescend(t, now) {
+    skyBg('#a9d4ec', '#cfe6f2', '#dfeed8');
+    for (let i = 0; i < 10; i++) { const yy = ((i * 80 - now * (0.08 + t * 0.16)) % (H + 120) + H + 120) % (H + 120) - 60; cloudBlob((i * 83 % W), yy, 74, 0.5); }
+    // 下方に迫る緑地
+    const gy = H * (1.15 - t * 0.5); ctx.fillStyle = '#3a7d3a'; ctx.beginPath(); ctx.ellipse(W / 2, gy + 120, W * 0.9, 130, 0, 0, Math.PI * 2); ctx.fill();
+    drawWalkerFig(W / 2, H * (0.3 + t * 0.4), 1.5, '#20303c', 1, 0);
+  }
+
+  function playSkyArrival(cb) {
+    runScenes([
+      { d: 3000, draw: scSkyAltar, text: '風の祭壇に立つと、渦が足もとから立ちのぼった。', onEnter: function () { if (Game.Audio.cineStart) Game.Audio.cineStart('mystic'); try { Game.Audio.play('portal'); } catch (e) {} if (Game.Audio.cue) Game.Audio.cue('riser'); } },
+      { d: 3000, draw: scSkyAscend, text: '雲を貫いて、からだが空へと運ばれてゆく。', shake: 0.25, onEnter: function () { if (Game.Audio.cue) Game.Audio.cue('swell'); } },
+      { d: 3400, draw: scSkyReveal, text: '——雲海のうえに、浮島の群れがひらけた。', onEnter: function () { try { Game.Audio.play('portal_arrive'); } catch (e) {} if (Game.Audio.cue) Game.Audio.cue('shimmer'); } },
+    ], cb);
+  }
+  function playSkyReturn(cb) {
+    runScenes([
+      { d: 2800, draw: scSkyDescend, text: '雲の切れ間から、緑の大地が近づいてくる。', onEnter: function () { if (Game.Audio.cineStart) Game.Audio.cineStart('mystic'); try { Game.Audio.play('portal'); } catch (e) {} } },
+    ], cb, { subdued: true });
+  }
+
   // 断章データ(story.js)の fx キー → 専用描画。汎用章は scStory
   const STORYFX = {
     chr_dusk: scChrDusk, chr_carve: scChrCarve, chr_stones: scChrStones, chr_dawn: scChrDawn,
@@ -1294,5 +1372,5 @@ Game.Cutscene = (function () {
     });
     runScenes(scenes, cb, { subdued: subdued });
   }
-  return { play, playLaunch, playDiscovery, playBossIntro, playBossOutro, playStory, skip: finish, isPlaying: function () { return playing; } };
+  return { play, playLaunch, playDiscovery, playBossIntro, playBossOutro, playStory, playSkyArrival, playSkyReturn, skip: finish, isPlaying: function () { return playing; } };
 })();
