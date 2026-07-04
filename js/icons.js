@@ -372,9 +372,38 @@ Game.Icons = (function () {
         break;
       }
       case 'material': {
-        // 結晶/インゴット風（ファセット線＋きらめきで宝石/金属を差別化）
+        // 素材の性質(id)で形を描き分ける。棒/結晶/鉱石/有機/粉/部品
+        const mform = /_bar$|ingot|steel_plate|_plate$/.test(id) ? 'ingot'
+          : /crystal|shard|core|gem|lumen|_metal$|moonshard/.test(id) ? 'crystal'
+          : /ore|coal|stone|obsidian|sulfur/.test(id) ? 'ore'
+          : /leather|hide|string|rope|silk|fiber|cloth|guts|feather|scale|chitin|spore|web|wool/.test(id) ? 'organic'
+          : /powder|dust|ash|gunpowder/.test(id) ? 'powder'
+          : /circuit|parts|glass|gear|cog|energy_cell/.test(id) ? 'parts'
+          : 'auto';
+        if (mform === 'ore') { // ごつごつした鉱石の塊(鉱脈色の斑点)
+          ctx.fillStyle = shade('#6a6660', 1); ctx.beginPath(); ctx.moveTo(12, 30); ctx.lineTo(18, 16); ctx.lineTo(30, 14); ctx.lineTo(37, 26); ctx.lineTo(32, 38); ctx.lineTo(16, 39); ctx.closePath(); ctx.fill(); ctx.stroke();
+          ctx.fillStyle = c.base; [[20, 24, 4], [28, 22, 3], [24, 32, 3.5], [32, 30, 2.5]].forEach(g => { ctx.beginPath(); ctx.arc(g[0], g[1], g[2], 0, 7); ctx.fill(); }); glint(ctx, 22, 20, 2); break;
+        } else if (mform === 'organic') { // 束ねた有機素材(革/繊維)
+          ctx.fillStyle = c.base; roundBlob ? roundBlob(ctx) : null;
+          ctx.fillStyle = c.base; ctx.beginPath(); ctx.ellipse(M, M + 2, 13, 10, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+          ctx.strokeStyle = shade(c.base, 0.6); ctx.lineWidth = 1.4; for (let i = -8; i <= 8; i += 4) { ctx.beginPath(); ctx.moveTo(M + i, M - 8); ctx.quadraticCurveTo(M + i + 2, M, M + i, M + 10); ctx.stroke(); }
+          ctx.strokeStyle = '#5a3a1e'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(M - 13, M + 4); ctx.lineTo(M + 13, M + 4); ctx.stroke(); break; // 結び紐
+        } else if (mform === 'powder') { // 小袋に入った粉
+          ctx.fillStyle = shade('#7a6a4a', 1); ctx.beginPath(); ctx.moveTo(M - 10, 20); ctx.lineTo(M + 10, 20); ctx.lineTo(M + 12, 40); ctx.lineTo(M - 12, 40); ctx.closePath(); ctx.fill(); ctx.stroke(); // 袋
+          ctx.fillStyle = c.base; ctx.beginPath(); ctx.ellipse(M, 20, 8, 3, 0, 0, Math.PI * 2); ctx.fill(); // 口の粉
+          ctx.strokeStyle = '#5a3a1e'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(M - 8, 18); ctx.lineTo(M + 8, 18); ctx.stroke(); break;
+        } else if (mform === 'parts') { // 機械部品(歯車/基板)
+          ctx.fillStyle = c.base; ctx.beginPath(); ctx.arc(M, M, 11, 0, 7); ctx.fill(); ctx.stroke();
+          ctx.fillStyle = shade(c.base, 0.6); for (let a = 0; a < 8; a++) { const an = a / 8 * Math.PI * 2; ctx.fillRect(M + Math.cos(an) * 11 - 2, M + Math.sin(an) * 11 - 2, 4, 4); }
+          ctx.fillStyle = '#0d1424'; ctx.beginPath(); ctx.arc(M, M, 4, 0, 7); ctx.fill(); glint(ctx, M - 4, M - 4, 2); break;
+        }
         const h = hash(id);
-        if (h % 2 === 0) {
+        if (mform === 'ingot' || (mform === 'auto' && h % 2 !== 0)) {
+          ctx.fillStyle = metalGradV(ctx, 10, 34, c.base); ctx.beginPath(); ctx.moveTo(14, 30); ctx.lineTo(34, 30); ctx.lineTo(30, 38); ctx.lineTo(10, 38); ctx.closePath(); ctx.fill(); ctx.stroke();
+          ctx.fillStyle = mix(c.base, '#fff', 0.3); ctx.beginPath(); ctx.moveTo(14, 30); ctx.lineTo(34, 30); ctx.lineTo(31, 26); ctx.lineTo(11, 26); ctx.closePath(); ctx.fill(); ctx.stroke();
+          glint(ctx, 28, 28, 2.2); break;
+        }
+        if (h % 2 === 0 || mform === 'crystal') {
           ctx.fillStyle = c.base; ctx.beginPath(); ctx.moveTo(M, 8); ctx.lineTo(M + 12, 22); ctx.lineTo(M + 6, 40); ctx.lineTo(M - 6, 40); ctx.lineTo(M - 12, 22); ctx.closePath(); ctx.fill(); ctx.stroke();
           ctx.fillStyle = c.hi; ctx.globalAlpha = 0.5; ctx.beginPath(); ctx.moveTo(M, 8); ctx.lineTo(M - 12, 22); ctx.lineTo(M, 26); ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1;
           ctx.fillStyle = shade(c.base, 0.62); ctx.globalAlpha = 0.7; ctx.beginPath(); ctx.moveTo(M + 12, 22); ctx.lineTo(M + 6, 40); ctx.lineTo(M, 26); ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1; // 右下ファセット陰
