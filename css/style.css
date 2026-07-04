@@ -459,6 +459,21 @@ body.shadow-mode #app::after {
 .x-btn { background: #33455e; border: none; color: #fff; width: 40px; height: 40px; border-radius: 10px; cursor: pointer; font-size: 1.05rem; flex: 0 0 auto; }
 .grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 5px; }
 .grid .slot { touch-action: none; }
+/* インベントリ: 4行を1ページとし、5行目以降は横スクロールで切り替える(下に伸ばさない=説明が隠れない) */
+#inv-grid { display: flex; overflow-x: auto; overflow-y: hidden; gap: 0;
+  scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+#inv-grid::-webkit-scrollbar { display: none; }
+#inv-grid .inv-page { flex: 0 0 100%; display: grid; grid-template-columns: repeat(9, 1fr); gap: 5px;
+  align-content: start; scroll-snap-align: start; }
+@media (max-width: 560px) { #inv-grid .inv-page { grid-template-columns: repeat(6, 1fr); } }
+/* ページ送り(◀ ドット ▶) */
+.inv-pager { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 8px 0 2px; }
+.inv-page-arrow { background: #2a3a56; border: 1px solid #3a4c6a; color: #cfe0f0; width: 34px; height: 30px;
+  border-radius: 8px; cursor: pointer; font-size: .9rem; line-height: 1; }
+.inv-page-arrow:active { background: #3a4c6a; }
+.inv-dots { display: flex; align-items: center; gap: 7px; }
+.inv-dot { width: 9px; height: 9px; border-radius: 50%; background: #3a4c6a; cursor: pointer; transition: background .15s, transform .15s; }
+.inv-dot.on { background: #ffd86b; transform: scale(1.25); }
 .inv-quest { background: rgba(80,66,30,0.4); border: 1px solid #6a5a2a; color: #ffe9a0; font-size: .82rem;
   padding: 7px 10px; border-radius: 8px; margin-bottom: 10px; }
 /* コントローラ操作ヒント: パッド接続時のみ表示(body.has-pad) */
