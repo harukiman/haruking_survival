@@ -89,6 +89,11 @@ Game.World = (function () {
     const o = objAt(tx, ty);
     const meta = Game.OBJ_META[o];
     if (meta && meta.bridge) return true; // 橋は水上でも通れる
+    // 自動車庫扉: プレイヤーが近い(2.2タイル以内)と自動で開いて通れる
+    if (meta && meta.autoDoor) {
+      const TS = Game.CFG.TILE_SIZE, p = Game.state.player;
+      if (p && Math.hypot((tx + 0.5) * TS - p.x, (ty + 0.5) * TS - p.y) <= 2.2 * TS) return true;
+    }
     const g = groundAt(tx, ty);
     if (Game.SOLID_TILE[g]) return false;
     if (o === Game.OBJ.NONE) return true;

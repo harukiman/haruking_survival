@@ -257,6 +257,15 @@ Game.Player = (function () {
     else if (!inDun && p._inDungeon) { p._inDungeon = false; }
     const onWater = !p.vehicle && gUnder === Game.TILE.WATER;
     if (onWater) spd *= 0.5;
+    // 発着場: 乗り物で上に停まると燃料・耐久がゆっくり回復
+    if (p.vehicle && Game.state.tick % 20 === 0) {
+      const ptx = Math.floor(p.x / TS), pty = Math.floor(p.y / TS);
+      if (Game.World.objAt(ptx, pty) === Game.OBJ.LANDING_PAD) {
+        if (FUEL_VEHICLES[p.vehicle]) { if (!p.fuel) p.fuel = {}; p.fuel[p.vehicle] = Math.min(120, (p.fuel[p.vehicle] || 0) + 2); }
+        if (VEH_MAXDUR[p.vehicle] != null) { if (!p.vehDur) p.vehDur = {}; p.vehDur[p.vehicle] = Math.min(VEH_MAXDUR[p.vehicle], (p.vehDur[p.vehicle] == null ? VEH_MAXDUR[p.vehicle] : p.vehDur[p.vehicle]) + 2); }
+        if (Game.Render.spawnParticles && Game.state.tick % 40 === 0) Game.Render.spawnParticles(p.x, p.y, '#7fd0ff', 2);
+      }
+    }
     // 遊泳(深水): 呼吸ゲージが減り、尽きると溺れて継続ダメージ。地上/ボート/浅瀬で急速回復。
     const submerged = !p.vehicle && gUnder === Game.TILE.DEEP_WATER;
     if (p.breath == null) p.breath = p.maxBreath || 360;

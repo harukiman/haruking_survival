@@ -74,7 +74,7 @@ Game.OBJ = {
   WAYPOINT_STONE:166,
   // 建築・農業の拡張
   STONE_WALL:167, HEDGE:168, FOUNTAIN:169, LANTERN_POST:170, FLOWERBED:171, SCARECROW:172, WOOD_STAIRS:173, TRELLIS:174,
-  EXIT_PORTAL:175,
+  EXIT_PORTAL:175, GARAGE_DOOR:176, LANDING_PAD:177,
 };
 
 // 地面の色（手続き描画のベース）
@@ -279,6 +279,8 @@ Game.OBJ_META = {
   // 帰還の祭壇: 空島の中心。傍らに立つと大地へ還る(破壊不可)
   [Game.OBJ.RETURN_ALTAR]:{ name:'帰還の祭壇', solid:true, mineable:false, tool:null, tier:0, hp:999, light:7, drops:[], render:'returnaltar', returnAltar:true },
   [Game.OBJ.EXIT_PORTAL]:{ name:'帰還の渦', solid:false, mineable:false, tool:null, tier:0, hp:999, light:6, drops:[], render:'exitportal', dungeonExit:true },
+  [Game.OBJ.GARAGE_DOOR]:{ name:'自動車庫扉', solid:true, mineable:true, tool:null, tier:0, hp:12, drops:[{item:'garage_door', n:[1,1]}], render:'garagedoor', autoDoor:true },
+  [Game.OBJ.LANDING_PAD]:{ name:'発着場', solid:false, mineable:true, tool:null, tier:0, hp:8, light:4, drops:[{item:'landing_pad', n:[1,1]}], render:'landingpad', landingPad:true },
   [Game.OBJ.SKY_PILLAR]:  { name:'風化した柱', solid:true, mineable:true, tool:'pickaxe', tier:2, hp:14, drops:[{item:'stone', n:[1,2]}], render:'skypillar' },
   [Game.OBJ.SKY_TREE]:    { name:'空の樹', solid:true, mineable:true, tool:'axe', tier:0, hp:7, drops:[{item:'wood', n:[2,3]},{item:'feather', n:[0,1]}], render:'skytree' },
   [Game.OBJ.WIND_ORE]:    { name:'風晶鉱', solid:true, mineable:true, tool:'pickaxe', tier:3, hp:16, drops:[{item:'wind_crystal', n:[1,2]}], render:'ore', oreColor:'#8fe8e0' },
@@ -434,6 +436,8 @@ Game.ITEMS = {
   wood_floor:    { name:'木の床', stack:99, color:'#b07a40', place:Game.OBJ.WOOD_FLOOR },
   stone_floor:   { name:'石の床', stack:99, color:'#9a9ea2', place:Game.OBJ.STONE_FLOOR },
   wall:          { name:'壁', stack:99, color:'#8a6a44', place:Game.OBJ.WALL },
+  garage_door:   { name:'自動車庫扉', stack:16, color:'#7a8088', place:Game.OBJ.GARAGE_DOOR, flavor:'近づくと自動で開き、離れると閉まるシャッター。車庫や格納庫に。' },
+  landing_pad:   { name:'発着場', stack:16, color:'#3a4048', place:Game.OBJ.LANDING_PAD, flavor:'乗り物の発着場。上に乗って停めた乗り物は、燃料と耐久がゆっくり回復する。' },
   window:        { name:'窓', stack:99, color:'#a8d8e8', place:Game.OBJ.WINDOW },
   bridge:        { name:'橋', stack:99, color:'#9c6b3f', place:Game.OBJ.BRIDGE },
   sign:          { name:'立て札', stack:16, color:'#a9762f', place:Game.OBJ.SIGN },
@@ -678,6 +682,8 @@ Game.RECIPES = [
   { out:{id:'heavenfall_staff', n:1}, in:{star_core:1, gold_bar:3, shadow_crystal:5, lumen:3}, station:'enchant_table' },
   // 建築拡張
   { out:{id:'stone_wall', n:4}, in:{stone:4}, station:'crafting_table' },
+  { out:{id:'garage_door', n:1}, in:{iron:4, steel_plate:1}, station:'crafting_table' },
+  { out:{id:'landing_pad', n:2}, in:{stone:4, iron:2, lumen:1}, station:'crafting_table' },
   { out:{id:'hedge', n:4}, in:{wood:2, moonleaf:1}, station:'crafting_table' },
   { out:{id:'fountain', n:1}, in:{stone:12, lumen:1}, station:'crafting_table' },
   { out:{id:'lantern_post', n:2}, in:{wood:2, iron:1, coal:1}, station:'crafting_table' },
@@ -1233,7 +1239,7 @@ Game.ITEM_GLYPH = {
   sand_greatsword:'⚔️', magma_hammer:'🔨', pharaoh_crown:'👑', mind_tome:'📖', wisdom_tome:'📗', xp_orb:'🔮', expand_pouch:'🎒',
   feather:'🪶', wind_crystal:'💠', wind_steel:'🌀', wind_feather:'🪶', wind_sword:'🗡️', sky_cloak:'🧥', cloud_boots:'👢',
   ring_crit:'💍', amulet_swift:'📿', fang_vamp:'🦷', heart_regen:'❤️‍🔥', eye_xp:'👁️', band_power:'💪', crest_guard:'🛡️',
-  energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️', prism_blade:'⚔️', dragon_fang:'⚔️', colossus_blade:'⚔️', mire_scythe:'⚔️', magma_maul:'🔨', starcore_greatsword:'⚔️', voidcore_blade:'⚔️', spore_scythe:'⚔️', star_aegis:'🛡️', void_helm:'⛑️', thorn_plate:'🥷', tempest_spear:'🔱', sovereign_scepter:'👑', rift_crown:'👑', frostfang_blade:'🗡️', emberfang_axe:'🪓', echoedge:'🗡️', quakehammer:'🔨', flashstep_edge:'⚡', combat_vest:'🎽', reflect_aegis:'🛡️', iai_mumyo:'🗡️', heavenfall_staff:'☄️', gasoline:'⛽', repair_kit:'🔧', buggy:'🚙', tank:'🛡️', cannon_shell:'💣', battle_mech:'🤖', aqualung:'🤿', moonshard:'🌙', moon_charm:'🔮', fighter_jet:'✈️', bomber:'🛩️', aerial_bomb:'💣', heavy_bomb:'🧨', gunpowder:'⚫', gun_parts:'⚙️', steel_plate:'🔩', rope:'🪢', glass:'🔷', circuit:'🖥️', jerky:'🥓', fruit_salad:'🥗', energy_bar:'🍫', medkit:'🩹', deagle:'🔫', uzi:'🔫', p90:'🔫', scar_h:'🔫', barrett:'🔫', spas12:'🔫', minigun:'🔫', m79:'🧨', flamethrower:'🔥', plasma_rifle:'🔫',
+  energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️', prism_blade:'⚔️', dragon_fang:'⚔️', colossus_blade:'⚔️', mire_scythe:'⚔️', magma_maul:'🔨', starcore_greatsword:'⚔️', voidcore_blade:'⚔️', spore_scythe:'⚔️', star_aegis:'🛡️', void_helm:'⛑️', thorn_plate:'🥷', tempest_spear:'🔱', sovereign_scepter:'👑', rift_crown:'👑', frostfang_blade:'🗡️', emberfang_axe:'🪓', echoedge:'🗡️', quakehammer:'🔨', flashstep_edge:'⚡', combat_vest:'🎽', reflect_aegis:'🛡️', iai_mumyo:'🗡️', heavenfall_staff:'☄️', gasoline:'⛽', repair_kit:'🔧', buggy:'🚙', tank:'🛡️', cannon_shell:'💣', battle_mech:'🤖', aqualung:'🤿', moonshard:'🌙', moon_charm:'🔮', fighter_jet:'✈️', bomber:'🛩️', aerial_bomb:'💣', heavy_bomb:'🧨', gunpowder:'⚫', gun_parts:'⚙️', steel_plate:'🔩', rope:'🪢', glass:'🔷', circuit:'🖥️', jerky:'🥓', fruit_salad:'🥗', energy_bar:'🍫', medkit:'🩹', deagle:'🔫', uzi:'🔫', p90:'🔫', scar_h:'🔫', barrett:'🔫', spas12:'🔫', minigun:'🔫', m79:'🧨', flamethrower:'🔥', plasma_rifle:'🔫', garage_door:'🚪', landing_pad:'🛬',
 };
 
 Game.INV_SIZE = 36;       // 先頭9 = ホットバー

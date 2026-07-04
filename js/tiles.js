@@ -132,7 +132,7 @@ Game.Tiles = (function () {
   }
 
   // 立ちオブジェクトの接地影（チャンクキャッシュにベイク＝毎フレーム負荷ゼロ）
-  const standing = { tree: 1, deadtree: 1, pine: 1, rock: 1, ore: 1, bush: 1, berry: 1, cactus: 1, flower: 1, sapling: 1, shadowtree: 1, shadowcrystal: 1, lumenore: 1, soulflower: 1, voidrock: 1, starore: 1, giantshroom: 1, glowshroom: 1, pmushroom: 1, obsidian: 1, sulfur: 1, barrel: 1, potted: 1, totem: 1, streetlamp: 1, torch: 1, lantern: 1, brazier: 1, stela: 1, sign: 1, campfire: 1, rocket_obj: 1, lumenlantern: 1, banner: 1, chair: 1, skytree: 1, skypillar: 1, windaltar: 1, returnaltar: 1, ancientgate: 1, returngate: 1, ruincolumn: 1, ruinstatue: 1, rifttear: 1, riftreturn: 1, riftspire: 1, waypoint: 1, stonewall: 1, hedge: 1, fountain: 1, lanternpost: 1, flowerbed: 1, scarecrow: 1, woodstairs: 1, trellis: 1, exitportal: 1 };
+  const standing = { tree: 1, deadtree: 1, pine: 1, rock: 1, ore: 1, bush: 1, berry: 1, cactus: 1, flower: 1, sapling: 1, shadowtree: 1, shadowcrystal: 1, lumenore: 1, soulflower: 1, voidrock: 1, starore: 1, giantshroom: 1, glowshroom: 1, pmushroom: 1, obsidian: 1, sulfur: 1, barrel: 1, potted: 1, totem: 1, streetlamp: 1, torch: 1, lantern: 1, brazier: 1, stela: 1, sign: 1, campfire: 1, rocket_obj: 1, lumenlantern: 1, banner: 1, chair: 1, skytree: 1, skypillar: 1, windaltar: 1, returnaltar: 1, ancientgate: 1, returngate: 1, ruincolumn: 1, ruinstatue: 1, rifttear: 1, riftreturn: 1, riftspire: 1, waypoint: 1, stonewall: 1, hedge: 1, fountain: 1, lanternpost: 1, flowerbed: 1, scarecrow: 1, woodstairs: 1, trellis: 1, exitportal: 1, garagedoor: 1, landingpad: 1 };
   function contactShadow(x, rx) {
     x.fillStyle = 'rgba(0,0,0,0.22)';
     x.beginPath(); x.ellipse(TS / 2, TS - 4, rx || 10, 3.2, 0, 0, Math.PI * 2); x.fill();
@@ -603,6 +603,19 @@ Game.Tiles = (function () {
       for (let a = 0; a < 24; a++) { const t = a / 24 * Math.PI * 3, rr = 2 + t * 1.4; const px = TS / 2 + Math.cos(t) * rr, py = TS / 2 + Math.sin(t) * rr; if (a === 0) x.moveTo(px, py); else x.lineTo(px, py); }
       x.stroke();
       x.fillStyle = '#c8f0ff'; circle(x, TS / 2, TS / 2, 2);
+    } else if (r === 'garagedoor') {
+      // 金属シャッター＋左右フレーム。近づくと開く(機能はisWalkable側)
+      x.fillStyle = '#4a5058'; x.fillRect(0, 0, 3, TS); x.fillRect(TS - 3, 0, 3, TS); // 側柱
+      x.fillStyle = '#7a8088'; x.fillRect(3, 1, TS - 6, TS * 0.42); // 巻き上がったシャッター(上部)
+      x.fillStyle = '#5a606a'; for (let yy = 3; yy < TS * 0.42; yy += 4) x.fillRect(4, yy, TS - 8, 2);
+      x.fillStyle = '#1a1e24'; x.fillRect(4, TS * 0.42, TS - 8, TS * 0.58 - 1); // 開口(暗い車庫内)
+      x.fillStyle = '#e8c84a'; x.fillRect(3, 1, TS - 6, 2); // 上部の警告帯
+    } else if (r === 'landingpad') {
+      // ヘリパッド風: 濃灰の床＋黄縁＋H字/円マーク
+      x.fillStyle = '#2e343c'; x.fillRect(0, 0, TS, TS);
+      x.strokeStyle = '#e8c84a'; x.lineWidth = 2; x.strokeRect(2, 2, TS - 4, TS - 4);
+      x.strokeStyle = '#cfe0ff'; x.lineWidth = 2; x.beginPath(); x.arc(TS / 2, TS / 2, TS / 2 - 6, 0, Math.PI * 2); x.stroke();
+      x.fillStyle = '#cfe0ff'; x.fillRect(TS / 2 - 5, TS / 2 - 6, 2, 12); x.fillRect(TS / 2 + 3, TS / 2 - 6, 2, 12); x.fillRect(TS / 2 - 5, TS / 2 - 1, 10, 2);
     }
     objAtlas[id] = c;
   }
