@@ -503,6 +503,11 @@ body.shadow-mode #app::after {
   filter: drop-shadow(0 2px 5px rgba(0,0,0,0.6)); animation: heldBob 0.9s ease-in-out infinite; }
 .held-cursor .icon { width: 26px; height: 26px; }
 .held-cursor .cnt { font-size: .62rem; }
+/* バグ修正: 絵文字グリフ系アイテムは .slot 外(ドラッグゴースト/持ち上げアイコン)だとfont-size未指定でアイコンが出ない。
+   .slot 外でもグリフを中央に適切なサイズで描画する。画像アイコンは背景で伸縮させる */
+.drag-ghost .icon.glyph, .held-cursor .icon.glyph { display: flex; align-items: center; justify-content: center; font-size: 22px; line-height: 1; box-shadow: none; }
+.held-cursor .icon.glyph { font-size: 20px; }
+.drag-ghost .icon.img, .held-cursor .icon.img { background-size: contain; background-repeat: no-repeat; background-position: center; }
 @keyframes heldBob { 0%,100% { transform: translate(-50%,-50%); } 50% { transform: translate(-50%,-58%); } }
 .inv-discard { background: #7a2f3a !important; border-color: #c0505a !important; }
 .chest-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
