@@ -596,9 +596,9 @@ Game.ITEMS = {
   void_shroud:   { name:'虚無の外套', stack:1, color:'#7a5aa8', armor:6, slot:'chest', sanityResist:0.3, flavor:'狭間の布で織った外套。正気を蝕む影の囁きを、あわいの静けさが和らげる。正気耐性+30%。' },
   rift_charm:    { name:'狭間の護符', stack:1, color:'#c0a0f0', relic:{maxHp:12, moveSpd:0.05}, flavor:'あわいの護符。存在が薄れるぶん、身は軽い。装身具として最大HP+12・移動+5%。' },
   // 嵐の主の固有ドロップ: 雷を纏う戈
-  tempest_spear: { name:'嵐帝の戈', stack:1, color:'#8fc8f0', tool:'sword', tier:5, attack:14, special:{type:'thunder', name:'雷帝', pct:0.55, cd:55, color:'#bfe4ff'}, proj:{kind:'chain', dmg:9, cd:16}, flavor:'嵐の主を統べた戈。振るえば刃から雷が連鎖し、遠くの敵まで貫く。空の怒りを、この手に。' },
+  tempest_spear: { name:'嵐帝の戈', stack:1, color:'#8fc8f0', tool:'sword', tier:5, attack:18, special:{type:'thunder', name:'雷帝', pct:0.55, cd:55, color:'#bfe4ff'}, proj:{kind:'chain', dmg:9, cd:16}, flavor:'嵐の主を統べた戈。振るえば刃から雷が連鎖し、遠くの敵まで貫く。空の怒りを、この手に。' },
   // 玉座の王の固有ドロップ: 威圧の王笏
-  sovereign_scepter:{ name:'玉座の王笏', stack:1, color:'#d8c078', tool:'sword', tier:5, attack:15, special:{type:'shock', name:'王の威圧', pct:0.55, cd:70, r:2.6, color:'#e8cf80'}, aoe:true, flavor:'玉座の王が握りし黄金の笏。一振りで臣従を強い、周囲の者を威圧の衝撃で薙ぐ。' },
+  sovereign_scepter:{ name:'玉座の王笏', stack:1, color:'#d8c078', tool:'sword', tier:5, attack:19, special:{type:'shock', name:'王の威圧', pct:0.55, cd:70, r:2.6, color:'#e8cf80'}, aoe:true, flavor:'玉座の王が握りし黄金の笏。一振りで臣従を強い、周囲の者を威圧の衝撃で薙ぐ。' },
   // 虚無の帝の固有ドロップ: あわいの王冠(防具)
   rift_crown:{ name:'虚無の王冠', stack:1, color:'#b088e8', armor:6, slot:'head', thornsFixed:0.18, flavor:'虚無の帝が戴きし王冠。触れる者に虚無を刻む(棘18%反射)。あわいを統べる証。' },
 };
