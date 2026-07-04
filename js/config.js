@@ -1111,6 +1111,19 @@ Game.MOBS = {
   void_spawnling:{ name:'虚の落とし子', hostile:true, hp:30, speed:1.5, color:'#8f6fc8', size:10, str:3, space:true, drops:[{item:'void_shard',n:[0,1]},{item:'shadow_shard',n:[1,2]}], dmg:7, xp:10, shape:'orb', ghost:true, ranged:{dmg:8,range:7,cd:65,kind:'hex'}, split:{max:1} },
   dread_knight:{ name:'戦慄の騎士', hostile:true, hp:120, speed:1.3, color:'#4a4a5a', size:14, str:4, drops:[{item:'shadow_steel',n:[0,1]},{item:'iron',n:[1,2]}], dmg:14, xp:26, shape:'humanoid', charge:{range:6,windup:18,dashTicks:14,dashSpeed:5.5,dmg:20,cd:120} },
   storm_roc:{ name:'嵐の大鷲', hostile:true, hp:80, speed:2.4, color:'#8fa8d8', size:15, str:4, big:true, drops:[{item:'feather',n:[1,3]},{item:'wind_steel',n:[0,1]}], dmg:12, xp:24, shape:'bird', ranged:{dmg:10,range:8,cd:85,kind:'frost'} },
+  // ㊾ 新規モブ 第2弾(形/攻撃を重複させない)
+  marsh_leaper:{ name:'沼跳ね', hostile:true, hp:22, speed:1.8, color:'#5a7a4a', size:10, str:2, hop:true, drops:[{item:'guts',n:[0,1]},{item:'glow_spore',n:[0,1]}], dmg:6, xp:7, shape:'blob', inflict:{poison:180} },
+  glacier_maw:{ name:'氷牙', hostile:true, hp:46, speed:1.9, color:'#bfe8ff', size:13, str:3, drops:[{item:'hide',n:[1,2]},{item:'shadow_shard',n:[0,1]}], dmg:9, xp:13, shape:'beast', charge:{range:6,windup:16,dashTicks:14,dashSpeed:6,dmg:15,cd:110} },
+  ash_wraith:{ name:'灰の亡霊', hostile:true, hp:30, speed:1.3, color:'#a06a4a', size:11, str:3, ghost:true, drops:[{item:'coal',n:[1,2]},{item:'sulfur',n:[0,1]}], dmg:7, xp:10, shape:'wisp', ranged:{dmg:8,range:7,cd:70,kind:'fire',status:{burn:120}} },
+  crystal_scuttler:{ name:'水晶蟹', hostile:true, hp:70, speed:1.1, color:'#9fd0e8', size:13, str:3, drops:[{item:'shadow_crystal',n:[0,1]},{item:'stone',n:[1,2]}], dmg:8, xp:14, shape:'spider' },
+  dune_raider:{ name:'砂の略奪者', hostile:true, hp:26, speed:1.6, color:'#c8a860', size:11, str:2, drops:[{item:'chitin',n:[0,1]},{item:'gold_ore',n:[0,1]}], dmg:6, xp:8, shape:'humanoid' },
+  thunder_wisp:{ name:'雷の精', hostile:true, hp:34, speed:1.5, color:'#ffe27a', size:10, str:3, ghost:true, drops:[{item:'wind_steel',n:[0,1]},{item:'lumen',n:[0,1]}], dmg:7, xp:11, shape:'wisp', ranged:{dmg:9,range:8,cd:60,kind:'hex'} },
+  rot_hulk:{ name:'腐の巨躯', hostile:true, hp:130, speed:0.7, color:'#6a7a4a', size:18, str:4, big:true, drops:[{item:'guts',n:[1,3]},{item:'bone',n:[0,2]}], dmg:14, xp:28, shape:'tall', deathBurst:{r:2.4,dmg:12,status:{poison:200}} },
+  shade_archer:{ name:'影の射手', hostile:true, hp:38, speed:1.4, color:'#5a4a7a', size:11, str:3, shadow:true, drops:[{item:'shadow_shard',n:[1,2]}], dmg:6, xp:11, shape:'humanoid', ranged:{dmg:11,range:9,cd:75,kind:'pierce'} },
+  magma_serpent:{ name:'溶岩蛇', hostile:true, hp:88, speed:2.1, color:'#e05a2a', size:15, str:4, big:true, drops:[{item:'sulfur',n:[1,2]},{item:'iron_ore',n:[1,2]}], dmg:12, xp:22, shape:'serpent', deathBurst:{r:1.8,dmg:10,status:{burn:150}} },
+  frost_giant:{ name:'霜の巨人', hostile:true, hp:150, speed:0.8, color:'#aee0ff', size:20, str:5, big:true, drops:[{item:'shadow_shard',n:[1,2]},{item:'iron',n:[1,2]}], dmg:16, xp:34, shape:'tall', pound:{r:2.6,cd:120} },
+  spore_swarm:{ name:'胞子群', hostile:true, hp:24, speed:1.4, color:'#c884f0', size:10, str:2, drops:[{item:'glow_spore',n:[1,2]},{item:'luminous_cap',n:[0,1]}], dmg:5, xp:7, shape:'blob', split:{max:2} },
+  void_reaver:{ name:'虚無の刈り手', hostile:true, hp:180, speed:1.9, color:'#7f5fd0', size:15, str:5, space:true, drops:[{item:'void_shard',n:[1,2]},{item:'void_alloy',n:[0,1]},{item:'shadow_steel',n:[0,1]}], dmg:16, xp:40, shape:'humanoid', ghost:true, charge:{range:7,windup:16,dashTicks:16,dashSpeed:6.5,dmg:22,cd:100} },
   troll:    { name:'森のトロル', hostile:true, hp:70, speed:0.85, color:'#6a8a4a', size:30, drops:[{item:'raw_meat',n:[2,4]},{item:'hide',n:[1,3]},{item:'bone',n:[1,2]}], dmg:11, xp:12, big:true, shape:'tall', pound:{r:2.2,cd:110} },
   bog_horror:{ name:'沼の怪異', hostile:true, hp:50, speed:0.9, color:'#5a6a3a', size:22, drops:[{item:'guts',n:[1,3]},{item:'string',n:[0,1]}], dmg:8, xp:9, shape:'blob', inflict:{infection:300}, deathBurst:{r:2.2,dmg:7,status:{poison:240}} },
   // ===== P40 バイオーム多様化: 新通常モブ =====
@@ -1193,8 +1206,8 @@ Game.DANGER = {
   RADII: [40, 90, 160],                       // band 0/1/2 の外縁(タイル)。160+ が band3
   NAMES: ['安全圏', '開拓圏', '辺境', '深域', '深域+'],
   COLORS: ['#7fd0a0', '#cfd6e0', '#ffd24a', '#ff8a4a', '#ff4a6a'], // UI/描画の可視化用
-  STAT_PER: 0.30,                             // band1超過1段ごとの hp/dmg 上昇率(非ボス敵対のみ)。序盤(band0-1)は不変、辺境以降を明確に強く
-  STAT_MAX: 1.2,                              // 上限(スキル/装備強化前提で深域=約1.9倍まで歯応えを持たせる)
+  STAT_PER: 0.45,                             // band1超過1段ごとの hp/dmg 上昇率(非ボス敵対のみ)。序盤(band0-1)は不変、中位以上を相当強く(ユーザー指示)
+  STAT_MAX: 2.0,                              // 上限。band2=1.45/band3=1.90/深域band4=約2.35倍。スキル/装備強化前提の歯応え
   XP_PER: 0.25,                               // band1超過1段ごとの XP/バーツ増加率
   ELITE_MULT: [0, 1, 2, 3, 4],                // 精鋭率の帯別倍率(安全圏は精鋭なし)
   CHAMP_MULT: [0, 1, 1, 2, 2],                // チャンピオン率の帯別倍率

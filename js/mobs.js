@@ -60,8 +60,9 @@ Game.Mobs = (function () {
     const peers = (Game.Net && Game.Net.isConnected && Game.Net.isConnected() && Game.Net.peerCount) ? Game.Net.peerCount() : 0;
     const coopHp = (def.boss || def.midboss) ? (1 + 0.55 * Math.min(3, peers)) : 1;
     const flatBossHp = def.boss ? 2 : def.midboss ? 1.5 : 1; // ユーザー指示: ボスHP一律×2/中ボス×1.5
+    const flatBossDmg = def.boss ? 2 : def.midboss ? 1.5 : 1; // 攻撃力も同様に(ユーザー指示: HPだけでなく強さも)
     const hp = Math.round(def.hp * mult * bandMult * bossMult * lvHp * nightHp * coopHp * spaceHp * flatBossHp);
-    const dmgMult = mult * bandMult * lvDmg * nightDmg * bossDmg * spaceDmg * (diff.dmgMult != null ? diff.dmgMult : 1);
+    const dmgMult = mult * bandMult * lvDmg * nightDmg * bossDmg * spaceDmg * flatBossDmg * (diff.dmgMult != null ? diff.dmgMult : 1);
     Game.state._mobId = (Game.state._mobId || 0) + 1;
     const m = {
       id: Game.state._mobId, type: type, def: def,
