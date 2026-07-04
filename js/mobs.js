@@ -244,8 +244,11 @@ Game.Mobs = (function () {
           const tb = DZ.DUNGEON_BOSS[theme];
           if (Math.random() < 0.03 && countType(tb) === 0) type = tb;
         }
-        // 空島の番人(中ボスD): 宝殿の巣が守護個体として稀に召喚(1体まで)
-        if (!type && Game.state.worldName === 'light' && Game.WorldGen.inSkyEnclave && Game.WorldGen.inSkyEnclave(stx, sty, Game.state.seed) && Math.random() < 0.05 && countType('sky_warden') === 0) type = 'sky_warden';
+        // 空島の固有ボス「嵐の主」(稀・1体まで)＞ 番人(中ボスD)
+        if (!type && Game.state.worldName === 'light' && Game.WorldGen.inSkyEnclave && Game.WorldGen.inSkyEnclave(stx, sty, Game.state.seed)) {
+          if (Math.random() < 0.025 && countType('storm_sovereign') === 0) type = 'storm_sovereign';
+          else if (Math.random() < 0.05 && countType('sky_warden') === 0) type = 'sky_warden';
+        }
         // 古都の守番(中ボスD): 神殿の巣が守護個体として稀に召喚(1体まで)
         if (!type && Game.state.worldName === 'light' && Game.WorldGen.inRuinCity && Game.WorldGen.inRuinCity(stx, sty, Game.state.seed) && Math.random() < 0.05 && countType('city_warden') === 0) type = 'city_warden';
         // 狭間の番人(中ボスD): 狭間の巣が守護個体として稀に召喚(1体まで)

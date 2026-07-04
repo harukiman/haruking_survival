@@ -589,6 +589,8 @@ Game.ITEMS = {
   rift_blade:    { name:'狭間の裂刃', stack:1, color:'#b088e8', tool:'sword', tier:5, attack:14, special:{type:'shock', name:'裂雷', pct:0.5, cd:70, color:'#c0a0f0'}, flavor:'二相のあわいで鍛えた刃。斬撃が空間ごと裂き、近くの敵へ雷光が奔る。' },
   void_shroud:   { name:'虚無の外套', stack:1, color:'#7a5aa8', armor:6, slot:'chest', sanityResist:0.3, flavor:'狭間の布で織った外套。正気を蝕む影の囁きを、あわいの静けさが和らげる。正気耐性+30%。' },
   rift_charm:    { name:'狭間の護符', stack:1, color:'#c0a0f0', relic:{maxHp:12, moveSpd:0.05}, flavor:'あわいの護符。存在が薄れるぶん、身は軽い。装身具として最大HP+12・移動+5%。' },
+  // 嵐の主の固有ドロップ: 雷を纏う戈
+  tempest_spear: { name:'嵐帝の戈', stack:1, color:'#8fc8f0', tool:'sword', tier:5, attack:14, special:{type:'thunder', name:'雷帝', pct:0.55, cd:55, color:'#bfe4ff'}, proj:{kind:'chain', dmg:9, cd:16}, flavor:'嵐の主を統べた戈。振るえば刃から雷が連鎖し、遠くの敵まで貫く。空の怒りを、この手に。' },
 };
 
 // クラフトレシピ。station=null は手作り、それ以外は近接が必要
@@ -986,6 +988,8 @@ Game.MOBS = {
   wind_wisp:  { name:'風の精', hostile:true, hp:20, speed:1.5, color:'#bfe8e0', size:10, drops:[{item:'feather',n:[0,1]},{item:'wind_crystal',n:[0,1]},{item:'lumen',n:[0,1]}], dmg:5, xp:6, ghost:true, shape:'wisp', ranged:{dmg:6,range:7,cd:80,kind:'frost',status:{cold:150}} },
   cloud_hawk: { name:'雲鷹', hostile:true, hp:24, speed:2.2, color:'#dfe8f4', size:12, drops:[{item:'feather',n:[1,3]},{item:'raw_meat',n:[0,1]}], dmg:6, xp:7, shape:'bird', charge:{ range:5, windup:14, dashTicks:18, dashSpeed:5.6, dmg:10, cd:140 } },
   sky_warden: { name:'空島の番人', hostile:true, hp:140, speed:1.0, color:'#9fb8c8', size:18, drops:[{item:'wind_crystal',n:[2,4]},{item:'feather',n:[1,3]},{item:'lumen',n:[1,2]},{item:'stone',n:[2,4]}], dmg:10, xp:18, midboss:true, big:true, shape:'tall', pound:{r:2.0,cd:120}, summon:'wind_wisp', inflict:{cold:180} },
+  // 空島の固有ボス: 嵐の主(雷竜)。雲海の主として稀に顕現。遠距離の雷撃と雲鷹召喚
+  storm_sovereign:{ name:'嵐の主', hostile:true, hp:840, tier:3, speed:1.5, color:'#8fc8f0', size:28, drops:[{item:'tempest_spear',n:[0,1]},{item:'wind_crystal',n:[5,10]},{item:'feather',n:[3,6]},{item:'lumen',n:[2,4]},{item:'star_core',n:[0,1]}], dmg:12, xp:75, boss:true, big:true, shape:'bird', ghost:true, summon:'cloud_hawk', ranged:{dmg:9,range:9,cd:60,kind:'chain'} },
   // 古代都市の守り手
   sentinel_husk: { name:'哨士の亡骸', hostile:true, hp:60, speed:0.7, color:'#b8ac82', size:14, drops:[{item:'relic_shard',n:[0,1]},{item:'stone',n:[1,2]}], dmg:9, xp:9, shape:'tall', ranged:{dmg:7,range:7,cd:70,kind:'hex'} },
   gloom_moth:  { name:'幽き蛾', hostile:true, hp:22, speed:2.0, color:'#9a8fb8', size:11, drops:[{item:'relic_shard',n:[0,1]},{item:'glow_spore',n:[0,1]}], dmg:6, xp:6, ghost:true, shape:'wisp', inflict:{poison:120} },
@@ -1106,7 +1110,7 @@ Game.ITEM_GLYPH = {
   sand_greatsword:'⚔️', magma_hammer:'🔨', pharaoh_crown:'👑', mind_tome:'📖', wisdom_tome:'📗', xp_orb:'🔮', expand_pouch:'🎒',
   feather:'🪶', wind_crystal:'💠', wind_steel:'🌀', wind_feather:'🪶', wind_sword:'🗡️', sky_cloak:'🧥', cloud_boots:'👢',
   ring_crit:'💍', amulet_swift:'📿', fang_vamp:'🦷', heart_regen:'❤️‍🔥', eye_xp:'👁️', band_power:'💪', crest_guard:'🛡️',
-  energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️', prism_blade:'⚔️', dragon_fang:'⚔️', colossus_blade:'⚔️', mire_scythe:'⚔️', magma_maul:'🔨', starcore_greatsword:'⚔️', voidcore_blade:'⚔️', spore_scythe:'⚔️', star_aegis:'🛡️', void_helm:'⛑️',
+  energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️', prism_blade:'⚔️', dragon_fang:'⚔️', colossus_blade:'⚔️', mire_scythe:'⚔️', magma_maul:'🔨', starcore_greatsword:'⚔️', voidcore_blade:'⚔️', spore_scythe:'⚔️', star_aegis:'🛡️', void_helm:'⛑️', tempest_spear:'🔱',
 };
 
 Game.INV_SIZE = 36;       // 先頭9 = ホットバー
