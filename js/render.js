@@ -145,7 +145,23 @@ Game.Render = (function () {
     drawHitDir(ctx);
     drawHomeCompass(ctx);
     drawPeerCompass(ctx);
+    drawLowHpVignette(ctx);
     drawFlash(ctx);
+  }
+
+  // 低HP時の赤い画面端ヴィネット(鼓動に合わせ脈動)。窮地の緊張感(音の低HP警告と対)
+  function drawLowHpVignette(ctx) {
+    const s = Game.state; if (!s || s.paused) return;
+    const p = s.player; if (!p || p.health <= 0) return;
+    const ratio = p.health / p.maxHealth;
+    if (ratio >= 0.3) return;
+    const v = Game.view, w = v.w, h = v.h;
+    const sev = 1 - ratio / 0.3; // 0(30%)→1(瀕死)
+    const pulse = 0.55 + 0.45 * Math.sin(s.tick * 0.18); // 鼓動
+    const a = (0.14 + sev * 0.34) * pulse;
+    const g = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.28, w / 2, h / 2, Math.max(w, h) * 0.62);
+    g.addColorStop(0, 'rgba(180,0,0,0)'); g.addColorStop(1, 'rgba(150,0,10,' + a.toFixed(3) + ')');
+    ctx.save(); ctx.fillStyle = g; ctx.fillRect(0, 0, w, h); ctx.restore();
   }
 
   // 帰路コンパス: 拠点(spawn/ベッド)が遠いとき、画面端に方向矢印＋距離。広大な世界で迷子防止
