@@ -40,6 +40,8 @@ Game.Audio = (function () {
     desert:   { root: 277.18, scale: [0, 1, 4, 5, 7, 8, 11],  bpm: 100, wave: 'triangle', cut: 1900, kick: true, bassEvery: 4, arp: [0, 4, 5, 8, 7, 4], arpEvery: 2, noteVol: 0.04, bassVol: 0.045, kickVol: 0.06, prog: [0, 1, 0, -4] }, // 砂漠=エキゾチック(ダブルハーモニック)
     snow:     { root: 261.63, scale: [0, 2, 4, 7, 9],         bpm: 66,  wave: 'sine', cut: 1200, kick: false, bassEvery: 8, arp: [0, 7, 9, 4, 7, 2], arpEvery: 2, noteVol: 0.04, bassVol: 0.038, kickVol: 0,     prog: [0, -3, 5, 0] },   // 雪原=静謐(ペンタ)
     meadow:   { root: 329.63, scale: [0, 2, 4, 7, 9],         bpm: 84,  wave: 'triangle', cut: 1700, kick: false, bassEvery: 8, arp: [0, 4, 7, 9, 7, 4], arpEvery: 2, noteVol: 0.042, bassVol: 0.04, kickVol: 0, prog: [0, -3, 5, 7] },   // 花の野=穏やかな田園(明るいペンタ)
+    // メインテーマ(タイトル)=壮大で郷愁を誘う冒険の主題。光と影の二相を宿す(希望のリディアン+短調の陰り)。ベル主旋律+深いドローン+聖歌スウェル+遠い鼓動
+    title:    { root: 293.66, scale: [0, 2, 4, 6, 7, 9, 11],  bpm: 72,  wave: 'sine', cut: 2200, kick: false, bassEvery: 8, arp: [0, 4, 7, 11, 9, 7, 4, 2], arpEvery: 2, noteVol: 0.05, bassVol: 0.036, kickVol: 0, prog: [0, 5, -3, 7], bell: true, send: 2.4, drone: 0.05, swell: 0.05, heartbeat: 0.05, padDetune: 10, padVol: 0.024 },
     // 新エリア3種(空島/古代都市/狭間) — 拡張フィールド(bell/pluck/drone/heartbeat/pulse/sub/hatRandom/swell/send/padDetune/padVol)は
     // tickBGM 側で存在チェックして使う。未指定ジャンルは従来と完全に同じ挙動
     sky:      { root: 349.23, scale: [0, 2, 4, 6, 7, 9, 11],  bpm: 76,  wave: 'sine', cut: 2400, kick: false, bassEvery: 16, arp: [0, 4, 6, 11, 9, 7], arpEvery: 4, noteVol: 0.045, bassVol: 0.028, kickVol: 0, prog: [0, 2, 7, 4],  bell: true, send: 2.2, pulse: 0.035, padDetune: 11, padVol: 0.021 }, // 空島=澄んだ浮遊感(リディアン・ベルリード・キックレス柔パルス・残響たっぷり)
@@ -54,7 +56,7 @@ Game.Audio = (function () {
     // 影の世界=光と別ゲーの音。ロクリアン的な不協・深いドローン+サブ・不規則ハットで常に不穏
     shadowrealm: { root: 155.56, scale: [0, 1, 3, 5, 6, 8, 10], bpm: 68, wave: 'triangle', cut: 1150, kick: false, bassEvery: 8, arp: [0, 3, 6, 8, 6, 3], arpEvery: 4, noteVol: 0.04, bassVol: 0.046, kickVol: 0, prog: [0, -4, 1, -2], drone: 0.065, sub: 0.05, hatRandom: true, swell: 0.045 },
   };
-  const MOOD_GENRE = { title: 'meadow', day: 'animepop', night: 'city', shadow: 'shadowrealm', cave: 'classic', boss: 'edm', space: 'space', desert: 'desert', snow: 'snow', meadow: 'meadow', sky: 'sky', ruins: 'ruins', rift: 'rift',
+  const MOOD_GENRE = { title: 'title', day: 'animepop', night: 'city', shadow: 'shadowrealm', cave: 'classic', boss: 'edm', space: 'space', desert: 'desert', snow: 'snow', meadow: 'meadow', sky: 'sky', ruins: 'ruins', rift: 'rift',
     boss1: 'boss1', boss2: 'boss2', boss3: 'boss3', boss4: 'boss4', boss5: 'boss5', shadowrealm: 'shadowrealm' };
 
   function ensure() {

@@ -28,6 +28,8 @@ button { font-family: inherit; touch-action: manipulation; }
 /* ===== タイトル ===== */
 /* タイトル: 光と影の二相を表す生きた背景 */
 #title-screen { overflow-x: hidden; } /* 縦は .overlay の overflow-y:auto を活かす(横画面で下部が見切れないように) */
+#title-fx { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; display: block; }
+#title-screen .title-box { z-index: 2; }
 #title-screen::before { content: ''; position: fixed; inset: -20%; z-index: -1;
   background:
     radial-gradient(circle at 22% 30%, rgba(110,196,107,0.22), transparent 42%),
@@ -56,11 +58,13 @@ button { font-family: inherit; touch-action: manipulation; }
 .title-box h1 { font-size: 2.2rem; line-height: 1.05; letter-spacing: 2px; color: #6fc46b; text-shadow: 0 2px 0 #1d3a1b; }
 .title-box h1 span { color: #e8c54a; }
 /* リファインしたタイトル */
-.game-title { display: flex; flex-direction: column; align-items: center; gap: 0; margin-bottom: 4px; line-height: 1; }
+.game-title { display: flex; flex-direction: column; align-items: center; gap: 0; margin-bottom: 4px; line-height: 1; animation: titleFloat 6.5s ease-in-out infinite; }
+@keyframes titleFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+@keyframes titleGlowPulse { 0%,100% { filter: drop-shadow(0 1px 0 #14331c) drop-shadow(0 0 10px rgba(90,220,130,0.22)); } 50% { filter: drop-shadow(0 1px 0 #14331c) drop-shadow(0 0 22px rgba(110,240,150,0.5)); } }
 .game-title .t-haru { font-size: 2.7rem; font-weight: 900; letter-spacing: 6px;
   background: linear-gradient(180deg, #eafff0 0%, #7fe089 45%, #2f9d57 100%); -webkit-background-clip: text; background-clip: text; color: transparent;
-  text-shadow: 0 2px 10px rgba(60,200,110,0.35); filter: drop-shadow(0 1px 0 #14331c) drop-shadow(0 0 14px rgba(90,220,130,0.28));
-  animation: titleWordIn .8s cubic-bezier(.2,.8,.3,1) both .12s; }
+  text-shadow: 0 2px 10px rgba(60,200,110,0.35);
+  animation: titleWordIn .8s cubic-bezier(.2,.8,.3,1) both .12s, titleGlowPulse 4.5s ease-in-out infinite 1s; }
 .game-title .t-surv { font-size: 1.55rem; font-weight: 800; letter-spacing: 12px; margin-top: 2px; margin-left: 12px;
   background: linear-gradient(180deg, #fff3c8, #e8c54a 60%, #b88a1e); -webkit-background-clip: text; background-clip: text; color: transparent;
   filter: drop-shadow(0 0 10px rgba(232,197,74,0.25));
