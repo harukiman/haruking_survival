@@ -87,11 +87,12 @@ Game.Save = (function () {
     } catch (e) { return false; }
   }
 
-  // イベント駆動オートセーブ: ネット参加者(非ホスト)は保存せず、短時間の連発をスロットルし、
-  // 控えめなインジケータを表示する。reason==='force' でスロットルを無視。
+  // イベント駆動オートセーブ: 短時間の連発をスロットルし、控えめなインジケータを表示。
+  // reason==='force' でスロットルを無視。
+  // ⑱ MPゲストも自分の進捗(レベル/インベントリ/スキル/所持世界のコピー)を保存する。
+  // 次回「つづきから」で自分のスロットに、共有世界のコピー＋育てたキャラで再開できる。
   let lastAuto = 0;
   function autosave(reason) {
-    if (Game.Net && Game.Net.isConnected && Game.Net.isConnected() && !Game.Net.host) return false; // ゲストはホスト世界を保存しない
     const t = (typeof performance !== 'undefined' && performance.now) ? performance.now() : 0;
     if (reason !== 'force' && (t - lastAuto) < 4000) return false; // 4秒スロットル(イベント連発対策)
     lastAuto = t;
