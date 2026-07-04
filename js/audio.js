@@ -551,6 +551,12 @@ Game.Audio = (function () {
     boat:   { osc: 'triangle', hz: 66,  oscVol: 0.45, filt: 'bandpass', cut: 520,  q: 0.8, noiseVol: 0.7,  lfoHz: 4.5, lfoDepth: 0.55, vol: 0.055 },
     plane:  { osc: 'sawtooth', hz: 122, oscVol: 0.5,  filt: 'bandpass', cut: 950,  q: 0.6, noiseVol: 0.45, lfoHz: 15,  lfoDepth: 0.1,  vol: 0.045 },
     carpet: { osc: 'sine',     hz: 194, oscVol: 0.35, filt: 'highpass', cut: 2600, q: 0.5, noiseVol: 0.16, lfoHz: 0.9, lfoDepth: 0.35, vol: 0.032 },
+    // 新規乗り物ごとに音色を差別化(バギー=荒い/戦車=重い履帯/ロボ=サーボ/戦闘機=タービン/爆撃機=四発プロペラ)
+    buggy:  { osc: 'sawtooth', hz: 72,  oscVol: 0.5,  filt: 'lowpass',  cut: 300,  q: 0.7, noiseVol: 0.5,  lfoHz: 14,  lfoDepth: 0.3,  vol: 0.052 },
+    tank:   { osc: 'sawtooth', hz: 38,  oscVol: 0.6,  filt: 'lowpass',  cut: 170,  q: 0.9, noiseVol: 0.55, lfoHz: 6,   lfoDepth: 0.5,  vol: 0.06 },
+    mech:   { osc: 'square',   hz: 88,  oscVol: 0.42, filt: 'bandpass', cut: 620,  q: 1.2, noiseVol: 0.35, lfoHz: 3.2, lfoDepth: 0.6,  vol: 0.05 },
+    jet:    { osc: 'sawtooth', hz: 240, oscVol: 0.5,  filt: 'bandpass', cut: 1800, q: 0.5, noiseVol: 0.5,  lfoHz: 22,  lfoDepth: 0.08, vol: 0.048 },
+    bomber: { osc: 'sawtooth', hz: 96,  oscVol: 0.52, filt: 'bandpass', cut: 760,  q: 0.7, noiseVol: 0.55, lfoHz: 9,   lfoDepth: 0.35, vol: 0.052 },
   };
   const veh = { want: null, inten: 0, built: false, osc: null, oscG: null, nF: null, nG: null, lfo: null, lfoG: null, gain: null };
   function buildVehicleLoop() {
