@@ -1316,7 +1316,9 @@ Game.DAY_LENGTH = 24000;  // 1日のtick数（昼夜は次波で本格化）
       AFFIX.forEach(function (A) {
         const id = 'gen_' + B.k + '_' + T.k + (A.k ? '_' + A.k : '');
         const atk = Math.max(1, Math.round(B.atk * T.m) + (A.atk || 0) + T.t);
-        reg(id, { name: (A.jp || '') + T.jp + 'の' + B.jp, stack: 1, color: A.c || T.c, tool: 'sword', tier: Math.min(5, T.t), attack: atk }, T.t);
+        const gdef = { name: (A.jp || '') + T.jp + 'の' + B.jp, stack: 1, color: A.c || T.c, tool: 'sword', tier: Math.min(5, T.t), attack: atk };
+        if (A.k === 'flame') gdef.hitDot = 'fire'; else if (A.k === 'frost') gdef.hitDot = 'frost'; // 名前通り炎上/凍えを付与(元素システムに接続)
+        reg(id, gdef, T.t);
       });
     });
   });

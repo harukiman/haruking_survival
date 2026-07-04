@@ -150,9 +150,11 @@ Game.Loot = (function () {
   }
   // 武器に付いた元素付与(業火/氷結/猛毒)の kind 一覧。命中時 applyDot に使う
   function dotKinds(slot) {
-    if (!slot || !slot.roll || !slot.roll.affixes) return null;
+    if (!slot) return null;
     let ds = null;
-    for (let i = 0; i < slot.roll.affixes.length; i++) { const a = slot.roll.affixes[i]; if (a.dot) { (ds || (ds = [])).push(a.dot); } }
+    const def = Game.ITEMS[slot.id];
+    if (def && def.hitDot) (ds || (ds = [])).push(def.hitDot); // 武器そのものの元素(業火/氷結の基礎装備・魔法武器)
+    if (slot.roll && slot.roll.affixes) for (let i = 0; i < slot.roll.affixes.length; i++) { const a = slot.roll.affixes[i]; if (a.dot && (!ds || ds.indexOf(a.dot) < 0)) { (ds || (ds = [])).push(a.dot); } }
     return ds;
   }
 
