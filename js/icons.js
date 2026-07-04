@@ -42,6 +42,9 @@ Game.Icons = (function () {
     if (/^ammo_|^shell|^bullet$|rocket_ammo|energy_cell/.test(id)) return 'ammo';
     if (def.place != null) return 'block';
     if (/ore|_bar|_ore$|^iron$|^coal$|^stone$|crystal|lumen|shadow_steel|star_metal|star_core|chitin|shadow_core|void_heart|shadow_shard|_shard/.test(id)) return 'material';
+    // 追加素材(中間素材/有機/鉱物系)も material へ回して形を付ける
+    if (/gunpowder|gun_parts|steel_plate|rope|glass|circuit|^guts$|^hide$|^leather$|^bone$|^string$|slime_ball|shadow_wood|^sulfur$|obsidian|moonshard|silk|feather|scale|web|wool|fiber|cloth|^wood$|glow_spore|luminous_cap|spore|_steel$|_alloy$|kokuhen|_metal$|wind_ore|wind_feather/.test(id)) return 'material';
+    if (/aerial_bomb|heavy_bomb|cannon_shell|_bomb$/.test(id)) return 'bomb'; // 爆弾類は爆弾アイコン
     return 'misc';
   }
 
