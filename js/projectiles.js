@@ -125,6 +125,7 @@ Game.Projectiles = (function () {
     }
     if (Game.Mobs.alertNoise) Game.Mobs.alertNoise(x, y, 13 + radiusTiles, 180); // 爆発音で周囲の敵を引き寄せる
     if (Game.World.blastTerrain) Game.World.blastTerrain(x, y, radiusTiles); // 木/岩/基本構造物を破壊しアイテム化(鉱石除く)
+    if (Game.World.ignite) Game.World.ignite(x, y, radiusTiles + 1, kind === 'fire' ? 0.6 : 0.3); // 爆発で周囲の可燃物が発火(延焼)
     Game.Render.spawnParticles(x, y, '#ff8a3c', 24);
     Game.Render.spawnParticles(x, y, '#ffe27a', 16);
     Game.Render.spawnParticles(x, y, '#57504a', 10); // 破片(デブリ)が飛び散る
@@ -230,11 +231,14 @@ Game.Projectiles = (function () {
         if (pr.returning) { const dx = pl.x - pr.x, dy = pl.y - pr.y, l = Math.hypot(dx, dy) || 1; const sp = Math.hypot(pr.vx, pr.vy); pr.vx = dx / l * sp; pr.vy = dy / l * sp; if (l < 18) { arr.splice(i, 1); continue; } }
       }
       pr.x += pr.vx; pr.y += pr.vy; pr.life--;
+      // 火属性の飛来弾は通過した可燃タイルに火を放つ(火炎放射器/炎の弾が野を焼く)。プレイヤー由来のみ
+      if (pr.kind === 'fire' && !pr.hostile && Game.World.ignite && Math.random() < 0.35) Game.World.ignite(pr.x, pr.y, 0, 1);
       // 壁（solid）に当たれば消滅（貫通/ブーメランは壁を無視）
       const tx = Math.floor(pr.x / TS), ty = Math.floor(pr.y / TS);
       const o = Game.World.objAt(tx, ty), meta = Game.OBJ_META[o];
       if (meta && meta.solid && !pr.pierce && !pr.boomerang) {
         if (pr.explosive) explode(pr.x, pr.y, pr.explosive, pr.dmg, pr.kind);
+        if (pr.kind === 'fire' && !pr.hostile && Game.World.ignite) Game.World.ignite(pr.x, pr.y, 1, 0.5); // 炎弾が着弾点周囲を発火
         // 遠距離攻撃で自然オブジェクト(木/石/鉱石など)を破壊できる。設置物/チェストは誤破壊しない
         const breakable = !pr.hostile && meta.mineable && meta.hp != null && o < 100 && o !== Game.OBJ.CHEST && o !== Game.OBJ.TREASURE_CHEST && o !== Game.OBJ.SEAL_WALL;
         if (breakable) damageObject(tx, ty, o, meta, pr.explosive ? pr.dmg * 3 : pr.dmg, pr.x, pr.y);

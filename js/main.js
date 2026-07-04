@@ -260,6 +260,7 @@ window.Game = window.Game || {};
     Game.Events.update();
     Game.Mobs.update();
     Game.Projectiles.update();
+    if (Game.state.fires && Game.state.fires.length) Game.World.updateFire();
     if (Game.state.tick % 30 === 0) Game.Farming.update();
     if (Game.state.tick % 30 === 15) Game.Quests.update();
     if (Game.Discovery && Game.state.tick % 15 === 7) Game.Discovery.scan();

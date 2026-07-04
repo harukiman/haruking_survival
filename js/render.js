@@ -129,6 +129,7 @@ Game.Render = (function () {
     drawFuel(ctx);
     drawVehDur(ctx);
     drawWreck(ctx);
+    drawFires(ctx);
     drawDrops(ctx);
     Game.Mobs.draw(ctx, alpha);
     drawPeers(ctx);
@@ -692,6 +693,31 @@ Game.Render = (function () {
     ctx.restore();
   }
   // 死の灰ゾーン: 放射性の緑の円＋うごめく粒子(常時危険)
+  // 燃え盛る炎: 各火災タイルに揺らめく炎＋熱の明かり(延焼の視認)
+  function drawFires(ctx) {
+    const fires = Game.state.fires; if (!fires || !fires.length) return;
+    const TS = Game.CFG.TILE_SIZE, z = Game.Camera.zoom ? Game.Camera.zoom() : 1, t = Game.state.tick;
+    ctx.save();
+    for (let i = 0; i < fires.length; i++) {
+      const f = fires[i], sc = Game.Camera.worldToScreen(f.tx * TS + TS / 2, f.ty * TS + TS / 2);
+      if (sc.x < -30 || sc.y < -30 || sc.x > Game.view.w + 30 || sc.y > Game.view.h + 30) continue;
+      const fade = f.t < 12 ? f.t / 12 : 1;                 // 消える間際は弱まる
+      // 熱の明かり
+      const gr = ctx.createRadialGradient(sc.x, sc.y, 0, sc.x, sc.y, TS * 0.9 * z);
+      gr.addColorStop(0, 'rgba(255,150,60,' + (0.32 * fade).toFixed(3) + ')'); gr.addColorStop(1, 'rgba(255,120,40,0)');
+      ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(sc.x, sc.y, TS * 0.9 * z, 0, Math.PI * 2); ctx.fill();
+      // 揺らめく炎(3枚の重なる舌)
+      for (let k = 0; k < 3; k++) {
+        const ph = t * 0.3 + i * 1.7 + k * 2.1, sway = Math.sin(ph) * TS * 0.14 * z;
+        const bx = sc.x + (k - 1) * TS * 0.22 * z, by = sc.y + TS * 0.34 * z;
+        const hgt = (TS * (0.6 + 0.22 * Math.sin(ph * 1.3)) * z) * fade;
+        ctx.fillStyle = k === 1 ? 'rgba(255,225,120,0.95)' : 'rgba(255,140,50,0.9)';
+        ctx.beginPath(); ctx.moveTo(bx - TS * 0.16 * z, by); ctx.quadraticCurveTo(bx + sway, by - hgt * 0.6, bx + sway, by - hgt);
+        ctx.quadraticCurveTo(bx - sway, by - hgt * 0.6, bx + TS * 0.16 * z, by); ctx.closePath(); ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
   function drawFallout(ctx) {
     const fs = Game.state.fallout; if (!fs || !fs.length) return;
     const z = Game.Camera.zoom ? Game.Camera.zoom() : 1, t = Game.state.tick;

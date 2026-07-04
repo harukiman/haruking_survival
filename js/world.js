@@ -376,8 +376,86 @@ Game.World = (function () {
     if (Game.Achievements) Game.Achievements.unlock('resonance');
   }
 
+  // ===== 火災の延焼(世界の反応性) =====
+  // 火属性の攻撃/爆発で可燃物が発火→隣接の可燃物へ延焼→燃え尽きて消失。火中のエンティティは燃焼。
+  const FLAMMABLE_OBJ = {};
+  [Game.OBJ.TREE, Game.OBJ.PINE_TREE, Game.OBJ.DEAD_TREE, Game.OBJ.BUSH, Game.OBJ.BERRY_BUSH, Game.OBJ.FLOWER,
+   Game.OBJ.SHADOW_TREE, Game.OBJ.GIANT_MUSHROOM, Game.OBJ.GLOW_SHROOM, Game.OBJ.POISON_MUSHROOM,
+   Game.OBJ.WOOD_BLOCK, Game.OBJ.FENCE, Game.OBJ.DOOR, Game.OBJ.WOOD_FLOOR, Game.OBJ.BRIDGE, Game.OBJ.SIGN,
+   Game.OBJ.SAPLING, Game.OBJ.BED, Game.OBJ.CRAFTING_TABLE].forEach(function (o) { if (o != null) FLAMMABLE_OBJ[o] = 1; });
+  const WOODY = {};
+  [Game.OBJ.TREE, Game.OBJ.PINE_TREE, Game.OBJ.DEAD_TREE, Game.OBJ.SHADOW_TREE, Game.OBJ.WOOD_BLOCK, Game.OBJ.FENCE, Game.OBJ.DOOR, Game.OBJ.WOOD_FLOOR, Game.OBJ.BRIDGE].forEach(function (o) { if (o != null) WOODY[o] = 1; });
+  const FLAMMABLE_GROUND = {};
+  [Game.TILE.GRASS, Game.TILE.FOREST, Game.TILE.BLOOM].forEach(function (t) { if (t != null) FLAMMABLE_GROUND[t] = 1; });
+  const FIRE_CAP = 180;
+  function tileFlammable(tx, ty) {
+    const o = objAt(tx, ty);
+    if (FLAMMABLE_OBJ[o]) return 'obj';
+    if (o === Game.OBJ.NONE && FLAMMABLE_GROUND[groundAt(tx, ty)]) return 'ground';
+    return null;
+  }
+  function igniteTile(tx, ty) {
+    if (!Game.state.fires) Game.state.fires = [];
+    const fires = Game.state.fires;
+    if (fires.length >= FIRE_CAP) return false;
+    for (let i = 0; i < fires.length; i++) if (fires[i].tx === tx && fires[i].ty === ty) return false;
+    const kind = tileFlammable(tx, ty); if (!kind) return false;
+    const isObj = kind === 'obj';
+    fires.push({ tx: tx, ty: ty, t: isObj ? (90 + ((tx * 7 + ty * 13) & 31)) : (40 + ((tx * 5 + ty * 11) & 15)), obj: isObj });
+    return true;
+  }
+  // 火属性攻撃/爆発の発火: 中心タイル＋周囲(半径)を確率で発火
+  function ignite(cx, cy, radiusTiles, chance) {
+    const TS = Game.CFG.TILE_SIZE, ctx = Math.floor(cx / TS), cty = Math.floor(cy / TS);
+    const R = Math.max(0, radiusTiles | 0), ch = chance == null ? 1 : chance; let n = 0;
+    for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++) {
+      if (dx * dx + dy * dy > (R + 0.5) * (R + 0.5)) continue;
+      if ((dx || dy) && Math.random() > ch) continue;
+      if (igniteTile(ctx + dx, cty + dy)) n++;
+    }
+    return n;
+  }
+  function updateFire() {
+    const fires = Game.state.fires; if (!fires || !fires.length) return;
+    const TS = Game.CFG.TILE_SIZE, tick = Game.state.tick, p = Game.state.player, mobs = Game.state.mobs;
+    const pTx = Math.floor(p.x / TS), pTy = Math.floor(p.y / TS);
+    const spreadPhase = tick % 3 === 0, dmgPhase = tick % 12 === 0;
+    for (let i = fires.length - 1; i >= 0; i--) {
+      const f = fires[i];
+      f.t--;
+      if ((tick & 3) === (i & 3) && Game.Render.spawnParticles) Game.Render.spawnParticles(f.tx * TS + TS / 2 + (Math.random() - 0.5) * TS * 0.6, f.ty * TS + TS * 0.4, Math.random() < 0.5 ? '#ff8a3c' : '#ffd24a', 1);
+      if (dmgPhase) {
+        if (pTx === f.tx && pTy === f.ty && !p.vehicle) { if (Game.Status && Game.Status.add) Game.Status.add('burn', 72); else Game.Survival.damage(3, 'status'); }
+        for (let m = 0; m < mobs.length; m++) { const mo = mobs[m]; if (mo.def.friendly) continue; if (Math.floor(mo.x / TS) === f.tx && Math.floor(mo.y / TS) === f.ty && Game.Mobs.applyDot) Game.Mobs.applyDot(mo, 'fire'); }
+      }
+      if (spreadPhase && f.t > 6) {
+        // 4方向へ延焼。可燃物(木/木造)はよく燃え移り、草地は弱い伝播で野火が無限拡大しないよう抑制。
+        // さらに延焼先は「オブジェクト優先」: 草より木へ燃え移りやすく、森は燃えるが草原は自然鎮火しやすい。
+        const pObj = f.obj ? 0.14 : 0.05;   // 発火源が木造ほど勢いが強い
+        const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+        for (let d = 0; d < 4; d++) {
+          const nx = f.tx + dirs[d][0], ny = f.ty + dirs[d][1], k = tileFlammable(nx, ny);
+          if (!k) continue;
+          const chance = k === 'obj' ? pObj : pObj * 0.35; // 草地への燃え移りは更に控えめ
+          if (Math.random() < chance) igniteTile(nx, ny);
+        }
+      }
+      if (f.t <= 0) {
+        const o = objAt(f.tx, f.ty);
+        if (FLAMMABLE_OBJ[o]) {
+          setObj(f.tx, f.ty, Game.OBJ.NONE);
+          if (Game.Net && Game.Net.broadcastEdit) Game.Net.broadcastEdit(f.tx, f.ty, Game.OBJ.NONE, Game.state.worldName);
+          if (WOODY[o] && Math.random() < 0.35 && Game.state.drops) Game.state.drops.push({ id: 'coal', count: 1, x: f.tx * TS + TS / 2, y: f.ty * TS + TS / 2 });
+          if (Game.Render.spawnParticles) Game.Render.spawnParticles(f.tx * TS + TS / 2, f.ty * TS + TS / 2, '#3a3330', 8);
+        }
+        fires.splice(i, 1);
+      }
+    }
+  }
+
   return {
     Chunk, getChunk, groundAt, objAt, setObj, setGround,
+    ignite, igniteTile, updateFire,
     getTileData, setTileData, clearTileData,
     isWalkable, updateChunks, toChunkCoord, rescueStuck: nudgeToWalkable,
     setActiveWorld, shift, setObjBothWorlds, resonate, depthOf, inDepths, isSheltered, blastTerrain, travelTo,
