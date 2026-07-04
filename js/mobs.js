@@ -342,10 +342,23 @@ Game.Mobs = (function () {
 
   // 弾の種類→敵の状態異常付与（fire=燃焼/venom・hex=毒/frost=鈍足）
   const KIND_DOT = { fire: ['burn', 150], venom: ['poison', 180], hex: ['poison', 150], frost: ['slow', 150] };
+  // 元素反応: 熱衝撃(炎↔凍)。燃えている敵に凍/凍えている敵に炎を重ねると急激な温度差でバースト＋両状態を消費。
+  // 属性を「重ねる」読み合いに意味を持たせる(密度A)。
+  function thermalShock(m) {
+    const dmg = Math.max(7, Math.round((m.def.hp || 30) * 0.13));
+    if (m.dot) { m.dot.burn = 0; m.dot.slow = 0; }
+    if (Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - m.def.size * 0.6, '熱衝撃!', '#ffd0e0', true);
+    if (Game.UI && Game.UI.tipOnce) Game.UI.tipOnce('elem_thermal', '元素反応「熱衝撃」！ 炎と氷を重ねると急激な温度差で大ダメージ。属性を切り替えて攻めよう');
+    if (Game.Render.spawnParticles) { Game.Render.spawnParticles(m.x, m.y, '#bfe4ff', 10); Game.Render.spawnParticles(m.x, m.y, '#ff9a4a', 10); }
+    if (Game.Audio) Game.Audio.play('crit');
+    damageMob(m, dmg, m.x, m.y, false);
+  }
   function applyDot(m, kind) {
     if (!m || !m.def || m.def.npc) return;
     const e = KIND_DOT[kind]; if (!e) return;
-    m.dot = m.dot || {}; m.dot[e[0]] = Math.max(m.dot[e[0]] || 0, e[1]);
+    m.dot = m.dot || {};
+    if ((kind === 'fire' && (m.dot.slow || 0) > 0) || (kind === 'frost' && (m.dot.burn || 0) > 0)) { thermalShock(m); return; }
+    m.dot[e[0]] = Math.max(m.dot[e[0]] || 0, e[1]);
   }
   // 武器由来の出血DoT: dmg/秒相当を dur フレーム継続(既存より深手を優先)
   function applyBleed(m, dmg, dur, every, col) {
@@ -992,6 +1005,14 @@ Game.Mobs = (function () {
 
   // combat.js から呼ばれる
   function damageMob(m, dmg, fromX, fromY, crit) {
+    // 元素反応: 粉砕(凍結+会心)。凍えて脆くなった敵に会心が刺さると砕けて追加ダメージ＋凍結解除
+    if (crit && m.dot && (m.dot.slow || 0) > 0) {
+      dmg = Math.round(dmg * 1.4); m.dot.slow = 0;
+      if (Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - m.def.size * 0.6, '粉砕!', '#bfe4ff', true);
+      if (Game.UI && Game.UI.tipOnce) Game.UI.tipOnce('elem_shatter', '元素反応「粉砕」！ 凍った敵に会心が刺さると砕けて追加ダメージ。まず凍らせて会心を狙え');
+      if (Game.Render.spawnParticles) Game.Render.spawnParticles(m.x, m.y, '#dff0ff', 12);
+      if (Game.Audio) Game.Audio.play('crit');
+    }
     // 弱点窓(大技回避後の隙): 被ダメ 1.6倍。回避→反撃の見返りを大きく
     if (m.vulnerable > 0) {
       dmg = Math.round(dmg * 1.6);
