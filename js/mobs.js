@@ -821,7 +821,10 @@ Game.Mobs = (function () {
     const items = [];
     if (m.def.drops) {
       m.def.drops.forEach(function (d) {
-        const n = Game.Utils.randInt(Math.random, d.n[0], d.n[1]);
+        let n = Game.Utils.randInt(Math.random, d.n[0], d.n[1]);
+        // ドロップ調整(ユーザー指示): 素材のばら撒きを抑え、固有(稀)ドロップの出現率も下げる
+        if (d.n[0] === 0) { if (n > 0 && Math.random() < 0.45) n = 0; } // 固有/稀ドロップ(n[0]=0)を約45%減
+        else if (n > 1 && Math.random() < 0.35) n -= 1;                  // 通常素材の量を控えめに
         for (let k = 0; k < n; k++) items.push({ id: d.item, count: 1 });
       });
     }
