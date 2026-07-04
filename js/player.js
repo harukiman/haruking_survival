@@ -1510,10 +1510,15 @@ Game.Player = (function () {
   // 扇状に拡散させず、微小なばらつきのみ。弾薬は発射時に1消費済みで、ここでは消費しない。
   function updateJetBurst(p) {
     const ang = p.jetBurstDir || 0, dmg = p.jetBurstDmg || 6, sp = 13;
-    const shots = Math.min(2, p.jetBurst);
+    // 1tickあたりの発射数(既定2.5=ミニガンの2.5倍レート)。端数はアキュムレータで持ち越す
+    const jd = Game.ITEMS.fighter_jet && Game.ITEMS.fighter_jet.jetGun;
+    const rate = (jd && jd.rate) || 2.5;
+    p.jetEmitAcc = (p.jetEmitAcc || 0) + rate;
+    let shots = Math.floor(p.jetEmitAcc); p.jetEmitAcc -= shots;
+    shots = Math.min(shots, p.jetBurst);
     for (let i = 0; i < shots; i++) {
       const jit = (Math.random() - 0.5) * 0.05; // 真っ直ぐ寄りの微小ばらつき
-      Game.Projectiles.fire(dmg, 'tracer', { angle: ang + jit, speed: sp });
+      Game.Projectiles.fire(dmg, 'tracer', { angle: ang + jit, speed: sp, jetRound: true });
     }
     p.jetBurst -= shots;
     // マズルフラッシュと発砲音・振動(流し撃ちの手触り)。重く速い機首砲音を毎tick鳴らす

@@ -257,8 +257,10 @@ Game.Input = (function () {
     const menuOpen = Game.state && Game.state.paused; // メニュー中はカーソルでボタン操作するため維持
     if (Math.abs(rx) > 0.16 || Math.abs(ry) > 0.16) {
       cursor.active = true; padIdle = 0;
-      cursor.x = clamp(cursor.x + rx * Math.abs(rx) * 13, 0, Game.view ? Game.view.w : window.innerWidth);
-      cursor.y = clamp(cursor.y + ry * Math.abs(ry) * 13, 0, Game.view ? Game.view.h : window.innerHeight);
+      // カーソル感度: 設定 padCursor(%) で速度を調整(既定100=×13)。動かすのが間に合わない時は上げる
+      const cspd = 13 * (((Game.Settings && Game.Settings.get('padCursor')) || 100) / 100);
+      cursor.x = clamp(cursor.x + rx * Math.abs(rx) * cspd, 0, Game.view ? Game.view.w : window.innerWidth);
+      cursor.y = clamp(cursor.y + ry * Math.abs(ry) * cspd, 0, Game.view ? Game.view.h : window.innerHeight);
       mouse.x = cursor.x; mouse.y = cursor.y; mouse.inside = true; mouse.moved = true;
     } else if (cursor.active && !menuOpen) {
       // スティックを離した: 数フレーム後にカーソルを消し、方向照準へ切替

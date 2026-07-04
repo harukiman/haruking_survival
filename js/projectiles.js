@@ -78,6 +78,7 @@ Game.Projectiles = (function () {
       const pr = spawn(p.x + ux * 14, p.y + uy * 14, ux * sp, uy * sp, dmg, kind, false, null, opts.explosive || 0);
       pr.ang = ang;
       if (opts.crit) pr.crit = true;
+      if (opts.jetRound) pr.jetRound = true; // 戦闘機の機首砲弾: 特殊物以外の地形を破壊できる
       if (opts.impact) pr.icol = opts.impact; // 口径別の着弾スパーク色(演出のみ)
       if (opts.pierce || kind === 'slash' || kind === 'pierce' || kind === 'laser') { pr.pierce = true; pr.hits = {}; }
       if (opts.chain || kind === 'chain') { pr.chain = opts.chain || 3; }
@@ -284,6 +285,17 @@ Game.Projectiles = (function () {
         if (pr.shell) explodeShell(pr.x, pr.y, pr.blastDmg, pr.blastRadius, pr.knock, null);
         else if (pr.explosive) explode(pr.x, pr.y, pr.explosive, pr.dmg, pr.kind);
         if (pr.kind === 'fire' && !pr.hostile && Game.World.ignite) Game.World.ignite(pr.x, pr.y, 1, 0.5); // 炎弾が着弾点周囲を発火
+        // 戦闘機の機首砲弾: 封印壁/チェスト/共鳴核など特殊物以外の mineable 物を破壊できる(高位鉱石=o>=100も対象)。
+        // 硬い鉱石(ツルハシ用tier1+)は1発の削り量を hp/5 に抑え、耐久が削れた~5発目で破壊。木/岩など柔物は通常dmgで即砕く。
+        if (pr.jetRound && !pr.hostile) {
+          const protectedObj = (o === Game.OBJ.CHEST || o === Game.OBJ.TREASURE_CHEST || o === Game.OBJ.SEAL_WALL || o === Game.OBJ.RESONANCE_CORE);
+          if (meta.mineable && meta.hp != null && !protectedObj) {
+            const hard = meta.tool === 'pickaxe' && (meta.tier || 0) >= 1; // 鉱石/硬い岩
+            const perHit = hard ? Math.max(1, Math.ceil(meta.hp / 5)) : pr.dmg;
+            damageObject(tx, ty, o, meta, perHit, pr.x, pr.y);
+          } else { Game.Render.spawnParticles(pr.x, pr.y, '#caa86a', 3); if (Game.Render.spawnImpact) Game.Render.spawnImpact(pr.x, pr.y, pr.icol || '#c9cdd6'); }
+          arr.splice(i, 1); continue;
+        }
         // 遠距離攻撃で自然オブジェクト(木/石/鉱石など)を破壊できる。設置物/チェストは誤破壊しない
         const breakable = !pr.hostile && meta.mineable && meta.hp != null && o < 100 && o !== Game.OBJ.CHEST && o !== Game.OBJ.TREASURE_CHEST && o !== Game.OBJ.SEAL_WALL;
         if (breakable) damageObject(tx, ty, o, meta, pr.explosive ? pr.dmg * 3 : pr.dmg, pr.x, pr.y);

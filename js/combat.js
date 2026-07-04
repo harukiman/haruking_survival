@@ -59,7 +59,7 @@ Game.Combat = (function () {
       return true;
     }
     // 戦闘機の機首砲: 攻撃1タップで真っ直ぐ10連射のバーストを開始(弾丸1消費)。
-    // ミニガンの2倍レート(2発/tick)・低威力(6)の弾幕。扇状に拡散せず照準方向へ一直線。以降のtickで流し撃つ。
+    // ミニガンの2.5倍レート(2.5発/tick)の弾幕。扇状に拡散せず照準方向へ一直線。以降のtickで流し撃つ。
     if (p.vehicle === 'jet') {
       const jd = Game.ITEMS.fighter_jet && Game.ITEMS.fighter_jet.jetGun;
       if (!jd) return true;
@@ -69,10 +69,10 @@ Game.Combat = (function () {
       Game.Inventory.remove('bullet', 1); // 1タップ=弾薬1消費
       const mounted = (p.vehGuns && p.vehGuns.jet) || 0;
       const burst = (jd.burst || 10) + mounted * 4; // 増設機関銃で弾幕が濃くなる(基本10発)
-      p.jetBurst = burst;
+      p.jetBurst = burst; p.jetEmitAcc = 0;
       p.jetBurstDir = Game.Projectiles.aimAngle ? Game.Projectiles.aimAngle() : 0; // 照準方向を固定
       p.jetBurstDmg = Game.Player.effAttack(jd.dmg);
-      p.cannonCd = Math.ceil(burst / 2) + 2; // バースト射出中は再タップ不可
+      p.cannonCd = Math.ceil(burst / (jd.rate || 2.5)) + 2; // バースト射出中は再タップ不可
       return true;
     }
     // 爆撃機: 攻撃ボタンで搭載爆弾を投下(所持している爆弾を消費)。重い爆弾を優先

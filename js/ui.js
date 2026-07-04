@@ -1091,6 +1091,7 @@ Game.UI = (function () {
       slider('btnSize', '📐 ボタンサイズ', 70, 140) +
       slider('btnOpacity', '👁 ボタン透明度', 30, 100) +
       slider('joySens', '🕹 スティック感度', 60, 160) +
+      slider('padCursor', '🎯 カーソル感度(パッド)', 60, 320) +
       toggle('joyFollow', '🕹 スティック追従(指を追う)') +
       toggle('leftHanded', '✋ 左利き(操作左右反転)') +
       toggle('dmgNumbers', '🔢 ダメージ数値表示') +
