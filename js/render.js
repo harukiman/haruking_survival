@@ -123,6 +123,7 @@ Game.Render = (function () {
     drawTargetHighlight(ctx);
     drawMiningCrack(ctx);
     drawMeteorCast(ctx);
+    drawBreath(ctx);
     drawDrops(ctx);
     Game.Mobs.draw(ctx, alpha);
     drawPeers(ctx);
@@ -620,6 +621,21 @@ Game.Render = (function () {
   }
 
   // 隕石詠唱の着弾予告リング(詠唱の進行に合わせて充填)
+  // 呼吸(遊泳)ゲージ: 潜水中や回復途中のみ表示。プレイヤーの頭上に泡メーター
+  function drawBreath(ctx) {
+    const p = Game.state.player; if (!p || p.maxBreath == null) return;
+    if (p.breath >= p.maxBreath) return; // 満タンなら非表示
+    const sc = Game.Camera.worldToScreen(p.x, p.y), z = Game.Camera.zoom ? Game.Camera.zoom() : 1;
+    const w = 40 * z, h = 5 * z, bx = sc.x - w / 2, by = sc.y - 34 * z;
+    const frac = Math.max(0, p.breath / p.maxBreath);
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(bx - 1, by - 1, w + 2, h + 2);
+    ctx.fillStyle = frac < 0.34 ? '#ff5a5a' : '#7fd0ff';
+    ctx.fillRect(bx, by, w * frac, h);
+    ctx.fillStyle = '#bfe2f5'; ctx.font = 'bold ' + Math.round(8 * z) + 'px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('💨', sc.x, by - 3 * z); ctx.textAlign = 'left';
+    ctx.restore();
+  }
   function drawMeteorCast(ctx) {
     const p = Game.state.player; const c = p && p.casting; if (!c) return;
     const TS = Game.CFG.TILE_SIZE, sc = Game.Camera.worldToScreen(c.tx, c.ty);

@@ -34,6 +34,7 @@ Game.Player = (function () {
       xp: 0, level: 1, xpNext: 24, invSlots: 36, bts: 0,
       baseMaxHealth: 100,
       stamina: 100, maxStamina: 100,
+      breath: 360, maxBreath: 360, // 遊泳の呼吸ゲージ(12秒)
       vehicle: null, // null|'car'|'boat'|'plane'
       armor: { head: null, chest: null }, // {id, roll} インスタンス
       accessory: null, accessory2: null, // 遺物(relic) {id} ×2枠
@@ -57,6 +58,8 @@ Game.Player = (function () {
       if (Game.World.isWalkable(tx, ty)) continue;
       // ボートは水上を進める
       if (v === 'boat') { const g = Game.World.groundAt(tx, ty); if (g === Game.TILE.WATER || g === Game.TILE.DEEP_WATER) continue; }
+      // 徒歩は深水を遊泳できる(呼吸ゲージで制限=長距離横断は不可、外洋の島や海底ダンジョンには船が要る)
+      else if (!v) { const g = Game.World.groundAt(tx, ty); if (g === Game.TILE.DEEP_WATER) continue; }
       return true;
     }
     return false;
@@ -227,6 +230,21 @@ Game.Player = (function () {
     else if (!inDun && p._inDungeon) { p._inDungeon = false; }
     const onWater = !p.vehicle && gUnder === Game.TILE.WATER;
     if (onWater) spd *= 0.5;
+    // 遊泳(深水): 呼吸ゲージが減り、尽きると溺れて継続ダメージ。地上/ボート/浅瀬で急速回復。
+    const submerged = !p.vehicle && gUnder === Game.TILE.DEEP_WATER;
+    if (p.breath == null) p.breath = p.maxBreath || 360;
+    if (submerged) {
+      spd *= 0.6;
+      p.breath = Math.max(0, p.breath - 1);
+      if (Game.state.tick % 10 === 0 && Game.Render.spawnParticles) Game.Render.spawnParticles(p.x + (Math.random() - 0.5) * 8, p.y - 6, '#bfe2f5', 1); // 気泡
+      if (p.breath <= 0 && Game.state.tick % 18 === 0) {
+        Game.Survival.damage(4, 'drown');
+        if (Game.Render.flash) Game.Render.flash('rgba(30,80,160,0.22)');
+      }
+      if (p.breath === Math.floor((p.maxBreath || 360) * 0.34) && Game.UI) Game.UI.toast('💨 息が続かない… 早く水面へ！');
+    } else if (p.breath < (p.maxBreath || 360)) {
+      p.breath = Math.min(p.maxBreath || 360, p.breath + 5); // 地上で急速回復
+    }
     // 毒の沼地: 足が重く、稀に毒を受ける（徒歩のみ）
     if (!p.vehicle && gUnder === Game.TILE.SWAMP) {
       spd *= 0.72;
