@@ -38,7 +38,7 @@ Game.Mobs = (function () {
       hurt: 0, fleeTimer: 0, hopPhase: Math.random() * 6,
       knockX: 0, knockY: 0,
       // 個体差: 同じ種でも大きさ/色味/動き方を変えて一辺倒を避ける
-      sizeVar: 0.86 + Math.random() * 0.30,          // 0.86〜1.16
+      sizeVar: 0.78 + Math.random() * 0.46,          // 0.78〜1.24(個体差を拡大して見た目を多様化)
       tint: Math.round((Math.random() - 0.5) * 38),  // 色の明暗揺らぎ -19〜+19
       moveStyle: pickMoveStyle(type, def),
       wobble: Math.random() * 6,
@@ -813,6 +813,24 @@ Game.Mobs = (function () {
         if (m.type === 'gold_thief' && !Game.Story.seen('goldthief')) Game.Story.unlock('goldthief', true);
         if (m.type === 'shade_stalker' && !Game.Story.seen('shadewalk')) Game.Story.unlock('shadewalk', true);
         if (firstSeen && Object.keys(Game.state.bestiary).length >= 20 && !Game.Story.seen('bestiary')) Game.Story.unlock('bestiary', true);
+      }
+    }
+    // 分裂(splitter): 倒すと小型の同種が2体飛び出す。何度か分裂して群れになる戦術的な敵
+    if (m.def.split && !(Game.Net.isConnected() && !Game.Net.host)) {
+      const gen = (m.splitGen || 0);
+      if (gen < (m.def.split.max || 2) && Game.state.mobs.length < TUNE.MOB_CAP) {
+        for (let sidx = 0; sidx < 2; sidx++) {
+          const child = spawnMob(m.type, m.x + (sidx ? 10 : -10), m.y + (Math.random() - 0.5) * 8);
+          if (child) {
+            child.splitGen = gen + 1;
+            const sc = Math.pow(0.68, gen + 1);
+            child.sizeVar = (m.sizeVar || 1) * 0.72;
+            child.maxHp = child.hp = Math.max(1, Math.round(child.maxHp * sc));
+            child.dmg = Math.max(1, Math.round(child.dmg * (0.6 + gen * 0.1)));
+            child.knockX = (sidx ? 3 : -3); child.knockY = (Math.random() - 0.5) * 3;
+          }
+        }
+        if (Game.Render.spawnParticles) Game.Render.spawnParticles(m.x, m.y, m.def.color || '#8fd06a', 12);
       }
     }
     // 賞金首: 対象モブの討伐をカウント

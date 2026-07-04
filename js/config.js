@@ -906,7 +906,7 @@ Game.MOBS = {
   gold_thief:{ name:'金喰い', hostile:false, hp:46, speed:2.7, color:'#ffd24a', size:13, drops:[{item:'gold_bar',n:[3,6]},{item:'kokuhen',n:[0,1]}], skittish:true, shape:'beast', xp:30 },
   deer:     { name:'鹿', hostile:false, hp:8,  speed:1.4, color:'#a9762f', size:11, drops:[{item:'raw_meat',n:[1,3]},{item:'hide',n:[1,2]}], flee:true, xp:2 },
   sheep:    { name:'羊', hostile:false, hp:6,  speed:1.0, color:'#eee', size:10, drops:[{item:'raw_meat',n:[1,2]},{item:'hide',n:[1,2]}], flee:true, xp:1 },
-  slime:    { name:'スライム', hostile:true, hp:6,  speed:1.1, color:'#5fc46b', size:10, drops:[{item:'slime_ball',n:[1,2]},{item:'shadow_shard',n:[0,1]}], dmg:2, hop:true, xp:2, deathBurst:{r:1.4,dmg:3} },
+  slime:    { name:'スライム', hostile:true, hp:8,  speed:1.1, color:'#5fc46b', size:12, drops:[{item:'slime_ball',n:[1,2]},{item:'shadow_shard',n:[0,1]}], dmg:2, hop:true, xp:2, split:{max:2} },
   zombie:   { name:'ゾンビ', hostile:true, hp:14, speed:1.3, color:'#4a7a4a', size:11, drops:[{item:'raw_meat',n:[0,1]},{item:'guts',n:[0,1]},{item:'shadow_shard',n:[0,1]}], dmg:4, xp:3, inflict:{infection:200} },
   skeleton: { name:'スケルトン', hostile:true, hp:12, speed:1.5, color:'#dcdcd0', size:10, drops:[{item:'bone',n:[1,3]},{item:'shadow_shard',n:[0,1]}], dmg:3, xp:3, ranged:{dmg:4,range:7,cd:90,kind:'bullet'} },
   spider:   { name:'クモ', hostile:true, hp:10, speed:2.2, color:'#3a2a3a', size:12, drops:[{item:'string',n:[1,2]},{item:'shadow_shard',n:[0,1]}], dmg:3, xp:3 },
