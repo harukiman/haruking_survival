@@ -219,6 +219,7 @@ window.Game = window.Game || {};
     p.vehDur = sp.vehDur || {}; // 乗り物の耐久値を復元
     p.vehGuns = sp.vehGuns || {}; // 航空機の増設機関銃基数を復元
     Game.state.ngLevel = data.ngLevel || 0;
+    Game.state._tips = data.tips || {}; // 表示済みヒントを復元(再表示防止)
     // インベントリ（拡張済みなら容量も復元）
     if (data.inventory) {
       while (Game.state.inventory.length < data.inventory.length) Game.state.inventory.push(null);
