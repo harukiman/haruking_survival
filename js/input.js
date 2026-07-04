@@ -210,7 +210,10 @@ Game.Input = (function () {
     ['stats', 'ステータス&スキル'], ['opts', '設定メニュー'],
   ];
   function PB(a) { const m = Game.Settings && Game.Settings.get && Game.Settings.get('padbinds'); return (m && m[a] != null) ? m[a] : PAD_DEF[a]; }
-  function padLabel(a) { const b = PB(a); return 'ボタン' + b; }
+  // PS4/PS5標準配列の見やすいボタン名(Xbox/Switch Proもほぼ同一インデックス)
+  const PAD_BTN_LABELS = ['✕', '◯', '□', '△', 'L1', 'R1', 'L2', 'R2', 'SHARE', 'OPTIONS', 'L3', 'R3', '↑', '↓', '←', '→', 'PS', 'タッチパッド'];
+  function padBtnLabel(b) { return (b == null || b < 0) ? '未割当' : (PAD_BTN_LABELS[b] || ('B' + b)); }
+  function padLabel(a) { return padBtnLabel(PB(a)); }
   let padRebind = null; // {action, cb}
   function beginPadRebind(action, cb) { padRebind = { action: action, cb: cb }; }
   function resetPadBinds() { if (Game.Settings) Game.Settings.set('padbinds', Object.assign({}, PAD_DEF)); }
@@ -380,5 +383,5 @@ Game.Input = (function () {
 
   function resetBinds() { Game.Settings.set('keybinds', Object.assign({}, DEF_BINDS)); }
   return { init, poll, intent, cursor, beginRebind, keyLabel, bindAt: B, BIND_ACTIONS, resetBinds,
-    beginPadRebind, padLabel, PAD_ACTIONS, resetPadBinds };
+    beginPadRebind, padLabel, padBtnLabel, PAD_ACTIONS, resetPadBinds };
 })();
