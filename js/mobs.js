@@ -1607,6 +1607,17 @@ Game.Mobs = (function () {
         ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.beginPath(); ctx.arc(-r * 0.4, -r * 0.5, r * 0.16, 0, Math.PI * 2); ctx.fill();
         ctx.restore();
       }
+      // 炎上: 頭上に揺らめく炎(氷結の氷塊と対の常時表示。燃えている敵が一目で分かる)
+      if (m.dot && m.dot.burn > 0 && !(m.iced > 0)) {
+        const tk = Game.state.tick;
+        for (let k = 0; k < 3; k++) {
+          const ph = tk * 0.35 + k * 2.1, sway = Math.sin(ph) * r * 0.2;
+          const fx2 = (k - 1) * r * 0.42, fy2 = -r * 0.9, fh = r * (0.7 + 0.25 * Math.sin(ph * 1.4));
+          ctx.fillStyle = k === 1 ? 'rgba(255,220,110,0.9)' : 'rgba(255,120,45,0.85)';
+          ctx.beginPath(); ctx.moveTo(fx2 - r * 0.18, fy2); ctx.quadraticCurveTo(fx2 + sway, fy2 - fh * 0.6, fx2 + sway, fy2 - fh);
+          ctx.quadraticCurveTo(fx2 - sway, fy2 - fh * 0.6, fx2 + r * 0.18, fy2); ctx.closePath(); ctx.fill();
+        }
+      }
       // 目（orbは独自描画済）
       if (shape !== 'orb') {
         ctx.fillStyle = m.def.hostile ? '#e33' : '#222';
