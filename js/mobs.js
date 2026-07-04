@@ -357,7 +357,18 @@ Game.Mobs = (function () {
     if (!m || !m.def || m.def.npc) return;
     const e = KIND_DOT[kind]; if (!e) return;
     m.dot = m.dot || {};
-    if ((kind === 'fire' && (m.dot.slow || 0) > 0) || (kind === 'frost' && (m.dot.burn || 0) > 0)) { thermalShock(m); return; }
+    if ((kind === 'fire' && (m.dot.slow || 0) > 0) || (kind === 'frost' && (m.dot.burn || 0) > 0)) { thermalShock(m); m.chill = 0; return; }
+    // 氷結: 氷を重ねがけ(3スタック)すると敵が凍りつき停止。ボスは免疫、中ボスは短縮。
+    if (kind === 'frost' && !m.def.boss && (m.iced || 0) <= 0) {
+      m.chill = (m.chill || 0) + 1;
+      if (m.chill >= 3) {
+        m.chill = 0; m.iced = m.def.midboss ? 36 : 66; m.dot.slow = 0;
+        if (Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - m.def.size * 0.6, '氷結!', '#bfe4ff', true);
+        if (Game.Render.spawnParticles) Game.Render.spawnParticles(m.x, m.y, '#dff0ff', 14);
+        if (Game.UI && Game.UI.tipOnce) Game.UI.tipOnce('elem_freeze', '氷結！ 氷を重ねがけすると敵が凍りついて動けない。今のうちに会心で「粉砕」を狙え');
+        return;
+      }
+    }
     m.dot[e[0]] = Math.max(m.dot[e[0]] || 0, e[1]);
   }
   // 武器由来の出血DoT: dmg/秒相当を dur フレーム継続(既存より深手を優先)
@@ -516,7 +527,7 @@ Game.Mobs = (function () {
       if (m.alertT > 0) m.alertT--;
       // 状態異常(DoT/鈍足): 炎/毒は継続ダメージ、凍は moveMob で減速
       if (m.dot) {
-        if (m.dot.slow > 0) m.dot.slow--;
+        if (m.dot.slow > 0) { m.dot.slow--; if (m.dot.slow === 0) m.chill = 0; } // 凍え終了で氷結ゲージ減衰
         if (Game.state.tick % 20 === 0 && ((m.dot.burn || 0) > 0 || (m.dot.poison || 0) > 0)) {
           const d = ((m.dot.burn || 0) > 0 ? 2 : 0) + ((m.dot.poison || 0) > 0 ? 1 : 0);
           m.hp -= d; m.hurt = Math.max(m.hurt, 2);
@@ -580,6 +591,12 @@ Game.Mobs = (function () {
       // 時止め(砂時計): 敵は動かず攻撃もしない。プレイヤーの攻撃は通る(damageMobは別経路)
       if (Game.state.mobFreeze > 0) { m.frozen = true; continue; }
       m.frozen = false;
+      // 氷結(frost蓄積で氷漬け): 移動も攻撃もできず、粉砕(会心)の的になる。ボスは免疫(中ボスは短縮)
+      if (m.iced > 0) {
+        m.iced--;
+        if (Game.state.tick % 5 === 0 && Game.Render.spawnParticles) Game.Render.spawnParticles(m.x + (Math.random() - 0.5) * m.def.size, m.y - m.def.size * 0.3, '#cfeeff', 1);
+        continue;
+      }
 
       // 激昂の決死ノヴァ: テレグラフ後に半径 novaR の爆発。範囲外へ逃げれば回避(読み合い)
       if (m.novaT > 0) {
@@ -1421,7 +1438,8 @@ Game.Mobs = (function () {
       ctx.translate(0, r); ctx.scale(2 - breathe, breathe); ctx.translate(0, -r);
       // 本体（形状バリエーション）。状態異常で色味、個体差で明暗
       let bodyCol = m.tint ? shadeHex(m.def.color, m.tint) : m.def.color;
-      if (m.dot) {
+      if (m.iced > 0) bodyCol = '#9fd0ee'; // 氷結中は氷色
+      else if (m.dot) {
         if (m.dot.burn > 0 && Game.state.tick % 6 < 3) bodyCol = '#ff7a3a';
         else if (m.dot.poison > 0 && Game.state.tick % 12 < 6) bodyCol = '#7ad04a';
         else if (m.dot.slow > 0) bodyCol = '#8fd0ff';
@@ -1546,6 +1564,16 @@ Game.Mobs = (function () {
       drawMobFeatures(ctx, m, r, bodyCol, shape);
       // ボスは型ごとの装具(角/肩当て/フード＋魔法球/光輪/砲身)でシルエットを明確に差別化
       if (m.def.boss) drawBossRegalia(ctx, m, r, litCol, dimCol, hiCol);
+      // 氷結: 体を覆う半透明の氷塊＋白い輝きで「凍って動けない」を明示
+      if (m.iced > 0) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(190,228,255,0.42)';
+        ctx.beginPath(); roundRect(ctx, -r * 1.15, -r * 1.3, r * 2.3, r * 2.5, r * 0.3); ctx.fill();
+        ctx.strokeStyle = 'rgba(230,245,255,0.85)'; ctx.lineWidth = 1.4;
+        ctx.beginPath(); ctx.moveTo(-r * 0.5, -r * 1.2); ctx.lineTo(-r * 0.2, r * 1.0); ctx.moveTo(r * 0.6, -r * 1.0); ctx.lineTo(r * 0.3, r * 1.1); ctx.stroke();
+        ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.beginPath(); ctx.arc(-r * 0.4, -r * 0.5, r * 0.16, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      }
       // 目（orbは独自描画済）
       if (shape !== 'orb') {
         ctx.fillStyle = m.def.hostile ? '#e33' : '#222';
