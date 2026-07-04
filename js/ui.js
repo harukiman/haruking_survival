@@ -842,6 +842,22 @@ Game.UI = (function () {
     bmCtx.strokeStyle = 'rgba(180,200,240,0.5)'; bmCtx.lineWidth = 2; bmCtx.strokeRect(1, 1, size - 2, size - 2);
   }
 
+  // ホットバーのアイテム詳細をタップで表示(スマホ・コントローラ無しでも情報が読める)。
+  // インベントリと同じ tipFor の詳細を、タップしたスロットの上に一定時間ポップアップ。
+  let hbDetailTimer = null;
+  function showHotbarDetail(idx, cellEl) {
+    if (!el.tooltip) el.tooltip = document.getElementById('tooltip');
+    if (!el.tooltip || !cellEl) return;
+    const stack = Game.Inventory.slots()[idx];
+    const html = stack ? tipFor(stack) : null;
+    if (!html) { el.tooltip.style.display = 'none'; return; }
+    el.tooltip.innerHTML = html; el.tooltip.style.display = 'block';
+    const r = cellEl.getBoundingClientRect(), tw = el.tooltip.offsetWidth || 220, th = el.tooltip.offsetHeight || 80;
+    el.tooltip.style.left = Math.min(Math.max(8, r.left + r.width / 2 - tw / 2), window.innerWidth - tw - 8) + 'px';
+    el.tooltip.style.top = Math.max(8, r.top - th - 10) + 'px';
+    if (hbDetailTimer) clearTimeout(hbDetailTimer);
+    hbDetailTimer = setTimeout(function () { if (el.tooltip) el.tooltip.style.display = 'none'; }, 3200);
+  }
   function buildHotbar() {
     el.hotbar.innerHTML = '';
     for (let i = 0; i < Game.HOTBAR_SIZE; i++) {
@@ -849,8 +865,10 @@ Game.UI = (function () {
       slot.className = 'slot';
       slot.dataset.index = i;
       slot.addEventListener('click', function () {
-        Game.Inventory.setHotbar(parseInt(this.dataset.index, 10));
+        const idx = parseInt(this.dataset.index, 10);
+        Game.Inventory.setHotbar(idx);
         Game.Audio.play('select');
+        showHotbarDetail(idx, this); // スマホ・コントローラなしでもタップで詳細を表示
       });
       el.hotbar.appendChild(slot);
     }
