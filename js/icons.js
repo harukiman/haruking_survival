@@ -129,16 +129,29 @@ Game.Icons = (function () {
     const M = SIZE / 2;
     switch (cls) {
       case 'sword': {
-        // 斜めの刀身＋鍔＋柄（刃は金属グラデ＋きらめき）
+        // 武器の性質で刀身の形を変える: 大剣(幅広)/細剣(鋭)/通常
+        const big = def.aoe || def.big || /greatsword|大剣|colossus|dragon|終焉|excalibur|約束/.test(id);
+        const thin = /rapier|細|prism|gae|刺|突/.test(id) || (def.proj && def.proj.kind === 'pierce');
         ctx.save(); ctx.translate(M, M); ctx.rotate(-Math.PI / 4);
-        ctx.fillStyle = metalGradV(ctx, -4, 4, c.base);
-        ctx.beginPath(); ctx.moveTo(-3, -18); ctx.lineTo(3, -18); ctx.lineTo(4, 8); ctx.lineTo(0, 13); ctx.lineTo(-4, 8); ctx.closePath(); ctx.fill(); ctx.stroke();
-        ctx.fillStyle = c.hi; ctx.fillRect(-1, -17, 1.6, 24); // 刃の光
-        ctx.fillStyle = shade(c.base, 0.6); ctx.fillRect(2.2, -16, 1.2, 22); // 刃の陰(峰)
-        ctx.fillStyle = c.accent; ctx.fillRect(-9, 8, 18, 4); ctx.strokeRect(-9, 8, 18, 4); // 鍔
-        ctx.fillStyle = shade(c.accent, 0.6); ctx.fillRect(-2.5, 11, 5, 9); ctx.strokeRect(-2.5, 11, 5, 9); // 柄
-        grainV(ctx, -2.5, 11, 5, 9);
-        glint(ctx, 0, -13, 2.6); // 切っ先近くの金属光
+        ctx.fillStyle = metalGradV(ctx, -6, 6, c.base);
+        if (big) { // 幅広の大剣(切っ先が広く、両刃)
+          ctx.beginPath(); ctx.moveTo(-6, -18); ctx.lineTo(6, -18); ctx.lineTo(5, 6); ctx.lineTo(0, 12); ctx.lineTo(-5, 6); ctx.closePath(); ctx.fill(); ctx.stroke();
+          ctx.fillStyle = c.hi; ctx.fillRect(-0.8, -17, 1.6, 22); // 中央樋
+          ctx.fillStyle = c.accent; ctx.fillRect(-11, 6, 22, 4); ctx.strokeRect(-11, 6, 22, 4); // 大きな鍔
+          ctx.fillStyle = shade(c.accent, 0.6); ctx.fillRect(-2.5, 9, 5, 11); ctx.strokeRect(-2.5, 9, 5, 11);
+        } else if (thin) { // 細身の刺突剣
+          ctx.beginPath(); ctx.moveTo(-1.6, -20); ctx.lineTo(1.6, -20); ctx.lineTo(2, 8); ctx.lineTo(-2, 8); ctx.closePath(); ctx.fill(); ctx.stroke();
+          ctx.fillStyle = c.hi; ctx.fillRect(-0.6, -19, 1, 26);
+          ctx.strokeStyle = c.accent; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 9, 4, Math.PI * 0.2, Math.PI * 1.8); ctx.stroke(); // 湾曲ガード
+          ctx.fillStyle = shade(c.accent, 0.6); ctx.fillRect(-1.8, 9, 3.6, 10); ctx.strokeRect(-1.8, 9, 3.6, 10);
+        } else { // 標準的な片手剣
+          ctx.beginPath(); ctx.moveTo(-3, -18); ctx.lineTo(3, -18); ctx.lineTo(4, 8); ctx.lineTo(0, 13); ctx.lineTo(-4, 8); ctx.closePath(); ctx.fill(); ctx.stroke();
+          ctx.fillStyle = c.hi; ctx.fillRect(-1, -17, 1.6, 24);
+          ctx.fillStyle = shade(c.base, 0.6); ctx.fillRect(2.2, -16, 1.2, 22);
+          ctx.fillStyle = c.accent; ctx.fillRect(-9, 8, 18, 4); ctx.strokeRect(-9, 8, 18, 4);
+          ctx.fillStyle = shade(c.accent, 0.6); ctx.fillRect(-2.5, 11, 5, 9); ctx.strokeRect(-2.5, 11, 5, 9); grainV(ctx, -2.5, 11, 5, 9);
+        }
+        glint(ctx, 0, -13, 2.6);
         ctx.restore(); break;
       }
       case 'scythe': {
@@ -185,7 +198,7 @@ Game.Icons = (function () {
       }
       case 'gun': {
         // 銃種ごとに実銃に即したシルエットを描き分ける（同形を作らない）
-        const FORM = { pistol: 'pistol', glock17: 'pistol', deagle: 'pistol', mp5: 'smg', uzi: 'smg', p90: 'smg', m4: 'rifle', scar_h: 'rifle', minigun: 'rifle', ak47: 'ak', shadow_rifle: 'rifle', m870: 'shotgun', spas12: 'shotgun', barrett: 'sniper', rpg7: 'rpg', m79: 'rpg', star_cannon: 'rpg', flamethrower: 'energy', laser_rifle: 'energy', railgun: 'energy', plasma_rifle: 'energy' };
+        const FORM = { pistol: 'pistol', glock17: 'pistol', deagle: 'pistol', mp5: 'smg', uzi: 'smg', p90: 'smg', m4: 'rifle', scar_h: 'rifle', minigun: 'minigun', ak47: 'ak', shadow_rifle: 'rifle', m870: 'shotgun', spas12: 'shotgun', barrett: 'sniper', rpg7: 'rpg', m79: 'rpg', star_cannon: 'rpg', flamethrower: 'energy', laser_rifle: 'energy', railgun: 'energy', plasma_rifle: 'energy' };
         const form = FORM[id] || 'pistol';
         const body = '#1a1a1e', dark = '#0e0e11', metal = '#3a3a42', wood = '#5a3a1e';
         const R = function (x, y, w, hh, col) { ctx.fillStyle = col; ctx.fillRect(x, y, w, hh); ctx.strokeRect(x, y, w, hh); };
@@ -211,6 +224,15 @@ Game.Icons = (function () {
             ctx.fillStyle = wood; ctx.beginPath(); ctx.moveTo(22, 26); ctx.quadraticCurveTo(24, 36, 30, 38); ctx.lineTo(33, 37); ctx.quadraticCurveTo(27, 34, 26, 26); ctx.closePath(); ctx.fill(); ctx.stroke();
           } else { R(22, 26, 6, 11, dark); }  // M4は直線マガジン
           ctx.fillStyle = c.accent; ctx.fillRect(16, 17, 12, 2); // キャリングハンドル/レール
+        } else if (form === 'minigun') {
+          // M134: 回転式の六銃身＋大きな機関部＋給弾ボックス
+          R(6, 18, 16, 14, metal);           // 機関部(大きい四角)
+          ctx.fillStyle = c.accent; ctx.fillRect(7, 19, 14, 3);
+          R(4, 30, 12, 8, dark);             // グリップ/給弾
+          // 束ねた6本の銃身
+          for (let i = 0; i < 6; i++) { const by = 20 + (i % 3) * 3.2, bx = i < 3 ? 0 : 1.5; ctx.fillStyle = i % 2 ? '#111' : metal; ctx.fillRect(22 + bx, by, 20, 2.4); ctx.strokeRect(22 + bx, by, 20, 2.4); }
+          ctx.fillStyle = dark; ctx.beginPath(); ctx.arc(23, 25, 5, 0, 7); ctx.fill(); ctx.stroke(); // 回転部の輪
+          ctx.fillStyle = c.accent; ctx.beginPath(); ctx.arc(23, 25, 2, 0, 7); ctx.fill();
         } else if (form === 'shotgun') {
           R(5, 20, 36, 6, body);             // 長く太いバレル
           R(8, 26, 24, 4, metal);            // ポンプ(下)

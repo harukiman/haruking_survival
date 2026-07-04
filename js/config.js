@@ -467,7 +467,7 @@ Game.ITEMS = {
   scar_h:      { name:'SCAR-H', stack:1, color:'#3a3222', tool:'gun', mag:20, ammo:'ammo_762', fireDmg:18, cd:8, bkind:'tracer', gunsfx:'gun_rifle', flavor:'高威力弾を扱うモジュラー・バトルライフル。中距離の王。' },
   barrett:     { name:'バレットM82', stack:1, color:'#2e3228', tool:'gun', mag:10, ammo:'ammo_50', fireDmg:62, cd:44, bkind:'tracer', pierce:true, gunsfx:'gun_antimat', flavor:'対物ライフル。装甲も敵も貫く一撃。狙って撃て。' },
   spas12:      { name:'SPAS-12', stack:1, color:'#20242a', tool:'gun', mag:8, ammo:'shell_12g', fireDmg:7, cd:21, pellets:7, spread:0.55, bkind:'bullet', gunsfx:'gun_shotgun', flavor:'戦闘用セミオート散弾銃。至近の制圧力は圧巻。' },
-  minigun:     { name:'M134 ミニガン', stack:1, color:'#33352e', tool:'gun', mag:100, ammo:'ammo_556', fireDmg:7, cd:2, bkind:'tracer', spread:0.16, gunsfx:'gun_mini', flavor:'回転式多銃身の弾幕製造機。抱えて撃てば嵐が吹く。' },
+  minigun:     { name:'M134 ミニガン', stack:1, color:'#33352e', tool:'gun', mag:150, ammo:'ammo_556', fireDmg:4, cd:1, bkind:'tracer', spread:0.2, gunsfx:'gun_mini', flavor:'回転式六銃身の弾幕製造機。一発は軽いが毎秒数十発を浴びせる圧倒的連射。弾はみるみる溶ける。' },
   m79:         { name:'M79 擲弾銃', stack:1, color:'#3a3a2a', tool:'gun', mag:1, ammo:'rocket_ammo', fireDmg:14, cd:34, explosive:true, bkind:'rocket', gunsfx:'gun_launch', flavor:'単発の擲弾発射器。放物線を描いて着弾、炸裂。' },
   flamethrower:{ name:'火炎放射器', stack:1, color:'#a83a2a', tool:'gun', mag:100, ammo:'gasoline', fireDmg:5, cd:3, bkind:'fire', gunsfx:'gun_flame', flavor:'ガソリンを噴射し敵を焼き尽くす。近距離で群れを炎に包め。' },
   plasma_rifle:{ name:'プラズマライフル', stack:1, color:'#8a4ad0', tool:'gun', mag:24, ammo:'energy_cell', fireDmg:22, cd:9, bkind:'laser', pierce:true, gunsfx:'gun_energy', flavor:'高エネルギープラズマを撃ち出す未来兵器。光の刃が敵列を貫く。' },
