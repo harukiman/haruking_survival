@@ -268,6 +268,13 @@ Game.Input = (function () {
     // ===== メニュー中: 十字キー/左スティック=フォーカス移動 ×=決定 ○=戻る L1/R1=タブ =====
     const menuRoot = Game.UI && Game.UI.padMenuRoot && Game.UI.padMenuRoot();
     if (menuRoot) {
+      // 右スティック縦: メニュー本文を自由スクロール(ステータス等の長い画面を辿れる)
+      const rys = gp.axes[3] || 0;
+      if (Math.abs(rys) > 0.22) {
+        let sc = menuRoot.querySelector('.inv-box');
+        if (!sc || sc.scrollHeight <= sc.clientHeight + 2) sc = menuRoot; // 実際にスクロールできる方を選ぶ
+        sc.scrollTop += rys * 16;
+      }
       if (edge(12)) Game.UI.padNav('up');
       if (edge(13)) Game.UI.padNav('down');
       if (edge(14)) Game.UI.padNav('left');
