@@ -32,6 +32,17 @@ Game.Projectiles = (function () {
     Game.Render.spawnParticles(m.x, m.y, KIND_COLOR[k] || '#c060ff', 8);
     Game.Audio.play('beam');
   }
+  // ボスの全方位弾: 360°に count 発。回転オフセットで模様に変化(2波目をずらすと隙間を突ける読み合い)
+  function enemyRing(m, dmg, kind, count, rot, speed) {
+    const k = kind || 'hex', n = count || 12, sp = speed || 5.2;
+    const st = k === 'fire' ? { burn: 120 } : k === 'venom' ? { poison: 150 } : k === 'frost' ? { slow: 120 } : null;
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2 + (rot || 0);
+      spawn(m.x + Math.cos(a) * 14, m.y + Math.sin(a) * 14, Math.cos(a) * sp, Math.sin(a) * sp, dmg, k, true, st);
+    }
+    Game.Render.spawnParticles(m.x, m.y, KIND_COLOR[k] || '#c060ff', 14);
+    Game.Audio.play('beam');
+  }
   function enemyShoot(m, dmg, kind, status) {
     const p = Game.state.player;
     let dx = p.x - m.x, dy = p.y - m.y; const len = Math.hypot(dx, dy) || 1;
@@ -313,5 +324,5 @@ Game.Projectiles = (function () {
     }
   }
 
-  return { spawn, fire, enemyShoot, enemyVolley, update, draw, explode, callMeteor, callVortex, aimAngle: aimDir };
+  return { spawn, fire, enemyShoot, enemyVolley, enemyRing, update, draw, explode, callMeteor, callVortex, aimAngle: aimDir };
 })();

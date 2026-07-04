@@ -14,12 +14,14 @@ Game.Mobs = (function () {
     spore_queen: 'summoner', star_guardian: 'summoner', tomb_king: 'summoner', broodmother: 'summoner',
     abyss_dragon: 'artillery', endbringer: 'artillery', storm_sovereign: 'artillery', void_emperor: 'artillery', ruin_king: 'artillery',
   };
+  // volley=扇状弾幕 / slam=溜め叩き / summon=召喚 / radial=全方位弾 / zone=遅延設置爆発 / leap=跳躍叩きつけ
+  // 各型に「得意技(signature)」を持たせ、ボスごとにモーション・攻め筋が明確に異なるようにする
   const ARCH = {
-    berserker: { speed: 1.5, volley: 0.4, slam: 1.8, summon: 0.4, keepDist: 0 },
-    bruiser: { speed: 1.15, volley: 0.5, slam: 1.6, summon: 0.6, keepDist: 0 },
-    caster: { speed: 0.8, volley: 2.4, slam: 0.4, summon: 0.8, keepDist: 1 },
-    summoner: { speed: 0.95, volley: 1.0, slam: 0.7, summon: 2.6, keepDist: 0.4 },
-    artillery: { speed: 1.0, volley: 2.8, slam: 0.7, summon: 1.0, keepDist: 0.7 },
+    berserker: { speed: 1.5, volley: 0.4, slam: 1.4, summon: 0.4, keepDist: 0, radial: 0, zone: 0.3, leap: 2.4 },
+    bruiser: { speed: 1.15, volley: 0.5, slam: 1.6, summon: 0.6, keepDist: 0, radial: 0.2, zone: 0.5, leap: 1.3 },
+    caster: { speed: 0.8, volley: 1.8, slam: 0.4, summon: 0.8, keepDist: 1, radial: 2.4, zone: 0.9, leap: 0 },
+    summoner: { speed: 0.95, volley: 1.0, slam: 0.7, summon: 2.6, keepDist: 0.4, radial: 0.6, zone: 1.7, leap: 0.3 },
+    artillery: { speed: 1.0, volley: 2.2, slam: 0.7, summon: 1.0, keepDist: 0.7, radial: 1.2, zone: 2.6, leap: 0 },
   };
   function archOf(type) { return ARCH[BOSS_ARCH[type] || 'bruiser']; }
 
@@ -653,6 +655,76 @@ Game.Mobs = (function () {
           if ((m.slamCd || 0) > 0) m.slamCd--;
           else if (distP < 6 * TS && Math.random() < (m.enraged ? 0.06 : 0.035) * archOf(m.type).slam) { m.slam = m.enraged ? 14 : 18; m.slamMax = m.slam; m.slamR = (m.def.big ? 3 : 2.4); Game.Audio.play('whirl'); }
         }
+        // ── ボスの多彩な大技(型ごとに得意技=モーションが異なる) ──
+        if (m.def.boss) {
+          const A = archOf(m.type), enr = m.enraged;
+          // 全方位弾(radial): テレグラフ→360°弾。激昂時は半ピッチずらした2波で隙間を突く読み合い
+          if (m.radial != null) {
+            m.radial--;
+            if (Game.state.tick % 3 === 0) Game.Render.spawnParticles(m.x, m.y - m.def.size * 0.2, '#ffd24a', 2);
+            if (m.radial <= 0) {
+              m.radial = null; m.radialCd = enr ? 130 : 210;
+              const rd = Math.round((m.dmg || m.def.dmg) * 0.6), rk = bossElement(m.def.color), cnt = enr ? 16 : 12;
+              Game.Projectiles.enemyRing(m, rd, rk, cnt, 0);
+              if (enr) Game.Projectiles.enemyRing(m, rd, rk, cnt, Math.PI / cnt);
+              if (Game.Render.shake) Game.Render.shake(6);
+            }
+            m.hopPhase += 0.2; continue;
+          }
+          if ((m.radialCd || 0) > 0) m.radialCd--;
+          else if (A.radial > 0 && distP < 12 * TS && Math.random() < (enr ? 0.05 : 0.03) * A.radial) {
+            m.radial = 26; m.radialMax = 26; Game.Audio.play('whirl');
+            if (Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - m.def.size, '全方位弾!', '#ffd24a', true);
+          }
+          // 設置爆撃(zone): プレイヤー周辺に複数の遅延爆発円。踏み続けは危険=移動を強いる(動きながら継続)
+          if (m.zones) {
+            let alive = false;
+            for (let zi = 0; zi < m.zones.length; zi++) {
+              const zo = m.zones[zi]; if (zo.done) continue; alive = true; zo.t--;
+              if (zo.t <= 0) {
+                zo.done = true; const R = (zo.r || 2.2) * TS, d2 = Math.hypot(p.x - zo.x, p.y - zo.y);
+                if (d2 <= R) Game.Survival.damage(Math.round((m.dmg || m.def.dmg) * 1.1), m.def.name || 'mob');
+                Game.Render.spawnParticles(zo.x, zo.y, '#ff8a3c', 20);
+                if (Game.Render.shake && d2 < R * 1.5) Game.Render.shake(7);
+                Game.Audio.play('boom_sfx');
+              }
+            }
+            if (!alive) { m.zones = null; m.zoneCd = enr ? 120 : 200; }
+          } else if ((m.zoneCd || 0) > 0) m.zoneCd--;
+          else if (A.zone > 0 && distP < 11 * TS && Math.random() < (enr ? 0.045 : 0.028) * A.zone) {
+            const n = enr ? 5 : 4, zs = []; Game.Audio.play('whirl');
+            for (let zi = 0; zi < n; zi++) { const ang = (zi / n) * Math.PI * 2 + m.wobble; const rad = (zi === 0 ? 0 : (1.4 + (zi % 3) * 0.9)) * TS; zs.push({ x: p.x + Math.cos(ang) * rad, y: p.y + Math.sin(ang) * rad, t: 34 + zi * 7, tmax: 34 + zi * 7, r: 2.2 }); }
+            m.zones = zs;
+            if (Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - m.def.size, '爆撃!', '#ff8a3c', true);
+          }
+          // 跳躍叩きつけ(leap): しゃがみ溜め→放物線で着地点へ跳躍→衝撃波。着地点は影で予告(移動で回避)
+          if (m.leap) {
+            if (m.leap.phase === 'crouch') {
+              m.leap.t--;
+              if (m.leap.t <= 0) { m.leap.phase = 'air'; m.leap.t = m.leap.air; m.leap.sx = m.x; m.leap.sy = m.y; }
+              m.hopPhase += 0.3; continue;
+            } else {
+              m.leap.t--;
+              const pr = 1 - m.leap.t / m.leap.air;
+              m.x = m.leap.sx + (m.leap.tx - m.leap.sx) * pr; m.y = m.leap.sy + (m.leap.ty - m.leap.sy) * pr;
+              m.leapZ = Math.sin(pr * Math.PI) * (m.def.size * 1.4);
+              if (m.leap.t <= 0) {
+                const R = (m.def.big ? 3.4 : 2.8) * TS, d2 = Math.hypot(p.x - m.x, p.y - m.y), hit = d2 <= R;
+                if (hit && Game.Survival.damage(Math.round((m.dmg || m.def.dmg) * 1.8), m.def.name || 'mob') !== false) { const kl = d2 || 1; p.x += (p.x - m.x) / kl * 22; p.y += (p.y - m.y) / kl * 22; }
+                Game.Render.spawnParticles(m.x, m.y, '#ffcaa0', 30); if (Game.Render.shake) Game.Render.shake(12); Game.Audio.play('boom_sfx');
+                m.leapZ = 0; m.leap = null; m.leapCd = enr ? 110 : 180;
+                m.stunned = hit ? 6 : 34; m.vulnerable = hit ? 20 : 84;
+                if (!hit && Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - m.def.size, 'スキ!', '#ffe27a', true);
+              }
+              m.hopPhase += 0.2; continue;
+            }
+          }
+          if ((m.leapCd || 0) > 0) m.leapCd--;
+          else if (A.leap > 0 && distP > 3 * TS && distP < 9 * TS && Math.random() < (enr ? 0.055 : 0.035) * A.leap) {
+            m.leap = { phase: 'crouch', t: enr ? 12 : 16, air: 18, tx: p.x, ty: p.y }; Game.Audio.play('whirl');
+            if (Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - m.def.size, '跳躍!', '#ffcaa0', true);
+          }
+        }
         // 重量級の溜め叩きつけ(非ボス): ボスslamのテレグラフ描画を流用。回避ゲーで攻撃に幅
         if (m.def.pound && !m.def.boss) {
           if (m.slam != null) {
@@ -1193,6 +1265,38 @@ Game.Mobs = (function () {
         ctx.beginPath(); ctx.arc(s.x, s.y, rr, 0, Math.PI * 2); ctx.stroke();
         ctx.restore();
       }
+      // 設置爆撃のテレグラフ: 各爆発予定地に、満ちるほど濃くなる橙リング(移動して避ける)
+      if (m.zones) {
+        const z = Game.Camera.zoom ? Game.Camera.zoom() : 1, TS2 = Game.CFG.TILE_SIZE;
+        ctx.save();
+        for (let zi = 0; zi < m.zones.length; zi++) {
+          const zo = m.zones[zi]; if (zo.done) continue;
+          const zs2 = Game.Camera.worldToScreen(zo.x, zo.y), R = (zo.r || 2.2) * TS2 * z, prog = 1 - zo.t / (zo.tmax || 34);
+          ctx.strokeStyle = 'rgba(255,140,60,0.85)'; ctx.lineWidth = 2 * z;
+          ctx.beginPath(); ctx.arc(zs2.x, zs2.y, R, 0, Math.PI * 2); ctx.stroke();
+          ctx.fillStyle = 'rgba(255,120,50,' + (0.08 + prog * 0.28).toFixed(3) + ')';
+          ctx.beginPath(); ctx.arc(zs2.x, zs2.y, R * Math.max(0.15, prog), 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.restore();
+      }
+      // 跳躍の着地点予告(赤リング＋影)。跳んでくる先が一目で分かる
+      if (m.leap) {
+        const z = Game.Camera.zoom ? Game.Camera.zoom() : 1, TS2 = Game.CFG.TILE_SIZE;
+        const ls = Game.Camera.worldToScreen(m.leap.tx, m.leap.ty), R = (m.def.big ? 3.4 : 2.8) * TS2 * z;
+        ctx.save();
+        ctx.fillStyle = 'rgba(0,0,0,0.28)'; ctx.beginPath(); ctx.arc(ls.x, ls.y, R * 0.9, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = 'rgba(255,120,60,0.9)'; ctx.lineWidth = 2.5 * z;
+        ctx.beginPath(); ctx.arc(ls.x, ls.y, R, 0, Math.PI * 2); ctx.stroke();
+        ctx.restore();
+      }
+      // 全方位弾のテレグラフ: ボス中心に脈動する黄リング(外へ広がるほど発射が近い)
+      if (m.radial != null) {
+        const z = Game.Camera.zoom ? Game.Camera.zoom() : 1, prog = 1 - m.radial / (m.radialMax || 26);
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,210,74,' + (0.4 + prog * 0.5).toFixed(3) + ')'; ctx.lineWidth = 2.5 * z;
+        ctx.beginPath(); ctx.arc(s.x, s.y, (14 + prog * 46) * z, 0, Math.PI * 2); ctx.stroke();
+        ctx.restore();
+      }
       // 突進の溜めテレグラフ(向き矢印)
       if (m.charge && m.charge.phase === 'windup') {
         const z = Game.Camera.zoom ? Game.Camera.zoom() : 1;
@@ -1205,9 +1309,9 @@ Game.Mobs = (function () {
         ctx.restore();
       }
       const r = m.def.size * 0.5 * (m.champion ? 1.55 : m.elite ? 1.3 : 1) * (m.sizeVar || 1);
-      const hop = m.def.hop ? Math.abs(Math.sin(m.hopPhase)) * 5 : 0;
+      const hop = (m.def.hop ? Math.abs(Math.sin(m.hopPhase)) * 5 : 0) + (m.leapZ || 0) * (Game.Camera.zoom ? Game.Camera.zoom() : 1);
       // 予兆(!マーク): 溜め/照準/突進構え中の敵の頭上に点滅警告。スマホでも一目で分かる
-      const windup = m.slam != null || m.aim != null || (m.charge && m.charge.phase === 'windup');
+      const windup = m.slam != null || m.aim != null || m.radial != null || (m.charge && m.charge.phase === 'windup') || (m.leap && m.leap.phase === 'crouch');
       if (windup) {
         ctx.fillStyle = (Game.state.tick % 8) < 4 ? '#ffd24a' : '#ff7a3c';
         ctx.font = 'bold 15px sans-serif'; ctx.textAlign = 'center';
