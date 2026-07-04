@@ -504,12 +504,18 @@ Game.Combat = (function () {
       : p.vehicle === 'bomber' ? (Game.ITEMS.bomber && Game.ITEMS.bomber.bomberMissile) : null;
     if (!md) return false;
     if ((p.missileCd || 0) > 0) return false;
-    if (Game.Inventory.count('missile') <= 0) { if (Game.state.tick % 40 === 0) Game.UI.toast('ミサイルがない — クラフトして搭載を'); p.missileCd = 15; return false; }
-    Game.Inventory.remove('missile', 1);
+    const ammoId = md.ammo || 'missile';
+    if (Game.Inventory.count(ammoId) <= 0) { if (Game.state.tick % 40 === 0) Game.UI.toast((Game.ITEMS[ammoId] ? Game.ITEMS[ammoId].name : 'ミサイル') + 'がない — クラフトして搭載を'); p.missileCd = 15; return false; }
+    Game.Inventory.remove(ammoId, 1); // 1発ぶんの弾薬で count 発を一斉発射
     const ang = Game.Projectiles.aimAngle ? Game.Projectiles.aimAngle() : 0;
     const sp = md.speed || 18; // 通常の爆弾/ロケット(~6)の約3倍速
     const life = Math.max(6, Math.round((md.range || 16) * TS / sp)); // 一定距離で自爆
-    Game.Projectiles.fire(Game.Player.effAttack(md.dmg || 60), 'missile', { angle: ang, speed: sp, explosive: md.explosive || 2.6, detonateAtEnd: true, life: life, homing: !!md.homing });
+    const dmg = Game.Player.effAttack(md.dmg || 60);
+    const count = md.count || 1;
+    for (let k = 0; k < count; k++) {
+      const spr = count > 1 ? (k / (count - 1) - 0.5) * 0.34 : 0; // 扇状に散らしてから各自追尾
+      Game.Projectiles.fire(dmg, 'missile', { angle: ang + spr, speed: sp, explosive: md.explosive || 2.6, detonateAtEnd: true, life: life, homing: !!md.homing, small: md.small });
+    }
     Game.Audio.play('missile_launch');
     if (Game.Render.spawnMuzzle) Game.Render.spawnMuzzle(p.x + Math.cos(ang) * 18, p.y + Math.sin(ang) * 18, ang, '#ffb060', 1.3);
     if (Game.Render.shake) Game.Render.shake(3);

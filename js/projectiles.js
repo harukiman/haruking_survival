@@ -81,6 +81,7 @@ Game.Projectiles = (function () {
       if (opts.life) pr.life = opts.life; // 到達距離で自爆させる用の寿命上書き
       if (opts.detonateAtEnd) pr.detonateAtEnd = true; // 命中しなくても寿命(=一定距離)で炸裂(ミサイル)
       if (opts.homing) { pr.homing = true; pr.ang = ang; } // 最寄りの敵へ自動追尾(ロックオン/爆撃機ミサイル)
+      if (opts.small) pr.small = true; // 小型ミサイル(爆撃機の一斉発射)
       if (opts.jetRound) pr.jetRound = true; // 戦闘機の機首砲弾: 特殊物以外の地形を破壊できる
       if (opts.impact) pr.icol = opts.impact; // 口径別の着弾スパーク色(演出のみ)
       if (opts.pierce || kind === 'slash' || kind === 'pierce' || kind === 'laser') { pr.pierce = true; pr.hits = {}; }
@@ -406,16 +407,17 @@ Game.Projectiles = (function () {
         ctx.restore(); continue;
       }
       if (pr.kind === 'missile') {
-        // ミサイル: 長い煙＋炎の尾＋弾体(進行方向へ向く)。高速なので尾を長めに
+        // ミサイル: 長い煙＋炎の尾＋弾体(進行方向へ向く)。高速なので尾を長めに。小型(sm)は一回り小さく
+        const sm = pr.small ? 0.6 : 1;
         const t1 = Game.Camera.worldToScreen(pr.x - (pr.vx || 0) * 2.2, pr.y - (pr.vy || 0) * 2.2);
-        ctx.strokeStyle = 'rgba(190,185,175,0.5)'; ctx.lineWidth = 6 * z; ctx.lineCap = 'round';
+        ctx.strokeStyle = 'rgba(190,185,175,0.5)'; ctx.lineWidth = 6 * z * sm; ctx.lineCap = 'round';
         ctx.beginPath(); ctx.moveTo(t1.x, t1.y); ctx.lineTo(s.x, s.y); ctx.stroke();
-        ctx.strokeStyle = 'rgba(255,150,60,0.75)'; ctx.lineWidth = 3.5 * z;
+        ctx.strokeStyle = 'rgba(255,150,60,0.75)'; ctx.lineWidth = 3.5 * z * sm;
         ctx.beginPath(); ctx.moveTo(ps.x, ps.y); ctx.lineTo(s.x, s.y); ctx.stroke();
         ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(pr.ang || Math.atan2(pr.vy || 0, pr.vx || 1));
-        ctx.fillStyle = '#c8ccd2'; ctx.beginPath(); ctx.ellipse(0, 0, 8 * z, 3 * z, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#e0664a'; ctx.beginPath(); ctx.moveTo(8 * z, 0); ctx.lineTo(3 * z, -3 * z); ctx.lineTo(3 * z, 3 * z); ctx.closePath(); ctx.fill(); // 弾頭
-        ctx.fillStyle = '#ffd86b'; ctx.beginPath(); ctx.arc(-8 * z, 0, 2.6 * z, 0, Math.PI * 2); ctx.fill(); // 噴射炎
+        ctx.fillStyle = '#c8ccd2'; ctx.beginPath(); ctx.ellipse(0, 0, 8 * z * sm, 3 * z * sm, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#e0664a'; ctx.beginPath(); ctx.moveTo(8 * z * sm, 0); ctx.lineTo(3 * z * sm, -3 * z * sm); ctx.lineTo(3 * z * sm, 3 * z * sm); ctx.closePath(); ctx.fill(); // 弾頭
+        ctx.fillStyle = '#ffd86b'; ctx.beginPath(); ctx.arc(-8 * z * sm, 0, 2.6 * z * sm, 0, Math.PI * 2); ctx.fill(); // 噴射炎
         ctx.restore(); continue;
       }
       if (pr.kind === 'rocket') {
