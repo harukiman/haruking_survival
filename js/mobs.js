@@ -655,9 +655,12 @@ Game.Mobs = (function () {
           if ((m.slamCd || 0) > 0) m.slamCd--;
           else if (distP < 6 * TS && Math.random() < (m.enraged ? 0.06 : 0.035) * archOf(m.type).slam) { m.slam = m.enraged ? 14 : 18; m.slamMax = m.slam; m.slamR = (m.def.big ? 3 : 2.4); Game.Audio.play('whirl'); }
         }
-        // ── ボスの多彩な大技(型ごとに得意技=モーションが異なる) ──
-        if (m.def.boss) {
-          const A = archOf(m.type), enr = m.enraged;
+        // ── ボス/中ボスの多彩な大技(ボス=型ごとの得意技3種 / 中ボス=識別に応じ1種を控えめに) ──
+        // 中ボスにも読み合いの大技を1つ付与し、mid-tier戦闘にも「テレグラフ→回避→反撃」を作る(密度A)
+        if (m.def.boss || m.def.midboss) {
+          const A = m.def.boss ? archOf(m.type) : null, enr = m.enraged;
+          const mbRanged = !A && !!m.def.ranged;                 // 中ボスの術者系=全方位弾
+          const mbHeavy = !A && !m.def.ranged && (m.def.big || m.def.pound); // 中ボスの重量系=跳躍
           // 全方位弾(radial): テレグラフ→360°弾。激昂時は半ピッチずらした2波で隙間を突く読み合い
           if (m.radial != null) {
             m.radial--;
@@ -672,7 +675,7 @@ Game.Mobs = (function () {
             m.hopPhase += 0.2; continue;
           }
           if ((m.radialCd || 0) > 0) m.radialCd--;
-          else if (A.radial > 0 && distP < 12 * TS && Math.random() < (enr ? 0.05 : 0.03) * A.radial) {
+          else if (((A && A.radial > 0) || mbRanged) && distP < 12 * TS && Math.random() < (A ? (enr ? 0.05 : 0.03) * A.radial : 0.017)) {
             m.radial = 26; m.radialMax = 26; Game.Audio.play('whirl');
             if (Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - m.def.size, '全方位弾!', '#ffd24a', true);
           }
@@ -691,7 +694,7 @@ Game.Mobs = (function () {
             }
             if (!alive) { m.zones = null; m.zoneCd = enr ? 120 : 200; }
           } else if ((m.zoneCd || 0) > 0) m.zoneCd--;
-          else if (A.zone > 0 && distP < 11 * TS && Math.random() < (enr ? 0.045 : 0.028) * A.zone) {
+          else if (A && A.zone > 0 && distP < 11 * TS && Math.random() < (enr ? 0.045 : 0.028) * A.zone) {
             const n = enr ? 5 : 4, zs = []; Game.Audio.play('whirl');
             for (let zi = 0; zi < n; zi++) { const ang = (zi / n) * Math.PI * 2 + m.wobble; const rad = (zi === 0 ? 0 : (1.4 + (zi % 3) * 0.9)) * TS; zs.push({ x: p.x + Math.cos(ang) * rad, y: p.y + Math.sin(ang) * rad, t: 34 + zi * 7, tmax: 34 + zi * 7, r: 2.2 }); }
             m.zones = zs;
@@ -720,7 +723,7 @@ Game.Mobs = (function () {
             }
           }
           if ((m.leapCd || 0) > 0) m.leapCd--;
-          else if (A.leap > 0 && distP > 3 * TS && distP < 9 * TS && Math.random() < (enr ? 0.055 : 0.035) * A.leap) {
+          else if (((A && A.leap > 0) || mbHeavy) && distP > 3 * TS && distP < 9 * TS && Math.random() < (A ? (enr ? 0.055 : 0.035) * A.leap : 0.02)) {
             m.leap = { phase: 'crouch', t: enr ? 12 : 16, air: 18, tx: p.x, ty: p.y }; Game.Audio.play('whirl');
             if (Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - m.def.size, '跳躍!', '#ffcaa0', true);
           }
