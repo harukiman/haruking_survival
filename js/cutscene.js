@@ -80,8 +80,38 @@ Game.Cutscene = (function () {
     g.putImageData(img, 0, 0);
     grainPat = ctx.createPattern(gc, 'repeat');
   }
+  // 映画的な空気感: ゆっくり漂う塵＋斜めに射す光条。全ムービー共通の奥行きと質感
+  function drawCineAtmos(now, local, idx) {
+    ctx.save();
+    // 斜光(ゴッドレイ)を1〜2本、シーンによって角度と色を変える
+    const rays = 1 + (idx % 2);
+    for (let i = 0; i < rays; i++) {
+      const rx = W * (0.2 + 0.5 * ((idx + i) % 3) / 2) + Math.sin(now * 0.0004 + i) * 20;
+      const warm = (idx % 3 === 0);
+      const g = ctx.createLinearGradient(rx, 0, rx + W * 0.18, H);
+      g.addColorStop(0, warm ? 'rgba(255,240,200,0.10)' : 'rgba(200,220,255,0.08)');
+      g.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.globalAlpha = 0.6 + 0.4 * Math.sin(now * 0.001 + i * 2);
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.moveTo(rx - 30, 0); ctx.lineTo(rx + W * 0.16, 0); ctx.lineTo(rx + W * 0.30, H); ctx.lineTo(rx + W * 0.04, H); ctx.closePath(); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    // 漂う塵(前景の被写界深度ボケ風・大小)
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    for (let i = 0; i < 18; i++) {
+      const t = (now * 0.00003 * (1 + (i % 3)) + i * 0.137) % 1;
+      const x = ((i * 137 + Math.sin(now * 0.0006 + i) * 24) % (W + 40)) - 20;
+      const y = H - t * (H + 40);
+      const s = 0.8 + (i % 4) * 0.7;
+      ctx.globalAlpha = (0.12 + (i % 3) * 0.06) * (0.5 + 0.5 * Math.sin(now * 0.002 + i));
+      ctx.beginPath(); ctx.arc(x, y, s, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+  }
   function drawFilmOverlay(now) {
     if (vinGrad) { ctx.fillStyle = vinGrad; ctx.fillRect(0, 0, W, H); }
+    // 追加の強めの周辺減光で被写体を締める(映画的フレーミング)
+    { const vg = ctx.createRadialGradient(W / 2, H * 0.46, Math.min(W, H) * 0.34, W / 2, H / 2, Math.max(W, H) * 0.62); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,0.34)'); ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H); }
     if (grainPat) {
       const ox = (now * 0.61 | 0) % 96, oy = (now * 0.37 | 0) % 96;
       ctx.save(); ctx.globalAlpha = 0.045; ctx.globalCompositeOperation = 'overlay';
@@ -580,12 +610,22 @@ Game.Cutscene = (function () {
     const sh = (Game.Settings && !Game.Settings.get('screenShake')) ? 0 : shakeMag * Math.max(0, 1 - local * 2.2) * 14;
     ctx.save();
     if (sh > 0.2) ctx.translate((Math.random() - 0.5) * sh, (Math.random() - 0.5) * sh);
-    // ケンバーンズ(緩やかなズームイン)
-    if (sc.kb !== false) { const z = 1 + 0.042 * easeInOutCubic(local); ctx.translate(W / 2, H / 2); ctx.scale(z, z); ctx.translate(-W / 2, -H / 2); }
+    // ケンバーンズ(シーンごとに寄る/引く/流すを変えて動的なカメラワーク)
+    if (sc.kb !== false) {
+      const e2 = easeInOutCubic(local), mode = idx % 3;
+      let z = 1.05, panx = 0, pany = 0;
+      if (mode === 0) z = 1 + 0.065 * e2;                 // 寄る
+      else if (mode === 1) z = 1.065 - 0.065 * e2;        // 引く
+      else { z = 1.04; panx = (e2 - 0.5) * W * 0.06; pany = (e2 - 0.5) * H * 0.035; } // 流す
+      ctx.translate(W / 2 + panx, H / 2 + pany); ctx.scale(z, z); ctx.translate(-W / 2, -H / 2);
+    }
     sc.draw(local, now);
     if (prevDraw && e < prevUntilE) { ctx.globalAlpha = clamp01((prevUntilE - e) / 430); try { prevDraw(1, now); } catch (er) {} ctx.globalAlpha = 1; }
     else if (prevDraw) prevDraw = null;
     ctx.restore();
+    drawCineAtmos(now, local, idx); // 塵・光条の映画的レイヤー
+    // シーン切替時の淡い光漏れフラッシュ
+    if (e < prevUntilE && prevDraw) { const lf = clamp01((prevUntilE - e) / 430); ctx.save(); ctx.globalAlpha = lf * 0.14; ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H); ctx.restore(); }
     drawLetterbox(e, total);
     drawFilmOverlay(now);
     if (sc.text) drawText(sc.text, local, now);
