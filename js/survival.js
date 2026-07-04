@@ -226,9 +226,11 @@ Game.Survival = (function () {
       let kills = 0; for (const k in best) kills += best[k];
       const survTicks = Game.state.tick - (p.lifeStart || 0);
       const dl = Game.DAY_LENGTH || 3600;
+      const projLost = Math.floor(p.level / 3), projAfter = Math.max(1, p.level - projLost); // 復活後レベル(respawnと同式)
       const summary = {
         cause: CAUSE_LABEL[p.deathCause] || p.deathCause || '不明',
         level: p.level,
+        levelAfter: projAfter, levelLost: projLost,
         days: Math.max(0, Math.floor(survTicks / dl)),
         mins: Math.max(0, Math.floor(survTicks / 30 / 60)),
         bosses: Game.Player.bossesDefeated ? Game.Player.bossesDefeated() : 0,

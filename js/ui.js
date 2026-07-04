@@ -2008,7 +2008,7 @@ Game.UI = (function () {
     box.innerHTML =
       '<div>死因　　　<b style="color:#ff8a8a">' + s.cause + '</b></div>' +
       '<div>生存　　　<b>' + s.days + '</b> 日（約 ' + s.mins + ' 分）</div>' +
-      '<div>レベル　　<b>' + s.level + '</b></div>' +
+      '<div>レベル　　<b>' + s.level + '</b>' + (s.levelLost > 0 ? ' <span style="color:#ff8a8a">→ 復活後 Lv.' + s.levelAfter + '（-' + s.levelLost + '）</span>' : '') + '</div>' +
       '<div>撃破ボス　<b style="color:#ffd86b">' + s.bosses + '</b> 体</div>' +
       '<div>討伐総数　<b>' + s.kills + '</b></div>' +
       '<div>所持金塊　<b style="color:#e8c54a">' + s.gold + '</b></div>' +
