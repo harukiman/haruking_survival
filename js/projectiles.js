@@ -24,9 +24,10 @@ Game.Projectiles = (function () {
     const p = Game.state.player;
     const dx = p.x - m.x, dy = p.y - m.y, base = Math.atan2(dy, dx);
     const sp = 5.8, k = kind || 'hex', n = count || 5, half = spread || 0.6;
+    const st = k === 'fire' ? { burn: 120 } : k === 'venom' ? { poison: 150 } : null; // 属性で状態異常を付与
     for (let i = 0; i < n; i++) {
       const a = base + (n > 1 ? (i / (n - 1) - 0.5) * half * 2 : 0);
-      spawn(m.x + Math.cos(a) * 14, m.y + Math.sin(a) * 14, Math.cos(a) * sp, Math.sin(a) * sp, dmg, k, true, null);
+      spawn(m.x + Math.cos(a) * 14, m.y + Math.sin(a) * 14, Math.cos(a) * sp, Math.sin(a) * sp, dmg, k, true, st);
     }
     Game.Render.spawnParticles(m.x, m.y, KIND_COLOR[k] || '#c060ff', 8);
     Game.Audio.play('beam');
