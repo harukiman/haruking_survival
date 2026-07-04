@@ -679,14 +679,18 @@ Game.Audio = (function () {
   // ===== シネマティック演出音（OP/発射/発見ムービー用・オーケストラ風）=====
   const cine = { on: false, nodes: [], master: null };
   // ムード別のシネマ和音（根音Hz配列＋高弦の音）。場面に合うBGMを選ぶ
+  // 各ムービー固有のテーマ。chord=持続和音, hi=うねる高弦, root/motif=主旋律(半音オフセット), mtempo=音長ms。
+  // motif を持たせることで各ムービーに聴き分けられる「主題」が付き、共通感を解消
   const CINE_MOODS = {
-    dramatic: { chord: [65.41, 77.78, 98.00, 130.81], hi: 523.25 },   // Cマイナー: 緊張・ドラマ
-    somber:   { chord: [55.00, 65.41, 82.41, 110.00], hi: 440.00 },   // Aマイナー: 物語・哀愁
-    heroic:   { chord: [65.41, 82.41, 98.00, 130.81], hi: 659.25 },   // Cメジャー: 勝利・高揚
-    mystic:   { chord: [61.74, 92.50, 110.00, 146.83], hi: 587.33 },  // 浮遊する神秘(sus)
-    tense:    { chord: [61.74, 73.42, 87.31, 123.47], hi: 493.88 },   // 減和音: 不穏・ボス登場
-    aerial:   { chord: [87.31, 130.81, 174.61, 220.00], hi: 698.46 }, // Fメジャー開放和音: 空・光・浮遊(空島到着ムービー)
-    liminal:  { chord: [61.74, 65.41, 92.50, 123.47], hi: 466.16 },   // 短2度+三全音クラスタ: 狭間の不気味さ(到着ムービー)
+    dramatic: { chord: [65.41, 77.78, 98.00, 130.81], hi: 523.25, root: 261.63, motif: [0, 3, 7, 3, 5, 3, 0, -2], mtempo: 460, mwave: 'triangle', mvol: 0.055 }, // Cマイナー: 緊張・ドラマ
+    somber:   { chord: [55.00, 65.41, 82.41, 110.00], hi: 440.00, root: 220.00, motif: [0, 3, 5, 3, 0, -2, 0], mtempo: 620, mwave: 'sine', mvol: 0.05 },       // Aマイナー: 物語・哀愁(ゆったり)
+    heroic:   { chord: [65.41, 82.41, 98.00, 130.81], hi: 659.25, root: 261.63, motif: [0, 4, 7, 12, 7, 9, 12], mtempo: 360, mwave: 'sawtooth', mvol: 0.05 },   // Cメジャー: 勝利のファンファーレ(上昇)
+    mystic:   { chord: [61.74, 92.50, 110.00, 146.83], hi: 587.33, root: 293.66, motif: [0, 7, 5, 12, 7, 2], mtempo: 540, mwave: 'sine', mvol: 0.05 },           // 浮遊する神秘(sus)
+    tense:    { chord: [61.74, 73.42, 87.31, 123.47], hi: 493.88, root: 246.94, motif: [0, 1, 0, 6, 0, -1], mtempo: 300, mwave: 'sawtooth', mvol: 0.06 },        // 減/b2: 不穏・ボス登場(刻む)
+    aerial:   { chord: [87.31, 130.81, 174.61, 220.00], hi: 698.46, root: 349.23, motif: [0, 4, 7, 9, 12, 9, 7], mtempo: 420, mwave: 'sine', mvol: 0.05 },       // 空・光・浮遊(明るいベル)
+    liminal:  { chord: [61.74, 65.41, 92.50, 123.47], hi: 466.16, root: 233.08, motif: [0, 1, 6, 7, 6, 1, 0, -5], mtempo: 500, mwave: 'triangle', mvol: 0.05 },  // 狭間の不気味さ(半音/三全音の彷徨)
+    ancient:  { chord: [58.27, 73.42, 87.31, 116.54], hi: 466.16, root: 233.08, motif: [0, 3, 5, 7, 5, 3, 0], mtempo: 700, mwave: 'triangle', mvol: 0.052 },     // 古代都市: 荘厳と郷愁(ドリアンの爪弾き)
+    wonder:   { chord: [65.41, 98.00, 130.81, 164.81], hi: 784.00, root: 392.00, motif: [0, 4, 7, 11, 12, 7], mtempo: 360, mwave: 'sine', mvol: 0.05 },          // 発見の驚き(きらめく上昇)
   };
   function cineStart(mood) {
     if (!enabled) return; ensure(); if (!ctx) return;
@@ -711,8 +715,33 @@ Game.Audio = (function () {
     const lfo = ctx.createOscillator(); lfo.frequency.value = 0.15; const lg = ctx.createGain(); lg.gain.value = 8;
     lfo.connect(lg); lg.connect(hi.frequency); hi.connect(hg); hg.connect(filt); hi.start(t); lfo.start(t);
     cine.nodes.push(hi, hg, lfo, lg);
+    // 主旋律(モチーフ): ムービー固有のテーマを繰り返し奏で、共通感を解消
+    if (M.motif && M.motif.length) {
+      let step = 0;
+      const playNote = function () {
+        if (!cine.on || !ctx) return;
+        const semi = M.motif[step % M.motif.length];
+        cineMotifTone(M.root * Math.pow(2, semi / 12), M.mwave || 'triangle', M.mvol || 0.05);
+        // フレーズ末で少し間を置き、単調さを避ける
+        step++;
+        const gap = (step % M.motif.length === 0) ? (M.mtempo || 500) * 1.6 : (M.mtempo || 500);
+        cine.motifTimer = setTimeout(playNote, gap);
+      };
+      cine.motifTimer = setTimeout(playNote, 1100); // 主題は少し遅れて入る(和音が先)
+    }
+  }
+  // カットシーンの主旋律1音(短い減衰の撥弦/ベル)。cine.master 経由でダック済みミックスに乗る
+  function cineMotifTone(freq, wave, vol) {
+    if (!ctx || !cine.master) return;
+    const t = ctx.currentTime;
+    const o = ctx.createOscillator(); o.type = wave; o.frequency.value = freq;
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.9);
+    o.connect(g); g.connect(cine.master);
+    o.start(t); o.stop(t + 1.0);
   }
   function cineStop() {
+    if (cine.motifTimer) { clearTimeout(cine.motifTimer); cine.motifTimer = null; }
     if (!ctx) { cine.on = false; bgm.duck = 1; return; }
     cine.on = false; const t = ctx.currentTime;
     bgm.duck = 1; applyBgmGain(0.8); // BGMをゆっくり復帰

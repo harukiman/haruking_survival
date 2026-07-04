@@ -412,7 +412,7 @@ Game.Cutscene = (function () {
   };
   function playDiscovery(kind, cb) {
     const d = DISCOVERY[kind] || DISCOVERY.dungeon;
-    runScenes([{ d: 3400, draw: function (t, now) { scDiscovery(t, now, d); }, text: '', shake: kind === 'boss' ? 0.5 : 0.15, onEnter: function () { Game.Audio.cue(d.audio); } }], cb);
+    runScenes([{ d: 3400, draw: function (t, now) { scDiscovery(t, now, d); }, text: '', shake: kind === 'boss' ? 0.5 : 0.15, onEnter: function () { if (Game.Audio.cineStart) Game.Audio.cineStart(kind === 'boss' ? 'tense' : 'wonder'); Game.Audio.cue(d.audio); } }], cb);
   }
   function scDiscovery(t, now, d) {
     ctx.fillStyle = '#05060c'; ctx.fillRect(0, 0, W, H);
@@ -1400,7 +1400,7 @@ Game.Cutscene = (function () {
 
   function playSkyArrival(cb) {
     runScenes([
-      { d: 3000, draw: scSkyAltar, trans: 'rise', text: '風の祭壇に立つと、渦が足もとから立ちのぼった。', onEnter: function () { if (Game.Audio.cineStart) Game.Audio.cineStart('mystic'); try { Game.Audio.play('portal'); } catch (e) {} if (Game.Audio.cue) Game.Audio.cue('riser'); } },
+      { d: 3000, draw: scSkyAltar, trans: 'rise', text: '風の祭壇に立つと、渦が足もとから立ちのぼった。', onEnter: function () { if (Game.Audio.cineStart) Game.Audio.cineStart('aerial'); try { Game.Audio.play('portal'); } catch (e) {} if (Game.Audio.cue) Game.Audio.cue('riser'); } },
       { d: 3000, draw: scSkyAscend, text: '雲を貫いて、からだが空へと運ばれてゆく。', shake: 0.25, onEnter: function () { if (Game.Audio.cue) Game.Audio.cue('swell'); } },
       { d: 3400, draw: scSkyReveal, text: '——雲海のうえに、浮島の群れがひらけた。', onEnter: function () { try { Game.Audio.play('portal_arrive'); } catch (e) {} if (Game.Audio.cue) Game.Audio.cue('shimmer'); } },
     ], cb);
@@ -1471,7 +1471,7 @@ Game.Cutscene = (function () {
 
   function playRuinArrival(cb) {
     runScenes([
-      { d: 3000, draw: scRuinGate, trans: 'dark', text: '古の鍵をかざすと、門の紋様が金に燃えた。', onEnter: function () { if (Game.Audio.cineStart) Game.Audio.cineStart('mystic'); try { Game.Audio.play('portal'); } catch (e) {} if (Game.Audio.cue) Game.Audio.cue('boom'); } },
+      { d: 3000, draw: scRuinGate, trans: 'dark', text: '古の鍵をかざすと、門の紋様が金に燃えた。', onEnter: function () { if (Game.Audio.cineStart) Game.Audio.cineStart('ancient'); try { Game.Audio.play('portal'); } catch (e) {} if (Game.Audio.cue) Game.Audio.cue('boom'); } },
       { d: 3200, draw: scRuinStreet, text: '誰もいない大路を、苔と沈黙だけが埋めている。', onEnter: function () { try { Game.Audio.play('ancient_hum'); } catch (e) {} if (Game.Audio.cue) Game.Audio.cue('choir'); } },
       { d: 3400, draw: scRuinReveal, text: '——沈黙の都市が、崩れた尖塔ごとひらけた。', onEnter: function () { try { Game.Audio.play('portal_arrive'); } catch (e) {} if (Game.Audio.cue) Game.Audio.cue('swell'); } },
     ], cb);
