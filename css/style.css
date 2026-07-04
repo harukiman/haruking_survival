@@ -752,3 +752,8 @@ body.cinematic #hint-pill, body.cinematic #toast, body.cinematic .toast, body.ci
 .opt-mp-input { width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid #33455e; background: #10182a; color: #e8edf2; font-size: .9rem; }
 .opt-mp .mp-btns { display: flex; gap: 8px; }
 .opt-mp .mp-btns .map-btn { flex: 1; }
+
+/* 死亡中はHUDの一時ポップアップを隠す(死亡後に残らないように) */
+body.dead #context-action, body.dead #hb-iteminfo, body.dead #ammo-hud, body.dead #combo-hud,
+body.dead #status-pop, body.dead #event-banner, body.dead #hint-pill, body.dead #toast,
+body.dead #quest-tracker, body.dead #bounty-tracker, body.dead #boss-bar { display: none !important; }

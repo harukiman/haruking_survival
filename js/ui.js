@@ -136,7 +136,7 @@ Game.UI = (function () {
     document.getElementById('btn-ending-continue').addEventListener('click', function () {
       el.endingScreen.classList.add('hidden'); Game.state.paused = false;
     });
-    { const rv = document.getElementById('btn-death-revive'); if (rv) rv.addEventListener('click', function () { document.getElementById('death-screen').classList.add('hidden'); Game.Survival.respawn(); }); }
+    { const rv = document.getElementById('btn-death-revive'); if (rv) rv.addEventListener('click', function () { document.getElementById('death-screen').classList.add('hidden'); document.body.classList.remove('dead'); Game.Survival.respawn(); }); }
     document.getElementById('btn-ending-ngplus').addEventListener('click', function () {
       el.endingScreen.classList.add('hidden'); Game.startNGPlus();
     });
@@ -1903,7 +1903,17 @@ Game.UI = (function () {
     '棘の反射': '棘を持つ敵には弓・銃・投擲など遠くからの攻撃が安全',
     '魔物の襲撃': '防具を整え、回避ロール(無敵時間)を使おう。夜は明かりの近くが安全',
   };
+  // 一時的なHUDポップアップを一括で消す(死亡/画面遷移で残らないように)
+  function clearHudPopups() {
+    ['context-action', 'hb-iteminfo', 'ammo-hud', 'combo-hud', 'autosave-ind', 'status-pop', 'event-banner'].forEach(function (id) {
+      const e = document.getElementById(id); if (e) { e.style.display = 'none'; e.style.opacity = '0'; e.classList.remove('show'); }
+    });
+    const tst = document.getElementById('toast'); if (tst) tst.classList.remove('show');
+    const hp = document.getElementById('hint-pill'); if (hp) hp.classList.add('hidden');
+    clearTimeout(toastTimer);
+  }
   function showDeath(s) {
+    clearHudPopups(); document.body.classList.add('dead'); // 死亡時: 残存ポップアップを消し、再描画されても隠す
     const box = document.getElementById('death-stats'); if (!box) return;
     box.innerHTML =
       '<div>死因　　　<b style="color:#ff8a8a">' + s.cause + '</b></div>' +
