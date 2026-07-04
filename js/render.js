@@ -661,9 +661,10 @@ Game.Render = (function () {
   }
   // 乗り物の耐久ゲージ(頭上・燃料の下)。損傷時のみ表示
   function drawVehDur(ctx) {
-    const p = Game.state.player; if (!p || !p.vehicle || !p.vehDur) return;
-    const MAX = { car: 120, buggy: 90, plane: 140, boat: 70 }[p.vehicle]; if (MAX == null) return;
-    const d = p.vehDur[p.vehicle]; if (d == null || d >= MAX) return;
+    const p = Game.state.player; if (!p || !p.vehicle) return;
+    const MAX = { car: 120, buggy: 90, plane: 140, boat: 70, tank: 240, mech: 180, jet: 130, bomber: 160 }[p.vehicle]; if (MAX == null) return;
+    if (!p.vehDur) p.vehDur = {};
+    let d = p.vehDur[p.vehicle]; if (d == null) d = MAX; // 常に表示(ユーザー: 耐久も常時表示)
     const sc = Game.Camera.worldToScreen(p.x, p.y), z = Game.Camera.zoom ? Game.Camera.zoom() : 1;
     const w = 46 * z, h = 4 * z, bx = sc.x - w / 2, by = sc.y - 47 * z, frac = Math.max(0, d / MAX);
     ctx.save();

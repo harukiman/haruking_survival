@@ -265,7 +265,8 @@ window.Game = window.Game || {};
     const pt = Game.Player.playerTile();
     if (Game.state.tick % 10 === 0) Game.World.updateChunks(pt.tx, pt.ty);
     if (Game.state.tick % 20 === 0) { Game.UI.updateMinimap(); if (Game.UI.isBigMapOpen && Game.UI.isBigMapOpen()) Game.UI.updateBigMap(); }
-    if (Game.state.player.reloadCd > 0 && Game.state.tick % 3 === 0 && Game.UI.refreshAmmo) Game.UI.refreshAmmo(); // リロード進捗バーを更新
+    // 銃装備中は常に残弾(装填/総予備)を画面表示。リロード中は毎3tick、通常は毎6tickで更新
+    if (Game.UI.refreshAmmo && ((Game.state.player.reloadCd > 0 && Game.state.tick % 3 === 0) || Game.state.tick % 6 === 0)) Game.UI.refreshAmmo();
     if (Game.state.tick % 6 === 0 && Game.UI.refreshBossBar) Game.UI.refreshBossBar();
     if (Game.state.tick % 30 === 0 && Game.UI.refreshBounty) Game.UI.refreshBounty();
     if (Game.state.tick % 30 === 0) Game.Audio.updateMood();
