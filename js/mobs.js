@@ -593,6 +593,7 @@ Game.Mobs = (function () {
               // 回避→反撃のループを全ボスに付与(A: 戦闘の読み合い)
               m.stunned = hit ? 8 : 40; m.vulnerable = hit ? 24 : 96;
               if (!hit && Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - m.def.size, 'スキ!', '#ffe27a', true);
+              if (!hit && Game.UI.tipOnce) Game.UI.tipOnce('weakpoint', 'ボスの大技を回避すると「隙」が生まれ、その間は与ダメージが増えます。回避→反撃が鍵');
             }
             m.hopPhase += 0.2; continue; // 溜め中は移動・他攻撃しない(回避猶予)
           }

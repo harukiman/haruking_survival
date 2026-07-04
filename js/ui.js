@@ -2098,6 +2098,14 @@ Game.UI = (function () {
     richToast(ic + '<b style="color:' + col + '">' + esc(name) + '</b><span class="tst-r" style="color:' + col + '">' + esc(rname) + '</span>', 'tst-rare r' + idx, 1900);
     return true;
   }
+  // 一度きりのチュートリアル的ヒント(新システムの発見性を高める)。keyごとに初回のみ表示
+  function tipOnce(key, msg) {
+    if (!Game.state) return;
+    if (!Game.state._tips) Game.state._tips = {};
+    if (Game.state._tips[key]) return;
+    Game.state._tips[key] = 1;
+    toast('💡 ' + msg);
+  }
   function toast(msg) {
     msg = String(msg == null ? '' : msg);
     try {
@@ -2422,7 +2430,7 @@ Game.UI = (function () {
 
   return {
     init, showGameUI, refreshHotbar, refreshStats, refreshInventory,
-    refreshCraft, refreshAll, toggleInventory, toast, updateMinimap,
+    refreshCraft, refreshAll, toggleInventory, toast, tipOnce, updateMinimap,
     openChest, openSharedChest, closeChest, refreshChest, refreshWorld,
     showLore, closeLore, refreshQuest, openQuest, closeQuest, refreshBounty, showEnding, showDeath, showIntro, refreshNet, refreshStatus,
     toggleOptions, openEnchant, closeEnchant, flashSave, flashHotbarItem, flashCombo, refreshContext, refreshAmmo,

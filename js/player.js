@@ -797,6 +797,7 @@ Game.Player = (function () {
       } else {
         p.vehicle = def.vehicle; p.vThr = 0;
         if (VEH_MAXDUR[def.vehicle] != null) { if (!p.vehDur) p.vehDur = {}; if (p.vehDur[def.vehicle] == null) p.vehDur[def.vehicle] = VEH_MAXDUR[def.vehicle]; }
+        if (FUEL_VEHICLES[def.vehicle] && Game.UI.tipOnce) Game.UI.tipOnce('fuel', '現代の乗り物は燃料(⛽)で走ります。ガソリンで給油、耐久0で大破。発着場で自動回復');
         Game.Audio.play('mount');
         if (Game.Audio.vehicleLoop) Game.Audio.vehicleLoop(def.vehicle, 0);
         Game.Render.spawnParticles(p.x, p.y + 6, '#cfd6e0', 5);
@@ -998,6 +999,7 @@ Game.Player = (function () {
       Game.Projectiles.fire(dmg, kind, { spread: spr, explosive: sel.explosive || 0, speed: sel.bspeed, crit: isCrit, impact: cfx ? cfx.imp : null });
     }
     p.attackCd = sel.cd || 12;
+    if (Game.UI.tipOnce) Game.UI.tipOnce('gun_strafe', '銃は撃ちながら移動できます（ストレイフ）。射撃中は射撃方向が固定されます');
     // マズルフラッシュ(銃口の閃光)。銃種で色/大きさを変える
     if (Game.Render.spawnMuzzle) {
       const mcol = sel.bkind === 'laser' || sel.bkind === 'pierce' ? (sel.color || '#9fd8ff') : (sel.bkind === 'rocket' ? '#ff9a3c' : '#ffe06a');
@@ -1032,6 +1034,7 @@ Game.Player = (function () {
     if (p.attackCd > 0) return;
     // 流星/渦召喚の杖は近接攻撃ロジック側(Combat)で標的に効果を生む
     if (sel.strike || sel.vortex) { Game.Combat.tryAttack(); return; }
+    if (Game.UI.tipOnce) Game.UI.tipOnce('mana', '杖などの魔法はマナ(🔮)を消費します。マナ系スキルで最大値/威力/回復を強化できます');
     if (!spendMana(sel.mpCost || 10)) { if (Game.state.tick % 30 === 0) Game.UI.toast('マナが足りない'); return; } // 魔法弾はマナ消費
     Game.Projectiles.fire(Math.round((sel.fireDmg || 12) * magicPower()), sel.magic || 'fire');
     p.attackCd = 16;
