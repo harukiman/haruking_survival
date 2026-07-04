@@ -38,12 +38,12 @@ Game.Cutscene = (function () {
 
   const SCENES = [
     { d: 4400, draw: sceneUnified, text: 'かつて、世界はひとつだった。', onEnter: function () { Game.Audio.cineStart(); Game.Audio.cue('swell'); } },
-    { d: 4600, draw: scenePrayers, text: '「永遠の昼」を願う者と、「安らぎの夜」を望む者。', onEnter: function () { Game.Audio.cue('choir'); } },
-    { d: 2600, draw: sceneTension, text: 'ふたつの祈りは、譲らなかった——', shake: 0.35, onEnter: function () { Game.Audio.cue('riser'); } },
-    { d: 4400, draw: sceneSplit, text: '相反する願いが、大地を引き裂いた。', shake: 1, onEnter: function () { Game.Audio.cue('impact'); Game.Audio.cue('crack'); } },
-    { d: 4600, draw: sceneDescend, text: 'いま、あなたは世界の狭間に降り立つ——', shake: 0.2, onEnter: function () { Game.Audio.cue('shimmer'); } },
-    { d: 5200, draw: sceneArrival, text: '名も故郷も持たぬまま、ひとりの旅人が、裂けた大地に舞い降りた。', shake: 0.15, onEnter: function () { Game.Audio.cineStart('somber'); Game.Audio.cue('shimmer'); } },
-    { d: 5200, draw: sceneTitle, text: '', onEnter: function () { Game.Audio.cue('choir'); Game.Audio.cue('boom'); } },
+    { d: 4600, draw: scenePrayers, text: '「永遠の昼」を願う者と、「安らぎの夜」を望む者。', trans: 'dark', onEnter: function () { Game.Audio.cue('choir'); } },
+    { d: 2600, draw: sceneTension, text: 'ふたつの祈りは、譲らなかった——', shake: 0.35, trans: 'flash', onEnter: function () { Game.Audio.cue('riser'); } },
+    { d: 4400, draw: sceneSplit, text: '相反する願いが、大地を引き裂いた。', shake: 1, trans: 'flash', onEnter: function () { Game.Audio.cue('impact'); Game.Audio.cue('crack'); } },
+    { d: 4600, draw: sceneDescend, text: 'いま、あなたは世界の狭間に降り立つ——', shake: 0.2, trans: 'iris', onEnter: function () { Game.Audio.cue('shimmer'); } },
+    { d: 5200, draw: sceneArrival, text: '名も故郷も持たぬまま、ひとりの旅人が、裂けた大地に舞い降りた。', shake: 0.15, trans: 'rise', onEnter: function () { Game.Audio.cineStart('somber'); Game.Audio.cue('shimmer'); } },
+    { d: 5200, draw: sceneTitle, text: '', trans: 'dark', onEnter: function () { Game.Audio.cue('choir'); Game.Audio.cue('boom'); } },
   ];
   function play(cb) { runScenes(SCENES, cb, { bg: '#05070e', arm: 800 }); }
 
@@ -106,6 +106,23 @@ Game.Cutscene = (function () {
       ctx.globalAlpha = (0.12 + (i % 3) * 0.06) * (0.5 + 0.5 * Math.sin(now * 0.002 + i));
       ctx.beginPath(); ctx.arc(x, y, s, 0, Math.PI * 2); ctx.fill();
     }
+    ctx.restore();
+  }
+  // シーン固有の入りトランジション。sc.trans で種類指定(未指定はクロスフェードのみ)
+  function drawSceneTransition(sc, local) {
+    if (!sc.trans) return;
+    const dur = 0.16; if (local >= dur) return;
+    const tp = local / dur; // 0(開始)→1(完了)
+    ctx.save();
+    if (sc.trans === 'flash') { ctx.fillStyle = 'rgba(255,255,255,' + (1 - tp).toFixed(3) + ')'; ctx.fillRect(0, 0, W, H); }
+    else if (sc.trans === 'dark') { ctx.fillStyle = 'rgba(2,3,8,' + (1 - tp).toFixed(3) + ')'; ctx.fillRect(0, 0, W, H); }
+    else if (sc.trans === 'iris') {
+      ctx.fillStyle = '#04050a'; ctx.beginPath();
+      ctx.rect(0, 0, W, H);
+      const r = tp * Math.hypot(W, H) * 0.6; ctx.arc(W / 2, H / 2, r, 0, Math.PI * 2, true);
+      ctx.fill('evenodd');
+    } else if (sc.trans === 'wipe') { ctx.fillStyle = '#04050a'; ctx.fillRect(0, tp * H, W, H); }
+    else if (sc.trans === 'rise') { ctx.fillStyle = '#04050a'; ctx.fillRect(0, 0, W, H - tp * H); }
     ctx.restore();
   }
   function drawFilmOverlay(now) {
@@ -539,7 +556,7 @@ Game.Cutscene = (function () {
   function playBossIntro(type, cb) {
     const d = BOSS[type] || BOSS.sovereign;
     runScenes([
-      { d: 3300, draw: function (t, n) { bossScene(t, n, d, 'rise'); }, text: d.intro[0], shake: 0.35, onEnter: function () { Game.Audio.cineStart('tense'); Game.Audio.cue('boom'); } },
+      { d: 3300, draw: function (t, n) { bossScene(t, n, d, 'rise'); }, text: d.intro[0], shake: 0.35, trans: 'flash', onEnter: function () { Game.Audio.cineStart('tense'); Game.Audio.cue('boom'); } },
       { d: 3500, draw: function (t, n) { bossScene(t, n, d, 'name'); }, text: d.intro[1], shake: 0.15, onEnter: function () { Game.Audio.cue('riser'); } },
       { d: 2000, draw: function (t, n) { bossScene(t, n, d, 'clash'); }, text: '——いざ、尋常に。', shake: 0.6, onEnter: function () { Game.Audio.cue('impact'); Game.Audio.cue('boom'); } },
     ], cb);
@@ -624,6 +641,7 @@ Game.Cutscene = (function () {
     else if (prevDraw) prevDraw = null;
     ctx.restore();
     drawCineAtmos(now, local, idx); // 塵・光条の映画的レイヤー
+    drawSceneTransition(sc, local);  // シーン固有の入りトランジション(flash/iris/wipe/rise)
     // シーン切替時の淡い光漏れフラッシュ
     if (e < prevUntilE && prevDraw) { const lf = clamp01((prevUntilE - e) / 430); ctx.save(); ctx.globalAlpha = lf * 0.14; ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H); ctx.restore(); }
     drawLetterbox(e, total);
@@ -1381,7 +1399,7 @@ Game.Cutscene = (function () {
 
   function playSkyArrival(cb) {
     runScenes([
-      { d: 3000, draw: scSkyAltar, text: '風の祭壇に立つと、渦が足もとから立ちのぼった。', onEnter: function () { if (Game.Audio.cineStart) Game.Audio.cineStart('mystic'); try { Game.Audio.play('portal'); } catch (e) {} if (Game.Audio.cue) Game.Audio.cue('riser'); } },
+      { d: 3000, draw: scSkyAltar, trans: 'rise', text: '風の祭壇に立つと、渦が足もとから立ちのぼった。', onEnter: function () { if (Game.Audio.cineStart) Game.Audio.cineStart('mystic'); try { Game.Audio.play('portal'); } catch (e) {} if (Game.Audio.cue) Game.Audio.cue('riser'); } },
       { d: 3000, draw: scSkyAscend, text: '雲を貫いて、からだが空へと運ばれてゆく。', shake: 0.25, onEnter: function () { if (Game.Audio.cue) Game.Audio.cue('swell'); } },
       { d: 3400, draw: scSkyReveal, text: '——雲海のうえに、浮島の群れがひらけた。', onEnter: function () { try { Game.Audio.play('portal_arrive'); } catch (e) {} if (Game.Audio.cue) Game.Audio.cue('shimmer'); } },
     ], cb);
@@ -1452,7 +1470,7 @@ Game.Cutscene = (function () {
 
   function playRuinArrival(cb) {
     runScenes([
-      { d: 3000, draw: scRuinGate, text: '古の鍵をかざすと、門の紋様が金に燃えた。', onEnter: function () { if (Game.Audio.cineStart) Game.Audio.cineStart('mystic'); try { Game.Audio.play('portal'); } catch (e) {} if (Game.Audio.cue) Game.Audio.cue('boom'); } },
+      { d: 3000, draw: scRuinGate, trans: 'dark', text: '古の鍵をかざすと、門の紋様が金に燃えた。', onEnter: function () { if (Game.Audio.cineStart) Game.Audio.cineStart('mystic'); try { Game.Audio.play('portal'); } catch (e) {} if (Game.Audio.cue) Game.Audio.cue('boom'); } },
       { d: 3200, draw: scRuinStreet, text: '誰もいない大路を、苔と沈黙だけが埋めている。', onEnter: function () { try { Game.Audio.play('ancient_hum'); } catch (e) {} if (Game.Audio.cue) Game.Audio.cue('choir'); } },
       { d: 3400, draw: scRuinReveal, text: '——沈黙の都市が、崩れた尖塔ごとひらけた。', onEnter: function () { try { Game.Audio.play('portal_arrive'); } catch (e) {} if (Game.Audio.cue) Game.Audio.cue('swell'); } },
     ], cb);
@@ -1514,7 +1532,7 @@ Game.Cutscene = (function () {
 
   function playRiftArrival(cb) {
     runScenes([
-      { d: 3000, draw: scRiftOpen, text: '虚ろな鍵をかざすと、空間が縦に裂けた。', shake: 0.3, onEnter: function () { if (Game.Audio.cineStart) Game.Audio.cineStart('liminal'); try { Game.Audio.play('portal'); } catch (e) {} if (Game.Audio.cue) Game.Audio.cue('crack'); } },
+      { d: 3000, draw: scRiftOpen, trans: 'iris', text: '虚ろな鍵をかざすと、空間が縦に裂けた。', shake: 0.3, onEnter: function () { if (Game.Audio.cineStart) Game.Audio.cineStart('liminal'); try { Game.Audio.play('portal'); } catch (e) {} if (Game.Audio.cue) Game.Audio.cue('crack'); } },
       { d: 3200, draw: scRiftFall, text: '光でも影でもない、あわいを落ちてゆく。', shake: 0.2, onEnter: function () { if (Game.Audio.cue) Game.Audio.cue('riser'); } },
       { d: 3400, draw: scRiftReveal, text: '——世界の隙間に、割れた足場が浮かんでいた。', onEnter: function () { try { Game.Audio.play('portal_arrive'); } catch (e) {} if (Game.Audio.cue) Game.Audio.cue('shimmer'); } },
     ], cb);
