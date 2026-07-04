@@ -4,3 +4,6 @@ node_modules/
 smoke.js
 /tmp/
 gen_manual.js
+
+# dev-only tools with local machine paths (keep out of public repo)
+gen_gallery.js
