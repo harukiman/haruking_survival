@@ -225,8 +225,10 @@ Game.Loot = (function () {
   }
 
   // ===== エンチャント =====
-  function reroll(slot) { if (slot && slot.roll) slot.roll = rollAt(slot.id, slot.roll.rarity); }
-  function upgrade(slot) { if (slot) { const r = slot.roll ? slot.roll.rarity : 0; slot.roll = rollAt(slot.id, Math.min(4, r + 1)); } }
+  // エンチャントで affix(耐久affix含む)が変わるため耐久上限を再計算。現耐久は新上限に比例スケール
+  function refreshDurAfterRoll(slot) { if (slot && slot.durMax != null) { const f = durFrac(slot); slot.durMax = durMax(slot); slot.dur = Math.round(slot.durMax * f); } }
+  function reroll(slot) { if (slot && slot.roll) { slot.roll = rollAt(slot.id, slot.roll.rarity); refreshDurAfterRoll(slot); } }
+  function upgrade(slot) { if (slot) { const r = slot.roll ? slot.roll.rarity : 0; slot.roll = rollAt(slot.id, Math.min(4, r + 1)); refreshDurAfterRoll(slot); } }
   function maxRarity(slot) { return slot && slot.roll ? slot.roll.rarity >= 4 : false; }
   function enchantCost(slot, kind) {
     const r = slot && slot.roll ? slot.roll.rarity : 0;
