@@ -1027,20 +1027,23 @@ Game.UI = (function () {
     // 乗り物の武器(戦車/戦闘機/爆撃機)も残弾を表示。搭載弾薬はインベントリ在庫がそのまま残弾
     if (p.vehicle) {
       const VA = { tank: 'cannon_shell' };
-      if (p.vehicle === 'jet') { // 機銃(攻撃) と ミサイル(L2/🚀, モード切替可) を表示
+      // 航空機: 通常ミサイル/誘導ミサイルの残数を常に両方表示(現在モードを強調)。弾と同様に常時可視
+      const missileHtml = function () {
+        const nm = Game.Inventory.count('missile'), hm = Game.Inventory.count('homing_missile');
+        const on = 'color:#ffd86b;font-weight:700', off = 'color:#7a8ba0';
+        const nStyle = p.missileMode === 'normal' ? on : off, hStyle = p.missileMode === 'homing' ? on : off;
+        return '<span style="' + nStyle + '">🚀通常 ' + nm + '</span>　<span style="' + hStyle + '">🎯追尾 ' + hm + '</span>';
+      };
+      if (p.vehicle === 'jet') { // 機銃(攻撃) と ミサイル(L2/🚀, 通常/誘導 常時表示)
         const b = Game.Inventory.count('bullet');
-        const mode = (Game.MISSILE_MODES && Game.MISSILE_MODES[p.missileMode || 'homing']) || {};
-        const m = Game.Inventory.count(mode.ammo || 'missile');
         ammoEl.style.display = 'block';
-        ammoEl.innerHTML = '🎯 <span style="color:#9fb6d0">機銃</span> <b style="color:' + (b === 0 ? '#e0664a' : '#7fe0a0') + '">' + b + '</b>　' + (p.missileMode === 'homing' ? '🎯' : '🚀') + ' <span style="color:#9fb6d0">' + (mode.label || 'ミサイル') + '</span> <b style="color:' + (m === 0 ? '#e0664a' : '#ffb060') + '">' + m + '</b> <span style="color:#5a6b80">(回避で切替)</span>';
+        ammoEl.innerHTML = '🎯 <span style="color:#9fb6d0">機銃</span> <b style="color:' + (b === 0 ? '#e0664a' : '#7fe0a0') + '">' + b + '</b>　' + missileHtml();
         return;
       }
-      if (p.vehicle === 'bomber') { // 搭載爆弾(攻撃) と ミサイル(L2/🚀, モード切替可) を表示
+      if (p.vehicle === 'bomber') { // 搭載爆弾(攻撃) と ミサイル(L2/🚀, 通常/誘導 常時表示)
         const n = Game.Inventory.count('heavy_bomb') + Game.Inventory.count('aerial_bomb');
-        const mode = (Game.MISSILE_MODES && Game.MISSILE_MODES[p.missileMode || 'homing']) || {};
-        const m = Game.Inventory.count(mode.ammo || 'homing_missile');
         ammoEl.style.display = 'block';
-        ammoEl.innerHTML = '🛩 <span style="color:#9fb6d0">爆弾</span> <b style="color:' + (n === 0 ? '#e0664a' : '#7fe0a0') + '">' + n + '</b>　' + (p.missileMode === 'homing' ? '🎯' : '🚀') + ' <span style="color:#9fb6d0">' + (mode.label || 'ミサイル') + '</span> <b style="color:' + (m === 0 ? '#e0664a' : '#ffb060') + '">' + m + '</b> <span style="color:#5a6b80">(回避で切替)</span>';
+        ammoEl.innerHTML = '🛩 <span style="color:#9fb6d0">爆弾</span> <b style="color:' + (n === 0 ? '#e0664a' : '#7fe0a0') + '">' + n + '</b>　' + missileHtml();
         return;
       }
       const aid = VA[p.vehicle];
