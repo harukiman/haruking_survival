@@ -483,6 +483,15 @@ Game.Mobs = (function () {
       if (Game.state.mobFreeze > 0) { m.frozen = true; continue; }
       m.frozen = false;
 
+      // ボスの隙(スタン/弱点窓): 大技を回避された後の反撃猶予。動かず攻撃もしない=絶好の攻めどき
+      if (m.vulnerable > 0) m.vulnerable--;
+      if (m.stunned > 0) {
+        m.stunned--;
+        m.hopPhase = (m.hopPhase || 0) + 0.06;
+        if (Game.state.tick % 8 === 0 && Game.Render.spawnParticles) Game.Render.spawnParticles(m.x + (Math.random() - 0.5) * m.def.size, m.y - m.def.size * 0.5, '#ffe27a', 1);
+        continue; // AI/攻撃を停止(隙をさらす)
+      }
+
       // 精鋭アフィックス: 再生(不死) — 毎秒 最大HPの一定割合を回復
       if (hasAffix(m, 'regened') && m.hp < m.maxHp && Game.state.tick % 30 === 0) {
         const af = Game.ELITE_AFFIXES.regened;
@@ -518,13 +527,18 @@ Game.Mobs = (function () {
             m.slam--;
             if (m.slam <= 0) {
               const R = (m.slamR || 2.4) * TS;
-              if (distP <= R && Game.Survival.damage(Math.round((m.dmg || m.def.dmg) * 1.6), m.def.name || 'mob') !== false) {
+              const hit = distP <= R;
+              if (hit && Game.Survival.damage(Math.round((m.dmg || m.def.dmg) * 1.6), m.def.name || 'mob') !== false) {
                 const kl = distP || 1; p.x += (dxp / kl) * 18; p.y += (dyp / kl) * 18;
               }
               Game.Render.spawnParticles(m.x, m.y, '#ff7a3c', 26);
               if (Game.Render.shake) Game.Render.shake(10);
               Game.Audio.play('boom_sfx');
               m.slam = null; m.slamCd = m.enraged ? 90 : 150;
+              // 読み合い: 大技を回避されたら大きな「隙(スタン+被ダメ増)」。当てられたら猶予は短い。
+              // 回避→反撃のループを全ボスに付与(A: 戦闘の読み合い)
+              m.stunned = hit ? 8 : 40; m.vulnerable = hit ? 24 : 96;
+              if (!hit && Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - m.def.size, 'スキ!', '#ffe27a', true);
             }
             m.hopPhase += 0.2; continue; // 溜め中は移動・他攻撃しない(回避猶予)
           }
@@ -767,6 +781,11 @@ Game.Mobs = (function () {
 
   // combat.js から呼ばれる
   function damageMob(m, dmg, fromX, fromY, crit) {
+    // 弱点窓(大技回避後の隙): 被ダメ 1.6倍。回避→反撃の見返りを大きく
+    if (m.vulnerable > 0) {
+      dmg = Math.round(dmg * 1.6);
+      if (Game.Render.spawnFloat && Game.state.tick % 3 === 0) Game.Render.spawnFloat(m.x + (Math.random() - 0.5) * 10, m.y - m.def.size * 0.7, 'WEAK!', '#ffd23a', true);
+    }
     m.hp -= dmg;
     m.hurt = crit ? 13 : 8; // クリは白フラッシュを長めに
     // ボスの激昂: HP30%以下で第二段階。攻撃が激化し赤く染まる(劇的な決着フェーズ)
@@ -1075,6 +1094,15 @@ Game.Mobs = (function () {
         ctx.textAlign = 'left';
       }
       ctx.save();
+      // 弱点窓(隙): 眩い黄色の脈動リング＋「!」で「今が攻めどき」を明示
+      if (m.vulnerable > 0) {
+        const z2 = Game.Camera.zoom ? Game.Camera.zoom() : 1;
+        const pl = 0.5 + Math.sin(Game.state.tick * 0.4) * 0.5;
+        ctx.strokeStyle = 'rgba(255,220,80,' + (0.5 + pl * 0.4).toFixed(3) + ')'; ctx.lineWidth = 3 * z2;
+        ctx.beginPath(); ctx.arc(s.x, s.y - hop, r * (1.5 + pl * 0.25), 0, Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = '#ffe27a'; ctx.font = 'bold ' + Math.round(13 * z2) + 'px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('!', s.x, s.y - r - hop - 20); ctx.textAlign = 'left';
+      }
       // 精鋭/ボスのオーラ: 脈動する発光リング(ボスは自色で威圧、精鋭は金色)
       if (m.elite || m.bountyBoss || m.def.boss) {
         m.auraPhase = (m.auraPhase || 0) + 0.08;
