@@ -362,6 +362,13 @@ Game.Mobs = (function () {
     else if (/frost|^ice|_ice|glacier|snow|rime|winter|chill|blizzard|frozen/.test(t)) e = 'ice';
     m._elem = e; return e;
   }
+  // 属性の敵は接触で対応する状態異常を付与(火=炎上/氷=凍え)。双方向の元素テーマ=敵の属性を尊重する読み合い
+  function inflictMobElement(m) {
+    if (!Game.Status || !Game.Status.add) return;
+    const el = mobElement(m);
+    if (el === 'fire') Game.Status.add('burn', 130);
+    else if (el === 'ice') Game.Status.add('cold', 130);
+  }
   function applyDot(m, kind) {
     if (!m || !m.def || m.def.npc) return;
     const e = KIND_DOT[kind]; if (!e) return;
@@ -884,6 +891,7 @@ Game.Mobs = (function () {
             if (Game.Survival.damage(m.dmg || m.def.dmg, m.def.name || 'mob') !== false) {
               if (Game.Render.spawnHitDir) Game.Render.spawnHitDir(m.x, m.y); // 被弾方向インジケータ
               if (m.def.inflict) for (const k in m.def.inflict) Game.Status.add(k, m.def.inflict[k]);
+              inflictMobElement(m); // 火/氷属性の敵は接触で炎上/凍え
               if (hasAffix(m, 'blazing')) Game.Status.add('burn', Game.ELITE_AFFIXES.blazing.burn); // 業火: 接触で炎上
               // 棘(thorns)防具: 被弾時に攻撃元へダメージ反射
               if (p.gearThorns > 0 && !m.def.boss) { const refl = Math.max(1, Math.round((m.dmg || m.def.dmg) * p.gearThorns)); Game.Render.spawnParticles(m.x, m.y, '#ff8a6a', 5); damageMob(m, refl, p.x, p.y, false); }
@@ -967,6 +975,7 @@ Game.Mobs = (function () {
         if (d < m.def.size * 0.5 + 12) {
           if (Game.Survival.damage(m.def.dmg, m.def.name || 'mob') !== false) {
             if (m.def.inflict) for (const k in m.def.inflict) Game.Status.add(k, m.def.inflict[k]);
+            inflictMobElement(m); // 火/氷属性の敵は接触で炎上/凍え
           }
           m.attackCd = 42;
         }
