@@ -308,8 +308,25 @@ window.Game = window.Game || {};
 
   function initTitle() {
     const btnContinue = document.getElementById('btn-continue');
-    if (!Game.Save.hasSave()) { btnContinue.classList.add('disabled'); btnContinue.disabled = true; }
-    else { const cc = document.querySelector('.cta-col'); if (cc) cc.classList.add('has-save'); } // セーブ持ちには「つづきから」を主導線に
+    function updateContinueBtn() {
+      const has = Game.Save.hasSave();
+      btnContinue.disabled = !has; btnContinue.classList.toggle('disabled', !has);
+      const cc = document.querySelector('.cta-col'); if (cc) cc.classList.toggle('has-save', has); // セーブ持ちには「つづきから」を主導線に
+    }
+    // 複数セーブスロット選択(複数人が別々のデータで遊べる)
+    function renderSlots() {
+      const el = document.getElementById('save-slots'); if (!el || !Game.Save.slotCount) return;
+      const n = Game.Save.slotCount(); let h = '<div class="slots-lbl">セーブ枠（人ごとに使い分け）</div><div class="slots-row">';
+      for (let i = 0; i < n; i++) {
+        const info = Game.Save.slotInfo(i), cur = Game.Save.currentSlot() === i;
+        const sub = info.exists ? ('Lv' + info.level + (info.ng ? ' NG+' + info.ng : '')) : '空き';
+        h += '<button class="slot-btn' + (cur ? ' on' : '') + '" data-slot="' + i + '">枠' + (i + 1) + '<span class="slot-sub">' + sub + '</span></button>';
+      }
+      el.innerHTML = h + '</div>';
+      el.querySelectorAll('.slot-btn').forEach(function (b) { b.addEventListener('click', function () { Game.Save.setSlot(parseInt(b.dataset.slot, 10)); renderSlots(); updateContinueBtn(); }); });
+    }
+    renderSlots();
+    updateContinueBtn();
     // 難易度セレクタ
     let chosenDiff = 'normal';
     const diffBtns = document.querySelectorAll('#diff-row .diff-btn');

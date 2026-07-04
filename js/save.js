@@ -3,6 +3,19 @@ window.Game = window.Game || {};
 
 Game.Save = (function () {
   const KEY = Game.CFG.SAVE_KEY;
+  // 複数セーブスロット(複数人が別々のデータで遊べる)。スロット0=従来キー(既存セーブ互換)
+  const SLOTS = 3;
+  let curSlot = 0;
+  try { curSlot = Math.max(0, Math.min(SLOTS - 1, parseInt(localStorage.getItem(KEY + '_cur') || '0', 10) || 0)); } catch (e) {}
+  function slotKey(i) { return i > 0 ? KEY + '_' + i : KEY; }
+  function setSlot(i) { curSlot = Math.max(0, Math.min(SLOTS - 1, i | 0)); try { localStorage.setItem(KEY + '_cur', String(curSlot)); } catch (e) {} }
+  function currentSlot() { return curSlot; }
+  function slotCount() { return SLOTS; }
+  function slotInfo(i) {
+    try { const raw = localStorage.getItem(slotKey(i)); if (!raw) return { exists: false }; const d = JSON.parse(raw);
+      return { exists: true, level: (d.player && d.player.level) || 1, diff: d.difficulty || 'normal', ng: d.ngLevel || 0 }; }
+    catch (e) { return { exists: false }; }
+  }
 
   function dumpWorld(w) {
     const deltas = {}, tileData = {};
@@ -67,7 +80,7 @@ Game.Save = (function () {
 
   function save() {
     try {
-      localStorage.setItem(KEY, JSON.stringify(serialize()));
+      localStorage.setItem(slotKey(curSlot), JSON.stringify(serialize()));
       return true;
     } catch (e) { return false; }
   }
@@ -86,20 +99,20 @@ Game.Save = (function () {
   }
 
   function hasSave() {
-    try { return !!localStorage.getItem(KEY); } catch (e) { return false; }
+    try { return !!localStorage.getItem(slotKey(curSlot)); } catch (e) { return false; }
   }
 
   function load() {
     try {
-      const raw = localStorage.getItem(KEY);
+      const raw = localStorage.getItem(slotKey(curSlot));
       if (!raw) return null;
       return JSON.parse(raw);
     } catch (e) { return null; }
   }
 
   function clear() {
-    try { localStorage.removeItem(KEY); } catch (e) {}
+    try { localStorage.removeItem(slotKey(curSlot)); } catch (e) {}
   }
 
-  return { serialize, save, autosave, load, hasSave, clear };
+  return { serialize, save, autosave, load, hasSave, clear, setSlot, currentSlot, slotCount, slotInfo };
 })();

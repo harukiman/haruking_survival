@@ -58,6 +58,16 @@ button { font-family: inherit; touch-action: manipulation; }
 .title-box h1 { font-size: 2.2rem; line-height: 1.05; letter-spacing: 2px; color: #6fc46b; text-shadow: 0 2px 0 #1d3a1b; }
 .title-box h1 span { color: #e8c54a; }
 /* リファインしたタイトル */
+/* セーブスロット選択(タイトル) */
+.save-slots { margin: 4px 0 10px; animation: titleFadeUp .6s ease both .65s; }
+.slots-lbl { font-size: .74rem; color: #8a94a8; margin-bottom: 4px; letter-spacing: .5px; }
+.slots-row { display: flex; gap: 8px; }
+.slot-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 7px 4px; border-radius: 10px;
+  background: rgba(30, 40, 58, 0.7); border: 1px solid #2c3a52; color: #cdd8e6; font-weight: 700; font-size: .9rem; cursor: pointer; transition: all .15s; }
+.slot-btn .slot-sub { font-size: .68rem; font-weight: 500; color: #8a94a8; }
+.slot-btn.on { border-color: #6fc46b; background: rgba(50, 90, 60, 0.5); box-shadow: 0 0 10px rgba(90, 200, 120, 0.25); }
+.slot-btn.on .slot-sub { color: #aee0b0; }
+.slot-btn.pad-focus { outline: 2px solid #ffd86b; }
 /* ステータス画面のタブ分割(スキル/図鑑/実績を別タブに。縦積みの長スクロール解消) */
 .stats-tabs { position: sticky; top: 0; z-index: 3; }
 .stats-tabbed .stp { display: none; }

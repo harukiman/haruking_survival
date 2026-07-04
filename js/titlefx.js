@@ -161,7 +161,7 @@
   let axLatch = 0;
   function focusables() {
     const box = document.querySelector('#title-screen .title-box'); if (!box) return [];
-    const sel = '#btn-continue:not([disabled]), #btn-new, .diff-btn, #btn-host, #btn-join, .title-acc > summary';
+    const sel = '#btn-continue:not([disabled]), #btn-new, .slot-btn, .diff-btn, #btn-host, #btn-join, .title-acc > summary';
     return Array.prototype.slice.call(box.querySelectorAll(sel)).filter(function (el) {
       return el.offsetParent !== null; // 非表示(details閉時の中身)は除外
     });
