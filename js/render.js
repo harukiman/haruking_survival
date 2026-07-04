@@ -130,6 +130,7 @@ Game.Render = (function () {
     drawVehDur(ctx);
     drawWreck(ctx);
     drawFires(ctx);
+    drawDowned(ctx);
     drawDrops(ctx);
     Game.Mobs.draw(ctx, alpha);
     drawPeers(ctx);
@@ -694,6 +695,29 @@ Game.Render = (function () {
   }
   // 死の灰ゾーン: 放射性の緑の円＋うごめく粒子(常時危険)
   // 燃え盛る炎: 各火災タイルに揺らめく炎＋熱の明かり(延焼の視認)
+  // 協力ダウン中の表示: 足元に赤リング＋残り時間＋(救助中は)蘇生ゲージ
+  function drawDowned(ctx) {
+    const p = Game.state.player; if (!p || !(p.downed > 0)) return;
+    const sc = Game.Camera.worldToScreen(p.x, p.y), z = Game.Camera.zoom ? Game.Camera.zoom() : 1, t = Game.state.tick;
+    ctx.save();
+    // 足元の赤い脈動リング(危機)
+    const pulse = 0.5 + Math.sin(t * 0.2) * 0.5;
+    ctx.strokeStyle = 'rgba(255,70,60,' + (0.5 + pulse * 0.4).toFixed(2) + ')'; ctx.lineWidth = 3 * z;
+    ctx.beginPath(); ctx.ellipse(sc.x, sc.y + 6 * z, 20 * z, 9 * z, 0, 0, Math.PI * 2); ctx.stroke();
+    // 残り時間バー
+    const w = 42 * z, bx = sc.x - w / 2, by = sc.y - 30 * z, frac = Math.max(0, p.downed / (p.downedMax || 450));
+    ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.fillRect(bx - 1, by - 1, w + 2, 6 * z + 2);
+    ctx.fillStyle = '#ff5a4a'; ctx.fillRect(bx, by, w * frac, 6 * z);
+    // 蘇生ゲージ(仲間が寄り添っている間)
+    if ((p.reviveT || 0) > 0) {
+      const rf = Math.min(1, p.reviveT / 90);
+      ctx.fillStyle = '#8fe0a0'; ctx.fillRect(bx, by + 7 * z, w * rf, 4 * z);
+      if (Game.view) { ctx.fillStyle = '#bff0c8'; ctx.font = 'bold ' + Math.round(9 * z) + 'px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('救助中…', sc.x, by - 4 * z); ctx.textAlign = 'left'; }
+    } else {
+      ctx.fillStyle = '#ffd0c0'; ctx.font = 'bold ' + Math.round(9 * z) + 'px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('⛑ 救助待ち', sc.x, by - 4 * z); ctx.textAlign = 'left';
+    }
+    ctx.restore();
+  }
   function drawFires(ctx) {
     const fires = Game.state.fires; if (!fires || !fires.length) return;
     const TS = Game.CFG.TILE_SIZE, z = Game.Camera.zoom ? Game.Camera.zoom() : 1, t = Game.state.tick;

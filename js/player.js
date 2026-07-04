@@ -175,6 +175,10 @@ Game.Player = (function () {
 
   function update(intent) {
     const p = Game.state.player;
+    // 協力ダウン中: 攻撃/採掘/使用は不可。ゆっくり這って安全な場所や仲間へ近づくのみ
+    if (p.downed > 0 && intent) {
+      intent = { dx: intent.dx * 0.45, dy: intent.dy * 0.45, dir: intent.dir };
+    }
     ensurePassiveHooks();
     updatePassives(p);
     if (Game.state.vehWreck) updateWreck(); // 大破カウントダウン→爆発

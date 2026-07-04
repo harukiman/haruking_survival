@@ -11,6 +11,30 @@ Game.Survival = (function () {
   function update() {
     const p = Game.state.player;
 
+    // 協力: ダウン&蘇生。致死ダメージで即死せず、仲間の救助を待つ状態(MP+仲間在席時のみ・die()から遷移)
+    if (p.downed > 0) {
+      p.downed--; p.health = Math.max(1, p.health);
+      const TS = Game.CFG.TILE_SIZE, now = Date.now();
+      let reviver = false;
+      if (Game.Net && Game.Net.getPeers) { const peers = Game.Net.getPeers();
+        for (const id in peers) { const pe = peers[id]; if (!pe || pe.tx == null) continue; if (pe.world && pe.world !== Game.state.worldName) continue; if (pe.lastSeen && now - pe.lastSeen > 8000) continue; if (Math.hypot(pe.tx - p.x, pe.ty - p.y) <= 3 * TS) { reviver = true; break; } }
+      }
+      if (reviver) {
+        p.reviveT = (p.reviveT || 0) + 1;
+        if (Game.state.tick % 6 === 0 && Game.Render.spawnParticles) Game.Render.spawnParticles(p.x, p.y - 8, '#8fe0a0', 2);
+        if (p.reviveT >= 90) { // 3秒寄り添えば蘇生(HP半分)
+          p.downed = 0; p.reviveT = 0; p.health = Math.round(p.maxHealth * 0.5); p.invuln = 60;
+          if (Game.UI && Game.UI.toast) Game.UI.toast('✚ 仲間に助け起こされた！');
+          if (Game.Audio) Game.Audio.play('levelup');
+          Game.UI.refreshStats();
+          return;
+        }
+      } else { p.reviveT = Math.max(0, (p.reviveT || 0) - 2); }
+      if (p.downed <= 0) { p._bleedout = true; p.health = 0; die(); } // 時間切れ=本当の死へ
+      Game.UI.refreshStats();
+      return; // ダウン中は他の生存処理を止める
+    }
+
     // 低HP警告音（鼓動・設定 lowHpWarn 尊重・play内で1.1sスロットル）
     if (p.health > 0 && p.health < p.maxHealth * 0.22 && Game.state.tick % 15 === 0 &&
         !(Game.Settings && Game.Settings.get('lowHpWarn') === false)) {
@@ -181,6 +205,7 @@ Game.Survival = (function () {
 
   function damage(amount, source) {
     const p = Game.state.player;
+    if (p.downed > 0) return false; // ダウン中は無敵(ブリードアウトのみ・救助を待つ)
     const physical = source !== 'starve' && source !== 'sanity' && source !== 'status';
     // 環境DoT(死の灰/寒さ/砂嵐/落雷/溺れ)は無敵時間を貫通し、毎秒確実に蝕む
     const envDot = source === 'fallout' || source === 'cold' || source === 'sand' || source === 'storm' || source === 'drown';
@@ -234,6 +259,19 @@ Game.Survival = (function () {
 
   function die() {
     const p = Game.state.player;
+    // 協力: MPで在席中の仲間が居れば、即死せず「ダウン」へ(救助待ち)。ソロ/仲間不在は従来通り即死。
+    if (!p._bleedout && !p.downed && Game.Net && Game.Net.isConnected && Game.Net.isConnected() && Game.Net.getPeers) {
+      const peers = Game.Net.getPeers(), now = Date.now(); let hasPeer = false;
+      for (const id in peers) { const pe = peers[id]; if (!pe) continue; if (pe.world && pe.world !== Game.state.worldName) continue; if (pe.lastSeen && now - pe.lastSeen > 8000) continue; hasPeer = true; break; }
+      if (hasPeer) {
+        p.downed = 450; p.downedMax = 450; p.reviveT = 0; p.health = 1; p.invuln = 30; // 15秒のブリードアウト
+        if (Game.UI && Game.UI.toast) Game.UI.toast('⛑ ダウン！ 仲間が近づけば助け起こしてくれる…(15秒)');
+        if (Game.Audio) Game.Audio.play('lowhp');
+        Game.UI.refreshStats();
+        return;
+      }
+    }
+    p._bleedout = false;
     if (Game.state.deathPending) return; // 二重発火防止
     Game.state.deathPending = true;
     if (Game.Save) Game.Save.autosave('force'); // 死亡時セーブ(進行を保全。autosave内でゲスト判定)
@@ -266,6 +304,7 @@ Game.Survival = (function () {
     Game.state.deathPending = false;
     Game.state.paused = false;
     const p = Game.state.player;
+    p.downed = 0; p.reviveT = 0; p._bleedout = false; // ダウン状態をリセット
     p.lifeStart = Game.state.tick;
     const btsGuarded = hasBtsGuard(); // ドロップ前に判定(護符が落ちても今回の死は守られる)
     Game.UI.toast('力尽きた…リスポーンします');
