@@ -35,11 +35,14 @@ Game.Mobs = (function () {
     const nightAmp = (def.hostile && !def.boss && Game.state.worldName === 'light' && Game.DayNight && Game.DayNight.isNight());
     const nightHp = nightAmp ? 1.55 : 1;   // 深夜個体はさらに強く(ユーザー: もっと強く)
     const nightDmg = nightAmp ? 1.4 : 1;
+    // 星々の世界(space)は最終盤(超高コストのロケットで到達)。固有の敵をかなり強化
+    const spaceHp = def.space ? (def.boss ? 1.5 : 2.4) : 1;
+    const spaceDmg = def.space ? (def.boss ? 1.35 : 1.9) : 1;
     // 協力プレイ: ボス/中ボスは参加人数でHPが増える(共闘が歯応えを保つ)。+55%/人(自分以外)
     const peers = (Game.Net && Game.Net.isConnected && Game.Net.isConnected() && Game.Net.peerCount) ? Game.Net.peerCount() : 0;
     const coopHp = (def.boss || def.midboss) ? (1 + 0.55 * Math.min(3, peers)) : 1;
-    const hp = Math.round(def.hp * mult * bandMult * bossMult * lvHp * nightHp * coopHp);
-    const dmgMult = mult * bandMult * lvDmg * nightDmg * bossDmg * (diff.dmgMult != null ? diff.dmgMult : 1);
+    const hp = Math.round(def.hp * mult * bandMult * bossMult * lvHp * nightHp * coopHp * spaceHp);
+    const dmgMult = mult * bandMult * lvDmg * nightDmg * bossDmg * spaceDmg * (diff.dmgMult != null ? diff.dmgMult : 1);
     Game.state._mobId = (Game.state._mobId || 0) + 1;
     const m = {
       id: Game.state._mobId, type: type, def: def,

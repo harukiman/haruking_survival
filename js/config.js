@@ -488,7 +488,7 @@ Game.ITEMS = {
   railgun:     { name:'レールガン', stack:1, color:'#101014', tool:'gun', mag:5, ammo:'energy_cell', fireDmg:38, cd:40, bspeed:16, bkind:'pierce', gunsfx:'beam', flavor:'超電磁加速。直線上の全てを撃ち抜く。' },
   excalibur:   { name:'約束された勝利の剣', stack:1, color:'#ffe9a0', tool:'sword', tier:5, attack:22, proj:{kind:'slash', dmg:34, big:true, cd:40}, wsfx:'beam', special:{type:'shock', name:'聖光の衝撃', pct:0.5, r:2.4, cd:80, color:'#ffe9a0'}, flavor:'掲げれば光の砲撃となりて、邪悪を薙ぎ払う。' },
   gae_bolg:    { name:'刺し穿つ死棘の槍', stack:1, color:'#c0303a', tool:'sword', tier:5, attack:18, proj:{kind:'pierce', dmg:24, cd:22}, wsfx:'slash_air', special:{type:'brand', name:'死棘の毒', dot:'venom', color:'#c0303a'}, flavor:'放てば因果を捻じ曲げ、必ず心臓を貫く朱槍。' },
-  gate_babylon:{ name:'王の財宝', stack:1, color:'#e8c54a', tool:'sword', tier:5, attack:16, proj:{kind:'slash', dmg:11, count:5, spread:0.7, cd:34}, wsfx:'slash_air', flavor:'無数の宝具を雨と降らせる、王の蔵。' },
+  gate_babylon:{ name:'王の財宝', stack:1, color:'#e8c54a', tool:'sword', tier:5, attack:26, proj:{kind:'slash', dmg:18, count:5, spread:0.7, cd:32}, wsfx:'slash_air', flavor:'無数の宝具を雨と降らせる、王の蔵。' },
   prism_blade: { name:'プリズムの刃', stack:1, color:'#c884f0', tool:'sword', tier:5, attack:19, proj:{kind:'slash', dmg:16, count:3, spread:0.4, cd:30}, wsfx:'beam', special:{type:'echo', name:'三閃残光', hits:2, pct:0.35, cd:70, color:'#c884f0'}, flavor:'水晶の女王の刃。光を七色に砕き、三閃となって奔る。' },
   dragon_fang: { name:'竜牙の大剣', stack:1, color:'#8a2fb0', tool:'sword', tier:5, attack:24, proj:{kind:'slash', dmg:28, big:true, cd:36}, wsfx:'beam', special:{type:'shock', name:'竜咆', pct:0.5, r:2.4, cd:75, color:'#8a2fb0'}, flavor:'深淵の竜の牙より鍛えし大剣。振るえば闇を裂く咆哮が奔る。' },
   endblade:    { name:'終焉の剣', stack:1, color:'#ff5a7a', tool:'sword', tier:5, attack:26, aoe:true, proj:{kind:'slash', dmg:32, big:true, cd:32}, wsfx:'beam', special:{type:'echo', name:'終焉の三連', hits:2, pct:0.4, cd:60, color:'#ff5a7a'}, flavor:'全ての強敵を退けし者に託される、終焉と再生の剣。一閃は三たび木霊する。' },
@@ -499,9 +499,9 @@ Game.ITEMS = {
   magma_maul:  { name:'溶岩の大槌', stack:1, color:'#d8521f', tool:'sword', tier:5, attack:25, aoe:true, proj:{kind:'fire', dmg:20, explosive:1.6, cd:40}, wsfx:'beam', special:{type:'brand', name:'焔纏', dot:'fire', color:'#ff7a3a'}, flavor:'溶岩の王の核より鍛えし大槌。打たれた者は炎を纏う。' },
   spore_scythe:{ name:'菌糸の大鎌', stack:1, color:'#9a6ad0', tool:'sword', tier:5, attack:22, proj:{kind:'venom', dmg:18, count:3, spread:0.4, cd:34}, wsfx:'beam', special:{type:'reap', name:'吸命', healPct:0.03, cd:30, color:'#9a6ad0'}, flavor:'胞子の女王より生まれた大鎌。散った命は菌糸を伝って還る。' },
   // ===== エンドゲーム手作り装備(ボス素材) =====
-  starcore_greatsword:{ name:'星核の大剣', stack:1, color:'#cfe0ff', tool:'sword', tier:5, attack:24, proj:{kind:'slash', dmg:24, big:true, cd:34}, wsfx:'beam', special:{type:'echo', name:'星屑残光', hits:2, pct:0.35, cd:70, color:'#cfe0ff'}, flavor:'星核を鍛え込んだ大剣。一閃の後、星屑の残光が追い斬る。' },
+  starcore_greatsword:{ name:'星核の大剣', stack:1, color:'#cfe0ff', tool:'sword', tier:5, attack:34, proj:{kind:'slash', dmg:34, big:true, cd:32}, wsfx:'beam', special:{type:'echo', name:'星屑残光', hits:2, pct:0.35, cd:70, color:'#cfe0ff'}, flavor:'星核を鍛え込んだ大剣。一閃の後、星屑の残光が追い斬る。' },
   voidcore_blade:{ name:'虚無の刃', stack:1, color:'#c060ff', tool:'sword', tier:5, attack:22, proj:{kind:'hex', dmg:18, count:2, spread:0.35, pierce:true, cd:32}, wsfx:'beam', special:{type:'reap', name:'虚喰', healPct:0.04, cd:30, color:'#c060ff'}, flavor:'影核と虚の心臓より生まれた刃。屠った命を喰らい、主を癒す。' },
-  star_aegis:  { name:'星核の鎧', stack:1, color:'#bfe0ff', armor:8, slot:'chest', warm:true, flavor:'星鋼と星核で鍛えた鎧。あらゆる衝撃を受け流す。' },
+  star_aegis:  { name:'星核の鎧', stack:1, color:'#bfe0ff', armor:12, slot:'chest', warm:true, flavor:'星鋼と星核で鍛えた鎧。あらゆる衝撃を受け流す。' },
   void_helm:   { name:'虚無の兜', stack:1, color:'#a060e0', armor:5, slot:'head', flavor:'影核を埋め込んだ兜。影の囁きを遮る。' },
   // 乗り物
   gasoline:      { name:'ガソリン', stack:16, color:'#d8b24a', fuel:60, flavor:'現代の乗り物を動かす燃料。乗車中に使うと燃料を補給できる。' },
@@ -534,8 +534,8 @@ Game.ITEMS = {
   rocket:        { name:'ロケット', stack:1, color:'#d8d8e0', place:Game.OBJ.ROCKET, flavor:'空の果て、星々の海へ。全ての貴き素材を束ねて。' },
   star_metal:    { name:'星鋼', stack:99, color:'#aee0ff', flavor:'星の核から採れる金属。地上のどんな鋼より硬く、軽い。' },
   star_core:     { name:'星核', stack:16, color:'#ffe9ff', flavor:'小さな星そのもの。無限の力が秘められている。' },
-  cosmic_blade:  { name:'コズミックブレード', stack:1, color:'#aee0ff', tool:'sword', tier:5, attack:18, special:{type:'thunder', name:'星の裁き', count:2, pct:0.5, cd:90, color:'#aee0ff'}, flavor:'星鋼で鍛えし剣。一閃が闇を裂き、星の光が敵を撃つ。' },
-  star_cannon:   { name:'スターキャノン', stack:1, color:'#aee0ff', tool:'gun', mag:8, ammo:'bullet', fireDmg:22, cd:10, explosive:2.0, bkind:'rocket', gunsfx:'gun_rocket', flavor:'星の力を撃ち放つ砲。着弾で炸裂する。' },
+  cosmic_blade:  { name:'コズミックブレード', stack:1, color:'#aee0ff', tool:'sword', tier:5, attack:28, special:{type:'thunder', name:'星の裁き', count:3, pct:0.7, cd:80, color:'#aee0ff'}, flavor:'星鋼で鍛えし剣。一閃が闇を裂き、星の光が敵を撃つ。' },
+  star_cannon:   { name:'スターキャノン', stack:1, color:'#aee0ff', tool:'gun', mag:8, ammo:'bullet', fireDmg:38, cd:9, explosive:2.6, bkind:'rocket', gunsfx:'gun_rocket', flavor:'星の力を撃ち放つ砲。着弾で炸裂する。' },
   gravity_boots: { name:'重力ブーツ', stack:1, color:'#88a', armor:4, slot:'chest', flavor:'星の重力を御す靴。' },
   // 家具・家作り
   healing_totem: { name:'癒しの祭壇', stack:16, color:'#7fd0a0', place:Game.OBJ.HEALING_TOTEM, flavor:'傍にいる者の傷を癒す祭壇。' },
@@ -786,7 +786,7 @@ Game.RECIPES = [
   { out:{id:'repair_kit', n:1}, in:{iron:3, coal:1}, station:'crafting_table' },
   { out:{id:'plane', n:1}, in:{shadow_steel:18, iron:24, lumen:12, gold_bar:4}, station:'crafting_table' },
   // ロケット(最高コスト)・宇宙装備
-  { out:{id:'rocket', n:1}, in:{iron:50, shadow_steel:24, lumen:24, shadow_core:6, gold_bar:8}, station:'crafting_table' },
+  { out:{id:'rocket', n:1}, in:{iron:90, shadow_steel:45, lumen:45, shadow_core:12, gold_bar:18, circuit:10, steel_plate:12}, station:'crafting_table' },
   { out:{id:'cosmic_blade', n:1}, in:{star_metal:5, shadow_steel:3}, station:'crafting_table' },
   { out:{id:'starcore_greatsword', n:1}, in:{star_core:1, star_metal:4, iron:2}, station:'enchant_table' },
   { out:{id:'voidcore_blade', n:1}, in:{shadow_core:1, void_heart:1, shadow_steel:4}, station:'enchant_table' },
