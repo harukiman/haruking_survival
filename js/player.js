@@ -1478,11 +1478,18 @@ Game.Player = (function () {
     let target = null;
     const it = intent || Game.Input.intent;
     if (it && it.usePointer && it.mouseTile) {
+      // 手動照準(PCマウス / コントローラ右スティックのカーソル): その方向へ砲塔を向ける
       const tx = it.mouseTile.tx * TS + TS / 2, ty = it.mouseTile.ty * TS + TS / 2;
       const dx = tx - p.x, dy = ty - p.y;
       if (Math.abs(dx) > 2 || Math.abs(dy) > 2) target = Math.atan2(dy, dx);
+    } else {
+      // 照準ポインタが無い(スマホ等): 射程内の最寄りの敵へ砲塔を自動追尾。敵が居なければ現在角を保持
+      const mobs = Game.state.mobs, reach = 16 * TS;
+      let bm = null, bd = Infinity;
+      for (let i = 0; i < mobs.length; i++) { const m = mobs[i]; if (m.def.friendly) continue; const d = Math.hypot(m.x - p.x, m.y - p.y); if (d <= reach && d < bd) { bd = d; bm = m; } }
+      if (bm) target = Math.atan2(bm.y - p.y, bm.x - p.x);
     }
-    if (target == null) return; // 入力なし=現在の砲塔角を保持
+    if (target == null) return; // 入力/標的なし=現在の砲塔角を保持
     // 最短方向へ最大旋回速度で近づける
     let diff = target - p.turretAng;
     while (diff > Math.PI) diff -= Math.PI * 2;
