@@ -985,6 +985,7 @@ Game.UI = (function () {
     if (el.healthVal) el.healthVal.textContent = Math.ceil(p.health) + '/' + p.maxHealth;
     if (el.hungerVal) el.hungerVal.textContent = Math.ceil(p.hunger) + '/' + p.maxHunger;
     if (el.staminaVal) el.staminaVal.textContent = Math.ceil(p.stamina) + '/' + p.maxStamina;
+    { const mb = document.getElementById('mana-bar'), mv = document.getElementById('mana-val'); if (mb) mb.style.width = ((p.mp || 0) / (p.maxMp || 100) * 100) + '%'; if (mv) mv.textContent = Math.ceil(p.mp || 0) + '/' + (p.maxMp || 100); }
     if (el.sanityVal) el.sanityVal.textContent = Math.ceil(Game.state.sanity) + '/' + Game.TUNE.SANITY_MAX;
     el.clock.textContent = Game.DayNight.clockText();
     if (el.level) {

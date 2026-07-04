@@ -92,6 +92,7 @@ Game.Combat = (function () {
     const _slot = Game.Inventory.selectedSlot(), _def = _slot && Game.ITEMS[_slot.id];
     // 流星召喚武器（流星の杖）: 範囲内の最寄り敵の頭上へ流星を落とす。敵が居なければ向いた先へ
     if (_def && _def.strike) {
+      if (!Game.Player.spendMana(_def.mpCost || 18)) { if (Game.state.tick % 30 === 0) Game.UI.toast('マナが足りない'); return true; }
       const stk = _def.strike;
       const reach = (stk.range || 9) * TS;
       let bm = null, bd = Infinity;
@@ -99,7 +100,7 @@ Game.Combat = (function () {
       let tx2, ty2;
       if (bm) { tx2 = bm.x; ty2 = bm.y; }
       else { let dx2 = 0, dy2 = 0; if (p.dir === 'up') dy2 = -1; else if (p.dir === 'down') dy2 = 1; else if (p.dir === 'left') dx2 = -1; else dx2 = 1; tx2 = p.x + dx2 * 4 * TS; ty2 = p.y + dy2 * 4 * TS; }
-      Game.Projectiles.callMeteor(tx2, ty2, Game.Player.effAttack(stk.dmg), stk.radius);
+      Game.Projectiles.callMeteor(tx2, ty2, Math.round(Game.Player.effAttack(stk.dmg) * Game.Player.magicPower()), stk.radius);
       if (_def.wsfx) Game.Audio.play(_def.wsfx); else Game.Audio.play('swing');
       Game.Render.spawnSlash(p.x, p.y, p.dir, '#ffb24a');
       p.attackCd = stk.cd || Game.Player.attackCooldown();
@@ -107,6 +108,7 @@ Game.Combat = (function () {
     }
     // 渦召喚武器（渦の杖）: 範囲内最寄り敵の位置に渦を生む。無標的なら向いた先
     if (_def && _def.vortex) {
+      if (!Game.Player.spendMana(_def.mpCost || 22)) { if (Game.state.tick % 30 === 0) Game.UI.toast('マナが足りない'); return true; }
       const vx = _def.vortex;
       const reach = (vx.range || 8) * TS;
       let bm = null, bd = Infinity;
@@ -114,7 +116,7 @@ Game.Combat = (function () {
       let tx2, ty2;
       if (bm) { tx2 = bm.x; ty2 = bm.y; }
       else { let dx2 = 0, dy2 = 0; if (p.dir === 'up') dy2 = -1; else if (p.dir === 'down') dy2 = 1; else if (p.dir === 'left') dx2 = -1; else dx2 = 1; tx2 = p.x + dx2 * 4 * TS; ty2 = p.y + dy2 * 4 * TS; }
-      Game.Projectiles.callVortex(tx2, ty2, Game.Player.effAttack(vx.dmg), vx.radius, vx.dur);
+      Game.Projectiles.callVortex(tx2, ty2, Math.round(Game.Player.effAttack(vx.dmg) * Game.Player.magicPower()), vx.radius, vx.dur);
       Game.Audio.play('whirl');
       Game.Render.spawnSlash(p.x, p.y, p.dir, '#b66ad0');
       p.attackCd = vx.cd || Game.Player.attackCooldown();
@@ -176,6 +178,7 @@ Game.Combat = (function () {
     // 隕石詠唱の杖: カーソル(or最寄り敵/正面)を指定し、長い詠唱の末に巨大隕石を落とす。
     // 詠唱中は無敵だがその場に停止する必要がある(動くと中断)。runSpecial ではなく状態(p.casting)で管理。
     if (_def && _def.castMeteor && !p.casting) {
+      if (!Game.Player.spendMana(_def.mpCost || 45)) { if (Game.state.tick % 30 === 0) Game.UI.toast('マナが足りない — 詠唱には大きな魔力が要る'); return true; }
       const cm = _def.castMeteor;
       const it = Game.Input.intent;
       let tx2, ty2;
@@ -186,7 +189,7 @@ Game.Combat = (function () {
         if (bm) { tx2 = bm.x; ty2 = bm.y; }
         else { let dx2 = 0, dy2 = 0; if (p.dir === 'up') dy2 = -1; else if (p.dir === 'down') dy2 = 1; else if (p.dir === 'left') dx2 = -1; else dx2 = 1; tx2 = p.x + dx2 * 5 * TS; ty2 = p.y + dy2 * 5 * TS; }
       }
-      p.casting = { type: 'meteor', tx: tx2, ty: ty2, until: Game.state.tick + (cm.dur || 300), dur: (cm.dur || 300), radius: cm.radius || 4, dmg: Game.Player.effAttack(cm.dmg || 120), sfx: cm.sfx || 'whirl' };
+      p.casting = { type: 'meteor', tx: tx2, ty: ty2, until: Game.state.tick + (cm.dur || 300), dur: (cm.dur || 300), radius: cm.radius || 4, dmg: Math.round(Game.Player.effAttack(cm.dmg || 120) * Game.Player.magicPower()), sfx: cm.sfx || 'whirl' };
       Game.Audio.play('whirl');
       if (Game.Render.spawnFloat) Game.Render.spawnFloat(p.x, p.y - 28, '詠唱開始…', '#ffb24a', true);
       p.attackCd = 20;

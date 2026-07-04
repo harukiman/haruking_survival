@@ -36,6 +36,7 @@ Game.Player = (function () {
       xp: 0, level: 1, xpNext: 24, invSlots: 36, bts: 0,
       baseMaxHealth: 100,
       stamina: 100, maxStamina: 100,
+      mp: 100, maxMp: 100, // マナ(杖/魔法系の消費資源)
       breath: 360, maxBreath: 360, // 遊泳の呼吸ゲージ(12秒)
       vehicle: null, // null|'car'|'boat'|'plane'|'buggy'
       fuel: {}, // 現代乗り物の燃料(type→残量)
@@ -222,6 +223,9 @@ Game.Player = (function () {
     }
     if (dashing) { p.stamina = Math.max(0, p.stamina - 1.1); }
     else if (p.stamina < p.maxStamina) { p.stamina = Math.min(p.maxStamina, p.stamina + (moving ? 0.3 : 0.7)); }
+    // マナ自然回復(戦闘中も緩やかに戻る)。マナ回復スキルで加速
+    if (p.mp == null) { p.mp = p.maxMp || 100; }
+    if (p.mp < p.maxMp) p.mp = Math.min(p.maxMp, p.mp + 0.35 + (skillBonus().manaRegen || 0));
     let spd = p.speed * (dashing ? 1.85 : 1);
     // 燃料: 現代の乗り物は走行で燃料を消費。尽きると推進力を失う(ガソリンで給油)
     if (p.vehicle && FUEL_VEHICLES[p.vehicle]) {
@@ -1006,7 +1010,8 @@ Game.Player = (function () {
     if (p.attackCd > 0) return;
     // 流星/渦召喚の杖は近接攻撃ロジック側(Combat)で標的に効果を生む
     if (sel.strike || sel.vortex) { Game.Combat.tryAttack(); return; }
-    Game.Projectiles.fire(sel.fireDmg || 12, sel.magic || 'fire');
+    if (!spendMana(sel.mpCost || 10)) { if (Game.state.tick % 30 === 0) Game.UI.toast('マナが足りない'); return; } // 魔法弾はマナ消費
+    Game.Projectiles.fire(Math.round((sel.fireDmg || 12) * magicPower()), sel.magic || 'fire');
     p.attackCd = 16;
     Game.Render.spawnParticles(p.x, p.y, sel.magic === 'frost' ? '#9fd8ff' : '#ff7a3c', 4);
     Game.Audio.play('gun');
@@ -1247,6 +1252,8 @@ Game.Player = (function () {
     const sb = skillBonus();
     p.maxHealth = base + hpBonus + (p.vit || 0) * 5 + sb.hp + bossesDefeated() * 5; // ボス討伐ごとに最大HP+5
     p.maxStamina = 100 + sb.staminaMax + gs;
+    p.maxMp = 100 + (sb.manaMax || 0);
+    if (p.mp == null || p.mp > p.maxMp) p.mp = p.maxMp;
     if (p.health > p.maxHealth) p.health = p.maxHealth;
     if (p.stamina > p.maxStamina) p.stamina = p.maxStamina;
   }
@@ -1275,6 +1282,10 @@ Game.Player = (function () {
   function levelArmorBonus() { const p = Game.state.player; return Math.floor(p.level / 4); }
   function attackCooldown() { const p = Game.state.player; return Math.max(7, Math.round(Game.TUNE.ATTACK_COOLDOWN * (1 - (p.dex || 0) * 0.02))); }
   function effAttack(baseAtk) { return Math.max(1, baseAtk + levelDmgBonus() + skillBonus().atk + (Game.Status ? Game.Status.buffSum().atk : 0)); }
+  // 魔法系: マナ消費(スキルでコスト減)。足りなければ false。magicPower は魔法ダメージ倍率
+  function manaCost(base) { const p = Game.state.player; return Math.max(1, Math.round(base * (1 - (skillBonus().manaCostCut || 0)))); }
+  function spendMana(base) { const p = Game.state.player; const c = manaCost(base); if ((p.mp || 0) < c) return false; p.mp -= c; if (Game.UI.refreshStats) Game.UI.refreshStats(); return true; }
+  function magicPower() { return 1 + (skillBonus().magicPower || 0); }
   // 装備比較用: 現在手持ち武器の実効攻撃 / 指定スロットの装備防御
   function currentWeaponAtk() {
     const sl = Game.Inventory.slots()[Game.state.player.hotbarIndex];
@@ -1503,7 +1514,7 @@ Game.Player = (function () {
   return {
     makeDefault, spawnAt, update, targetTile, mining, playerTile, breakBlock,
     interact, useNearby, gainXP, totalArmor, setBonus, sleep, checkGroupSleep, vehicleTakeDamage, updateWreck, equipSelectedArmor, equipFromInventory, equipRelic, equipOffhand, unequipSlot, applyEquipStats, bossesDefeated, bossTitle, travelToWaypoint,
-    effAttack, attackCooldown, levelDmgBonus, levelArmorBonus, spendStat, unlockSkill, respec,
+    effAttack, spendMana, manaCost, magicPower, attackCooldown, levelDmgBonus, levelArmorBonus, spendStat, unlockSkill, respec,
     skillBonus, skillFlag, canUnlock, currentWeaponAtk, equippedArmorAt, xpForLevel,
     reloadCurrent, magLoaded, magCap, selGunId, contextAction,
     saveLoadout, applyLoadout,

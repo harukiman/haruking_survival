@@ -215,6 +215,7 @@ window.Game = window.Game || {};
     p.mags = sp.mags || {}; // 銃のマガジン装填数を復元(リロードのやり直しを防ぐ)
     p.loadouts = sp.loadouts || null; // 装備ロードアウト(5セット)を復元
     p.fuel = sp.fuel || {}; // 現代乗り物の燃料残量を復元
+    p.maxMp = sp.maxMp || 100; p.mp = sp.mp != null ? sp.mp : p.maxMp; // マナ復元
     p.vehDur = sp.vehDur || {}; // 乗り物の耐久値を復元
     Game.state.ngLevel = data.ngLevel || 0;
     // インベントリ（拡張済みなら容量も復元）

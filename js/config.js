@@ -943,6 +943,13 @@ Game.SKILL_TREE = [
   { id:'s8', branch:'surv', name:'放浪の達人', tier:5, cost:5, req:['s6'], eff:{moveSpd:0.15, hp:30, mining:1, flag:'forager'}, desc:'移動+15%・HP+30・採掘UP・採取UP' },
   { id:'a6', branch:'arcane', name:'明鏡止水', tier:3, cost:3, req:['a1'], eff:{crit:0.08, xpBoost:0.1}, desc:'会心+8%・経験+10%' },
   { id:'a7', branch:'arcane', name:'大賢者', tier:5, cost:5, req:['a5'], eff:{atk:5, hp:30, xpBoost:0.25, lifesteal:0.08}, desc:'攻撃+5・HP+30・経験+25%・吸血+8%' },
+  // ===== ㊶ マナ(魔法)系統: 杖/魔法攻撃の資源。最大値/回復/消費減/魔法威力 =====
+  { id:'mn1', branch:'mana', name:'魔力の器', tier:1, cost:1, req:[], eff:{manaMax:30}, desc:'最大マナ+30' },
+  { id:'mn2', branch:'mana', name:'精霊の加護', tier:2, cost:2, req:['mn1'], eff:{manaRegen:0.4}, desc:'マナ自然回復+0.4/tick' },
+  { id:'mn3', branch:'mana', name:'魔法の冴え', tier:2, cost:2, req:['mn1'], eff:{magicPower:0.15}, desc:'魔法ダメージ+15%' },
+  { id:'mn4', branch:'mana', name:'魔力節制', tier:3, cost:3, req:['mn2'], eff:{manaCostCut:0.2}, desc:'魔法のマナ消費-20%' },
+  { id:'mn5', branch:'mana', name:'大魔道', tier:4, cost:4, req:['mn3','mn4'], eff:{magicPower:0.25, manaMax:40}, desc:'魔法ダメージ+25%・最大マナ+40' },
+  { id:'mn6', branch:'mana', name:'賢者の秘奥', tier:5, cost:5, req:['mn5'], eff:{magicPower:0.4, manaMax:60, manaCostCut:0.2, manaRegen:0.4}, desc:'魔法+40%・最大マナ+60・消費-20%・回復+0.4' },
 ];
 // 上位スキルはより多くのスキルポイントを要求(ユーザー指示)。序盤(tier1-2)は据え置き、tier3以降を段階的に重く。
 // 強力な終盤スキルを"投資"にし、レベリングの目標感を持たせる。desc末尾のコストは UI 側が cost を参照するので自動追従。
@@ -1004,7 +1011,7 @@ Game.AMMO_IDS = ['bullet', 'ammo_9mm', 'ammo_556', 'ammo_762', 'ammo_50', 'shell
 
 Game.SKILL_BY_ID = {};
 Game.SKILL_TREE.forEach(function (n) { Game.SKILL_BY_ID[n.id] = n; });
-Game.SKILL_BRANCHES = [['war', '⚔ 剣'], ['guard', '🛡 守'], ['surv', '🌿 探'], ['arcane', '✦ 魔'], ['hunter', '🏹 狩'], ['mystic', '🌓 幽'], ['fortune', '💰 福']];
+Game.SKILL_BRANCHES = [['war', '⚔ 剣'], ['guard', '🛡 守'], ['surv', '🌿 探'], ['arcane', '✦ 秘'], ['mana', '🔮 魔'], ['hunter', '🏹 狩'], ['mystic', '🌓 幽'], ['fortune', '💰 福']];
 Game.MAX_LEVEL = 9999;
 
 // 難易度（自由度: のんびり建築〜高難度）

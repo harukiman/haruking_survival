@@ -120,6 +120,7 @@ button { font-family: inherit; touch-action: manipulation; }
 .title-acc > :not(summary) { margin: 4px 13px 10px; }
 /* スタミナバー */
 .bar-fill.stamina { background: linear-gradient(90deg, #c9a23a, #ffe27a); }
+.bar-fill.mana-fill { background: linear-gradient(90deg, #5a3ad0, #9f7aff); }
 /* ダッシュ/オプションボタン */
 .abtn.dash { background: rgba(200,160,60,0.82); border-color: #ffe27a; }
 #cutscene-skip { position: absolute; right: 14px; top: 14px; z-index: 61; padding: 8px 16px; border-radius: 20px;
