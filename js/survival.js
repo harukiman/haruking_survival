@@ -188,8 +188,13 @@ Game.Survival = (function () {
       if ((p.rolling || 0) > 0 && !p.rollRewarded) {
         p.rollRewarded = true;
         p.stamina = Math.min(p.maxStamina, p.stamina + 10); // スタミナ還元
+        if (p.maxMp) p.mp = Math.min(p.maxMp, (p.mp || 0) + 8); // マナも少し還元
+        // ジャスト回避の"手応え": 短いスローモー(敵を一瞬止める)＋フラッシュで読み合いを称揚
+        Game.state.mobFreeze = Math.max(Game.state.mobFreeze || 0, 9);
+        Game.state.hitstop = Math.max(Game.state.hitstop || 0, 3);
+        if (Game.Render.flash) Game.Render.flash('rgba(140,220,255,0.14)');
         if (Game.Render.spawnFloat) Game.Render.spawnFloat(p.x, p.y - 24, 'JUST!', '#7fe0ff', true);
-        if (Game.Render.spawnParticles) Game.Render.spawnParticles(p.x, p.y, '#bfe8ff', 10);
+        if (Game.Render.spawnParticles) Game.Render.spawnParticles(p.x, p.y, '#bfe8ff', 12);
         Game.Audio.play('dodge_just');
       }
       return false; // ブロック: 呼び出し側は状態異常/被弾演出も抑止すること
