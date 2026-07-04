@@ -30,6 +30,14 @@ Game.Lore = (function () {
     { t: '碑文 其の二十五', b: '夜、空が泣く時がある。剥がれた天の破片が、火を曳いて還ってくるのだ。降り積もる星鋼を拾い集めよ——それは喪われた空の、形見である。' },
     { t: '碑文 其の二十六', b: '裂ける前、人々は来たるべき災いに備え、空へ多くの物資を託したという。風に流された木箱は、いまも時折 地へ降りる。古き世の備えが、狭間の旅人を生かす。' },
     { t: '碑文 其の二十七', b: 'これを読む者よ。お前が拾う一片の鉱、結ぶ一つの楔——その全てが、裂けた世界への返答だ。物語の続きを綴るのは、もはや碑ではない。お前自身だ。' },
+    { t: '碑文 其の二十八', b: '風の祭壇に羽根を掲げれば、雲の岸へ昇れる。空島は裂ける前、天に最も近かった者たちの庭。彼らは地を捨て、風とともに在ることを選んだ。' },
+    { t: '碑文 其の二十九', b: '古の門の奥、水濠に囲まれた沈黙の都。かつて幾万の声が満ちた大路を、いまは苔と守番だけが守る。栄華もまた、いつか碑文になる。' },
+    { t: '碑文 其の三十', b: '影の裂け目に虚ろな鍵を差せば、狭間へ落ちる。二相のどちらにも属さぬあわい——そこには世界が一つだった頃の残響が、いまも淀んでいる。' },
+    { t: '碑文 其の三十一', b: '道標の石は、遠く離れた石と石を結ぶ。祖先はこうして広い世界を渡った。足の速さより、置いた印の数が、旅人の器量を決める。' },
+    { t: '碑文 其の三十二', b: '刃に特殊の力を宿す業は、失われて久しい。雷を呼ぶ剣、三度斬り重なる刃——それらは英雄の武器ではない。英雄がそう振るったから、英雄の武器になったのだ。' },
+    { t: '碑文 其の三十三', b: '正気とは灯だ。影に長く身を浸せば、灯は細り、視えぬものが視え始める。狂気の淵で掴んだ真実だけが、時に世界の裏側を教える。だが——戻れる灯を、絶やすな。' },
+    { t: '碑文 其の三十四', b: '土を耕し、種を蒔き、水をやる。かかしを立て、実りを待つ。剣を鍛えるのと同じだけ、畑を耕すことにも、世界を癒す力が宿っている。' },
+    { t: '碑文 其の三十五', b: '碑を巡る者よ。散らばった言葉を集めるうち、お前は気づくだろう——この世界の物語は、読むためではなく、続けるために遺された。さあ、次の一歩を。' },
   ];
 
   function set() { return Game.state.lore || (Game.state.lore = {}); }
@@ -44,8 +52,20 @@ Game.Lore = (function () {
     if (first) {
       Game.Audio.play('craft');
       const c = count();
+      // 読むメリット: 碑文の知恵が経験値とバーツに。刻むほど価値が増す
+      const p = Game.state.player;
+      const xp = 25 + c * 8;
+      if (Game.Player && Game.Player.gainXP) Game.Player.gainXP(xp);
+      p.bts = (p.bts || 0) + 6;
+      if (Game.Render.spawnFloat) Game.Render.spawnFloat(p.x, p.y - 20, '碑文の知恵 +' + xp + 'EXP', '#b6a6f0', true);
+      if (Game.Audio.cue) Game.Audio.cue('shimmer');
+      // 3基ごとに恒久ボーナス: スキルポイント。学びが力になる実感
+      if (c % 3 === 0) { p.skillPoints = (p.skillPoints || 0) + 1; if (Game.UI.toast) Game.UI.toast('📜 碑文の悟り — スキルポイント +1（読破の褒賞）'); if (Game.Render.spawnFloat) Game.Render.spawnFloat(p.x, p.y - 36, 'スキルP +1', '#ffd86b', true); }
+      if (Game.UI.refreshAll) Game.UI.refreshAll();
       if (c >= 14 && Game.Story) Game.Story.unlock('chronicler', true); // 半ばまで読み解くと「刻む者」のムービー
       if (c >= Game.LORE.length) { if (Game.Achievements) Game.Achievements.unlock('lore_complete'); if (Game.Story) Game.Story.unlock('stelae', true); }
+    } else if (Game.Render.spawnFloat) {
+      const p = Game.state.player; Game.Render.spawnFloat(p.x, p.y - 20, '再読', '#8a8fb0');
     }
   }
 

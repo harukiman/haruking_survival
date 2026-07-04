@@ -285,10 +285,15 @@ Game.WorldGen = (function () {
     let obj = O.NONE;
     const h = U.hash3(wx, wy, seed + 777);  // 配置用 0..1
 
-    // 石碑（超低確率・両世界・陸地）
+    // 石碑（陸地・両世界）: グリッド分散で固まらず均等に配置。1セルに1基、セル内のハッシュ位置へ。
+    // (旧: 純ランダム0.0007=局所的に固まったり空白ができていた)
     const walkableGround = ground === T.GRASS || ground === T.FOREST || ground === T.SAND || ground === T.STONE;
-    if (walkableGround && U.hash3(wx, wy, seed + 31337) < 0.0007) {
-      return { ground: ground, obj: O.STELA };
+    if (walkableGround) {
+      const G = 52; // グリッド1辺(タイル)。小さいほど石碑が増える
+      const cgx = Math.floor(wx / G), cgy = Math.floor(wy / G);
+      const sx = cgx * G + Math.floor(U.hash3(cgx, cgy, seed + 313) * G);
+      const sy = cgy * G + Math.floor(U.hash3(cgx, cgy, seed + 927) * G);
+      if (wx === sx && wy === sy) return { ground: ground, obj: O.STELA };
     }
 
     // 古の祭壇（さらに低確率・陸地）— 触れると一時的な祝福を授かる探索報酬
