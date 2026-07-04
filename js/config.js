@@ -1270,7 +1270,7 @@ Game.ITEM_GLYPH = {
   energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️', prism_blade:'⚔️', dragon_fang:'⚔️', colossus_blade:'⚔️', mire_scythe:'⚔️', magma_maul:'🔨', starcore_greatsword:'⚔️', voidcore_blade:'⚔️', spore_scythe:'⚔️', star_aegis:'🛡️', void_helm:'⛑️', thorn_plate:'🥷', tempest_spear:'🔱', sovereign_scepter:'👑', rift_crown:'👑', frostfang_blade:'🗡️', emberfang_axe:'🪓', echoedge:'🗡️', quakehammer:'🔨', flashstep_edge:'⚡', combat_vest:'🎽', reflect_aegis:'🛡️', iai_mumyo:'🗡️', heavenfall_staff:'☄️', gasoline:'⛽', repair_kit:'🔧', buggy:'🚙', tank:'🛡️', cannon_shell:'💣', battle_mech:'🤖', aqualung:'🤿', moonshard:'🌙', moon_charm:'🔮', fighter_jet:'✈️', bomber:'🛩️', aerial_bomb:'💣', heavy_bomb:'🧨', gunpowder:'⚫', gun_parts:'⚙️', steel_plate:'🔩', rope:'🪢', glass:'🔷', circuit:'🖥️', jerky:'🥓', fruit_salad:'🥗', energy_bar:'🍫', medkit:'🩹', deagle:'🔫', uzi:'🔫', p90:'🔫', scar_h:'🔫', barrett:'🔫', spas12:'🔫', minigun:'🔫', m79:'🧨', flamethrower:'🔥', plasma_rifle:'🔫', garage_door:'🚪', landing_pad:'🛬', aircraft_gun:'🔫',
 };
 
-Game.INV_SIZE = 36;       // 先頭9 = ホットバー
+Game.INV_SIZE = 45;       // 先頭9 = ホットバー。初期から1行多め(ユーザー指示: 36→45)
 Game.HOTBAR_SIZE = 9;
 Game.DAY_LENGTH = 24000;  // 1日のtick数（昼夜は次波で本格化）
 

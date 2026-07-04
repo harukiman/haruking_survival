@@ -33,7 +33,7 @@ Game.Player = (function () {
       invuln: 0, hotbarIndex: 0,
       attackCd: 0,
       reloadCd: 0, reloadInfo: null, mags: {}, // 銃のマガジン(装填弾数)管理
-      xp: 0, level: 1, xpNext: 24, invSlots: 36, bts: 0,
+      xp: 0, level: 1, xpNext: 24, invSlots: 45, bts: 0,
       baseMaxHealth: 100,
       stamina: 100, maxStamina: 100,
       mp: 100, maxMp: 100, // マナ(杖/魔法系の消費資源)

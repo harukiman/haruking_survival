@@ -993,9 +993,12 @@ Game.Mobs = (function () {
         let n = Game.Utils.randInt(Math.random, d.n[0], d.n[1]);
         // ドロップ調整(ユーザー指示): 素材のばら撒きを抑え、固有(稀)ドロップの出現率も下げる
         if (d.n[0] === 0) {
-          const cut = m.nightAmped ? 0.15 : 0.45;     // 深夜は固有/稀ドロップを削りにくい(期待UP)
+          const cut = m.nightAmped ? 0.2 : 0.55;      // 固有/稀ドロップをさらに絞る
           if (n > 0 && Math.random() < cut) n = 0;
-        } else if (n > 1 && Math.random() < 0.35) n -= 1;                  // 通常素材の量を控えめに
+        } else { // 通常素材もドロップ率/量を全体的に低下(ユーザー: アイテムのドロップ率を低く)
+          if (n > 0 && Math.random() < (m.nightAmped ? 0.2 : 0.35)) n = 0; // 一定確率で丸ごと出ない
+          else if (n > 1 && Math.random() < 0.45) n -= 1;                  // 量も控えめ
+        }
         for (let k = 0; k < n; k++) items.push({ id: d.item, count: 1 });
       });
     }

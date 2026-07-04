@@ -208,7 +208,8 @@ Game.Loot = (function () {
   // モブ撃破時の装備ドロップ（ground drop配列にpush）
   function rollMobDrop(def, x, y, luck) {
     luck = luck || 0; // 深夜の高ぶり等でギアドロップ率＋レアリティを底上げ
-    const chance = (def.boss ? 1.0 : 0.07) + lootBonus() + luck;
+    // 装備ドロップは絞る(ユーザー: 敵からの装備ドロップが多すぎ)。非ボスは 7%→3%
+    const chance = (def.boss ? 1.0 : def.midboss ? 0.35 : 0.03) + lootBonus() * 0.6 + luck;
     const drops = [];
     const n = def.boss ? 2 : (Math.random() < chance ? 1 : 0);
     const pool = gearPoolFor(def);
