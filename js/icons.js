@@ -287,9 +287,41 @@ Game.Icons = (function () {
         ctx.fillStyle = '#ffb04a'; ctx.beginPath(); ctx.moveTo(M - 5, 36); ctx.lineTo(M, 44); ctx.lineTo(M + 5, 36); ctx.closePath(); ctx.fill(); break;
       }
       case 'vehicle': {
-        ctx.fillStyle = c.base; ctx.fillRect(8, 22, 32, 10); ctx.strokeRect(8, 22, 32, 10);
-        ctx.fillStyle = mix(c.base, '#fff', 0.3); ctx.fillRect(15, 16, 16, 8); ctx.strokeRect(15, 16, 16, 8);
-        ctx.fillStyle = '#222'; ctx.beginPath(); ctx.arc(16, 34, 4, 0, 7); ctx.fill(); ctx.beginPath(); ctx.arc(32, 34, 4, 0, 7); ctx.fill(); break;
+        const vt = def.vehicle;
+        if (vt === 'boat') {
+          ctx.fillStyle = c.base; ctx.beginPath(); ctx.moveTo(8, 24); ctx.lineTo(40, 24); ctx.lineTo(34, 36); ctx.lineTo(14, 36); ctx.closePath(); ctx.fill(); ctx.stroke();
+          ctx.strokeStyle = '#e8e0c8'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(24, 24); ctx.lineTo(24, 8); ctx.stroke(); // マスト
+          ctx.fillStyle = '#eef2f8'; ctx.beginPath(); ctx.moveTo(24, 9); ctx.lineTo(37, 22); ctx.lineTo(24, 22); ctx.closePath(); ctx.fill(); // 帆
+        } else if (vt === 'plane' || vt === 'jet' || vt === 'bomber') {
+          ctx.fillStyle = c.base; ctx.fillRect(22, 8, 4, 32); ctx.stroke(); // 胴
+          const wingY = vt === 'bomber' ? 20 : 24, ww = vt === 'bomber' ? 20 : 15;
+          ctx.fillStyle = mix(c.base, '#fff', 0.2); ctx.fillRect(24 - ww, wingY, ww * 2, 5); ctx.strokeRect(24 - ww, wingY, ww * 2, 5); // 主翼
+          ctx.fillStyle = mix(c.base, '#fff', 0.2); ctx.fillRect(19, 34, 10, 4); // 尾翼
+          ctx.fillStyle = '#9fd8ff'; ctx.fillRect(22, 11, 4, 5); // コックピット
+          if (vt !== 'plane') { ctx.fillStyle = '#3a3f34'; ctx.fillRect(24 - ww + 2, wingY + 5, 3, 3); ctx.fillRect(24 + ww - 5, wingY + 5, 3, 3); } // エンジン/銃
+        } else if (vt === 'carpet') {
+          ctx.save(); ctx.translate(24, 24); ctx.rotate(-0.15);
+          ctx.fillStyle = c.base; ctx.fillRect(-16, -8, 32, 16); ctx.strokeRect(-16, -8, 32, 16);
+          ctx.strokeStyle = mix(c.base, '#fff', 0.5); ctx.lineWidth = 1.5; ctx.strokeRect(-13, -5, 26, 10);
+          ctx.strokeStyle = c.base; for (let i = -14; i <= 14; i += 4) { ctx.beginPath(); ctx.moveTo(i, 8); ctx.lineTo(i, 12); ctx.stroke(); } // 房
+          ctx.restore();
+        } else if (vt === 'tank') {
+          ctx.fillStyle = '#2e3226'; ctx.fillRect(8, 30, 32, 8); ctx.strokeRect(8, 30, 32, 8); // 履帯
+          ctx.fillStyle = c.base; ctx.fillRect(10, 22, 28, 10); ctx.strokeRect(10, 22, 28, 10); // 車体
+          ctx.fillStyle = shade(c.base, 0.8); ctx.beginPath(); ctx.arc(24, 22, 7, Math.PI, 0); ctx.fill(); // 砲塔
+          ctx.strokeStyle = '#2a3420'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(24, 20); ctx.lineTo(42, 16); ctx.stroke(); // 砲身
+        } else if (vt === 'mech') {
+          ctx.fillStyle = shade(c.base, 0.7); ctx.fillRect(16, 30, 5, 12); ctx.fillRect(27, 30, 5, 12); // 脚
+          ctx.fillStyle = c.base; ctx.fillRect(15, 16, 18, 16); ctx.strokeRect(15, 16, 18, 16); // 胴
+          ctx.fillStyle = mix(c.base, '#fff', 0.2); ctx.fillRect(10, 18, 5, 10); ctx.fillRect(33, 18, 5, 10); // 肩
+          ctx.fillStyle = '#3a4250'; ctx.fillRect(19, 8, 10, 8); // 頭
+          ctx.fillStyle = '#ff6a4a'; ctx.fillRect(21, 11, 6, 2); // バイザー
+        } else { // car / buggy 等
+          ctx.fillStyle = c.base; ctx.fillRect(8, 22, 32, 10); ctx.strokeRect(8, 22, 32, 10);
+          ctx.fillStyle = mix(c.base, '#fff', 0.3); ctx.fillRect(15, 16, 16, 8); ctx.strokeRect(15, 16, 16, 8);
+          ctx.fillStyle = '#222'; ctx.beginPath(); ctx.arc(16, 34, 4, 0, 7); ctx.fill(); ctx.beginPath(); ctx.arc(32, 34, 4, 0, 7); ctx.fill();
+        }
+        break;
       }
       case 'block': {
         ctx.fillStyle = c.base; ctx.beginPath(); ctx.moveTo(M, 10); ctx.lineTo(M + 14, 18); ctx.lineTo(M + 14, 34); ctx.lineTo(M, 42); ctx.lineTo(M - 14, 34); ctx.lineTo(M - 14, 18); ctx.closePath(); ctx.fill(); ctx.stroke();

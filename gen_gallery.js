@@ -19,12 +19,55 @@ const path = require('path');
     document.getElementById('btn-new').click();
     await new Promise(r => setTimeout(r, 500));
 
-    // ---- アイテム: Icons.dataURL(id) を全件 ----
+    // ---- アイテム: Icons.dataURL(id) を全件＋詳細な効果 ----
+    const nm = (id) => (G.ITEMS[id] ? G.ITEMS[id].name : id);
+    function effOf(d) {
+      const p = [];
+      if (d.attack != null) p.push('攻撃 ' + d.attack + (d.tier ? ' (T' + d.tier + ')' : ''));
+      if (d.special) p.push('特殊:' + (d.special.name || d.special.type));
+      if (d.strike) p.push('流星 dmg' + d.strike.dmg + '/範囲' + d.strike.radius);
+      if (d.vortex) p.push('渦 dmg' + d.vortex.dmg + '/範囲' + d.vortex.radius);
+      if (d.castMeteor) p.push('隕石詠唱 dmg' + d.castMeteor.dmg + '/範囲' + d.castMeteor.radius + '/' + Math.round((d.castMeteor.dur || 300) / 30) + '秒詠唱');
+      if (d.chg) p.push('溜め斬 最大dmg×' + (1 + d.chg.dmgScale).toFixed(1) + '/会心' + Math.round((d.chg.critBase + d.chg.critScale) * 100) + '%');
+      if (d.mpCost) p.push('マナ' + d.mpCost);
+      if (d.proj) p.push('飛道具:' + d.proj.kind + ' dmg' + (d.proj.dmg || ''));
+      if (d.fireDmg != null) p.push('発射 ' + d.fireDmg);
+      if (d.mag) p.push('装弾' + d.mag);
+      if (d.ammo) p.push('弾:' + nm(d.ammo));
+      if (d.cd) p.push('cd' + d.cd);
+      if (d.pellets) p.push('散弾' + d.pellets);
+      if (d.explosive) p.push('爆発');
+      if (d.pierce) p.push('貫通');
+      if (d.armor != null) p.push('防御 ' + d.armor + (d.slot ? '(' + d.slot + ')' : ''));
+      if (d.thornsFixed) p.push('棘反射' + Math.round(d.thornsFixed * 100) + '%');
+      if (d.ammoStack) p.push('弾薬上限×' + d.ammoStack);
+      if (d.warm) p.push('防寒');
+      if (d.reflect) p.push('反射' + Math.round(d.reflect * 100) + '%');
+      if (d.diveGear) p.push('水中呼吸');
+      if (d.relic) p.push('遺物:' + Object.keys(d.relic).map(k => k + '+' + d.relic[k]).join('/'));
+      if (d.food) p.push('空腹+' + d.food);
+      if (d.heal) p.push('回復+' + d.heal);
+      if (d.buff) p.push('効果:' + d.buff.type);
+      if (d.cures) p.push('治療:' + (Array.isArray(d.cures) ? d.cures.join('/') : '状態異常'));
+      if (d.fuel) p.push('燃料+' + d.fuel);
+      if (d.repair) p.push('修理+' + d.repair);
+      if (d.vehicle) p.push('乗り物:' + d.vehicle + (d.fuelVeh ? '(燃料)' : ''));
+      if (d.tankCannon) p.push('主砲 dmg' + d.tankCannon.dmg);
+      if (d.jetGun) p.push('機関銃 dmg' + d.jetGun.dmg);
+      if (d.mechStomp) p.push('踏み鳴らし dmg' + d.mechStomp.dmg);
+      if (d.bomb) p.push('爆弾 dmg' + d.bomb.dmg + '/範囲' + d.bomb.radius);
+      if (d.place != null) p.push('設置');
+      if (d.plant != null) p.push('種まき');
+      if (d.summonBoss) p.push('ボス召喚');
+      if (d.stasis) p.push('時止め');
+      if (d.tool && ['pickaxe', 'axe', 'grapple'].includes(d.tool)) p.push(d.tool + (d.tier ? ' T' + d.tier : ''));
+      return p.join(' ・ ');
+    }
     const items = [];
     for (const id in G.ITEMS) {
       const d = G.ITEMS[id]; if (!d) continue;
       let img = null; try { img = G.Icons.dataURL(id, null); } catch (e) {}
-      items.push({ id: id, name: d.name || id, img: img, cat: d.tool || (d.armor != null ? 'armor' : d.place != null ? 'build' : d.food != null ? 'food' : d.vehicle ? 'vehicle' : d.relic || d.offhand ? 'gear' : 'material') });
+      items.push({ id: id, name: d.name || id, img: img, eff: effOf(d), flavor: d.flavor || '', cat: d.tool || (d.armor != null ? 'armor' : d.place != null ? 'build' : d.food != null ? 'food' : d.vehicle ? 'vehicle' : d.relic || d.offhand ? 'gear' : 'material') });
     }
 
     // ---- モブ/ボス: 1体ずつ生成→描画→ゲームcanvasから切り出し ----
@@ -49,8 +92,10 @@ const path = require('path');
       octx.clearRect(0, 0, 64, 64);
       try {
         octx.drawImage(gcanvas, (sc.x - sz / 2) * dpr, (sc.y - sz / 2) * dpr, sz * dpr, sz * dpr, 0, 0, 64, 64);
-        mobs.push({ id: t, name: def.name || t, boss: !!def.boss, hostile: !!def.hostile, img: off.toDataURL('image/png') });
-      } catch (e) { mobs.push({ id: t, name: def.name || t, boss: !!def.boss, img: null }); }
+        const drops = (def.drops || []).map(dr => nm(dr.item) + '×' + (dr.n ? dr.n.join('-') : 1)).join('・');
+        const st = 'HP' + (def.hp || '?') + (def.hostile ? ' ・攻' + (def.dmg || 0) : '') + ' ・XP' + (def.xp || 0) + (def.boss ? ' ・ボス' : def.midboss ? ' ・中ボス' : def.hostile ? '' : ' ・非敵対') + (drops ? ' ｜ ドロップ:' + drops : '');
+        mobs.push({ id: t, name: def.name || t, boss: !!def.boss, hostile: !!def.hostile, eff: st, img: off.toDataURL('image/png') });
+      } catch (e) { mobs.push({ id: t, name: def.name || t, boss: !!def.boss, eff: '', img: null }); }
     }
     G.state.mobs.length = 0;
     return { items, mobs };
@@ -60,8 +105,8 @@ const path = require('path');
   if (errs.length) console.log('page errors:', errs.slice(0, 5).join(' | '));
 
   // ---- HTML 組み立て ----
-  const esc = s => String(s).replace(/</g, '&lt;');
-  const cell = (o) => `<figure class="cell"${o.boss ? ' data-boss="1"' : ''}>${o.img ? `<img src="${o.img}" alt="">` : '<div class="noimg">—</div>'}<figcaption>${esc(o.name)}</figcaption></figure>`;
+  const esc = s => String(s == null ? '' : s).replace(/</g, '&lt;');
+  const cell = (o) => `<figure class="cell"${o.boss ? ' data-boss="1"' : ''}>${o.img ? `<img src="${o.img}" alt="">` : '<div class="noimg">—</div>'}<figcaption><b>${esc(o.name)}</b>${o.eff ? `<span class="eff">${esc(o.eff)}</span>` : ''}${o.flavor ? `<span class="flav">${esc(o.flavor)}</span>` : ''}</figcaption></figure>`;
   const cats = {};
   data.items.forEach(it => { (cats[it.cat] = cats[it.cat] || []).push(it); });
   const catLabel = { sword: '⚔ 武器', gun: '🔫 銃', pickaxe: '⛏ 道具', axe: '🪓 道具', staff: '🪄 杖', armor: '🛡 防具', gear: '💠 装身具/左手', build: '🧱 建築・設置', food: '🍖 食料', vehicle: '🚗 乗り物', material: '📦 素材・その他' };
@@ -69,12 +114,15 @@ const path = require('path');
 <title>Haruking Survival — 図鑑ギャラリー</title><style>
 body{background:#0c1018;color:#dfe6f0;font-family:system-ui,sans-serif;margin:0;padding:16px}
 h1{text-align:center;color:#8fe0a0}h2{color:#ffd86b;border-bottom:1px solid #2c3a52;padding-bottom:4px;margin-top:28px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px}
-.cell{margin:0;background:#151c28;border:1px solid #24304a;border-radius:8px;padding:6px 2px;text-align:center}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
+.cell{margin:0;background:#151c28;border:1px solid #24304a;border-radius:8px;padding:7px 8px;display:flex;gap:8px;align-items:flex-start}
 .cell[data-boss] {border-color:#ff5a4a;background:#1e1620}
-.cell img{width:48px;height:48px;image-rendering:pixelated;object-fit:contain}
-.cell .noimg{width:48px;height:48px;line-height:48px;margin:0 auto;color:#556}
-figcaption{font-size:.66rem;color:#aeb8c8;margin-top:3px;word-break:break-word;line-height:1.2}
+.cell img{width:44px;height:44px;image-rendering:pixelated;object-fit:contain;flex:0 0 auto;background:#0d1424;border-radius:6px}
+.cell .noimg{width:44px;height:44px;line-height:44px;text-align:center;color:#556;flex:0 0 auto}
+figcaption{font-size:.72rem;color:#cdd8e6;line-height:1.3;min-width:0}
+figcaption b{color:#eaf0f8;font-size:.82rem}
+.eff{display:block;color:#8fe0a0;font-size:.68rem;margin-top:2px}
+.flav{display:block;color:#8a94a8;font-size:.64rem;margin-top:2px;font-style:italic}
 .muted{color:#7a8494;text-align:center;font-size:.8rem}
 </style></head><body><h1>🗺 Haruking Survival — 図鑑ギャラリー</h1>
 <p class="muted">全アイテム ${data.items.length} 種 ／ 全モブ・ボス ${data.mobs.length} 種（実際のゲーム描画）</p>`;
