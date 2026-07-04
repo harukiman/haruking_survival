@@ -58,6 +58,59 @@ Game.Combat = (function () {
       p.attackCd = vx.cd || Game.Player.attackCooldown();
       return true;
     }
+    // 溜め斬武器(居合/チャージ): 通常斬りはダメージ0。前回の攻撃から chg.min 秒以上「溜めて」から
+    // 振ると、溜め時間が長いほど 会心率・ダメージ・ヒット数が上がる一撃を放つ。忍耐の武器。
+    if (_def && _def.chg) {
+      const chg = _def.chg;
+      const now = Game.state.tick, TPS = 30;
+      const last = p.chargeLastTick == null ? (now - 999 * TPS) : p.chargeLastTick;
+      const elapsed = (now - last) / TPS; // 秒
+      p.chargeLastTick = now; // このスイングで溜めをリセット
+      // 向き
+      let fx = 0, fy = 0; if (p.dir === 'up') fy = -1; else if (p.dir === 'down') fy = 1; else if (p.dir === 'left') fx = -1; else fx = 1;
+      const rangePx2 = (chg.range || Game.TUNE.ATTACK_RANGE) * TS;
+      let best = null, bd = Infinity;
+      for (let i = 0; i < mobs.length; i++) { const m = mobs[i]; if (m.def.friendly) continue; const dx = m.x - p.x, dy = m.y - p.y, d = Math.hypot(dx, dy); if (d > rangePx2 + m.def.size * 0.5) continue; if (d > 14 && (dx * fx + dy * fy) < 0) continue; if (d < bd) { bd = d; best = m; } }
+      p.attackCd = chg.cd || Game.Player.attackCooldown();
+      if (elapsed < (chg.min || 5)) {
+        // 溜め不足: 手応えなし(ダメージ0)。視覚と音で「早すぎた」ことを伝える
+        Game.Render.spawnSlash(p.x, p.y, p.dir, '#6a7a8a');
+        Game.Audio.play('swing');
+        if (Game.Render.spawnFloat) Game.Render.spawnFloat(p.x, p.y - 20, 'ため不足', '#8fa0b0');
+        return true;
+      }
+      // 溜め完了: 時間で強化(min→max秒で 0→1)
+      const f = Math.max(0, Math.min(1, (elapsed - (chg.min || 5)) / ((chg.max || 12) - (chg.min || 5))));
+      const baseAtk = Game.Player.effAttack(chg.dmg || 20);
+      const dmgMul = 1 + f * (chg.dmgScale || 3.0);       // 最大 4倍
+      const critCh = (chg.critBase || 0.15) + f * (chg.critScale || 0.85); // 最大 ~100%
+      const hits = 1 + Math.floor(f * (chg.hits || 3));    // 最大 4ヒット
+      const col = f >= 0.999 ? '#ffe27a' : chg.color || '#ff9a4a';
+      // 溜め切りの大演出
+      Game.Render.spawnSlash(p.x, p.y, p.dir, col);
+      Game.Render.shake(4 + Math.round(f * 8));
+      if (f > 0.6 && Game.Render.flash) Game.Render.flash('rgba(255,220,140,' + (0.1 + f * 0.16).toFixed(3) + ')');
+      Game.Audio.play(f > 0.8 ? 'crit' : 'swing');
+      if (Game.Render.spawnFloat) Game.Render.spawnFloat(p.x, p.y - 26, f >= 0.999 ? '真・一閃!' : '一閃', col, true);
+      if (!best) return true; // 空振りでも溜めは解放される
+      const canDirect = !(Game.Net.isConnected() && !Game.Net.host);
+      // 範囲: 溜めが乗るほど周囲も巻き込む
+      const cleave = f > 0.5;
+      const victims = [];
+      if (cleave) { for (let i = 0; i < mobs.length; i++) { const m = mobs[i]; if (m.def.friendly) continue; if (Math.hypot(m.x - best.x, m.y - best.y) <= rangePx2 * (0.5 + f * 0.6)) victims.push(m); } }
+      else victims.push(best);
+      for (let h = 0; h < hits; h++) {
+        for (let i = 0; i < victims.length; i++) {
+          const tg = victims[i]; if (!tg || tg.hp <= 0) continue;
+          const isCrit = Math.random() < critCh;
+          let dmg = Math.round(baseAtk * dmgMul * (isCrit ? (Game.TUNE.CRIT_MULT || 1.8) : 1));
+          if (!canDirect) { Game.Net.sendHit(tg.id, dmg, p.x, p.y); Game.Render.spawnBlood(tg.x, tg.y, 4); }
+          else Game.Mobs.damageMob(tg, dmg, p.x, p.y, isCrit);
+          if (Game.Render.spawnImpact) Game.Render.spawnImpact(tg.x, tg.y, isCrit ? '#fff0a0' : col);
+        }
+      }
+      return true;
+    }
     let projFired = false;
     if (_def && _def.proj) {
       const pj = _def.proj;
