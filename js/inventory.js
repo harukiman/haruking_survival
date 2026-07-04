@@ -17,6 +17,14 @@ Game.Inventory = (function () {
     return n;
   }
 
+  // 弾薬の1スロット上限: 戦術ベスト等(gearAmmoMul>1)装備中は弾薬アイテムを2倍まで積める
+  function maxStackFor(id, def) {
+    const base = (def && def.stack) || 99;
+    const p = Game.state && Game.state.player;
+    if (p && p.gearAmmoMul > 1 && Game.AMMO_IDS && Game.AMMO_IDS.indexOf(id) >= 0) return base * p.gearAmmoMul;
+    return base;
+  }
+
   // 追加。入りきらなかった数を返す（0なら全部入った）
   function add(id, n) {
     const def = Game.ITEMS[id];
@@ -24,7 +32,7 @@ Game.Inventory = (function () {
     // 影晶をはじめて手にしたとき、記憶回廊「傷の結晶」を解放
     if (id === 'shadow_crystal' && Game.Story && !Game.Story.seen('shadowcrystal')) Game.Story.unlock('shadowcrystal', true);
     if (id === 'lumen' && Game.Story && !Game.Story.seen('lumen')) Game.Story.unlock('lumen', true);
-    const max = def.stack || 99;
+    const max = maxStackFor(id, def);
     const s = slots();
     // 既存スタックに詰める
     for (let i = 0; i < s.length && n > 0; i++) {
@@ -62,7 +70,7 @@ Game.Inventory = (function () {
     const s = slots();
     for (let i = 0; i < s.length; i++) if (!s[i]) return true; // 空きがあれば常に可
     if (isInstance) return false; // 装備は空き必須
-    const def = Game.ITEMS[id]; const max = (def && def.stack) || 99;
+    const def = Game.ITEMS[id]; const max = maxStackFor(id, def);
     for (let i = 0; i < s.length; i++) if (s[i] && s[i].id === id && s[i].count < max) return true; // 同IDの空き
     return false;
   }
@@ -254,7 +262,7 @@ Game.Inventory = (function () {
     }
     const list = [];
     for (const id in stackable) {
-      const def = Game.ITEMS[id]; const max = (def && def.stack) || 99; let n = stackable[id];
+      const def = Game.ITEMS[id]; const max = maxStackFor(id, def); let n = stackable[id];
       while (n > 0) { const c = Math.min(max, n); list.push({ id: id, count: c, roll: null }); n -= c; }
     }
     for (let i = 0; i < instances.length; i++) list.push(instances[i]);

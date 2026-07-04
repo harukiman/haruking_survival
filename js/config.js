@@ -591,6 +591,8 @@ Game.ITEMS = {
   ruin_blade:    { name:'遺構の長剣', stack:1, color:'#cabf8a', tool:'sword', tier:4, attack:12, special:{type:'echo', name:'残響', pct:0.4, cd:60, color:'#e8dca0'}, flavor:'古代都市の兵が佩いた長剣。一撃が過去の残響を呼び、二度三度と斬り重なる。' },
   warden_plate:  { name:'守番の胸甲', stack:1, color:'#b8ac82', armor:6, slot:'chest', flavor:'都市を永く守り続けた守番の鎧。重いが、古代合金ゆえの堅牢さは折り紙付き。' },
   thorn_plate:   { name:'棘鎧', stack:1, color:'#7a5a4a', armor:5, slot:'chest', thornsFixed:0.28, flavor:'無数の棘に覆われた鎧。触れた者は自らの攻撃で傷つく。棘28%反射(付与効果と加算)。' },
+  combat_vest:   { name:'戦術タクティカルベスト', stack:1, color:'#3c4a38', armor:5, slot:'chest', ammoStack:2, flavor:'弾倉ポーチを備えた戦闘用ベスト。装備中は1スロットに携行できる弾薬の上限が2倍になる。銃使いの相棒。' },
+  reflect_aegis: { name:'反射の盾核', stack:1, color:'#8fd0ff', relic:{armor:2}, reflect:0.4, flavor:'攻撃を跳ね返す不思議な盾核。受けたダメージの40%を、殴ってきた相手へ反射する(ボスにも有効)。装身具枠。' },
   ancient_charm: { name:'古の護符', stack:1, color:'#e0cf90', relic:{maxHp:16, armor:1}, flavor:'刻印の護符。古の守りが宿り、身を固くする。装身具として最大HP+16・防御+1。' },
   // 狭間の遺物
   void_shard:    { name:'虚無晶', stack:99, color:'#b088e8', flavor:'狭間の裂け目に結晶した虚。覗き込むと、光でも影でもない色が渦を巻いている。' },
@@ -627,6 +629,8 @@ Game.RECIPES = [
   { out:{id:'echoedge', n:1}, in:{iron:5, shadow_steel:1, lumen:1}, station:'enchant_table' },
   { out:{id:'quakehammer', n:1}, in:{iron:8, stone:12, gold_bar:1}, station:'enchant_table' },
   { out:{id:'flashstep_edge', n:1}, in:{shadow_steel:2, shadow_crystal:6, lumen:3, gold_bar:2}, station:'enchant_table' },
+  { out:{id:'combat_vest', n:1}, in:{iron:6, leather:4, string:3}, station:'crafting_table' },
+  { out:{id:'reflect_aegis', n:1}, in:{shadow_steel:1, shadow_crystal:5, lumen:3, gold_bar:2}, station:'enchant_table' },
   // 建築拡張
   { out:{id:'stone_wall', n:4}, in:{stone:4}, station:'crafting_table' },
   { out:{id:'hedge', n:4}, in:{wood:2, moonleaf:1}, station:'crafting_table' },
@@ -914,6 +918,9 @@ Game.SKILL_TREE.push(
   { id:'p_conserve', branch:'hunter', name:'節約',   tier:5, cost:4, req:['gx_hunter_4_0'], eff:{flag:'conserve'}, desc:'射撃の12%で弾薬を消費しない' }
 );
 
+// 弾薬アイテムID(戦術ベスト装備で1スロット上限2倍の対象)
+Game.AMMO_IDS = ['bullet', 'ammo_9mm', 'ammo_556', 'ammo_762', 'ammo_50', 'shell_12g', 'rocket_ammo', 'energy_cell'];
+
 Game.SKILL_BY_ID = {};
 Game.SKILL_TREE.forEach(function (n) { Game.SKILL_BY_ID[n.id] = n; });
 Game.SKILL_BRANCHES = [['war', '⚔ 剣'], ['guard', '🛡 守'], ['surv', '🌿 探'], ['arcane', '✦ 魔'], ['hunter', '🏹 狩'], ['mystic', '🌓 幽'], ['fortune', '💰 福']];
@@ -1138,7 +1145,7 @@ Game.ITEM_GLYPH = {
   sand_greatsword:'⚔️', magma_hammer:'🔨', pharaoh_crown:'👑', mind_tome:'📖', wisdom_tome:'📗', xp_orb:'🔮', expand_pouch:'🎒',
   feather:'🪶', wind_crystal:'💠', wind_steel:'🌀', wind_feather:'🪶', wind_sword:'🗡️', sky_cloak:'🧥', cloud_boots:'👢',
   ring_crit:'💍', amulet_swift:'📿', fang_vamp:'🦷', heart_regen:'❤️‍🔥', eye_xp:'👁️', band_power:'💪', crest_guard:'🛡️',
-  energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️', prism_blade:'⚔️', dragon_fang:'⚔️', colossus_blade:'⚔️', mire_scythe:'⚔️', magma_maul:'🔨', starcore_greatsword:'⚔️', voidcore_blade:'⚔️', spore_scythe:'⚔️', star_aegis:'🛡️', void_helm:'⛑️', thorn_plate:'🥷', tempest_spear:'🔱', sovereign_scepter:'👑', rift_crown:'👑', frostfang_blade:'🗡️', emberfang_axe:'🪓', echoedge:'🗡️', quakehammer:'🔨', flashstep_edge:'⚡',
+  energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️', prism_blade:'⚔️', dragon_fang:'⚔️', colossus_blade:'⚔️', mire_scythe:'⚔️', magma_maul:'🔨', starcore_greatsword:'⚔️', voidcore_blade:'⚔️', spore_scythe:'⚔️', star_aegis:'🛡️', void_helm:'⛑️', thorn_plate:'🥷', tempest_spear:'🔱', sovereign_scepter:'👑', rift_crown:'👑', frostfang_blade:'🗡️', emberfang_axe:'🪓', echoedge:'🗡️', quakehammer:'🔨', flashstep_edge:'⚡', combat_vest:'🎽', reflect_aegis:'🛡️',
 };
 
 Game.INV_SIZE = 36;       // 先頭9 = ホットバー

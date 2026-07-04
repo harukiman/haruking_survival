@@ -314,6 +314,15 @@ Game.Mobs = (function () {
     m.dot = m.dot || {}; m.dot[e[0]] = Math.max(m.dot[e[0]] || 0, e[1]);
   }
 
+  // 反射の盾核(reflect_aegis): 受けたダメージの一定割合を攻撃元モブへ跳ね返す。ボスにも有効。
+  function reflectShield(m, rawDmg, p) {
+    if (!p || !p.gearReflect || p.gearReflect <= 0 || !m || m.hp <= 0) return;
+    const refl = Math.max(1, Math.round((rawDmg || 0) * p.gearReflect));
+    Game.Render.spawnParticles(m.x, m.y, '#8fd0ff', 6);
+    if (Game.Render.spawnImpact) Game.Render.spawnImpact(m.x, m.y, '#bfe8ff');
+    damageMob(m, refl, p.x, p.y, false);
+  }
+
   // 形が未指定のモブを、種ごとに安定して多彩な形へ(一辺倒の'round'を解消)
   const SHAPE_POOL = ['blob', 'tall', 'spiky', 'beast', 'humanoid', 'round'];
   // 種ごとに実在生物/敵らしいシルエットへ割当
@@ -599,6 +608,7 @@ Game.Mobs = (function () {
               if (hasAffix(m, 'blazing')) Game.Status.add('burn', Game.ELITE_AFFIXES.blazing.burn); // 業火: 接触で炎上
               // 棘(thorns)防具: 被弾時に攻撃元へダメージ反射
               if (p.gearThorns > 0 && !m.def.boss) { const refl = Math.max(1, Math.round((m.dmg || m.def.dmg) * p.gearThorns)); Game.Render.spawnParticles(m.x, m.y, '#ff8a6a', 5); damageMob(m, refl, p.x, p.y, false); }
+              reflectShield(m, (m.dmg || m.def.dmg), p);
               const kl = distP || 1;
               p.x += (dxp / kl) * (m.def.boss ? 12 : 6); p.y += (dyp / kl) * (m.def.boss ? 12 : 6);
             }
