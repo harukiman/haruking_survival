@@ -444,6 +444,9 @@ Game.World = (function () {
     const wt = Game.state.weather && Game.state.weather.type;
     const wet = wt === 'rain' || wt === 'storm' || wt === 'snow'; // 雨/雷雨/雪は鎮火を早め延焼を止める
     const spreadPhase = tick % 3 === 0 && !wet, dmgPhase = tick % 12 === 0;
+    // 火タイルの高速参照(モブの火避け回避に使用)。毎tick再構築
+    const fset = Game.state._fireTiles || (Game.state._fireTiles = new Set());
+    fset.clear(); for (let i = 0; i < fires.length; i++) fset.add(fires[i].tx + ',' + fires[i].ty);
     for (let i = fires.length - 1; i >= 0; i--) {
       const f = fires[i];
       f.t -= wet ? 4 : 1; // 雨天は急速に鎮火

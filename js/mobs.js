@@ -478,10 +478,14 @@ Game.Mobs = (function () {
     dx /= len; dy /= len;
     if (Math.abs(dx) > Math.abs(dy)) m.dir = dx < 0 ? 'left' : 'right';
     else m.dir = dy < 0 ? 'up' : 'down';
+    // 火避け: 火/爆発に弱い敵は燃え盛るタイルへ踏み込まない(炎が戦術的な壁になる=ゾーン制圧)。
+    // 火属性/自爆虫/ボスは無視して踏破。既に火中に居る敵は「新たな火タイル」だけ避ける=脱出は可能。
+    const fset = (Game.state.fires && Game.state.fires.length) ? Game.state._fireTiles : null;
+    const avoidFire = fset && !m.def.boss && !m.def.bomber && mobElement(m) !== 'fire';
     const nx = m.x + dx * speed;
-    if (walkAt(nx, m.y, m)) m.x = nx;
+    if (walkAt(nx, m.y, m) && !(avoidFire && fset.has(Math.floor(nx / TS) + ',' + Math.floor(m.y / TS)))) m.x = nx;
     const ny = m.y + dy * speed;
-    if (walkAt(m.x, ny, m)) m.y = ny;
+    if (walkAt(m.x, ny, m) && !(avoidFire && fset.has(Math.floor(m.x / TS) + ',' + Math.floor(ny / TS)))) m.y = ny;
   }
 
   function walkAt(wx, wy, m) {
