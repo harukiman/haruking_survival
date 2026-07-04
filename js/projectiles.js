@@ -82,10 +82,13 @@ Game.Projectiles = (function () {
       if (opts.detonateAtEnd) pr.detonateAtEnd = true; // 命中しなくても寿命(=一定距離)で炸裂(ミサイル)
       if (opts.homing) { pr.homing = true; pr.ang = ang; } // 最寄りの敵へ自動追尾(ロックオン/爆撃機ミサイル)
       if (opts.small) pr.small = true; // 小型ミサイル(爆撃機の一斉発射)
-      // ミサイルの加速プロファイル: 発射直後は低速→徐々に最高速へ("ばしゅっ"→ロックして加速)
+      // ミサイルの加速プロファイル: カタパルト射出→その場停留→点火して最高速へ
       if (opts.speedMax != null || opts.accel != null) {
-        pr.spd = (opts.speedStart != null) ? opts.speedStart : Math.hypot(pr.vx, pr.vy);
-        pr.spdMax = opts.speedMax || pr.spd; pr.accel = opts.accel || 0; pr.ang = ang;
+        pr.spdMax = opts.speedMax || Math.hypot(pr.vx, pr.vy); pr.accel = opts.accel || 0; pr.ang = ang;
+        pr.speedStart = (opts.speedStart != null) ? opts.speedStart : Math.hypot(pr.vx, pr.vy);
+        // 射出(launch)フェーズ: launchT>0 の間はほぼ停留(ejectSpd)。0で点火し加速開始
+        pr.launchT = opts.launchT || 0; pr.ejectSpd = opts.ejectSpd || 1.4;
+        pr.spd = pr.launchT > 0 ? pr.ejectSpd : pr.speedStart;
         pr.vx = Math.cos(ang) * pr.spd; pr.vy = Math.sin(ang) * pr.spd;
       }
       if (opts.jetRound) pr.jetRound = true; // 戦闘機の機首砲弾: 特殊物以外の地形を破壊できる
@@ -280,9 +283,20 @@ Game.Projectiles = (function () {
       const pr = arr[i];
       pr.prevX = pr.x; pr.prevY = pr.y;
       if (pr.spin != null) pr.spin += 0.5;
-      // ミサイル誘導: 加速(発射直後は低速→最高速)＋自動追尾(最寄りの敵へ機首を旋回)。
-      // 低速のうちは小回りが利くので確実にロックオンでき、狙いを定めてから高速で突入する(実機の発射感)。
-      if (pr.kind === 'missile' && !pr.hostile && (pr.accel || pr.homing)) {
+      // ミサイル: ①カタパルト射出フェーズ(その場停留・プシュー) → ②点火して加速＋追尾。
+      if (pr.kind === 'missile' && !pr.hostile && (pr.launchT > 0)) {
+        pr.launchT--;
+        if (pr.ang == null) pr.ang = Math.atan2(pr.vy, pr.vx);
+        pr.spd = pr.ejectSpd || 1.4; // ほぼ停留(僅かに前へドリフト)
+        pr.vx = Math.cos(pr.ang) * pr.spd; pr.vy = Math.sin(pr.ang) * pr.spd;
+        if (pr.launchT % 3 === 0 && Game.Render.spawnParticles) Game.Render.spawnParticles(pr.x, pr.y, '#d8d2c4', 1); // 射出ガスの白煙
+        if (pr.launchT === 0) { // 点火!
+          if (Game.Audio) Game.Audio.play('missile_launch');
+          if (Game.Render.spawnParticles) Game.Render.spawnParticles(pr.x, pr.y, '#ffce80', 5);
+          pr.spd = pr.speedStart || 5;
+        }
+      } else if (pr.kind === 'missile' && !pr.hostile && (pr.accel || pr.homing)) {
+        // 点火後: 低速→最高速へ加速。低速のうちは小回りが利き確実にロックオン、狙いを定めて高速突入
         pr.spd = pr.accel ? Math.min(pr.spdMax || 20, (pr.spd || 0) + pr.accel) : Math.hypot(pr.vx, pr.vy);
         if (pr.ang == null) pr.ang = Math.atan2(pr.vy, pr.vx);
         if (pr.homing) {
@@ -426,7 +440,7 @@ Game.Projectiles = (function () {
         ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(pr.ang || Math.atan2(pr.vy || 0, pr.vx || 1));
         ctx.fillStyle = '#c8ccd2'; ctx.beginPath(); ctx.ellipse(0, 0, 8 * z * sm, 3 * z * sm, 0, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = '#e0664a'; ctx.beginPath(); ctx.moveTo(8 * z * sm, 0); ctx.lineTo(3 * z * sm, -3 * z * sm); ctx.lineTo(3 * z * sm, 3 * z * sm); ctx.closePath(); ctx.fill(); // 弾頭
-        ctx.fillStyle = '#ffd86b'; ctx.beginPath(); ctx.arc(-8 * z * sm, 0, 2.6 * z * sm, 0, Math.PI * 2); ctx.fill(); // 噴射炎
+        if (!(pr.launchT > 0)) { ctx.fillStyle = '#ffd86b'; ctx.beginPath(); ctx.arc(-8 * z * sm, 0, 2.6 * z * sm, 0, Math.PI * 2); ctx.fill(); } // 噴射炎(点火後のみ)
         ctx.restore(); continue;
       }
       if (pr.kind === 'rocket') {

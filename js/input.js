@@ -338,6 +338,16 @@ Game.Input = (function () {
     [16].forEach(function (i) { padPrev[i] = btn(i); });
   }
 
+  // 航空機搭乗中のスマホボタン表示更新: 🚀ボタン=発射(現在モードのラベル)、回避ボタン=モード切替に流用
+  function refreshMissileBtn() {
+    const pl = Game.state && Game.state.player;
+    const inAir = !!(pl && (pl.vehicle === 'jet' || pl.vehicle === 'bomber'));
+    const mb = document.getElementById('btn-missile');
+    if (mb) { mb.style.display = inAir ? '' : 'none'; if (inAir) mb.textContent = pl.missileMode === 'homing' ? '🎯追尾' : '🚀通常'; }
+    const rb = document.getElementById('btn-roll');
+    if (rb) { if (inAir) { rb.textContent = '🔀切替'; rb.classList.add('mslmode'); } else if (rb.classList.contains('mslmode')) { rb.textContent = '回避'; rb.classList.remove('mslmode'); } }
+  }
+
   // 左スティックのメニューナビ: 方向が変わったら即時1回、押し続けで約0.5秒後からリピート
   let navHeld = null, navHeldT = 0;
   function stickNavDir(ax, ay) {
@@ -407,13 +417,14 @@ Game.Input = (function () {
     // 影渡りボタンは影鏡を持つ時だけ表示(使えないボタンでスマホの親指領域を圧迫しない)
     const canShift = !!(Game.Inventory && Game.Inventory.count && Game.Inventory.count('shadow_mirror') > 0);
     if (canShift !== shiftBtnShown) { shiftBtnShown = canShift; const sb = document.getElementById('btn-shift'); if (sb) sb.style.display = canShift ? '' : 'none'; }
-    // 🚀ミサイルボタンは戦闘機/爆撃機に搭乗中だけ表示
-    const canMsl = !!(Game.state && Game.state.player && (Game.state.player.vehicle === 'jet' || Game.state.player.vehicle === 'bomber'));
-    if (canMsl !== missileBtnShown) { missileBtnShown = canMsl; const mb = document.getElementById('btn-missile'); if (mb) mb.style.display = canMsl ? '' : 'none'; }
+    // 🚀ミサイルボタン(発射)＋回避ボタン(モード切替)は戦闘機/爆撃機に搭乗中だけ切替。状態が変わった時のみ更新
+    const pl2 = Game.state && Game.state.player;
+    const mslSig = (pl2 && (pl2.vehicle === 'jet' || pl2.vehicle === 'bomber')) ? (pl2.missileMode || 'homing') : 'off';
+    if (mslSig !== missileBtnShown) { missileBtnShown = mslSig; refreshMissileBtn(); }
     return intent;
   }
 
   function resetBinds() { Game.Settings.set('keybinds', Object.assign({}, DEF_BINDS)); }
   return { init, poll, intent, cursor, beginRebind, keyLabel, bindAt: B, BIND_ACTIONS, resetBinds,
-    beginPadRebind, padLabel, padBtnLabel, PAD_ACTIONS, resetPadBinds };
+    beginPadRebind, padLabel, padBtnLabel, PAD_ACTIONS, resetPadBinds, refreshMissileBtn };
 })();

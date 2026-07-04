@@ -254,8 +254,13 @@ Game.Audio = (function () {
       case 'boom_sfx':   { const t0 = ctx ? ctx.currentTime : 0; beep(96, 0.32, 'sawtooth', 0.18); beep(52, 0.46, 'sine', 0.16); if (ctx) { noiseShape(t0, 0.05, 0.34, 'highpass', 1900, 0.7, 3); noiseBurst(t0, 0.46, 0.24, 560); subThump(120, 28, 0.44, 0.17); } } break;
       // 戦車主砲: 巨砲の轟音。金属的な初撃＋極低サブ二段で腹に響く重量感
       case 'cannon_tank': if (throttled('ctk', 0.05)) { gunShot({ crackHz: 1400, crackVol: 0.72, crackDur: 0.05, bodyHz: 125, bodyLow: 28, bodyVol: 0.82, bodyDur: 0.28, midHz: 400, tailDur: 0.52, tailVol: 0.26, tailHz: 720, vol: 1.32 }); if (ctx) { subThump(108, 24, 0.44, 0.2); subThump(66, 22, 0.54, 0.14); } } break;
-      // ミサイル発射(ばしゅっ): 圧縮ガスの鋭いプシュッ→すぼまる噴射のシューッ→加速する低音のうなり。
-      // 短い間隔で4連射しても濁らないよう1発を短く・パンチィに。実機の連続発射の質感。
+      // カタパルト射出(プシュー): 冷却ガスで押し出す柔らかいエア抜け音。低音の突きは無し(モーター未点火)
+      case 'missile_eject': if (throttled('mej', 0.035)) { const t0 = ctx ? ctx.currentTime : 0; if (ctx) {
+        noiseBurst(t0, 0.3, 0.22, 720);                             // プシュー(空気の抜け)
+        noiseShape(t0, 0.05, 0.16, 'highpass', 1400, 0.4, 1);       // 立ち上がりの息
+        noiseShape(t0 + 0.02, 0.24, 0.1, 'bandpass', 480, 0.8, 1);  // 芯のあるガス
+      } } break;
+      // ミサイル点火(その後の加速): 圧縮ガスの鋭いプシュッ→すぼまる噴射→加速する低音のうなり。
       case 'missile_launch': if (throttled('msl', 0.045)) { const t0 = ctx ? ctx.currentTime : 0; if (ctx) {
         noiseShape(t0, 0.03, 0.6, 'highpass', 2100, 0.5, 3);        // プシュッ(点火/圧縮ガスの鋭い立ち上がり)
         noiseBurst(t0, 0.3, 0.32, 1100);                            // 噴射の白煙シューッ(短め)

@@ -500,22 +500,22 @@ Game.Combat = (function () {
   // 戦闘機=直進、爆撃機=自動追尾(homing)。機銃/爆弾(攻撃ボタン)とは別系統・別クールダウン。弾薬 missile を1消費。
   function tryJetMissile() {
     const p = Game.state.player;
-    const md = p.vehicle === 'jet' ? (Game.ITEMS.fighter_jet && Game.ITEMS.fighter_jet.jetMissile)
-      : p.vehicle === 'bomber' ? (Game.ITEMS.bomber && Game.ITEMS.bomber.bomberMissile) : null;
-    if (!md) return false;
+    if (p.vehicle !== 'jet' && p.vehicle !== 'bomber') return false;
+    const md = Game.MISSILE_MODES[p.missileMode || 'homing'] || Game.MISSILE_MODES.homing;
     if ((p.missileCd || 0) > 0 || (p.missileSalvo && p.missileSalvo.left > 0)) return false; // 発射中は次を受け付けない
     const ammoId = md.ammo || 'missile';
     if (Game.Inventory.count(ammoId) <= 0) { if (Game.state.tick % 40 === 0) Game.UI.toast((Game.ITEMS[ammoId] ? Game.ITEMS[ammoId].name : 'ミサイル') + 'がない — クラフトして搭載を'); p.missileCd = 15; return false; }
-    Game.Inventory.remove(ammoId, 1); // 1発ぶんの弾薬で count 発を短い間隔で連続発射(ばしゅっばしゅっ)
+    Game.Inventory.remove(ammoId, 1); // 1発ぶんの弾薬で count 発を短い間隔で連続発射
     const ang = Game.Projectiles.aimAngle ? Game.Projectiles.aimAngle() : 0;
     const count = md.count || 1;
-    // 一斉ではなく short interval で1発ずつ射出するサルボ。実機のように低速で出て狙いを定め加速する
+    // カタパルト射出→その場停留(プシュー)→点火加速。short interval で1発ずつ射出するサルボ
     p.missileSalvo = {
       left: count, i: 0, count: count, every: md.every || 4, t: 0, base: ang, spread: (md.spread != null ? md.spread : 0.34),
       dmg: Game.Player.effAttack(md.dmg || 60), explosive: md.explosive || 2.6, dur: md.dur || 50,
       speedStart: md.speedStart || 6, speedMax: md.speedMax || 20, accel: md.accel || 1.0, homing: !!md.homing, small: !!md.small,
+      launch: md.launch || 9, ejectSpd: md.ejectSpd || 1.4,
     };
-    if (md.homing && Game.UI.tipOnce) Game.UI.tipOnce('homing', '🚀 ロックオン発射！ ミサイルは低速で出て最寄りの敵へ狙いを定め、加速して突入する');
+    if (md.homing && Game.UI.tipOnce) Game.UI.tipOnce('homing', '🎯 誘導ミサイル発射！ カタパルト射出→その場で待機→点火して最寄りの敵へ追尾する');
     p.missileCd = md.cd || 26;
     return true;
   }

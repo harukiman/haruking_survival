@@ -41,6 +41,7 @@ Game.Player = (function () {
       vehicle: null, // null|'car'|'boat'|'plane'|'buggy'
       fuel: {}, // 現代乗り物の燃料(type→残量)
       vehGuns: {}, // 航空機に増設した機関銃の基数(type→0..4)
+      missileMode: 'homing', // 航空機ミサイルのモード: 'homing'(誘導4発) | 'normal'(通常1発高威力)
       armor: { head: null, chest: null }, // {id, roll} インスタンス
       accessory: null, accessory2: null, // 遺物(relic) {id} ×2枠
       offhand: null, // 左手スロット(盾/呼吸器などユーティリティ装備を保持して常時機能)
@@ -223,8 +224,9 @@ Game.Player = (function () {
     // ダッシュ（スタミナ消費）
     const moving = len > 0;
     const dashing = intent.dash && moving && p.stamina > 0;
-    // 回避ロール: 専用入力で短距離の素早い回避＋無敵フレーム
+    // 回避ロール: 専用入力で短距離の素早い回避＋無敵フレーム。※航空機搭乗中は回避入力をミサイルモード切替に流用
     if (p.rollCd > 0) p.rollCd--;
+    if (intent.roll && (p.vehicle === 'jet' || p.vehicle === 'bomber')) { toggleMissileMode(); intent.roll = false; }
     if (intent.roll && (p.rollCd || 0) <= 0 && (p.rolling || 0) <= 0 && p.stamina >= 20 && !p.vehicle) {
       let rx = dx, ry = dy;
       if (len < 0.01) { rx = p.dir === 'left' ? -1 : p.dir === 'right' ? 1 : 0; ry = p.dir === 'up' ? -1 : p.dir === 'down' ? 1 : 0; }
@@ -1504,6 +1506,18 @@ Game.Player = (function () {
     Game.UI.toast('🌀 帰還の渦に飛び込み、ダンジョンの入口へ戻った');
   }
   // 戦術核: 発射→10秒警報→着弾大爆発→死の灰(7ゲーム内日間の継続ダメージ、味方も敵も)
+  // 航空機ミサイルのモード切替(通常⇄誘導)。回避ボタン/入力を航空機搭乗中は流用
+  function toggleMissileMode() {
+    const p = Game.state.player;
+    p.missileMode = (p.missileMode === 'homing') ? 'normal' : 'homing';
+    const m = Game.MISSILE_MODES[p.missileMode];
+    if (Game.UI.toast) Game.UI.toast('ミサイル切替 → ' + (m ? m.label : p.missileMode) + (p.missileMode === 'homing' ? '（小型4発・自動追尾）' : '（1発・高威力・直進）'));
+    if (Game.Audio) Game.Audio.play('cursor');
+    if (Game.UI.refreshAmmo) Game.UI.refreshAmmo();
+    if (Game.Input && Game.Input.refreshMissileBtn) Game.Input.refreshMissileBtn();
+    return p.missileMode;
+  }
+
   // ミサイルのサルボ射出: 短い間隔(every)で1発ずつ発射。各弾は低速で出て加速し、homingなら最寄りの敵へ追尾。
   // 実機の連続発射のように "ばしゅっ ばしゅっ" と機体から次々に射出される。
   function updateMissileSalvo(p) {
@@ -1511,11 +1525,10 @@ Game.Player = (function () {
     if (s.t > 0) { s.t--; return; }
     const k = s.i, n = s.count;
     const spr = n > 1 ? (k / (n - 1) - 0.5) * s.spread : 0; // 扇状に散らしてから各自ロックオン
-    Game.Projectiles.fire(s.dmg, 'missile', { angle: s.base + spr, speedStart: s.speedStart, speedMax: s.speedMax, accel: s.accel, explosive: s.explosive, detonateAtEnd: true, life: s.dur, homing: s.homing, small: s.small });
-    Game.Audio.play('missile_launch');
-    const mx = p.x + Math.cos(s.base + spr) * 14, my = p.y + Math.sin(s.base + spr) * 14;
-    if (Game.Render.spawnMuzzle) Game.Render.spawnMuzzle(mx, my, s.base + spr, '#ffce80', 1.0);
-    if (Game.Render.spawnParticles) Game.Render.spawnParticles(mx, my, '#e8e2d4', 3); // 射出の白煙
+    Game.Projectiles.fire(s.dmg, 'missile', { angle: s.base + spr, speedStart: s.speedStart, speedMax: s.speedMax, accel: s.accel, explosive: s.explosive, detonateAtEnd: true, life: s.dur, homing: s.homing, small: s.small, launchT: s.launch, ejectSpd: s.ejectSpd });
+    Game.Audio.play('missile_eject'); // カタパルト射出のプシュー音(点火音は寿命側で鳴る)
+    const mx = p.x + Math.cos(s.base + spr) * 12, my = p.y + Math.sin(s.base + spr) * 12;
+    if (Game.Render.spawnParticles) Game.Render.spawnParticles(mx, my, '#e8e2d4', 4); // 射出の白煙(プシュー)
     if (Game.Mobs.alertNoise) Game.Mobs.alertNoise(p.x, p.y, 11, 90);
     s.i++; s.left--; s.t = s.every;
     if (s.left <= 0) p.missileSalvo = null;
@@ -1756,7 +1769,7 @@ Game.Player = (function () {
     interact, useNearby, gainXP, totalArmor, statusResist, setBonus, sleep, checkGroupSleep, vehicleTakeDamage, updateWreck, equipSelectedArmor, equipFromInventory, equipRelic, equipOffhand, unequipSlot, applyEquipStats, bossesDefeated, bossTitle, travelToWaypoint,
     effAttack, spendMana, manaCost, magicPower, attackCooldown, levelDmgBonus, levelArmorBonus, spendStat, unlockSkill, respec,
     skillBonus, skillFlag, canUnlock, currentWeaponAtk, equippedArmorAt, xpForLevel,
-    reloadCurrent, magLoaded, magCap, selGunId, contextAction,
+    reloadCurrent, magLoaded, magCap, selGunId, contextAction, toggleMissileMode,
     saveLoadout, applyLoadout,
     focusArmed, consumeFocus,
   };
