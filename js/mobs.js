@@ -21,8 +21,12 @@ Game.Mobs = (function () {
     // ボス強化(ユーザー指示: 脆すぎ→大幅強化)。プレイヤーLvに応じてHPが伸び、成長しても歯応えを保つ。
     // ダメージは据え置き(タンク化のみ)。中ボスは控えめ。
     const plv = (Game.state.player && Game.state.player.level) || 1;
-    const bossMult = def.boss ? 2.4 * (1 + Math.min(1.8, (plv - 1) * 0.035))
-                   : def.midboss ? 1.7 * (1 + Math.min(1.0, (plv - 1) * 0.02)) : 1;
+    // ボスは「かなり強くてよい」(ユーザー指示)。スキルツリー/装備強化前提でHPも与ダメも伸ばし、成長しても歯応えを保つ
+    const bossMult = def.boss ? 3.2 * (1 + Math.min(2.8, (plv - 1) * 0.045))
+                   : def.midboss ? 2.2 * (1 + Math.min(1.4, (plv - 1) * 0.028)) : 1;
+    // ボス/中ボスの与ダメも底上げ(タンク化だけでなく脅威に)。レベルで緩やかに増加
+    const bossDmg = def.boss ? 1.4 * (1 + Math.min(0.8, (plv - 1) * 0.02))
+                  : def.midboss ? 1.2 * (1 + Math.min(0.5, (plv - 1) * 0.015)) : 1;
     // 通常の敵対もプレイヤーLvで緩やかに強化(成長で雑魚化しすぎない)。+2%/Lv・最大+70%。ダメージは+1.2%/Lv・最大+45%
     const lvHp = (def.hostile && !def.boss && !def.midboss) ? 1 + Math.min(0.7, (plv - 1) * 0.02) : 1;
     const lvDmg = (def.hostile && !def.boss && !def.midboss) ? 1 + Math.min(0.45, (plv - 1) * 0.012) : 1;
@@ -32,7 +36,7 @@ Game.Mobs = (function () {
     const nightHp = nightAmp ? 1.35 : 1;
     const nightDmg = nightAmp ? 1.25 : 1;
     const hp = Math.round(def.hp * mult * bandMult * bossMult * lvHp * nightHp);
-    const dmgMult = mult * bandMult * lvDmg * nightDmg * (diff.dmgMult != null ? diff.dmgMult : 1);
+    const dmgMult = mult * bandMult * lvDmg * nightDmg * bossDmg * (diff.dmgMult != null ? diff.dmgMult : 1);
     Game.state._mobId = (Game.state._mobId || 0) + 1;
     const m = {
       id: Game.state._mobId, type: type, def: def,
