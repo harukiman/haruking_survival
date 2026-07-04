@@ -8,7 +8,7 @@ Game.Projectiles = (function () {
   const KIND_COLOR = {
     fire: '#ff7a3c', frost: '#9fd8ff', hex: '#c060ff', venom: '#9fe04a', tracer: '#ffd24a',
     rocket: '#ff7a3c', slash: '#cfefff', pierce: '#7fe0ff', laser: '#7fe0ff', chain: '#fff07a',
-    boomerang: '#caa86a', bullet: '#ffe9a0',
+    boomerang: '#caa86a', bullet: '#ffe9a0', shell: '#ffd86b',
   };
 
   function spawn(x, y, vx, vy, dmg, kind, hostile, status, explosive) {
@@ -136,6 +136,50 @@ Game.Projectiles = (function () {
     Game.Audio.play('boom_sfx');
   }
 
+  // 戦車の砲弾: 砲塔の向きへ真っ直ぐ飛び、敵に直撃 or 一定距離で炸裂する。
+  // 直撃は directDmg(特大・単体)、爆風は blastDmg(小さめ・範囲)と明確に分ける。強いノックバック付き。
+  function fireTankShell(ang, o) {
+    o = o || {};
+    const p = Game.state.player;
+    const sp = o.speed || 9;
+    const ux = Math.cos(ang), uy = Math.sin(ang);
+    const pr = spawn(p.x + ux * 22, p.y + uy * 22, ux * sp, uy * sp, o.directDmg || 100, 'shell', false, null, 0);
+    pr.shell = true; pr.big = true; pr.ang = ang;
+    pr.blastDmg = o.blastDmg || 30; pr.blastRadius = o.blastRadius || 3.5; pr.knock = o.knock || 22;
+    pr.life = Math.max(6, Math.round((o.range || 11) * TS / sp)); // 命中しなくてもこの距離で自爆
+    return pr;
+  }
+  // 砲弾の炸裂: 範囲内へ blastDmg(小さめ) と強ノックバック。直撃した敵(exclude)は directDmg 済みなので除外。
+  function explodeShell(x, y, blastDmg, radiusTiles, knock, exclude) {
+    const mobs = Game.state.mobs, r = radiusTiles * TS;
+    for (let m = 0; m < mobs.length; m++) {
+      const mo = mobs[m]; if (mo.def.friendly || mo === exclude) continue;
+      const d = Math.hypot(mo.x - x, mo.y - y);
+      if (d > r) continue;
+      if (Game.Net.isConnected() && !Game.Net.host) Game.Net.sendHit(mo.id, blastDmg, x, y);
+      else Game.Mobs.damageMob(mo, blastDmg, x, y, false);
+      // 戦車らしい強ノックバック(重量級ほど耐性)。標準のknockに上乗せして大きく吹き飛ばす
+      const dx = mo.x - x, dy = mo.y - y, l = Math.hypot(dx, dy) || 1;
+      const kb = (knock || 22) * (mo.def.boss ? 0.3 : mo.def.big ? 0.55 : 1);
+      mo.knockX = (dx / l) * kb; mo.knockY = (dy / l) * kb;
+    }
+    // プレイヤーも爆風に巻き込まれる(自爆注意): 中心付近なら blastDmg
+    const pl = Game.state.player;
+    if (Math.hypot(pl.x - x, pl.y - y) <= r * 0.7 && pl.vehicle !== 'tank') Game.Survival.damage(Math.round(blastDmg * 0.5), 'blast');
+    // 演出・地形破壊・発火(explodeと同等)
+    if (Game.Mobs.alertNoise) Game.Mobs.alertNoise(x, y, 14 + radiusTiles, 190);
+    if (Game.World.blastTerrain) Game.World.blastTerrain(x, y, radiusTiles);
+    if (Game.World.ignite) Game.World.ignite(x, y, radiusTiles + 1, 0.3);
+    Game.Render.spawnParticles(x, y, '#ff8a3c', 30);
+    Game.Render.spawnParticles(x, y, '#ffe27a', 20);
+    Game.Render.spawnParticles(x, y, '#57504a', 12);
+    Game.Render.spawnParticles(x, y, '#2e2a26', 8);
+    if (Game.Render.spawnImpact) Game.Render.spawnImpact(x, y, '#ffb060');
+    if (Game.Render.flash) Game.Render.flash('rgba(255,160,80,0.32)');
+    if (Game.Render.shake) Game.Render.shake(Math.min(13, 6 + radiusTiles * 2));
+    Game.Audio.play('boom_sfx');
+  }
+
   // 流星召喚（流星の杖など）: 標的点の頭上から流星が落ち、着弾で範囲爆発
   const strikes = [];
   function callMeteor(tx, ty, dmg, radiusTiles) {
@@ -237,7 +281,8 @@ Game.Projectiles = (function () {
       const tx = Math.floor(pr.x / TS), ty = Math.floor(pr.y / TS);
       const o = Game.World.objAt(tx, ty), meta = Game.OBJ_META[o];
       if (meta && meta.solid && !pr.pierce && !pr.boomerang) {
-        if (pr.explosive) explode(pr.x, pr.y, pr.explosive, pr.dmg, pr.kind);
+        if (pr.shell) explodeShell(pr.x, pr.y, pr.blastDmg, pr.blastRadius, pr.knock, null);
+        else if (pr.explosive) explode(pr.x, pr.y, pr.explosive, pr.dmg, pr.kind);
         if (pr.kind === 'fire' && !pr.hostile && Game.World.ignite) Game.World.ignite(pr.x, pr.y, 1, 0.5); // 炎弾が着弾点周囲を発火
         // 遠距離攻撃で自然オブジェクト(木/石/鉱石など)を破壊できる。設置物/チェストは誤破壊しない
         const breakable = !pr.hostile && meta.mineable && meta.hp != null && o < 100 && o !== Game.OBJ.CHEST && o !== Game.OBJ.TREASURE_CHEST && o !== Game.OBJ.SEAL_WALL;
@@ -271,15 +316,16 @@ Game.Projectiles = (function () {
         // 単発: 最初の敵に命中。連鎖弾は飛び移る
         for (let m = 0; m < mobs.length; m++) {
           const mo = mobs[m]; if (mo.def.friendly) continue;
-          if (Math.hypot(mo.x - pr.x, mo.y - pr.y) < mo.def.size * 0.5 + 6) {
+          if (Math.hypot(mo.x - pr.x, mo.y - pr.y) < mo.def.size * 0.5 + (pr.shell ? 10 : 6)) {
             if (Game.Net.isConnected() && !Game.Net.host) Game.Net.sendHit(mo.id, pr.dmg, pr.x, pr.y); else { Game.Mobs.damageMob(mo, pr.dmg, pr.x, pr.y, pr.crit); if (Game.Mobs.applyDot) Game.Mobs.applyDot(mo, pr.kind); }
             if (pr.chain) { const hs = {}; hs[mo.id] = 1; chainTo(mo.x, mo.y, Math.round(pr.dmg * 0.8), pr.chain, hs); }
             if (Game.Render.spawnImpact) Game.Render.spawnImpact(pr.x, pr.y, pr.icol || (pr.kind === 'laser' || pr.kind === 'pierce' ? '#9fd8ff' : '#ffd86a'));
-            hit = true; break;
+            pr._dt = mo; hit = true; break; // _dt=直撃した敵(爆風の二重加害を避けるため除外)
           }
         }
       }
       if (hit && pr.explosive) explode(pr.x, pr.y, pr.explosive, pr.dmg, pr.kind);
+      else if (pr.shell && (hit || pr.life <= 0)) explodeShell(pr.x, pr.y, pr.blastDmg, pr.blastRadius, pr.knock, hit ? pr._dt : null);
       if (hit || pr.life <= 0) arr.splice(i, 1);
     }
   }
@@ -313,6 +359,15 @@ Game.Projectiles = (function () {
         ctx.globalAlpha = 1; ctx.lineWidth = 2.5 * z; ctx.strokeStyle = '#ffffff';
         ctx.beginPath(); ctx.moveTo(ps.x, ps.y); ctx.lineTo(s.x, s.y); ctx.stroke(); continue;
       }
+      if (pr.kind === 'shell') {
+        // 戦車砲弾: 煙の尾＋大きめの砲弾本体(旋回方向へ飛ぶ)
+        ctx.strokeStyle = 'rgba(150,140,120,0.45)'; ctx.lineWidth = 7 * z; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(ps.x, ps.y); ctx.lineTo(s.x, s.y); ctx.stroke();
+        ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(pr.ang || 0);
+        ctx.fillStyle = '#4a4438'; ctx.beginPath(); ctx.ellipse(0, 0, 7 * z, 4 * z, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#ffd86b'; ctx.beginPath(); ctx.ellipse(5 * z, 0, 2.4 * z, 2.4 * z, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.restore(); continue;
+      }
       if (pr.kind === 'rocket') {
         // ロケット弾: 煙の尾＋本体
         ctx.strokeStyle = 'rgba(180,180,190,0.5)'; ctx.lineWidth = 6; ctx.lineCap = 'round';
@@ -328,5 +383,5 @@ Game.Projectiles = (function () {
     }
   }
 
-  return { spawn, fire, enemyShoot, enemyVolley, enemyRing, update, draw, explode, callMeteor, callVortex, aimAngle: aimDir };
+  return { spawn, fire, fireTankShell, enemyShoot, enemyVolley, enemyRing, update, draw, explode, callMeteor, callVortex, aimAngle: aimDir };
 })();

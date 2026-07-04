@@ -1095,12 +1095,17 @@ Game.Render = (function () {
       ctx.fillStyle = '#3a4250'; ctx.fillRect(x - 5, y - 14, 10, 7); // 頭
       ctx.fillStyle = '#ff6a4a'; ctx.fillRect(x - 3, y - 12, 6, 2); // バイザー
     } else if (type === 'tank') {
-      // 戦車: 履帯＋車体＋砲塔＋向いた方向の砲身
+      // 戦車: 履帯＋車体＋(移動と独立に旋回する)砲塔＋砲身
       ctx.fillStyle = '#2e3226'; ctx.fillRect(x - 18, y + 8, 36, 8); // 履帯
       ctx.fillStyle = '#4a5a3c'; roundRectC(ctx, x - 16, y - 4, 32, 16, 3); ctx.fill(); // 車体
-      ctx.fillStyle = '#3c4a30'; ctx.beginPath(); ctx.arc(x, y + 3, 8, 0, 7); ctx.fill(); // 砲塔
-      let ax = 0, ay = 0; if (dir === 'up') ay = -1; else if (dir === 'down') ay = 1; else if (dir === 'left') ax = -1; else ax = 1;
-      ctx.strokeStyle = '#2a3420'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(x, y + 3); ctx.lineTo(x + ax * 20, y + 3 + ay * 20); ctx.stroke(); // 砲身
+      // 砲塔角(旋回で決めた turretAng)。未設定なら車体の向き
+      const pl = Game.state.player;
+      let ta = (pl && pl.turretAng != null) ? pl.turretAng : (dir === 'up' ? -Math.PI / 2 : dir === 'down' ? Math.PI / 2 : dir === 'left' ? Math.PI : 0);
+      const px = x, py = y + 3;
+      ctx.strokeStyle = '#2a3420'; ctx.lineWidth = 5; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + Math.cos(ta) * 22, py + Math.sin(ta) * 22); ctx.stroke(); // 砲身(旋回方向)
+      ctx.fillStyle = '#3c4a30'; ctx.beginPath(); ctx.arc(px, py, 8, 0, 7); ctx.fill(); // 砲塔(砲身の付け根を覆う)
+      ctx.fillStyle = '#556644'; ctx.beginPath(); ctx.arc(px, py, 3.5, 0, 7); ctx.fill(); // ハッチ
     } else if (type === 'buggy') {
       // オフロードバギー: 太いタイヤ＋ロールケージ
       ctx.fillStyle = '#222'; ctx.beginPath(); ctx.arc(x - 12, y + 14, 5.5, 0, 7); ctx.arc(x + 12, y + 14, 5.5, 0, 7); ctx.fill();

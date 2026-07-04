@@ -26,13 +26,19 @@ Game.Combat = (function () {
       if ((p.cannonCd || 0) > 0) return true;
       if (Game.Inventory.count('cannon_shell') <= 0) { if (Game.state.tick % 40 === 0) Game.UI.toast('戦車砲弾がない — クラフトして補充を'); return true; }
       Game.Inventory.remove('cannon_shell', 1);
-      const it = Game.Input.intent; let tx, ty;
-      if (it && it.usePointer && it.mouseTile) { tx = it.mouseTile.tx * TS + TS / 2; ty = it.mouseTile.ty * TS + TS / 2; }
-      else { let dx = 0, dy = 0; if (p.dir === 'up') dy = -1; else if (p.dir === 'down') dy = 1; else if (p.dir === 'left') dx = -1; else dx = 1; tx = p.x + dx * tdef.range * TS * 0.6; ty = p.y + dy * tdef.range * TS * 0.6; }
-      Game.Projectiles.callMeteor(tx, ty, Game.Player.effAttack(tdef.dmg), tdef.radius);
-      Game.Audio.play('boom_sfx'); if (Game.Render.shake) Game.Render.shake(6);
-      if (Game.Render.spawnMuzzle) Game.Render.spawnMuzzle(p.x, p.y, Math.atan2(ty - p.y, tx - p.x), '#ffd86b', 1.5);
-      if (Game.Mobs.alertNoise) Game.Mobs.alertNoise(tx, ty, 14, 180); // 砲撃は着弾点にも大きな音
+      // 砲塔の向き(旋回で決めた turretAng)へ砲弾を撃ち出す。着弾点の指定ではなく、狙った方向へ発射
+      let ang = p.turretAng;
+      if (ang == null) { let dx = 0, dy = 0; if (p.dir === 'up') dy = -1; else if (p.dir === 'down') dy = 1; else if (p.dir === 'left') dx = -1; else dx = 1; ang = Math.atan2(dy, dx); }
+      Game.Projectiles.fireTankShell(ang, {
+        directDmg: Game.Player.effAttack(tdef.directDmg), blastDmg: Game.Player.effAttack(tdef.blastDmg),
+        blastRadius: tdef.blastRadius, range: tdef.range, speed: tdef.speed, knock: tdef.knock,
+      });
+      Game.Audio.play('boom_sfx'); if (Game.Render.shake) Game.Render.shake(7);
+      if (Game.Render.spawnMuzzle) Game.Render.spawnMuzzle(p.x + Math.cos(ang) * 22, p.y + Math.sin(ang) * 22, ang, '#ffd86b', 1.7);
+      if (Game.Mobs.alertNoise) Game.Mobs.alertNoise(p.x, p.y, 14, 180);
+      // 戦車の反動: 砲撃方向と逆へ車体が少し後退し、数tickで復元(player側のrecoil機構が壁を尊重して戻す)
+      const kk = 6, kx = -Math.cos(ang) * kk, ky = -Math.sin(ang) * kk;
+      p.x += kx; p.y += ky; p.recoilN = 4; p.recoilX = kx / 4; p.recoilY = ky / 4;
       p.cannonCd = tdef.cd;
       return true;
     }

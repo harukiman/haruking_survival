@@ -187,6 +187,7 @@ Game.Player = (function () {
     if (p.cannonCd > 0) p.cannonCd--; // 戦車主砲のクールダウン
     if (p.jetBurst > 0 && p.vehicle === 'jet') updateJetBurst(p); // 戦闘機の10連射バーストを流し撃つ
     else if (p.jetBurst > 0) p.jetBurst = 0; // 降機したら中断
+    if (p.vehicle === 'tank') updateTurret(p, intent); // 戦車の砲塔を旋回(移動と独立)
     p.prevX = p.x; p.prevY = p.y;
 
     let dx = intent.dx, dy = intent.dy;
@@ -1468,6 +1469,29 @@ Game.Player = (function () {
     Game.UI.toast('🌀 帰還の渦に飛び込み、ダンジョンの入口へ戻った');
   }
   // 戦術核: 発射→10秒警報→着弾大爆発→死の灰(7ゲーム内日間の継続ダメージ、味方も敵も)
+  // 戦車の砲塔旋回: 移動とは独立に、狙う方向(カーソル/タッチ/右スティック照準)へ砲塔を滑らかに回す。
+  // 照準入力が無い間は現在の向きを保持(=旋回して固定できる)。TWS(最大旋回速度)でゆっくり回るのが戦車らしい。
+  function updateTurret(p, intent) {
+    if (p.turretAng == null) { // 初期値は車体の向き
+      const d = p.dir; p.turretAng = d === 'up' ? -Math.PI / 2 : d === 'down' ? Math.PI / 2 : d === 'left' ? Math.PI : 0;
+    }
+    let target = null;
+    const it = intent || Game.Input.intent;
+    if (it && it.usePointer && it.mouseTile) {
+      const tx = it.mouseTile.tx * TS + TS / 2, ty = it.mouseTile.ty * TS + TS / 2;
+      const dx = tx - p.x, dy = ty - p.y;
+      if (Math.abs(dx) > 2 || Math.abs(dy) > 2) target = Math.atan2(dy, dx);
+    }
+    if (target == null) return; // 入力なし=現在の砲塔角を保持
+    // 最短方向へ最大旋回速度で近づける
+    let diff = target - p.turretAng;
+    while (diff > Math.PI) diff -= Math.PI * 2;
+    while (diff < -Math.PI) diff += Math.PI * 2;
+    const TWS = 0.16; // 1tickあたりの最大旋回(rad)
+    if (Math.abs(diff) <= TWS) p.turretAng = target;
+    else p.turretAng += Math.sign(diff) * TWS;
+  }
+
   // 戦闘機の掃射: バースト中、毎tick2発ずつ照準固定方向へ真っ直ぐ撃つ(=ミニガンの2倍レート)。
   // 扇状に拡散させず、微小なばらつきのみ。弾薬は発射時に1消費済みで、ここでは消費しない。
   function updateJetBurst(p) {

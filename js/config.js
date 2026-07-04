@@ -545,7 +545,7 @@ Game.ITEMS = {
   buggy:         { name:'バギー', stack:1, color:'#d8863c', vehicle:'buggy', fuelVeh:true, flavor:'四輪駆動の軽快なオフロード車。燃料で走る。荒地もぐいぐい進む。' },
   car:           { name:'車', stack:1, color:'#c0444a', vehicle:'car', fuelVeh:true, flavor:'大地を駆ける鉄の馬。燃料で走る。' },
   cannon_shell:  { name:'戦車砲弾', stack:32, color:'#6a6a4a', flavor:'戦車の主砲弾。着弾で炸裂し範囲に大ダメージ。乗車中に主砲として撃つ。' },
-  tank:          { name:'戦車', stack:1, color:'#4a5a3c', vehicle:'tank', fuelVeh:true, tankCannon:{ dmg:70, radius:2.6, cd:26, range:11 }, flavor:'一人乗りの装甲戦車。鈍いが頑強で、主砲(戦車砲弾)は着弾点を吹き飛ばす。攻撃ボタンで砲撃。' },
+  tank:          { name:'戦車', stack:1, color:'#4a5a3c', vehicle:'tank', fuelVeh:true, tankCannon:{ directDmg:110, blastDmg:36, blastRadius:3.8, speed:9, range:12, cd:26, knock:24 }, flavor:'一人乗りの装甲戦車。鈍いが頑強。砲塔は移動と別に旋回でき、狙った方向へ砲弾を撃ち出す。砲弾は着弾か一定距離で炸裂し、直撃は特大・爆風は広範囲を薙いで敵を大きく吹き飛ばす。' },
   battle_mech:   { name:'戦闘ロボ', stack:1, color:'#7a8496', vehicle:'mech', fuelVeh:true, mechStomp:{ dmg:44, r:2.6, cd:20 }, flavor:'一人乗りの二足歩行兵器。機敏で頑強。攻撃ボタンで大地を踏み鳴らし、周囲の敵を衝撃波で薙ぐ。' },
   fighter_jet:   { name:'戦闘機', stack:1, color:'#8a96c0', vehicle:'jet', fuelVeh:true, jetGun:{ dmg:6, burst:10, spread:0.05, speed:13 }, flavor:'一人乗りの戦闘機。空を高速で駆け、あらゆる地形を越える。攻撃1タップで機首砲が真っ直ぐ10連射(弾丸1消費)。ミニガンの2倍レート・低威力の弾幕で薙ぎ払う。' },
   aerial_bomb:   { name:'T-0S21 航空爆弾', stack:16, color:'#4a5240', bomb:{ dmg:90, radius:3.4 }, flavor:'爆撃機に搭載する制式航空爆弾。投下すると着弾点を広範囲に吹き飛ばす。' },
