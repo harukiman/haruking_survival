@@ -386,6 +386,13 @@ Game.Player = (function () {
       const rby = p.y - (p.recoilY || 0); if (!blocked(p.x, rby)) p.y = rby;
       if (p.recoilN <= 0) { p.recoilX = 0; p.recoilY = 0; }
     }
+    // 戦車の砲撃ノックバック: 後方へ実際に少し後退(壁は尊重、数tickで減衰)
+    if (p.knockVX || p.knockVY) {
+      const nx = p.x + p.knockVX; if (!blocked(nx, p.y)) p.x = nx;
+      const ny = p.y + p.knockVY; if (!blocked(p.x, ny)) p.y = ny;
+      p.knockVX *= 0.78; p.knockVY *= 0.78;
+      if (Math.abs(p.knockVX) < 0.2 && Math.abs(p.knockVY) < 0.2) { p.knockVX = 0; p.knockVY = 0; }
+    }
     // 先行入力バッファ: CDが明けた瞬間に予約済みの一撃を自動発動(近接/杖のみ。銃はtryFire側で管理)
     if (p.attackCd <= 0 && p.attackBuf) {
       p.attackBuf = false;
@@ -1509,9 +1516,10 @@ Game.Player = (function () {
       Game.Projectiles.fire(dmg, 'tracer', { angle: ang + jit, speed: sp });
     }
     p.jetBurst -= shots;
-    // マズルフラッシュと発砲音・振動(流し撃ちの手触り)
-    if (Game.Render.spawnMuzzle) Game.Render.spawnMuzzle(p.x + Math.cos(ang) * 16, p.y + Math.sin(ang) * 16, ang, '#ffe06a', 1.1);
-    if (Game.state.tick % 2 === 0) { Game.Audio.play('gun_mini'); if (Game.Render.shake) Game.Render.shake(1); }
+    // マズルフラッシュと発砲音・振動(流し撃ちの手触り)。重く速い機首砲音を毎tick鳴らす
+    if (Game.Render.spawnMuzzle) Game.Render.spawnMuzzle(p.x + Math.cos(ang) * 16, p.y + Math.sin(ang) * 16, ang, '#ffe06a', 1.2);
+    Game.Audio.play('gun_jet');
+    if (Game.state.tick % 2 === 0 && Game.Render.shake) Game.Render.shake(1);
     if (Game.Mobs.alertNoise) Game.Mobs.alertNoise(p.x, p.y, 10, 60);
   }
 

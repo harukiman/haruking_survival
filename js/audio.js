@@ -242,6 +242,9 @@ Game.Audio = (function () {
       // ㊴ 新銃の効果音: 重厚マグナム/ミニガン/対物狙撃/エネルギー/火炎/擲弾
       case 'gun_heavy':  if (throttled('ghv', 0.08)) gunShot({ crackHz: 2100, crackVol: 0.6, crackDur: 0.05, bodyHz: 160, bodyLow: 42, bodyVol: 0.66, bodyDur: 0.16, midHz: 520, tailDur: 0.2, tailVol: 0.18, tailHz: 1000, vol: 1.15 }); break;
       case 'gun_mini':   if (throttled('gmn', 0.012)) gunShot({ crackHz: 3200, crackVol: 0.28, crackDur: 0.015, bodyHz: 300, bodyLow: 90, bodyVol: 0.26, bodyDur: 0.03, midHz: 1000, tailDur: 0.02, tailVol: 0.05, tailHz: 1800, vol: 0.82 }); break;
+      // 戦闘機の機首砲: 実機の対地攻撃機(GAU-8系)を想起させる、速く・重く・リアルな連射音。
+      // 深い body + サブサンプの"ドスッ"を毎発重ね、低めのクラックで金属的すぎない重量感を出す。
+      case 'gun_jet':    if (throttled('gjt', 0.016)) { gunShot({ crackHz: 1500, crackVol: 0.54, crackDur: 0.026, bodyHz: 150, bodyLow: 40, bodyVol: 0.64, bodyDur: 0.08, midHz: 460, tailDur: 0.07, tailVol: 0.13, tailHz: 820, vol: 1.14 }); if (ctx) subThump(88, 36, 0.07, 0.1); } break;
       case 'gun_antimat':if (throttled('gam', 0.16)) { gunShot({ crackHz: 2600, crackVol: 0.7, crackDur: 0.06, bodyHz: 120, bodyLow: 34, bodyVol: 0.72, bodyDur: 0.22, midHz: 480, tailDur: 0.42, tailVol: 0.22, tailHz: 900, vol: 1.25 }); if (ctx) subThump(150, 48, 0.2, 0.12); } break;
       case 'gun_energy': if (throttled('gen', 0.04)) { beep(1600, 0.05, 'sine', 0.08); beep(900, 0.09, 'sawtooth', 0.06); sbeep(2200, 0.05, 'triangle', 0.05, 0.03); } break;
       case 'gun_flame':  if (throttled('gfl', 0.05)) { if (ctx) noiseBurst(ctx.currentTime, 0.16, 0.1, 900); beep(180, 0.12, 'sawtooth', 0.05); } break;

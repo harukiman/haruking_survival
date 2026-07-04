@@ -36,9 +36,8 @@ Game.Combat = (function () {
       Game.Audio.play('boom_sfx'); if (Game.Render.shake) Game.Render.shake(7);
       if (Game.Render.spawnMuzzle) Game.Render.spawnMuzzle(p.x + Math.cos(ang) * 22, p.y + Math.sin(ang) * 22, ang, '#ffd86b', 1.7);
       if (Game.Mobs.alertNoise) Game.Mobs.alertNoise(p.x, p.y, 14, 180);
-      // 戦車の反動: 砲撃方向と逆へ車体が少し後退し、数tickで復元(player側のrecoil機構が壁を尊重して戻す)
-      const kk = 6, kx = -Math.cos(ang) * kk, ky = -Math.sin(ang) * kk;
-      p.x += kx; p.y += ky; p.recoilN = 4; p.recoilX = kx / 4; p.recoilY = ky / 4;
+      // 戦車の反動: 発射ごとに砲撃方向と逆へ実際に少しノックバック(後退)。player側で壁を尊重しつつ減衰
+      const KB = 3.0; p.knockVX = -Math.cos(ang) * KB; p.knockVY = -Math.sin(ang) * KB;
       p.cannonCd = tdef.cd;
       return true;
     }
