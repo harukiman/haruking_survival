@@ -316,14 +316,23 @@ window.Game = window.Game || {};
     // 複数セーブスロット選択(複数人が別々のデータで遊べる)
     function renderSlots() {
       const el = document.getElementById('save-slots'); if (!el || !Game.Save.slotCount) return;
-      const n = Game.Save.slotCount(); let h = '<div class="slots-lbl">セーブ枠（人ごとに使い分け）</div><div class="slots-row">';
+      const n = Game.Save.slotCount(); let h = '<div class="slots-lbl">セーブ枠（人ごとに使い分け・名前は✎で変更）</div><div class="slots-row">';
       for (let i = 0; i < n; i++) {
         const info = Game.Save.slotInfo(i), cur = Game.Save.currentSlot() === i;
         const sub = info.exists ? ('Lv' + info.level + (info.ng ? ' NG+' + info.ng : '')) : '空き';
-        h += '<button class="slot-btn' + (cur ? ' on' : '') + '" data-slot="' + i + '">枠' + (i + 1) + '<span class="slot-sub">' + sub + '</span></button>';
+        const nm = (info.name || ('枠' + (i + 1))).replace(/</g, '&lt;');
+        h += '<button class="slot-btn' + (cur ? ' on' : '') + '" data-slot="' + i + '">' + nm + '<span class="slot-sub">' + sub + '</span></button>';
       }
-      el.innerHTML = h + '</div>';
+      h += '</div><button id="slot-rename" class="map-btn slot-rename">✎ 選択中の枠の名前を変更</button>';
+      el.innerHTML = h;
       el.querySelectorAll('.slot-btn').forEach(function (b) { b.addEventListener('click', function () { Game.Save.setSlot(parseInt(b.dataset.slot, 10)); renderSlots(); updateContinueBtn(); }); });
+      const rn = document.getElementById('slot-rename');
+      if (rn) rn.addEventListener('click', function () {
+        const i = Game.Save.currentSlot();
+        const cur2 = Game.Save.slotName(i);
+        const v = window.prompt('セーブ枠' + (i + 1) + ' の名前（最大16文字）', cur2);
+        if (v != null) { Game.Save.setSlotName(i, v); renderSlots(); updateContinueBtn(); }
+      });
     }
     renderSlots();
     updateContinueBtn();

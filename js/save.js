@@ -11,10 +11,12 @@ Game.Save = (function () {
   function setSlot(i) { curSlot = Math.max(0, Math.min(SLOTS - 1, i | 0)); try { localStorage.setItem(KEY + '_cur', String(curSlot)); } catch (e) {} }
   function currentSlot() { return curSlot; }
   function slotCount() { return SLOTS; }
+  function slotName(i) { try { return localStorage.getItem(KEY + '_name_' + i) || ('枠' + (i + 1)); } catch (e) { return '枠' + (i + 1); } }
+  function setSlotName(i, name) { try { name = (name || '').trim().slice(0, 16); if (name) localStorage.setItem(KEY + '_name_' + i, name); else localStorage.removeItem(KEY + '_name_' + i); } catch (e) {} }
   function slotInfo(i) {
-    try { const raw = localStorage.getItem(slotKey(i)); if (!raw) return { exists: false }; const d = JSON.parse(raw);
-      return { exists: true, level: (d.player && d.player.level) || 1, diff: d.difficulty || 'normal', ng: d.ngLevel || 0 }; }
-    catch (e) { return { exists: false }; }
+    try { const raw = localStorage.getItem(slotKey(i)); const base = { name: slotName(i) }; if (!raw) return Object.assign(base, { exists: false }); const d = JSON.parse(raw);
+      return Object.assign(base, { exists: true, level: (d.player && d.player.level) || 1, diff: d.difficulty || 'normal', ng: d.ngLevel || 0 }); }
+    catch (e) { return { exists: false, name: slotName(i) }; }
   }
 
   function dumpWorld(w) {
@@ -114,5 +116,5 @@ Game.Save = (function () {
     try { localStorage.removeItem(slotKey(curSlot)); } catch (e) {}
   }
 
-  return { serialize, save, autosave, load, hasSave, clear, setSlot, currentSlot, slotCount, slotInfo };
+  return { serialize, save, autosave, load, hasSave, clear, setSlot, currentSlot, slotCount, slotInfo, slotName, setSlotName };
 })();

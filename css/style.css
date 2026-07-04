@@ -73,6 +73,7 @@ button { font-family: inherit; touch-action: manipulation; }
 .slot-btn.on { border-color: #6fc46b; background: rgba(50, 90, 60, 0.5); box-shadow: 0 0 10px rgba(90, 200, 120, 0.25); }
 .slot-btn.on .slot-sub { color: #aee0b0; }
 .slot-btn.pad-focus { outline: 2px solid #ffd86b; }
+.slot-rename { margin-top: 6px; width: 100%; font-size: .78rem; opacity: .85; }
 /* ステータス画面のタブ分割(スキル/図鑑/実績を別タブに。縦積みの長スクロール解消) */
 .stats-tabs { position: sticky; top: 0; z-index: 3; }
 .stats-tabbed .stp { display: none; }
