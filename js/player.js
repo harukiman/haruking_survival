@@ -41,6 +41,7 @@ Game.Player = (function () {
       fuel: {}, // 現代乗り物の燃料(type→残量)
       armor: { head: null, chest: null }, // {id, roll} インスタンス
       accessory: null, accessory2: null, // 遺物(relic) {id} ×2枠
+      offhand: null, // 左手スロット(盾/呼吸器などユーティリティ装備を保持して常時機能)
       // RPGステータス（スキルポイントで振る）
       str: 0, vit: 0, dex: 0, skillPoints: 0, skills: {},
     };
@@ -805,6 +806,7 @@ Game.Player = (function () {
       Game.UI.toast('🔧 機体を修理した（耐久 ' + Math.round(pp.vehDur[pp.vehicle]) + '/' + max + '）'); Game.UI.refreshAll(); return;
     }
     if (def.food || def.cures || def.buff || def.skillTome || def.xpGain || def.invExpand || def.summonBoss || def.opensShop || def.recall || def.stasis) { Game.Inventory.useSelected(); return; }
+    if (def.offhand) { equipOffhand(); return; }
     if (def.armor) { equipSelectedArmor(); return; }
     if (def.relic) { equipRelic(); return; }
 
@@ -1085,6 +1087,22 @@ Game.Player = (function () {
   }
 
   // 遺物(relic)アクセサリーを装備（スロット1つ・入替式）
+  // 左手(オフハンド)スロットへ装備。盾/呼吸器などユーティリティを保持して常時機能させる
+  function equipOffhand(idx) {
+    const p = Game.state.player;
+    if (idx == null) idx = p.hotbarIndex;
+    const slot = Game.Inventory.slots()[idx];
+    if (!slot) return;
+    const def = Game.ITEMS[slot.id];
+    if (!def || !def.offhand) return;
+    const prev = p.offhand;
+    p.offhand = { id: slot.id };
+    Game.Inventory.slots()[idx] = prev ? { id: prev.id, count: 1 } : null;
+    applyEquipStats();
+    Game.Audio.play('relic_get');
+    Game.UI.toast(def.name + ' を左手に装備');
+    Game.UI.refreshAll();
+  }
   function equipRelic(idx) {
     const p = Game.state.player;
     if (idx == null) idx = p.hotbarIndex;
@@ -1154,9 +1172,9 @@ Game.Player = (function () {
     const p = Game.state.player;
     let item = null;
     if (key === 'head' || key === 'chest') { item = p.armor && p.armor[key]; }
-    else if (key === 'accessory' || key === 'accessory2') { item = p[key]; }
+    else if (key === 'accessory' || key === 'accessory2' || key === 'offhand') { item = p[key]; }
     if (!item) return false;
-    const stack = key === 'accessory' || key === 'accessory2' ? { id: item.id, count: 1 } : { id: item.id, roll: item.roll || null };
+    const stack = (key === 'accessory' || key === 'accessory2' || key === 'offhand') ? { id: item.id, count: 1 } : { id: item.id, roll: item.roll || null };
     const ok = item.roll ? Game.Inventory.addInstance(stack) : (Game.Inventory.add(stack.id, 1) === 0);
     if (!ok) { Game.UI.toast('インベントリに空きがない'); return false; }
     if (key === 'head' || key === 'chest') p.armor[key] = null; else p[key] = null;
@@ -1170,7 +1188,7 @@ Game.Player = (function () {
     const a = Game.state.player.armor;
     let s = 0;
     for (const k in a) if (a[k]) s += Game.Loot.stats(a[k]).armor;
-    return s + setBonus().armor + levelArmorBonus() + skillBonus().armor + (Game.Status ? Game.Status.buffSum().armor : 0);
+    return s + (Game.state.player.gearOffhandArmor || 0) + setBonus().armor + levelArmorBonus() + skillBonus().armor + (Game.Status ? Game.Status.buffSum().armor : 0);
   }
 
   // 装備セット効果（head+chestが同セット）
@@ -1216,10 +1234,10 @@ Game.Player = (function () {
     const p = Game.state.player;
     let hpBonus = 0, gm = 0, gs = 0, gr = 0, gx = 0, gt = 0, ammoMul = 1, reflect = 0;
     for (const k in p.armor) if (p.armor[k]) { const st = Game.Loot.stats(p.armor[k]); const d = Game.ITEMS[p.armor[k].id] || {}; hpBonus += st.hp; gm += st.moveSpd || 0; gs += st.staminaMax || 0; gr += st.regen || 0; gx += st.xpBoost || 0; gt += (st.thorns || 0) + (d.thornsFixed || 0); if (d.ammoStack) ammoMul = Math.max(ammoMul, d.ammoStack); if (d.reflect) reflect += d.reflect; }
-    // 装身具(accessory)の反射盾核・潜水呼吸器も合流
-    let dive = false;
-    [p.accessory, p.accessory2].forEach(function (acc) { if (!acc) return; const d = Game.ITEMS[acc.id || acc]; if (d && d.reflect) reflect += d.reflect; if (d && d.diveGear) dive = true; });
-    p.waterBreath = dive;
+    // 装身具(accessory)＋左手(offhand)の反射盾・潜水呼吸器も合流
+    let dive = false, ohArmor = 0;
+    [p.accessory, p.accessory2, p.offhand].forEach(function (acc) { if (!acc) return; const d = Game.ITEMS[acc.id || acc]; if (!d) return; if (d.reflect) reflect += d.reflect; if (d.diveGear) dive = true; if (d.ohArmor) ohArmor += d.ohArmor; });
+    p.waterBreath = dive; p.gearOffhandArmor = ohArmor;
     // 防具affixの実用チャンネルを集約(移動/スタミナ/HP回復/経験/棘反射/弾薬上限/ダメ反射)。stats/skill/setと重畳
     p.gearMoveSpd = gm; p.gearRegen = gr; p.gearXpBoost = gx; p.gearThorns = Math.min(0.6, gt); // 棘は上限60%(過剰反射防止)
     p.gearAmmoMul = ammoMul; p.gearReflect = Math.min(0.8, reflect); // 反射は上限80%
@@ -1482,7 +1500,7 @@ Game.Player = (function () {
 
   return {
     makeDefault, spawnAt, update, targetTile, mining, playerTile, breakBlock,
-    interact, useNearby, gainXP, totalArmor, setBonus, sleep, checkGroupSleep, vehicleTakeDamage, updateWreck, equipSelectedArmor, equipFromInventory, equipRelic, unequipSlot, applyEquipStats, bossesDefeated, bossTitle, travelToWaypoint,
+    interact, useNearby, gainXP, totalArmor, setBonus, sleep, checkGroupSleep, vehicleTakeDamage, updateWreck, equipSelectedArmor, equipFromInventory, equipRelic, equipOffhand, unequipSlot, applyEquipStats, bossesDefeated, bossTitle, travelToWaypoint,
     effAttack, attackCooldown, levelDmgBonus, levelArmorBonus, spendStat, unlockSkill, respec,
     skillBonus, skillFlag, canUnlock, currentWeaponAtk, equippedArmorAt, xpForLevel,
     reloadCurrent, magLoaded, magCap, selGunId, contextAction,

@@ -603,8 +603,8 @@ Game.ITEMS = {
   warden_plate:  { name:'守番の胸甲', stack:1, color:'#b8ac82', armor:6, slot:'chest', flavor:'都市を永く守り続けた守番の鎧。重いが、古代合金ゆえの堅牢さは折り紙付き。' },
   thorn_plate:   { name:'棘鎧', stack:1, color:'#7a5a4a', armor:5, slot:'chest', thornsFixed:0.28, flavor:'無数の棘に覆われた鎧。触れた者は自らの攻撃で傷つく。棘28%反射(付与効果と加算)。' },
   combat_vest:   { name:'戦術タクティカルベスト', stack:1, color:'#3c4a38', armor:5, slot:'chest', ammoStack:2, flavor:'弾倉ポーチを備えた戦闘用ベスト。装備中は1スロットに携行できる弾薬の上限が2倍になる。銃使いの相棒。' },
-  reflect_aegis: { name:'反射の盾核', stack:1, color:'#8fd0ff', relic:{armor:2}, reflect:0.4, flavor:'攻撃を跳ね返す不思議な盾核。受けたダメージの40%を、殴ってきた相手へ反射する(ボスにも有効)。装身具枠。' },
-  aqualung:      { name:'潜水呼吸器', stack:1, color:'#4ad0e0', relic:{}, diveGear:true, flavor:'古の海人が遺した呼吸器。装備すると水中で溺れなくなり、深い海の底まで潜っていける。装身具枠。' },
+  reflect_aegis: { name:'反射の盾', stack:1, color:'#8fd0ff', offhand:true, ohArmor:2, reflect:0.4, flavor:'攻撃を跳ね返す盾。左手に装備すると、受けたダメージの40%を殴ってきた相手へ反射する(ボスにも有効)。防御+2。' },
+  aqualung:      { name:'潜水呼吸器', stack:1, color:'#4ad0e0', offhand:true, diveGear:true, flavor:'古の海人が遺した呼吸器。左手に装備すると水中で溺れなくなり、深い海の底まで潜っていける。' },
   ancient_charm: { name:'古の護符', stack:1, color:'#e0cf90', relic:{maxHp:16, armor:1}, flavor:'刻印の護符。古の守りが宿り、身を固くする。装身具として最大HP+16・防御+1。' },
   // 狭間の遺物
   void_shard:    { name:'虚無晶', stack:99, color:'#b088e8', flavor:'狭間の裂け目に結晶した虚。覗き込むと、光でも影でもない色が渦を巻いている。' },

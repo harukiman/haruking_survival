@@ -534,6 +534,7 @@ Game.UI = (function () {
     h += gearCell('胴', p.armor && p.armor.chest);
     h += gearCell('遺物1', p.accessory);
     h += gearCell('遺物2', p.accessory2);
+    h += gearCell('左手', p.offhand);
     h += '</div>';
     // 派生ステータス（%）
     const sb = Game.Player.skillBonus();
@@ -1365,6 +1366,7 @@ Game.UI = (function () {
       { key: 'chest', label: '胴', item: p.armor && p.armor.chest },
       { key: 'accessory', label: '遺物1', item: p.accessory },
       { key: 'accessory2', label: '遺物2', item: p.accessory2 },
+      { key: 'offhand', label: '左手', item: p.offhand },
     ];
     let h = '<div class="eq-cells">';
     cells.forEach(function (c) {
@@ -1424,6 +1426,7 @@ Game.UI = (function () {
     const cur = Game.Inventory.slots()[idx]; if (!cur) return false;
     const d2 = Game.ITEMS[cur.id]; if (!d2) return false;
     if (d2.armor && d2.slot) Game.Player.equipFromInventory(idx);
+    else if (d2.offhand) { invSelected = idx; Game.Player.equipOffhand(idx); }
     else if (d2.relic) { invSelected = idx; Game.Player.equipRelic(idx); }
     else if (d2.food || d2.cures || d2.buff || d2.skillTome || d2.xpGain || d2.invExpand || d2.summonBoss || d2.opensShop || d2.recall) {
       const tmp = Game.state.player.hotbarIndex;
@@ -1513,6 +1516,7 @@ Game.UI = (function () {
     if (def.flavor) h += '<div class="tt-flavor" style="margin-bottom:6px">' + def.flavor + '</div>';
     const btns = [];
     if (def.armor && def.slot) btns.push('<button id="inv-act" class="big-btn">装備する</button>');
+    else if (def.offhand) btns.push('<button id="inv-act" class="big-btn">左手に装備</button>');
     else if (def.relic) btns.push('<button id="inv-act" class="big-btn">遺物を装備</button>');
     else if (def.food || def.cures || def.buff || def.skillTome || def.xpGain || def.invExpand || def.summonBoss || def.opensShop || def.recall || def.stasis) btns.push('<button id="inv-act" class="big-btn">' + (def.food ? '食べる' : def.skillTome ? '読む' : def.summonBoss ? '掲げる' : def.opensShop ? '鳴らす' : '使う') + '</button>');
     else if (Game.Loot.rollable(st.id) || def.tool || def.throw) btns.push('<button id="inv-hot" class="big-btn alt">ホットバーへ装備</button>');
@@ -1538,6 +1542,7 @@ Game.UI = (function () {
       const cur = Game.Inventory.slots()[invSelected]; if (!cur) return;
       const d2 = Game.ITEMS[cur.id];
       if (d2.armor) Game.Player.equipFromInventory(invSelected);
+      else if (d2.offhand) Game.Player.equipOffhand(invSelected);
       else if (d2.relic) Game.Player.equipRelic(invSelected);
       else { const tmp = Game.state.player.hotbarIndex; const sl = Game.Inventory.slots(); const k = sl.indexOf(cur); Game.state.player.hotbarIndex = k; Game.Inventory.useSelected(); Game.state.player.hotbarIndex = Math.min(tmp, Game.HOTBAR_SIZE - 1); }
       invSelected = -1; refreshInventory();
