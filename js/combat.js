@@ -32,6 +32,7 @@ Game.Combat = (function () {
       Game.Projectiles.callMeteor(tx, ty, Game.Player.effAttack(tdef.dmg), tdef.radius);
       Game.Audio.play('boom_sfx'); if (Game.Render.shake) Game.Render.shake(6);
       if (Game.Render.spawnMuzzle) Game.Render.spawnMuzzle(p.x, p.y, Math.atan2(ty - p.y, tx - p.x), '#ffd86b', 1.5);
+      if (Game.Mobs.alertNoise) Game.Mobs.alertNoise(tx, ty, 14, 180); // 砲撃は着弾点にも大きな音
       p.cannonCd = tdef.cd;
       return true;
     }
@@ -47,6 +48,7 @@ Game.Combat = (function () {
       if (Game.Render.spawnParticles) Game.Render.spawnParticles(p.x, p.y, '#aab4c6', 14);
       if (Game.Render.shake) Game.Render.shake(7);
       Game.Audio.play('boom_sfx');
+      if (Game.Mobs.alertNoise) Game.Mobs.alertNoise(p.x, p.y, 11, 150);
       p.cannonCd = md.cd;
       return true;
     }

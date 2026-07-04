@@ -319,6 +319,21 @@ Game.Mobs = (function () {
     m.dot = m.dot || {}; m.dot[e[0]] = Math.max(m.dot[e[0]] || 0, e[1]);
   }
 
+  // 騒音アグロ(C: 世界の反応性): 銃声/爆発など大きな音は周囲の敵を警戒させ引き寄せる。
+  // 近接/採掘は静かで音を出さない=ステルス寄りに遊べる。alertT を立てると aggro 範囲1.7倍+遠方から駆けつける。
+  function alertNoise(x, y, radiusTiles, frames) {
+    const TS = Game.CFG.TILE_SIZE, r = (radiusTiles || 8) * TS, mobs = Game.state.mobs;
+    let n = 0;
+    for (let i = 0; i < mobs.length; i++) {
+      const m = mobs[i]; if (!m.def || !m.def.hostile) continue;
+      if (Math.hypot(m.x - x, m.y - y) > r) continue;
+      m.alertT = Math.max(m.alertT || 0, frames || 120);
+      if (n < 6 && Game.Render.spawnFloat && Math.random() < 0.5) Game.Render.spawnFloat(m.x, m.y - m.def.size, '❕', '#ffd24a');
+      n++;
+    }
+    return n;
+  }
+
   // 反射の盾核(reflect_aegis): 受けたダメージの一定割合を攻撃元モブへ跳ね返す。ボスにも有効。
   function reflectShield(m, rawDmg, p) {
     if (!p || !p.gearReflect || p.gearReflect <= 0 || !m || m.hp <= 0) return;
@@ -1348,5 +1363,5 @@ Game.Mobs = (function () {
     ctx.closePath();
   }
 
-  return { list, update, draw, spawnMob, damageMob, killMob, applyDot, summonBoss, nearbyNPC, interactNPC, applyMobSnapshot, applyRemoteHit, spawnNetDrops, buildSnapshot };
+  return { list, update, draw, spawnMob, damageMob, killMob, applyDot, alertNoise, summonBoss, nearbyNPC, interactNPC, applyMobSnapshot, applyRemoteHit, spawnNetDrops, buildSnapshot };
 })();

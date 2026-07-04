@@ -988,6 +988,8 @@ Game.Player = (function () {
     // 重火器は反動で画面が揺れる(スナイパー/ロケット/ショットガン=高cdや爆発)
     if (Game.Render.shake) { const recoil = sel.explosive ? 7 : sel.pellets ? 5 : (sel.cd >= 30 ? 6 : 0); if (recoil) Game.Render.shake(recoil); }
     Game.Audio.play(sel.gunsfx || 'gun');
+    // 銃声は騒音: 周囲の敵を警戒させ引き寄せる(爆発武器ほど遠くまで響く)。近接/採掘は静か
+    if (Game.Mobs.alertNoise) Game.Mobs.alertNoise(p.x, p.y, sel.explosive ? 16 : sel.pellets ? 11 : 9, 150);
     if (p.mags[gid] <= 0 && Game.Inventory.count(sel.ammo) > 0) startReload(sel, gid); // 0になったら自動リロード
     Game.UI.refreshHotbar();
   }
@@ -1337,6 +1339,7 @@ Game.Player = (function () {
       // 周囲のモブも巻き込む
       const mobs = Game.state.mobs;
       for (let i = 0; i < mobs.length; i++) { const m = mobs[i]; if (Math.hypot(m.x - w.x, m.y - w.y) <= dmgR) Game.Mobs.damageMob(m, 120, w.x, w.y, false); }
+      if (Game.Mobs.alertNoise) Game.Mobs.alertNoise(w.x, w.y, 16, 240); // 大爆発は遠くまで響く
       Game.state.vehWreck = null;
     }
   }

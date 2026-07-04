@@ -99,6 +99,7 @@ Game.Projectiles = (function () {
         else { Game.Mobs.damageMob(mo, Math.round(dmg * 0.7), x, y); if (kind && Game.Mobs.applyDot) Game.Mobs.applyDot(mo, kind); }
       }
     }
+    if (Game.Mobs.alertNoise) Game.Mobs.alertNoise(x, y, 13 + radiusTiles, 180); // 爆発音で周囲の敵を引き寄せる
     Game.Render.spawnParticles(x, y, '#ff8a3c', 24);
     Game.Render.spawnParticles(x, y, '#ffe27a', 16);
     Game.Render.spawnParticles(x, y, '#57504a', 10); // 破片(デブリ)が飛び散る
