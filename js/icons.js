@@ -306,11 +306,21 @@ Game.Icons = (function () {
         ctx.strokeStyle = '#eee'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(M - 5, M - 14); ctx.lineTo(M - 5, M + 14); ctx.stroke(); break;
       }
       case 'shield': case 'chest': {
+        const cloth = cls === 'chest' && /coat|cloak|robe|vest|tunic|羽織|コート|ベスト|外套|毛皮/.test(id);
+        const spiky = /thorn|棘/.test(id);
+        if (cloth) { // 布/革の上衣: 肩から裾へ広がる柔らかいシルエット＋襟
+          ctx.fillStyle = c.base; ctx.beginPath();
+          ctx.moveTo(M - 10, 12); ctx.quadraticCurveTo(M, 8, M + 10, 12); ctx.lineTo(M + 13, 38); ctx.quadraticCurveTo(M, 42, M - 13, 38); ctx.closePath(); ctx.fill(); ctx.stroke();
+          ctx.fillStyle = shade(c.base, 0.7); ctx.beginPath(); ctx.moveTo(M, 12); ctx.lineTo(M - 4, 40); ctx.lineTo(M + 4, 40); ctx.closePath(); ctx.fill(); // 前合わせの影
+          ctx.fillStyle = c.accent; ctx.beginPath(); ctx.moveTo(M - 10, 12); ctx.lineTo(M - 4, 18); ctx.lineTo(M, 13); ctx.lineTo(M + 4, 18); ctx.lineTo(M + 10, 12); ctx.lineTo(M + 6, 11); ctx.lineTo(M, 15); ctx.lineTo(M - 6, 11); ctx.closePath(); ctx.fill(); // 襟
+          break;
+        }
         ctx.fillStyle = metalGradV(ctx, M - 14, M + 14, c.base);
         ctx.beginPath(); ctx.moveTo(M, 8); ctx.lineTo(M + 14, 14); ctx.lineTo(M + 11, 34); ctx.lineTo(M, 40); ctx.lineTo(M - 11, 34); ctx.lineTo(M - 14, 14); ctx.closePath(); ctx.fill(); ctx.stroke();
         ctx.fillStyle = c.accent; ctx.fillRect(M - 2, 12, 4, 26); ctx.fillRect(M - 12, 20, 24, 4);
         ctx.fillStyle = shade(c.base, 0.6); ctx.beginPath(); ctx.moveTo(M + 11, 34); ctx.lineTo(M, 40); ctx.lineTo(M, 36); ctx.closePath(); ctx.fill(); // 下端の陰
         ctx.fillStyle = c.hi; ctx.globalAlpha = 0.4; ctx.beginPath(); ctx.moveTo(M, 10); ctx.lineTo(M - 10, 16); ctx.lineTo(M - 2, 16); ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1;
+        if (spiky) { ctx.fillStyle = shade(c.base, 0.4); for (let i = -10; i <= 10; i += 5) { ctx.beginPath(); ctx.moveTo(M + i, 14); ctx.lineTo(M + i + 2, 8); ctx.lineTo(M + i + 4, 14); ctx.closePath(); ctx.fill(); } } // 棘
         glint(ctx, M - 7, 15, 2.2); break;
       }
       case 'helmet': {
