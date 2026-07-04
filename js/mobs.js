@@ -1055,9 +1055,11 @@ Game.Mobs = (function () {
 
   // combat.js から呼ばれる
   function damageMob(m, dmg, fromX, fromY, crit) {
-    // 元素反応: 粉砕(凍結+会心)。凍えて脆くなった敵に会心が刺さると砕けて追加ダメージ＋凍結解除
-    if (crit && m.dot && (m.dot.slow || 0) > 0) {
-      dmg = Math.round(dmg * 1.4); m.dot.slow = 0;
+    // 元素反応: 粉砕(凍結/凍え+会心)。氷結中(iced)または凍え中の敵に会心が刺さると砕けて追加ダメージ。
+    // 氷結を割ると更に大きく(氷漬け=完全に脆い)。freeze→crit のコンボの核心
+    if (crit && m && ((m.iced || 0) > 0 || (m.dot && (m.dot.slow || 0) > 0))) {
+      const wasIced = (m.iced || 0) > 0;
+      dmg = Math.round(dmg * (wasIced ? 1.7 : 1.4)); if (m.dot) m.dot.slow = 0; m.iced = 0; m.chill = 0;
       if (Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - m.def.size * 0.6, '粉砕!', '#bfe4ff', true);
       if (Game.UI && Game.UI.tipOnce) Game.UI.tipOnce('elem_shatter', '元素反応「粉砕」！ 凍った敵に会心が刺さると砕けて追加ダメージ。まず凍らせて会心を狙え');
       if (Game.Render.spawnParticles) Game.Render.spawnParticles(m.x, m.y, '#dff0ff', 12);
