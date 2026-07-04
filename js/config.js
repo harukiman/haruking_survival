@@ -597,6 +597,10 @@ Game.ITEMS = {
   rift_charm:    { name:'狭間の護符', stack:1, color:'#c0a0f0', relic:{maxHp:12, moveSpd:0.05}, flavor:'あわいの護符。存在が薄れるぶん、身は軽い。装身具として最大HP+12・移動+5%。' },
   // 嵐の主の固有ドロップ: 雷を纏う戈
   tempest_spear: { name:'嵐帝の戈', stack:1, color:'#8fc8f0', tool:'sword', tier:5, attack:14, special:{type:'thunder', name:'雷帝', pct:0.55, cd:55, color:'#bfe4ff'}, proj:{kind:'chain', dmg:9, cd:16}, flavor:'嵐の主を統べた戈。振るえば刃から雷が連鎖し、遠くの敵まで貫く。空の怒りを、この手に。' },
+  // 玉座の王の固有ドロップ: 威圧の王笏
+  sovereign_scepter:{ name:'玉座の王笏', stack:1, color:'#d8c078', tool:'sword', tier:5, attack:15, special:{type:'shock', name:'王の威圧', pct:0.55, cd:70, r:2.6, color:'#e8cf80'}, aoe:true, flavor:'玉座の王が握りし黄金の笏。一振りで臣従を強い、周囲の者を威圧の衝撃で薙ぐ。' },
+  // 虚無の帝の固有ドロップ: あわいの王冠(防具)
+  rift_crown:{ name:'虚無の王冠', stack:1, color:'#b088e8', armor:6, slot:'head', thornsFixed:0.18, flavor:'虚無の帝が戴きし王冠。触れる者に虚無を刻む(棘18%反射)。あわいを統べる証。' },
 };
 
 // クラフトレシピ。station=null は手作り、それ以外は近接が必要
@@ -1006,6 +1010,10 @@ Game.MOBS = {
   sentinel_husk: { name:'哨士の亡骸', hostile:true, hp:60, speed:0.7, color:'#b8ac82', size:14, drops:[{item:'relic_shard',n:[0,1]},{item:'stone',n:[1,2]}], dmg:9, xp:9, shape:'tall', ranged:{dmg:7,range:7,cd:70,kind:'hex'} },
   gloom_moth:  { name:'幽き蛾', hostile:true, hp:22, speed:2.0, color:'#9a8fb8', size:11, drops:[{item:'relic_shard',n:[0,1]},{item:'glow_spore',n:[0,1]}], dmg:6, xp:6, ghost:true, shape:'wisp', inflict:{poison:120} },
   city_warden: { name:'古都の守番', hostile:true, hp:150, speed:1.0, color:'#c8bc8a', size:19, drops:[{item:'relic_shard',n:[3,5]},{item:'ancient_alloy',n:[1,2]},{item:'lumen',n:[1,2]},{item:'gold_ore',n:[1,2]}], dmg:11, xp:20, midboss:true, big:true, shape:'tall', pound:{r:2.1,cd:110}, summon:'sentinel_husk', inflict:{poison:150} },
+  // 古代都市の固有ボス: 玉座の王。哨士を統べ、遠距離の呪詛と叩きつけ
+  ruin_king:{ name:'玉座の王', hostile:true, hp:900, tier:3, speed:1.0, color:'#d8c078', size:30, drops:[{item:'sovereign_scepter',n:[0,1]},{item:'relic_shard',n:[6,12]},{item:'ancient_alloy',n:[2,4]},{item:'gold_ore',n:[2,4]},{item:'lumen',n:[2,4]}], dmg:13, xp:80, boss:true, big:true, shape:'tall', pound:{r:2.4,cd:100}, summon:'sentinel_husk', ranged:{dmg:9,range:8,cd:70,kind:'hex'} },
+  // 狭間の固有ボス: 虚無の帝。反響の幻を統べ、空間を歪める
+  void_emperor:{ name:'虚無の帝', hostile:true, hp:1000, tier:4, speed:1.2, color:'#b088e8', size:30, drops:[{item:'rift_crown',n:[0,1]},{item:'void_shard',n:[6,12]},{item:'void_alloy',n:[2,4]},{item:'shadow_core',n:[1,2]},{item:'lumen',n:[2,4]}], dmg:14, xp:90, boss:true, big:true, shape:'tall', ghost:true, summon:'echo_phantom', ranged:{dmg:10,range:9,cd:60,kind:'hex'} },
   // 狭間の住人
   rift_wraith: { name:'狭間の亡霊', hostile:true, hp:70, speed:1.2, color:'#a888e0', size:14, drops:[{item:'void_shard',n:[0,1]},{item:'shadow_shard',n:[0,1]}], dmg:11, xp:11, ghost:true, shape:'wisp', ranged:{dmg:8,range:8,cd:65,kind:'hex',status:{sanity:0}} },
   echo_phantom:{ name:'反響の幻', hostile:true, hp:30, speed:2.4, color:'#c0a0f0', size:12, drops:[{item:'void_shard',n:[0,1]}], dmg:8, xp:8, ghost:true, shape:'orb', charge:{ range:6, windup:12, dashTicks:16, dashSpeed:6.2, dmg:12, cd:130 } },
@@ -1122,7 +1130,7 @@ Game.ITEM_GLYPH = {
   sand_greatsword:'⚔️', magma_hammer:'🔨', pharaoh_crown:'👑', mind_tome:'📖', wisdom_tome:'📗', xp_orb:'🔮', expand_pouch:'🎒',
   feather:'🪶', wind_crystal:'💠', wind_steel:'🌀', wind_feather:'🪶', wind_sword:'🗡️', sky_cloak:'🧥', cloud_boots:'👢',
   ring_crit:'💍', amulet_swift:'📿', fang_vamp:'🦷', heart_regen:'❤️‍🔥', eye_xp:'👁️', band_power:'💪', crest_guard:'🛡️',
-  energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️', prism_blade:'⚔️', dragon_fang:'⚔️', colossus_blade:'⚔️', mire_scythe:'⚔️', magma_maul:'🔨', starcore_greatsword:'⚔️', voidcore_blade:'⚔️', spore_scythe:'⚔️', star_aegis:'🛡️', void_helm:'⛑️', thorn_plate:'🥷', tempest_spear:'🔱', frostfang_blade:'🗡️', emberfang_axe:'🪓', echoedge:'🗡️', quakehammer:'🔨',
+  energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️', prism_blade:'⚔️', dragon_fang:'⚔️', colossus_blade:'⚔️', mire_scythe:'⚔️', magma_maul:'🔨', starcore_greatsword:'⚔️', voidcore_blade:'⚔️', spore_scythe:'⚔️', star_aegis:'🛡️', void_helm:'⛑️', thorn_plate:'🥷', tempest_spear:'🔱', sovereign_scepter:'👑', rift_crown:'👑', frostfang_blade:'🗡️', emberfang_axe:'🪓', echoedge:'🗡️', quakehammer:'🔨',
 };
 
 Game.INV_SIZE = 36;       // 先頭9 = ホットバー

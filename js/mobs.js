@@ -249,10 +249,16 @@ Game.Mobs = (function () {
           if (Math.random() < 0.025 && countType('storm_sovereign') === 0) type = 'storm_sovereign';
           else if (Math.random() < 0.05 && countType('sky_warden') === 0) type = 'sky_warden';
         }
-        // 古都の守番(中ボスD): 神殿の巣が守護個体として稀に召喚(1体まで)
-        if (!type && Game.state.worldName === 'light' && Game.WorldGen.inRuinCity && Game.WorldGen.inRuinCity(stx, sty, Game.state.seed) && Math.random() < 0.05 && countType('city_warden') === 0) type = 'city_warden';
-        // 狭間の番人(中ボスD): 狭間の巣が守護個体として稀に召喚(1体まで)
-        if (!type && Game.state.worldName === 'shadow' && Game.WorldGen.inRiftVoid && Game.WorldGen.inRiftVoid(stx, sty, Game.state.seed) && Math.random() < 0.05 && countType('rift_keeper') === 0) type = 'rift_keeper';
+        // 古代都市の固有ボス「玉座の王」(稀) ＞ 守番(中ボスD)
+        if (!type && Game.state.worldName === 'light' && Game.WorldGen.inRuinCity && Game.WorldGen.inRuinCity(stx, sty, Game.state.seed)) {
+          if (Math.random() < 0.025 && countType('ruin_king') === 0) type = 'ruin_king';
+          else if (Math.random() < 0.05 && countType('city_warden') === 0) type = 'city_warden';
+        }
+        // 狭間の固有ボス「虚無の帝」(稀) ＞ 番人(中ボスD)
+        if (!type && Game.state.worldName === 'shadow' && Game.WorldGen.inRiftVoid && Game.WorldGen.inRiftVoid(stx, sty, Game.state.seed)) {
+          if (Math.random() < 0.025 && countType('void_emperor') === 0) type = 'void_emperor';
+          else if (Math.random() < 0.05 && countType('rift_keeper') === 0) type = 'rift_keeper';
+        }
         if (!type) type = pool[Math.floor(Math.random() * pool.length)];
         // 近傍の歩ける床へ
         for (let a = 0; a < 6; a++) {
