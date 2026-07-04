@@ -2144,14 +2144,33 @@ Game.UI = (function () {
     }
     // 動的ドット（敵=赤/ボス=大赤/NPC=黄/仲間=水色）
     const mobs = Game.state.mobs;
+    let bossMk = null; // ボスは最前面＆画面外なら端に矢印で明示
     for (let i = 0; i < mobs.length; i++) {
       const m = mobs[i]; if (!m.def) continue;
       const mx = (Math.floor(m.x / TS) - (ptx - half)) * scale, my = (Math.floor(m.y / TS) - (pty - half)) * scale;
+      if (m.def.boss || m.champion || m.def.midboss) { if (!bossMk || (m.engaged && !bossMk.engaged) || (m.def.boss && !bossMk.isBoss)) bossMk = { mx: mx, my: my, engaged: m.engaged, isBoss: !!m.def.boss }; continue; }
       if (mx < 0 || my < 0 || mx > size || my > size) continue;
-      if (m.def.boss) { mmCtx.fillStyle = '#ff3030'; mmCtx.fillRect(mx - 2.5, my - 2.5, 5, 5); }
-      else if (m.def.npc || m.def.friendly) { mmCtx.fillStyle = '#ffe24a'; mmCtx.fillRect(mx - 1.5, my - 1.5, 3, 3); }
+      if (m.def.npc || m.def.friendly) { mmCtx.fillStyle = '#ffe24a'; mmCtx.fillRect(mx - 1.5, my - 1.5, 3, 3); }
       else if (m.def.hostile) { mmCtx.fillStyle = '#e0404a'; mmCtx.fillRect(mx - 1, my - 1, 2, 2); }
       else { mmCtx.fillStyle = '#7fd06a'; mmCtx.fillRect(mx - 1, my - 1, 2, 2); } // 受動的な動物(狩り対象)
+    }
+    if (bossMk) {
+      const pulse = 0.5 + 0.5 * Math.sin(Game.state.tick * 0.2);
+      const off = bossMk.mx < 3 || bossMk.my < 3 || bossMk.mx > size - 3 || bossMk.my > size - 3;
+      mmCtx.fillStyle = bossMk.isBoss ? '#ff3030' : '#ff8a3c';
+      if (off) {
+        // 画面外: 端にクランプして中心→ボス方向の矢印
+        const bx = Math.max(5, Math.min(size - 5, bossMk.mx)), by = Math.max(5, Math.min(size - 5, bossMk.my));
+        const ang = Math.atan2(bossMk.my - size / 2, bossMk.mx - size / 2);
+        mmCtx.save(); mmCtx.translate(bx, by); mmCtx.rotate(ang);
+        mmCtx.beginPath(); mmCtx.moveTo(6, 0); mmCtx.lineTo(-4, -5); mmCtx.lineTo(-4, 5); mmCtx.closePath(); mmCtx.fill();
+        mmCtx.restore();
+      } else {
+        const r = 3 + pulse * 2.2;
+        mmCtx.beginPath(); mmCtx.arc(bossMk.mx, bossMk.my, r, 0, 6.2832); mmCtx.fill();
+        mmCtx.strokeStyle = 'rgba(255,80,80,' + (0.4 + pulse * 0.5).toFixed(2) + ')'; mmCtx.lineWidth = 1.5;
+        mmCtx.beginPath(); mmCtx.arc(bossMk.mx, bossMk.my, r + 2.5, 0, 6.2832); mmCtx.stroke();
+      }
     }
     if (Game.Net && Game.Net.isConnected()) {
       const peers = Game.Net.getPeers();
@@ -2258,9 +2277,13 @@ Game.UI = (function () {
     'options-screen': function () { toggleOptions(); },
     'stats-screen': closeStats, 'chest-screen': closeChest, 'trade-screen': closeTrade,
     'story-screen': closeStory, 'quest-screen': closeQuest, 'enchant-screen': closeEnchant, 'lore-screen': closeLore,
+    'bigmap-screen': function () { if (bigMapOpen) toggleBigMap(); },
   };
   let padFocusEl = null, padLastPt = null;
   function padMenuRoot() {
+    // 世界地図が開いている間はその操作ボタン(近景/現在地/マーク/薄さ/閉じる)をナビ対象に
+    const bm = document.getElementById('bigmap-screen');
+    if (bm && !bm.classList.contains('hidden')) return bm;
     // 最後（=最前面）の可視オーバーレイをナビ対象にする
     const list = document.querySelectorAll('.overlay:not(.hidden)');
     return list.length ? list[list.length - 1] : null;
