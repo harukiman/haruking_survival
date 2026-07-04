@@ -34,6 +34,8 @@ Game.Icons = (function () {
     if (def.armor != null) return def.slot === 'head' ? 'helmet' : 'chest';
     if (def.vehicle) return 'vehicle';
     if (id === 'rocket') return 'rocket';
+    if (/^missile$|homing_missile/.test(id)) return 'missile'; // ミサイル系は専用の実物寄りアイコン
+    if (/^he_slug$/.test(id)) return 'shell';                  // 鉄鋼榴弾は砲弾アイコン
     if (def.respec) return 'book';
     if (def.throw) return 'bomb';
     if (id === 'powder_keg' || /_keg$/.test(id)) return 'bomb'; // 火薬樽は爆弾系アイコン(place判定より前)
@@ -203,7 +205,7 @@ Game.Icons = (function () {
       }
       case 'gun': {
         // 銃種ごとに実銃に即したシルエットを描き分ける（同形を作らない）
-        const FORM = { pistol: 'pistol', glock17: 'pistol', deagle: 'pistol', mp5: 'smg', uzi: 'smg', p90: 'smg', m4: 'rifle', scar_h: 'rifle', minigun: 'minigun', ak47: 'ak', shadow_rifle: 'rifle', m870: 'shotgun', spas12: 'shotgun', barrett: 'sniper', rpg7: 'rpg', m79: 'rpg', star_cannon: 'rpg', flamethrower: 'energy', laser_rifle: 'energy', railgun: 'energy', plasma_rifle: 'energy' };
+        const FORM = { pistol: 'pistol', glock17: 'pistol', deagle: 'pistol', mp5: 'smg', uzi: 'smg', p90: 'smg', m4: 'rifle', scar_h: 'rifle', minigun: 'minigun', ak47: 'ak', shadow_rifle: 'rifle', m870: 'shotgun', spas12: 'shotgun', barrett: 'sniper', rpg7: 'rpg', m79: 'rpg', star_cannon: 'rpg', he_launcher: 'rpg', lockon_launcher: 'rpg', flamethrower: 'energy', laser_rifle: 'energy', railgun: 'energy', plasma_rifle: 'energy' };
         const form = FORM[id] || 'pistol';
         const body = '#1a1a1e', dark = '#0e0e11', metal = '#3a3a42', wood = '#5a3a1e';
         const R = function (x, y, w, hh, col) { ctx.fillStyle = col; ctx.fillRect(x, y, w, hh); ctx.strokeRect(x, y, w, hh); };
@@ -389,6 +391,44 @@ Game.Icons = (function () {
         ctx.fillStyle = c.accent; ctx.beginPath(); ctx.arc(M, 20, 3.5, 0, 7); ctx.fill();
         ctx.fillStyle = '#c0444a'; ctx.beginPath(); ctx.moveTo(M - 8, 30); ctx.lineTo(M - 14, 38); ctx.lineTo(M - 8, 36); ctx.closePath(); ctx.fill(); ctx.beginPath(); ctx.moveTo(M + 8, 30); ctx.lineTo(M + 14, 38); ctx.lineTo(M + 8, 36); ctx.closePath(); ctx.fill();
         ctx.fillStyle = '#ffb04a'; ctx.beginPath(); ctx.moveTo(M - 5, 36); ctx.lineTo(M, 44); ctx.lineTo(M + 5, 36); ctx.closePath(); ctx.fill(); break;
+      }
+      case 'missile': {
+        const cx = M;
+        // 細長い弾体(金属)
+        ctx.fillStyle = mix(c.base, '#e8ecf0', 0.4);
+        ctx.beginPath(); ctx.moveTo(cx, 6); ctx.lineTo(cx + 4, 15); ctx.lineTo(cx + 4, 37); ctx.lineTo(cx - 4, 37); ctx.lineTo(cx - 4, 15); ctx.closePath(); ctx.fill(); ctx.stroke();
+        // 弾頭(ノーズコーン)
+        ctx.fillStyle = id === 'homing_missile' ? '#d85030' : '#c0402a';
+        ctx.beginPath(); ctx.moveTo(cx, 6); ctx.lineTo(cx + 4, 15); ctx.lineTo(cx - 4, 15); ctx.closePath(); ctx.fill(); ctx.stroke();
+        // カナード翼(前)＋テールフィン(後)
+        ctx.fillStyle = shade(c.base, 0.62);
+        ctx.beginPath(); ctx.moveTo(cx - 4, 19); ctx.lineTo(cx - 9, 22); ctx.lineTo(cx - 4, 24); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(cx + 4, 19); ctx.lineTo(cx + 9, 22); ctx.lineTo(cx + 4, 24); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(cx - 4, 31); ctx.lineTo(cx - 10, 39); ctx.lineTo(cx - 4, 37); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(cx + 4, 31); ctx.lineTo(cx + 10, 39); ctx.lineTo(cx + 4, 37); ctx.closePath(); ctx.fill();
+        // 胴のライン＋ハイライト
+        ctx.strokeStyle = shade(c.base, 0.5); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(cx - 4, 27); ctx.lineTo(cx + 4, 27); ctx.stroke();
+        ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.fillRect(cx - 3, 16, 2, 20);
+        // 誘導ミサイルはシーカー窓(青)
+        if (id === 'homing_missile') { ctx.fillStyle = '#7fd0ff'; ctx.beginPath(); ctx.arc(cx, 12, 1.9, 0, 7); ctx.fill(); }
+        // 噴射炎
+        ctx.fillStyle = '#ffd24a'; ctx.beginPath(); ctx.moveTo(cx - 3, 37); ctx.lineTo(cx, 45); ctx.lineTo(cx + 3, 37); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#ff7a3c'; ctx.beginPath(); ctx.moveTo(cx - 1.5, 37); ctx.lineTo(cx, 42); ctx.lineTo(cx + 1.5, 37); ctx.closePath(); ctx.fill();
+        break;
+      }
+      case 'shell': {
+        const cx = M;
+        // 鋼の弾体(円筒)
+        ctx.fillStyle = mix(c.base, '#c4c8ce', 0.45);
+        ctx.fillRect(cx - 7, 20, 14, 20); ctx.strokeRect(cx - 7, 20, 14, 20);
+        // オジャイブ(尖った丸みの弾頭)
+        ctx.beginPath(); ctx.moveTo(cx - 7, 21); ctx.quadraticCurveTo(cx, 3, cx + 7, 21); ctx.closePath(); ctx.fill(); ctx.stroke();
+        // 銅の弾帯(ドライビングバンド)
+        ctx.fillStyle = '#c8863c'; ctx.fillRect(cx - 7, 34, 14, 3);
+        // 底部＋ハイライト
+        ctx.fillStyle = shade(c.base, 0.58); ctx.fillRect(cx - 7, 38, 14, 2);
+        ctx.fillStyle = 'rgba(255,255,255,0.28)'; ctx.fillRect(cx - 5, 22, 3, 15);
+        break;
       }
       case 'vehicle': {
         const vt = def.vehicle;
