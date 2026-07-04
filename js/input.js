@@ -11,6 +11,7 @@ Game.Input = (function () {
   let dashDownT = 0, dashLatchIdle = 0, dashTipShown = false;
   let placeQueued = false;   // 設置エッジ
   let useQueued = false;     // 開く/使うエッジ
+  let shiftBtnShown = null;  // 影渡りボタンの表示状態キャッシュ(影鏡所持時のみ表示)
   let rollQueued = false;    // 回避ロールエッジ
   let lastDir = 'down';
   const cursor = { x: 200, y: 200, active: false }; // ゲームパッド右スティックの選択カーソル
@@ -358,9 +359,10 @@ Game.Input = (function () {
     if (keys[B('up')] || keys['arrowup'] || touch.up) dy -= 1;
     if (keys[B('down')] || keys['arrowdown'] || touch.down) dy += 1;
     // フローティング仮想スティック: 放射状デッドゾーン(0.14)＋なめらか再スケール＋平滑化
-    let jx = 0, jy = 0;
+    let jx = 0, jy = 0, joyPush = false;
     if (joy.active) {
       const jl = Math.hypot(joy.dx, joy.dy), DZ = 0.14;
+      joyPush = jl > 0.9; // スティックを端まで倒す=走る(押し込みラン。ボタン不要でスマホの動詞を削減)
       if (jl > DZ) {
         const g = Math.min(1, (jl - DZ) / (1 - DZ));
         const sn = (Game.Settings ? Game.Settings.get('joySens') : 100) / 100;
@@ -389,9 +391,12 @@ Game.Input = (function () {
     intent.place = placeQueued; placeQueued = false;
     intent.use = useQueued; useQueued = false;
     intent.roll = rollQueued; rollQueued = false;
-    intent.dash = !!keys[B('dash')] || touch.dash || tmp.dash || (dashLatch && movingNow);
+    intent.dash = !!keys[B('dash')] || touch.dash || tmp.dash || joyPush || (dashLatch && movingNow);
     intent.usePointer = usePointer;
     intent.mouseTile = usePointer ? Game.Camera.screenToTile(mouse.x, mouse.y) : null;
+    // 影渡りボタンは影鏡を持つ時だけ表示(使えないボタンでスマホの親指領域を圧迫しない)
+    const canShift = !!(Game.Inventory && Game.Inventory.count && Game.Inventory.count('shadow_mirror') > 0);
+    if (canShift !== shiftBtnShown) { shiftBtnShown = canShift; const sb = document.getElementById('btn-shift'); if (sb) sb.style.display = canShift ? '' : 'none'; }
     return intent;
   }
 

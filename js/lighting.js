@@ -45,10 +45,15 @@ Game.Lighting = (function () {
     return TINT_NIGHT;
   }
 
+  // ライティングは半解像度で描画し合成時に拡大(スマホ最適化: 塗り/放射グラデのピクセル数を1/4に)。
+  // 光は元々ソフトなので画質劣化はほぼ無く、夜のフィルレートを大きく削減する。
+  const LS = 0.5;
   function ensureBuf() {
     const v = Game.view;
     if (!lc) { lc = document.createElement('canvas'); lctx = lc.getContext('2d'); }
-    if (lc.width !== v.w || lc.height !== v.h) { lc.width = v.w; lc.height = v.h; }
+    const lw = Math.max(1, Math.ceil(v.w * LS)), lh = Math.max(1, Math.ceil(v.h * LS));
+    if (lc.width !== lw || lc.height !== lh) { lc.width = lw; lc.height = lh; }
+    lctx.setTransform(LS, 0, 0, LS, 0, 0); // 以降のdrawはスクリーン座標のまま(内部で半解像度)
   }
 
   // 光の切り抜きスプライト（毎フレームの createRadialGradient を排除）
@@ -139,7 +144,7 @@ Game.Lighting = (function () {
       }
     }
     lctx.globalCompositeOperation = 'source-over';
-    ctx.drawImage(lc, 0, 0);
+    ctx.drawImage(lc, 0, 0, v.w, v.h); // 半解像度の光バッファを画面全体へ拡大合成
 
     // 暖色グロー: 切り抜いた光の上に炎の色味を薄く重ねる（揺らめき付き）
     if (warmPts.length) {
