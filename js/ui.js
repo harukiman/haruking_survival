@@ -248,20 +248,31 @@ Game.UI = (function () {
     { rand: true, price: 90, label: '掘り出し物（ランダム装備）' },
   ];
   let shopMode = false; // true=バーツ商館 / false=金塊の旅商人
+  // ショップ入替は「ゲーム内 00:00 と 12:00」ごと(=半日=DAY_LENGTH/2 tick周期)。値段も期間ごとにランダム変動
+  function shopPeriod() { return Math.floor((Game.state.tick || 0) / (Game.DAY_LENGTH / 2)); }
+  function periodRng(salt) { let s = (shopPeriod() * 2654435761 + (salt | 0) + (Game.state.seed || 0)) >>> 0; return function () { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; }
+  // 期間ごとの価格変動(±25%)。同一期間・同一品では安定
+  function variedPrice(base, salt) { const r = periodRng(salt * 131 + 7)(); const f = 0.75 + r * 0.5; return Math.max(1, Math.round(base * f)); }
+  function priceStock(list) { return list.map(function (it, i) { if (it.price == null) return it; const c = Object.assign({}, it); c.price = variedPrice(it.price, i); return c; }); }
   function openShop() {
     const sc = document.getElementById('trade-screen'); if (!sc) return;
     shopMode = true; sc.classList.remove('hidden'); Game.state.paused = true;
     const title = sc.querySelector('h2'); if (title) title.textContent = 'バーツ商館 🏪';
-    tradeStock = SHOP_STOCK.slice(); lastBoughtIdx = -1; lastCurShown = null; refreshTrade();
+    tradeStock = priceStock(SHOP_STOCK); lastBoughtIdx = -1; lastCurShown = null; refreshTrade();
   }
-  let tradeStock = [];
+  let tradeStock = [], tradePeriod = -999;
   function rollTradeStock() {
+    // 同一期間(00:00〜12:00 / 12:00〜24:00)なら在庫据え置き。期間が変わったら入替
+    const per = shopPeriod();
+    if (per === tradePeriod && tradeStock.length) return;
+    tradePeriod = per;
+    const rng = periodRng(101);
     const pool = TRADE_POOL.slice();
-    for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp; }
+    for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); const tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp; }
     const picks = [];
-    for (let i = 0; i < pool.length && picks.length < 7; i++) { if (pool[i].rare && Math.random() > 0.4) continue; picks.push(pool[i]); }
-    tradeStock = TRADE_BASE.concat(picks);
-    tradeStock.push({ rand: true, price: 4, label: '謎の装備（ランダム）' });
+    for (let i = 0; i < pool.length && picks.length < 7; i++) { if (pool[i].rare && rng() > 0.4) continue; picks.push(pool[i]); }
+    tradeStock = priceStock(TRADE_BASE.concat(picks));
+    tradeStock.push({ rand: true, price: variedPrice(4, 99), label: '謎の装備（ランダム）' });
   }
   function openTrade() { const sc = document.getElementById('trade-screen'); if (!sc) return; shopMode = false; const title = sc.querySelector('h2'); if (title) title.textContent = '旅の商人 🧳'; sc.classList.remove('hidden'); Game.state.paused = true; rollTradeStock(); lastBoughtIdx = -1; lastCurShown = null; refreshTrade(); }
   function closeTrade() { const sc = document.getElementById('trade-screen'); if (sc) sc.classList.add('hidden'); Game.state.paused = false; shopMode = false; }
