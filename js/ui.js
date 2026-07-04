@@ -648,6 +648,12 @@ Game.UI = (function () {
         m.drops.forEach(function (d) { const it = Game.ITEMS[d.item]; const nm = it ? it.name : d.item; if (!seen[nm]) { seen[nm] = 1; names.push(nm); } });
         return names.length ? '<br><span class="ach-d" style="color:#9fd0a0">ドロップ: ' + names.join('・') + '</span>' : '';
       };
+      // 属性相性(元素システムの可読化): 火の敵=炎無効/氷弱点、氷の敵=凍結無効/炎弱点
+      const elemInfo = function (id) {
+        if (/ember|salamander|magma|lava|cinder|forge|flame|scorch|fire|sun|solar|blaze/.test(id)) return '<br><span class="ach-d" style="color:#ff9a5a">🔥 火属性 — 炎が無効・氷が弱点</span>';
+        if (/frost|^ice|_ice|glacier|snow|rime|winter|chill|blizzard|frozen/.test(id)) return '<br><span class="ach-d" style="color:#9fd8ff">❄ 氷属性 — 凍結が無効・炎が弱点</span>';
+        return '';
+      };
       // 未発見は「？？？」行を並べず1行に折りたたむ(長大スクロール防止)
       let lockedCount = 0;
       types.forEach(function (id) {
@@ -656,7 +662,7 @@ Game.UI = (function () {
         // ボス/中ボス: 固有ドロップ確定(pity)までの進捗を表示。3体討伐ごとに固有装備確定
         let pity = '';
         if (m.boss || m.midboss) { const hasUnique = (m.drops || []).some(function (d) { const it = Game.ITEMS[d.item]; return d.n[0] === 0 && it && (it.tool || it.armor != null || it.relic); }); if (hasUnique) { const rem = 3 - (best[id] % 3); pity = '<br><span class="ach-d" style="color:#ffd86b">🎁 固有装備の確定まで あと ' + (rem === 3 ? 3 : rem) + ' 体</span>'; } }
-        const info = '<br><span class="ach-d">撃破 ' + best[id] + ' 体' + (m.boss ? '・ボス' : (m.hostile ? '' : '・非敵対')) + ' ｜ HP ' + m.hp + (m.hostile ? '・攻 ' + (m.dmg || 0) : '') + '</span>' + pity + dropNames(m);
+        const info = '<br><span class="ach-d">撃破 ' + best[id] + ' 体' + (m.boss ? '・ボス' : (m.hostile ? '' : '・非敵対')) + ' ｜ HP ' + m.hp + (m.hostile ? '・攻 ' + (m.dmg || 0) : '') + '</span>' + elemInfo(id) + pity + dropNames(m);
         h += '<div class="ach-row got"><span class="ach-mk">' + (m.boss ? '👑' : '☠') + '</span><div><b>' + m.name + '</b>' + info + '</div></div>';
         // 深夜個体(月狂の〇〇): 別項で強化ステータス＋夜間限定ドロップ(月光の欠片)を表示
         const nk = best['night:' + id];
