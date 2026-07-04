@@ -273,10 +273,14 @@ Game.Combat = (function () {
       if (Game.World.isWalkable(Math.floor(nx / TS), Math.floor(ny / TS))) { p.x = nx; p.y = ny; }
     }
     const canDirect = !(Game.Net.isConnected() && !Game.Net.host); // マルチのゲスト中は直接ダメージ不可
+    const wdots = Game.Loot.dotKinds ? Game.Loot.dotKinds(slot) : null; // 戦利品の元素付与(業火/氷結/猛毒)
     for (let i = 0; i < targets.length; i++) {
       const tg = targets[i];
       if (!canDirect) { Game.Net.sendHit(tg.id, dmg, p.x, p.y); Game.Render.spawnBlood(tg.x, tg.y, 4); }
-      else Game.Mobs.damageMob(tg, dmg, p.x, p.y, isCrit);
+      else {
+        Game.Mobs.damageMob(tg, dmg, p.x, p.y, isCrit);
+        if (wdots && Game.Mobs.applyDot) for (let k = 0; k < wdots.length; k++) Game.Mobs.applyDot(tg, wdots[k]); // 元素付与で状態異常→元素反応に接続
+      }
       // 命中スパーク(打撃の手応え): 接触点に白い火花。会心は強め
       if (Game.Render.spawnImpact) Game.Render.spawnImpact((p.x + tg.x) / 2, (p.y + tg.y) / 2, isCrit ? '#fff0a0' : '#ffffff');
     }

@@ -12,6 +12,10 @@ Game.Loot = (function () {
   ];
   // 武器の付与効果(約20種)。エピック以上でランダムに付与。値は控えめ(インフレ防止)
   const WEAPON_AFFIXES = [
+    // 元素付与: 命中で状態異常を付与し、元素システム(熱衝撃/氷結/粉砕/相性)に接続する戦利品
+    { key: 'flaming', name: '業火の', atk: [1, 2], dot: 'fire' },
+    { key: 'freezing', name: '氷結の', atk: [1, 2], dot: 'frost' },
+    { key: 'venomous', name: '猛毒の', atk: [1, 2], dot: 'venom' },
     { key: 'sharp', name: '鋭利な', atk: [1, 2] },
     { key: 'keen', name: '鋭敏な', atk: [1, 3] },
     { key: 'brutal', name: '残虐な', atk: [2, 4] },
@@ -110,6 +114,7 @@ Game.Loot = (function () {
       if (pick.xpBoost) af.xpBoost = Math.round((pick.xpBoost[0] + Math.random() * (pick.xpBoost[1] - pick.xpBoost[0])) * 100) / 100;
       if (pick.thorns) af.thorns = Math.round((pick.thorns[0] + Math.random() * (pick.thorns[1] - pick.thorns[0])) * 100) / 100;
       if (pick.sanity) af.sanity = true;
+      if (pick.dot) af.dot = pick.dot; // 元素付与(業火/氷結/猛毒)を戦利品ロールに反映
       affixes.push(af);
     }
     return { rarity: rarity, affixes: affixes };
@@ -143,6 +148,13 @@ Game.Loot = (function () {
     }
     return out;
   }
+  // 武器に付いた元素付与(業火/氷結/猛毒)の kind 一覧。命中時 applyDot に使う
+  function dotKinds(slot) {
+    if (!slot || !slot.roll || !slot.roll.affixes) return null;
+    let ds = null;
+    for (let i = 0; i < slot.roll.affixes.length; i++) { const a = slot.roll.affixes[i]; if (a.dot) { (ds || (ds = [])).push(a.dot); } }
+    return ds;
+  }
 
   // rarityを配列範囲にクランプ(異常データでも描画例外を出さない)
   function rarityIdx(slot) { const r = (slot && slot.roll) ? slot.roll.rarity : 0; return Math.max(0, Math.min(RARITY.length - 1, r | 0)); }
@@ -166,6 +178,8 @@ Game.Loot = (function () {
     if (s.xpBoost) parts.push('経験 +' + Math.round(s.xpBoost * 100) + '%');
     if (s.thorns) parts.push('棘 ' + Math.round(s.thorns * 100) + '%反射');
     if (s.sanityResist) parts.push('正気耐性');
+    const ds = dotKinds(slot);
+    if (ds) { const L = { fire: '🔥命中で炎上', frost: '❄命中で凍え', venom: '☠命中で毒' }; ds.forEach(function (d) { if (L[d]) parts.push(L[d]); }); }
     return parts.join(' / ');
   }
 
@@ -233,5 +247,5 @@ Game.Loot = (function () {
     return drops;
   }
 
-  return { roll, rollAt, stats, rarityColor, rarityName, displayName, statText, rollable, lootBonus, rollMobDrop, rollEliteDrop, reroll, upgrade, maxRarity, enchantCost, RARITY };
+  return { roll, rollAt, stats, dotKinds, rarityColor, rarityName, displayName, statText, rollable, lootBonus, rollMobDrop, rollEliteDrop, reroll, upgrade, maxRarity, enchantCost, RARITY };
 })();
