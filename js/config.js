@@ -456,6 +456,11 @@ Game.ITEMS = {
   energy_cell: { name:'エネルギーセル', stack:99, color:'#2aa0d0', flavor:'エネルギー兵器の動力。青く脈動する。' },
   wind_blade:  { name:'風斬りの剣', stack:1, color:'#bfe8d8', tool:'sword', tier:3, attack:9, proj:{kind:'slash', dmg:7, cd:14}, wsfx:'slash_air', flavor:'振るたび刃から斬撃が飛ぶ。間合いの外から斬れ。' },
   thunder_sword:{ name:'雷鳴剣', stack:1, color:'#ffe27a', tool:'sword', tier:4, attack:11, proj:{kind:'chain', dmg:9, chain:3, cd:18}, wsfx:'thunder', special:{type:'thunder', name:'雷鳴', count:2, pct:0.5, cd:90}, flavor:'放たれた雷は敵から敵へ飛び移る。斬撃の余波が天雷を呼ぶ。' },
+  // 追加の特殊効果武器(クラフト可・ビルド多様化)
+  frostfang_blade:{ name:'霜牙の刃', stack:1, color:'#9fd8ff', tool:'sword', tier:4, attack:11, special:{type:'nova', name:'氷結の新星', pct:0.5, cd:80, r:2.0, dot:'frost', color:'#9fd8ff'}, flavor:'斬った敵を核に氷が爆ぜ、まわりの敵をも凍てつかせる。群れを一掃せよ。' },
+  emberfang_axe:{ name:'焔牙の斧', stack:1, color:'#ff7a3c', tool:'sword', tier:4, attack:12, special:{type:'nova', name:'焦熱の新星', pct:0.55, cd:85, r:2.1, dot:'burn', color:'#ff7a3c'}, wsfx:'whirl', flavor:'一撃が業火を呼び、標的を中心に炎が渦を巻く。焼き尽くせ。' },
+  echoedge:{ name:'残響の刺剣', stack:1, color:'#e8c8ff', tool:'sword', tier:4, attack:10, special:{type:'echo', name:'残響', pct:0.45, cd:60, hits:2, color:'#e8c8ff'}, flavor:'突きの残響が二度、三度と敵を刺す。速き刃こそ、この剣の真価。' },
+  quakehammer:{ name:'震撼の大鎚', stack:1, color:'#b0885a', tool:'sword', tier:4, attack:13, aoe:true, special:{type:'shock', name:'震撼', pct:0.5, cd:75, r:2.4, color:'#e0b060'}, wsfx:'whirl', flavor:'叩きつけると大地が揺れ、周囲の敵を衝撃波で薙ぐ。重き一撃の王。' },
   boomerang_axe:{ name:'回帰の戦斧', stack:1, color:'#caa86a', tool:'sword', tier:3, attack:12, proj:{kind:'boomerang', dmg:13, cd:28}, wsfx:'whirl', flavor:'投げれば貫き、手元へ還る。' },
   crescent_twinblade:{ name:'三日月の双刃', stack:1, color:'#9fe0d0', tool:'sword', tier:4, attack:13, proj:{kind:'slash', dmg:8, count:3, spread:0.5, cd:20}, wsfx:'slash_air', flavor:'一振りで三日月の斬撃が扇状に飛ぶ。群れを薙げ。' },
   laser_rifle: { name:'レーザーライフル', stack:1, color:'#141416', tool:'gun', mag:20, ammo:'energy_cell', fireDmg:14, cd:8, bkind:'laser', gunsfx:'beam', flavor:'敵を貫く収束光。' },
@@ -607,6 +612,11 @@ Game.RECIPES = [
   { out:{id:'chest', n:1}, in:{wood:8}, station:'crafting_table' },
   { out:{id:'waypoint_stone', n:2}, in:{stone:8, lumen:1}, station:'crafting_table' }, // ファストトラベルの道標
   { out:{id:'grapple_hook', n:1}, in:{iron:3, string:2, wood:2}, station:'crafting_table' }, // 鉤縄(traversal)
+  // 追加の特殊効果武器(ビルド多様化)
+  { out:{id:'frostfang_blade', n:1}, in:{iron:5, shadow_crystal:4, lumen:1}, station:'enchant_table' },
+  { out:{id:'emberfang_axe', n:1}, in:{iron:6, coal:6, gold_bar:1}, station:'enchant_table' },
+  { out:{id:'echoedge', n:1}, in:{iron:5, shadow_steel:1, lumen:1}, station:'enchant_table' },
+  { out:{id:'quakehammer', n:1}, in:{iron:8, stone:12, gold_bar:1}, station:'enchant_table' },
   // 建築拡張
   { out:{id:'stone_wall', n:4}, in:{stone:4}, station:'crafting_table' },
   { out:{id:'hedge', n:4}, in:{wood:2, moonleaf:1}, station:'crafting_table' },
@@ -1110,7 +1120,7 @@ Game.ITEM_GLYPH = {
   sand_greatsword:'⚔️', magma_hammer:'🔨', pharaoh_crown:'👑', mind_tome:'📖', wisdom_tome:'📗', xp_orb:'🔮', expand_pouch:'🎒',
   feather:'🪶', wind_crystal:'💠', wind_steel:'🌀', wind_feather:'🪶', wind_sword:'🗡️', sky_cloak:'🧥', cloud_boots:'👢',
   ring_crit:'💍', amulet_swift:'📿', fang_vamp:'🦷', heart_regen:'❤️‍🔥', eye_xp:'👁️', band_power:'💪', crest_guard:'🛡️',
-  energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️', prism_blade:'⚔️', dragon_fang:'⚔️', colossus_blade:'⚔️', mire_scythe:'⚔️', magma_maul:'🔨', starcore_greatsword:'⚔️', voidcore_blade:'⚔️', spore_scythe:'⚔️', star_aegis:'🛡️', void_helm:'⛑️', tempest_spear:'🔱',
+  energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️', prism_blade:'⚔️', dragon_fang:'⚔️', colossus_blade:'⚔️', mire_scythe:'⚔️', magma_maul:'🔨', starcore_greatsword:'⚔️', voidcore_blade:'⚔️', spore_scythe:'⚔️', star_aegis:'🛡️', void_helm:'⛑️', tempest_spear:'🔱', frostfang_blade:'🗡️', emberfang_axe:'🪓', echoedge:'🗡️', quakehammer:'🔨',
 };
 
 Game.INV_SIZE = 36;       // 先頭9 = ホットバー

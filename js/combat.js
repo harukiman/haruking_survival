@@ -231,6 +231,21 @@ Game.Combat = (function () {
       }
       Game.Audio.play('boom_sfx');
       procFx(p.x, p.y, sp);
+    } else if (sp.type === 'nova') {
+      // 新星: 命中した敵を中心に元素の爆発。周囲へ pct 倍ダメージ＋DoT。標的に炸裂
+      if (!best) return;
+      p.spCd[key] = now + (sp.cd || 80);
+      const d = Math.max(1, Math.round(baseDmg * (sp.pct || 0.5)));
+      const rr = (sp.r || 2.0) * TS;
+      const victims = nearestHostiles(best.x, best.y, rr, 99);
+      const col = sp.color || '#9fd8ff';
+      Game.Render.spawnImpact(best.x, best.y, col);
+      Game.Render.spawnParticles(best.x, best.y, col, 16);
+      if (Game.Render.flash) Game.Render.flash('rgba(160,216,255,0.14)');
+      for (let i = 0; i < victims.length; i++) { const m = victims[i]; if (m === best) continue; Game.Mobs.damageMob(m, d, best.x, best.y, false); if (sp.dot) Game.Mobs.applyDot(m, sp.dot); }
+      if (sp.dot) Game.Mobs.applyDot(best, sp.dot);
+      Game.Audio.play('boom_sfx');
+      procFx(best.x, best.y, sp);
     } else if (sp.type === 'echo') {
       // 残光: 本命中の後、遅延した追撃を hits 回(それぞれ pct 倍)。player.update が消化
       if (!best || best.hp <= 0) return;
