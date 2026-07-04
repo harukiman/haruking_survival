@@ -389,6 +389,7 @@ Game.UI = (function () {
     if (sp.type === 'echo') return '一閃の後、残光が' + (sp.hits || 2) + '回追い斬る（各 攻撃力の' + pct + '%、約' + sec + '秒に1回）';
     if (sp.type === 'reap') return '敵を倒すと最大HPの' + Math.round((sp.healPct || 0.03) * 100) + '%回復（連続発動は約' + sec + '秒に1回）';
     if (sp.type === 'brand') return '斬った敵に' + (DOT_NAMES[sp.dot] || sp.dot) + 'を付与する（毎回発動・待ち時間なし）';
+    if (sp.type === 'nova') return '命中した敵を核に元素が爆発し、周囲へ攻撃力の' + pct + '%' + (sp.dot ? '＋' + (DOT_NAMES[sp.dot] || sp.dot) + '付与' : '') + '（約' + sec + '秒に1回）';
     return '特殊な力が宿っている';
   }
   function specialBlock(sp) {
