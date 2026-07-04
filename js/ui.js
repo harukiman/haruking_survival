@@ -1300,6 +1300,8 @@ Game.UI = (function () {
     { icon: '⛏', text: '「採掘」ボタンで木や石を集めよう', life: 40, done: function () { return Game.Inventory.count('wood') > 0 || Game.Inventory.count('stone') > 0; } },
     { icon: '🔨', text: '「袋」を開いてクラフトで道具を作ろう', life: 45, done: function () { return Game.Achievements && Game.Achievements.has('first_craft'); } },
     { icon: '⚔️', text: '武器をホットバーで選び、敵に近づいて「攻撃」で戦う', life: 35, done: function () { const best = Game.state.bestiary || {}; for (const k in best) { const m = Game.MOBS[k]; if (m && m.hostile) return true; } return false; } },
+    // ★核(光と影の二相渡り)を序盤で北極星として提示。影の欠片を集め始めると自動前進
+    { icon: '🌓', text: '★あなたは光と影を渡り歩く者。夜の敵から《影の欠片》を集めて《影鏡》を作り、影の世界へ渡れ——割れた二つを一つに還すのが、この旅の目的だ', life: 55, done: function () { return Game.Inventory.count('shadow_shard') > 0 || (Game.Achievements && Game.Achievements.has('first_shift')); } },
     { icon: '🌙', text: '夜は敵が強くなる。松明と武器を備えよう', life: 25, done: function () { return Game.Inventory.count('torch') > 0; } },
     { icon: '💾', text: '進行は自動保存される。⚙からも保存できる', life: 12, done: function () { return false; } },
   ];
