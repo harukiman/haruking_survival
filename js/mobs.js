@@ -1348,7 +1348,7 @@ Game.Mobs = (function () {
         const cs = rgb[0] + ',' + rgb[1] + ',' + rgb[2];
         const grd = ctx.createRadialGradient(s.x, s.y - hop, r * 0.6, s.x, s.y - hop, ar);
         grd.addColorStop(0, 'rgba(' + cs + ',0)');
-        grd.addColorStop(0.65, 'rgba(' + cs + ',' + ((m.def.boss ? 0.24 : 0.18) + pulse * 0.16) + ')');
+        grd.addColorStop(0.65, 'rgba(' + cs + ',' + ((m.def.boss ? 0.16 : 0.18) + pulse * 0.13) + ')');
         grd.addColorStop(1, 'rgba(' + cs + ',0)');
         ctx.fillStyle = grd;
         ctx.beginPath(); ctx.arc(s.x, s.y - hop, ar, 0, Math.PI * 2); ctx.fill();
