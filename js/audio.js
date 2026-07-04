@@ -55,9 +55,11 @@ Game.Audio = (function () {
     boss5:    { root: 146.83, scale: [0, 1, 3, 5, 7, 8, 11],  bpm: 134, wave: 'sawtooth', cut: 2300, kick: true,  bassEvery: 1, arp: [0, 3, 7, 11, 8, 7, 3, 1], arpEvery: 1, noteVol: 0.04, bassVol: 0.066, kickVol: 0.13, prog: [0, -1, 5, 7], drone: 0.07, swell: 0.07, heartbeat: 0.06, padDetune: 12, padVol: 0.028 }, // ラスボス=最高潮(b2の緊張・聖歌・鼓動・ダブルベース)
     // 影の世界=光と別ゲーの音。ロクリアン的な不協・深いドローン+サブ・不規則ハットで常に不穏
     shadowrealm: { root: 155.56, scale: [0, 1, 3, 5, 6, 8, 10], bpm: 68, wave: 'triangle', cut: 1150, kick: false, bassEvery: 8, arp: [0, 3, 6, 8, 6, 3], arpEvery: 4, noteVol: 0.04, bassVol: 0.046, kickVol: 0, prog: [0, -4, 1, -2], drone: 0.065, sub: 0.05, hatRandom: true, swell: 0.045 },
+    // 戦車/戦闘機/ロボ搭乗中=駆り立てる軍事エレクトロ。重い四つ打ち＋唸るサブベース＋機械的アルペジオ(フリジアンの緊張)
+    warmachine: { root: 130.81, scale: [0, 1, 3, 5, 7, 8, 10], bpm: 132, wave: 'sawtooth', cut: 2000, kick: true, bassEvery: 1, arp: [0, 0, 7, 0, 3, 0, 8, 7], arpEvery: 1, noteVol: 0.036, bassVol: 0.062, kickVol: 0.14, prog: [0, 0, 5, 3], drone: 0.045, sub: 0.05 },
   };
   const MOOD_GENRE = { title: 'title', day: 'animepop', night: 'city', shadow: 'shadowrealm', cave: 'classic', boss: 'edm', space: 'space', desert: 'desert', snow: 'snow', meadow: 'meadow', sky: 'sky', ruins: 'ruins', rift: 'rift',
-    boss1: 'boss1', boss2: 'boss2', boss3: 'boss3', boss4: 'boss4', boss5: 'boss5', shadowrealm: 'shadowrealm' };
+    boss1: 'boss1', boss2: 'boss2', boss3: 'boss3', boss4: 'boss4', boss5: 'boss5', shadowrealm: 'shadowrealm', vehicle: 'warmachine' };
 
   function ensure() {
     if (!ctx) {
@@ -670,7 +672,11 @@ Game.Audio = (function () {
         if (am && MOOD_GENRE[am]) areaMood = am;
       } catch (e) {}
     }
+    // 戦闘車両(戦車/ロボ/戦闘機/爆撃機)搭乗中は軍事BGM。ボス戦は最優先。
+    const cv = p.vehicle;
+    const combatVeh = cv === 'tank' || cv === 'mech' || cv === 'jet' || cv === 'bomber';
     if (boss) mood = 'boss' + (bossLvl || 1); // 強さ別クラシックBGM(boss1..boss5)
+    else if (combatVeh) mood = 'vehicle';
     else if (areaMood) mood = areaMood;
     else if (Game.state.worldName === 'space') mood = 'space';
     else if (Game.state.worldName === 'shadow') mood = 'shadow';
