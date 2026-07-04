@@ -902,8 +902,23 @@ Game.Render = (function () {
 
   // パーティクル（採掘デブリ等）
   const particles = [];
+  // ===== パフォーマンス: パーティクルの上限＋画面外/モバイル間引き =====
+  // 律速はモバイルのモブ数×パーティクル数。深域で敵密度が上がっても破綻しないよう、
+  // (1)総数上限 (2)画面外はスポーンしない (3)小画面(モバイル)は本数を削減。
+  const PARTICLE_CAP = 300;
+  // 小画面ほど本数を減らす(スマホ実機の描画負荷対策)。1フレームで再計算せずviewから軽く導出
+  function partScale() { const w = (Game.view && Game.view.w) || 800; return w < 520 ? 0.5 : w < 760 ? 0.72 : 1; }
+  // ワールド座標が画面(＋margin)内か。画面外のパーティクルは見えないので生成を丸ごと省く
+  function onScreenW(wx, wy, margin) {
+    if (!Game.view) return true;
+    const s = Game.Camera.worldToScreen(wx, wy); margin = margin || 96;
+    return s.x >= -margin && s.y >= -margin && s.x <= Game.view.w + margin && s.y <= Game.view.h + margin;
+  }
   function spawnParticles(wx, wy, color, n) {
-    for (let i = 0; i < n; i++) {
+    if (particles.length >= PARTICLE_CAP) return;           // 上限で新規抑制
+    if (!onScreenW(wx, wy, 120)) return;                     // 画面外は生成しない
+    const cnt = Math.max(1, Math.round(n * partScale()));
+    for (let i = 0; i < cnt; i++) {
       particles.push({
         x: wx, y: wy,
         vx: (Math.random() - 0.5) * 3, vy: (Math.random() - 0.5) * 3,
@@ -936,8 +951,11 @@ Game.Render = (function () {
   }
 
   function spawnBlood(wx, wy, n) {
+    if (particles.length >= PARTICLE_CAP) return;
+    if (!onScreenW(wx, wy, 120)) return;
     const cols = ['#a01a28', '#c0303a', '#7a1420'];
-    for (let i = 0; i < n; i++) {
+    const cnt = Math.max(1, Math.round(n * partScale()));
+    for (let i = 0; i < cnt; i++) {
       particles.push({ x: wx, y: wy, vx: (Math.random() - 0.5) * 4, vy: (Math.random() - 0.5) * 4, life: 16 + Math.random() * 10, color: cols[Math.floor(Math.random() * cols.length)] });
     }
   }
