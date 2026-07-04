@@ -1017,15 +1017,14 @@ Game.UI = (function () {
       if (!ammoEl) {
         ammoEl = document.createElement('div'); ammoEl.id = 'ammo-hud';
         // 中央下はホットバー/クエスト/アイテム名表示と重なるため、右下(弾薬表示の定番位置)へ隔離
-        ammoEl.style.cssText = 'position:fixed;right:calc(10px + env(safe-area-inset-right));bottom:calc(150px + max(var(--ey,16px), env(safe-area-inset-bottom)));z-index:55;background:rgba(16,24,42,.9);border:1px solid #33455e;border-radius:9px;padding:5px 11px;font-size:.82rem;color:#e8edf2;pointer-events:none;display:none;white-space:nowrap;text-align:right;box-shadow:0 2px 8px rgba(0,0,0,.4)';
+        // 右上(ミニマップ/レベル表示の下)に固定。下部のホットバー/ヒント/ボタン群と重ならない定位置
+        ammoEl.style.cssText = 'position:fixed;right:calc(10px + env(safe-area-inset-right));top:calc(112px + env(safe-area-inset-top));z-index:55;background:rgba(16,24,42,.9);border:1px solid #33455e;border-radius:9px;padding:5px 11px;font-size:.82rem;color:#e8edf2;pointer-events:none;display:none;white-space:nowrap;text-align:right;box-shadow:0 2px 8px rgba(0,0,0,.4)';
         (document.getElementById('app') || document.body).appendChild(ammoEl);
       }
     }
     // オーバーレイ(インベントリ/チェスト等)表示中・ポーズ中は隠す
     const overlayOpen = (el.invScreen && !el.invScreen.classList.contains('hidden')) || (el.chestScreen && !el.chestScreen.classList.contains('hidden')) || Game.state.paused;
     if (overlayOpen) { ammoEl.style.display = 'none'; return; }
-    // 航空機は🚀ミサイルボタン等でアクション群が背高になり残弾表示と重なるため、右上寄りに逃がす
-    ammoEl.classList.toggle('ammo-veh', p.vehicle === 'jet' || p.vehicle === 'bomber');
     // 乗り物の武器(戦車/戦闘機/爆撃機)も残弾を表示。搭載弾薬はインベントリ在庫がそのまま残弾
     if (p.vehicle) {
       const VA = { tank: 'cannon_shell' };
@@ -2474,7 +2473,8 @@ Game.UI = (function () {
       ctxBtn = document.getElementById('context-action');
       if (!ctxBtn) {
         ctxBtn = document.createElement('button'); ctxBtn.id = 'context-action';
-        ctxBtn.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:calc(154px + max(var(--ey,16px), env(safe-area-inset-bottom)));z-index:57;background:rgba(28,40,64,.94);border:1px solid #5a78a8;border-radius:12px;padding:12px 20px;min-height:48px;font-size:1rem;color:#eaf2ff;font-weight:700;box-shadow:0 3px 12px rgba(0,0,0,.4);display:none;cursor:pointer';
+        // 右下のアクションボタン群の上に配置(中央だと左のヒント/説明・右のボタンと重なるため)
+        ctxBtn.style.cssText = 'position:fixed;right:calc(12px + max(var(--ex,10px), env(safe-area-inset-right)));bottom:calc(272px + max(var(--ey,16px), env(safe-area-inset-bottom)));z-index:57;background:rgba(28,40,64,.94);border:1px solid #5a78a8;border-radius:12px;padding:11px 18px;min-height:46px;font-size:.96rem;color:#eaf2ff;font-weight:700;box-shadow:0 3px 12px rgba(0,0,0,.4);display:none;cursor:pointer;white-space:nowrap';
         (document.getElementById('app') || document.body).appendChild(ctxBtn);
         ctxBtn.addEventListener('click', function (e) { e.stopPropagation(); Game.Audio.play('select'); Game.Player.useNearby(); });
       }
@@ -2496,7 +2496,8 @@ Game.UI = (function () {
       hbInfoEl = document.getElementById('hb-iteminfo');
       if (!hbInfoEl) {
         hbInfoEl = document.createElement('div'); hbInfoEl.id = 'hb-iteminfo';
-        hbInfoEl.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:calc(118px + max(var(--ey,16px), env(safe-area-inset-bottom)));z-index:56;background:rgba(14,20,36,.9);border:1px solid #3a4c66;border-radius:10px;padding:6px 13px;max-width:86vw;text-align:center;pointer-events:none;opacity:0;transition:opacity .2s;backdrop-filter:blur(2px)';
+        // 左寄せ・幅制限で右のアクションボタンと重ならず、ヒントピルの上に積む
+        hbInfoEl.style.cssText = 'position:fixed;left:calc(8px + max(var(--ex,10px), env(safe-area-inset-left)));bottom:calc(186px + max(var(--ey,16px), env(safe-area-inset-bottom)));z-index:56;background:rgba(14,20,36,.92);border:1px solid #3a4c66;border-radius:10px;padding:6px 13px;max-width:56vw;text-align:left;pointer-events:none;opacity:0;transition:opacity .2s;backdrop-filter:blur(2px)';
         (document.getElementById('app') || document.body).appendChild(hbInfoEl);
       }
     }

@@ -408,8 +408,8 @@ body.left-handed #action-btns { right: auto; left: calc(12px + max(var(--ex,10px
 .ending-box .ending-stats div:nth-child(3) { animation-delay: 1.85s; }
 @media (max-width: 560px) {
   /* スマホ: 目標/賞金首ピルは左下に寄せ、右下ボタン群・ホットバーと重ねない */
-  #quest-tracker { left: calc(8px + max(var(--ex,10px), env(safe-area-inset-left))); transform: none; bottom: calc(96px + max(var(--ey,16px), env(safe-area-inset-bottom))); font-size: .7rem; padding: 4px 11px; max-width: 58vw; }
-  #bounty-tracker { left: calc(8px + max(var(--ex,10px), env(safe-area-inset-left))); transform: none; bottom: calc(124px + max(var(--ey,16px), env(safe-area-inset-bottom))); font-size: .7rem; padding: 4px 11px; max-width: 58vw; }
+  #quest-tracker { left: calc(8px + max(var(--ex,10px), env(safe-area-inset-left))); transform: none; bottom: calc(96px + max(var(--ey,16px), env(safe-area-inset-bottom))); font-size: .7rem; padding: 4px 11px; max-width: 50vw; }
+  #bounty-tracker { left: calc(8px + max(var(--ex,10px), env(safe-area-inset-left))); transform: none; bottom: calc(124px + max(var(--ey,16px), env(safe-area-inset-bottom))); font-size: .7rem; padding: 4px 11px; max-width: 50vw; }
   .ending-box h1 { font-size: 1.3rem; }
 }
 /* 影世界モードの全体トーン */
@@ -602,9 +602,6 @@ body.shadow-mode #app::after {
   box-shadow: 0 0 12px rgba(255,226,122,0.75), inset 0 1px 0 rgba(255,255,255,0.3); }
 .abtn.roll { background: rgba(90,150,200,0.82); border-color: #8fd0ff; }
 .abtn.missile { background: rgba(200,80,50,0.88); border-color: #ff9a6a; font-size: .68rem; }
-/* 航空機搭乗中の残弾表示: 背高になるアクションボタン群と重ならないよう右上(ミニマップ下)へ逃がす。
-   インラインの bottom を上書きするため !important */
-#ammo-hud.ammo-veh { top: calc(92px + env(safe-area-inset-top)) !important; bottom: auto !important; }
 /* コントローラ接続中はタッチUIを隠す */
 body.has-pad #touch-controls { display: none !important; }
 
@@ -783,7 +780,7 @@ body.desktop .abtn:hover, body.desktop .dbtn:hover { filter: brightness(1.18); }
   border: 1px solid #6a5224; color: #ffd86b; font-size: .8rem; line-height: 1.55; text-align: left; }
 /* 初回マイクロガイド ピル(非モーダル・タップで次へ) */
 #hint-pill { position: fixed; left: calc(8px + max(var(--ex,10px), env(safe-area-inset-left))); bottom: calc(126px + max(var(--ey,16px), env(safe-area-inset-bottom)));
-  z-index: 19; display: flex; align-items: center; gap: 7px; min-height: 44px; max-width: 64vw; padding: 8px 12px;
+  z-index: 19; display: flex; align-items: center; gap: 7px; min-height: 44px; max-width: 54vw; padding: 8px 12px;
   border-radius: 22px; background: rgba(12,20,34,0.9); border: 1px solid #4a6a8e; color: #dfeaf8; font-size: .78rem;
   text-align: left; opacity: 0; transform: translateY(6px); transition: opacity .3s, transform .3s; pointer-events: none; cursor: pointer; }
 #hint-pill.in { opacity: 1; transform: none; pointer-events: auto; }
