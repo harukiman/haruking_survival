@@ -324,6 +324,17 @@ Game.Icons = (function () {
         glint(ctx, M - 7, 15, 2.2); break;
       }
       case 'helmet': {
+        if (/crown|王冠|王|tiara|circlet|pharaoh|冠/.test(id)) { // 王冠: 尖塔＋宝石
+          ctx.fillStyle = metalGradV(ctx, M - 14, M + 14, c.base);
+          ctx.beginPath(); ctx.moveTo(M - 14, M + 8); ctx.lineTo(M - 14, M - 2); ctx.lineTo(M - 8, M + 4); ctx.lineTo(M - 4, M - 8); ctx.lineTo(M, M + 2); ctx.lineTo(M + 4, M - 8); ctx.lineTo(M + 8, M + 4); ctx.lineTo(M + 14, M - 2); ctx.lineTo(M + 14, M + 8); ctx.closePath(); ctx.fill(); ctx.stroke();
+          ctx.fillStyle = c.accent; [[-4, -8], [4, -8], [0, 2]].forEach(g => { ctx.beginPath(); ctx.arc(M + g[0], M + g[1], 2, 0, 7); ctx.fill(); });
+          ctx.fillStyle = shade(c.base, 0.6); ctx.fillRect(M - 14, M + 6, 28, 3); glint(ctx, M - 4, M - 8, 2); break;
+        }
+        if (/cap|帽|hood|フード|頭巾|leather|straw|わら/.test(id)) { // 布/革の帽子・フード
+          ctx.fillStyle = c.base; ctx.beginPath(); ctx.arc(M, M + 2, 13, Math.PI, 0); ctx.quadraticCurveTo(M + 15, M + 10, M, M + 9); ctx.quadraticCurveTo(M - 15, M + 10, M - 13, M + 2); ctx.closePath(); ctx.fill(); ctx.stroke();
+          ctx.fillStyle = shade(c.base, 0.7); ctx.beginPath(); ctx.ellipse(M, M + 8, 14, 3, 0, 0, Math.PI * 2); ctx.fill(); // つば
+          ctx.fillStyle = c.hi; ctx.globalAlpha = 0.4; ctx.beginPath(); ctx.arc(M - 4, M - 3, 4, 0, 7); ctx.fill(); ctx.globalAlpha = 1; break;
+        }
         ctx.fillStyle = metalGradV(ctx, M - 14, M + 14, c.base);
         ctx.beginPath(); ctx.arc(M, M, 14, Math.PI, 0); ctx.lineTo(M + 14, M + 8); ctx.lineTo(M - 14, M + 8); ctx.closePath(); ctx.fill(); ctx.stroke();
         ctx.fillStyle = shade(c.base, 0.5); ctx.fillRect(M - 14, M + 4, 28, 5); ctx.strokeRect(M - 14, M + 4, 28, 5); // 面
@@ -338,6 +349,22 @@ Game.Icons = (function () {
         ctx.fillStyle = '#fff'; ctx.globalAlpha = 0.5; ctx.fillRect(M - 4, 18, 2, 16); ctx.globalAlpha = 1; break;
       }
       case 'food': {
+        if (/meat|肉|jerky|drumstick|frog|snake|steak/.test(id)) { // 骨付き肉
+          ctx.fillStyle = c.base; ctx.beginPath(); ctx.ellipse(M + 2, M, 11, 9, -0.4, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+          ctx.strokeStyle = '#efe6d0'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(M - 6, M + 6); ctx.lineTo(M - 13, M + 13); ctx.stroke();
+          ctx.fillStyle = '#efe6d0'; ctx.beginPath(); ctx.arc(M - 13, M + 13, 3, 0, 7); ctx.fill(); ctx.beginPath(); ctx.arc(M - 15, M + 11, 2.5, 0, 7); ctx.fill();
+          ctx.fillStyle = c.hi; ctx.globalAlpha = 0.4; ctx.beginPath(); ctx.arc(M, M - 3, 3, 0, 7); ctx.fill(); ctx.globalAlpha = 1; break;
+        }
+        if (/bread|パン|loaf|bun|pie|パイ|corn|とうもろこし|bar$|携行/.test(id)) { // パン/焼き物
+          ctx.fillStyle = c.base; ctx.beginPath(); ctx.moveTo(M - 13, M + 6); ctx.quadraticCurveTo(M - 13, M - 8, M, M - 8); ctx.quadraticCurveTo(M + 13, M - 8, M + 13, M + 6); ctx.quadraticCurveTo(M, M + 12, M - 13, M + 6); ctx.closePath(); ctx.fill(); ctx.stroke();
+          ctx.strokeStyle = shade(c.base, 0.6); ctx.lineWidth = 1.2; for (let i = -6; i <= 6; i += 4) { ctx.beginPath(); ctx.moveTo(M + i, M - 6); ctx.lineTo(M + i - 2, M - 2); ctx.stroke(); } break; // 切れ目
+        }
+        if (/soup|stew|スープ|シチュー|tea|茶|salad|サラダ|broth/.test(id)) { // 器に入った料理
+          ctx.fillStyle = '#cdd8e6'; ctx.beginPath(); ctx.arc(M, M + 4, 13, 0, Math.PI); ctx.closePath(); ctx.fill(); ctx.stroke(); // 器
+          ctx.fillStyle = c.base; ctx.beginPath(); ctx.ellipse(M, M + 3, 11, 3.5, 0, 0, Math.PI * 2); ctx.fill(); // 中身
+          ctx.fillStyle = c.hi; ctx.globalAlpha = 0.6; ctx.beginPath(); ctx.arc(M - 4, M + 2, 1.6, 0, 7); ctx.fill(); ctx.globalAlpha = 1; break;
+        }
+        // 果物/その他(丸)
         ctx.fillStyle = c.base; ctx.beginPath(); ctx.arc(M, M + 2, 13, 0, 7); ctx.fill(); ctx.stroke();
         ctx.fillStyle = c.hi; ctx.globalAlpha = 0.5; ctx.beginPath(); ctx.arc(M - 4, M - 3, 4, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
         ctx.strokeStyle = '#5a8f3c'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(M, M - 11); ctx.lineTo(M + 4, M - 16); ctx.stroke(); break;
