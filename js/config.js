@@ -1112,6 +1112,7 @@ Game.MOBS = {
   gazer:    { name:'浮遊する眼', hostile:true, hp:14, speed:1.3, color:'#6a3a6a', size:11, drops:[{item:'shadow_shard',n:[1,2]}], dmg:4, xp:4, ghost:true, shape:'orb', ranged:{dmg:5,range:6,cd:70,kind:'hex'} },
   dust_mage:{ name:'砂の呪術師', hostile:true, hp:16, speed:1.1, color:'#d8a050', size:10, drops:[{item:'chitin',n:[0,1]},{item:'gold_ore',n:[0,1]}], dmg:4, xp:5, shape:'wisp', ranged:{dmg:5,range:6,cd:90,kind:'venom',status:{poison:200}} },
   ember_imp:{ name:'灰の小鬼', hostile:true, hp:12, speed:1.5, color:'#e06030', size:8, drops:[{item:'coal',n:[1,2]},{item:'iron_ore',n:[0,1]}], dmg:4, xp:4, shape:'spiky', ranged:{dmg:5,range:5,cd:70,kind:'fire'} },
+  cinder_bomber:{ name:'燐火の自爆虫', hostile:true, hp:22, tier:2, speed:1.4, color:'#e0602a', size:12, drops:[{item:'gunpowder',n:[1,2]},{item:'sulfur',n:[0,1]}], dmg:5, xp:11, shape:'blob', bomber:{ r:2.8, dmg:34, fuse:26, trigger:2.4 } },
   // ===== ㊾ 新規モブ(見た目/攻撃を重複させない・強さtier=str1-5) =====
   thornback:{ name:'棘背獣', hostile:true, hp:34, speed:1.6, color:'#7a6a4a', size:13, str:2, drops:[{item:'hide',n:[1,2]},{item:'bone',n:[0,1]}], dmg:7, xp:8, shape:'beast', charge:{range:6,windup:20,dashTicks:14,dashSpeed:5.5,dmg:12,cd:120} },
   wisp_lantern:{ name:'誘い火', hostile:true, hp:20, speed:1.2, color:'#ffcf6a', size:9, str:2, drops:[{item:'glow_spore',n:[1,2]},{item:'lumen',n:[0,1]}], dmg:5, xp:7, shape:'wisp', ghost:true, ranged:{dmg:7,range:7,cd:75,kind:'fire',status:{burn:120}} },
@@ -1231,7 +1232,7 @@ Game.DANGER = {
     ruin:    ['zombie', 'zombie', 'skeleton', 'spider', 'slime', 'thornback', 'plague_rat'],
     ice:     ['frost_wisp', 'frost_wisp', 'frost_spider', 'cursed_armor', 'ice_bear', 'frost_lurker'],
     tomb:    ['scorpion', 'scorpion', 'dust_mage', 'sand_wurm', 'cursed_armor', 'sand_stalker'],
-    forge:   ['ember_imp', 'salamander', 'golem', 'cursed_armor', 'cinder_hound', 'crag_golem'],
+    forge:   ['ember_imp', 'salamander', 'golem', 'cursed_armor', 'cinder_hound', 'crag_golem', 'cinder_bomber'],
     crystal: ['frost_wisp', 'frost_spider', 'cursed_armor', 'golem', 'gazer', 'dread_knight'],
     shadow:  ['wraith', 'watcher', 'hex_caster', 'shade_stalker', 'gazer', 'abyss_stalker', 'void_spawnling', 'dread_knight'],
   },
@@ -1239,7 +1240,7 @@ Game.DANGER = {
   POOL_NIGHT: {
     0: ['slime', 'slime', 'zombie', 'skeleton', 'bat', 'plague_rat', 'gloom_bat'],
     2: ['zombie', 'skeleton', 'spider', 'leech', 'bat', 'gazer', 'harpy', 'viper', 'charger', 'troll', 'cursed_armor', 'bog_horror', 'thornback', 'wisp_lantern', 'gloom_bat', 'bramble_wretch'],
-    3: ['troll', 'troll', 'charger', 'golem', 'cursed_armor', 'mimic', 'bog_horror', 'gazer', 'harpy', 'crag_golem', 'dread_knight', 'storm_roc', 'sand_stalker', 'cinder_hound'],
+    3: ['troll', 'troll', 'charger', 'golem', 'cursed_armor', 'mimic', 'bog_horror', 'gazer', 'harpy', 'crag_golem', 'dread_knight', 'storm_roc', 'sand_stalker', 'cinder_hound', 'cinder_bomber'],
   },
   POOL_DAY3: ['troll', 'charger', 'golem', 'crag_golem', 'dread_knight'],   // 深域は昼でも強敵が徘徊
   TOASTS: [null,

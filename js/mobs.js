@@ -770,6 +770,27 @@ Game.Mobs = (function () {
           if ((m.chargeCd || 0) > 0) m.chargeCd--;
           else if (distP < ch.range * TS && distP > 2 * TS) { m.charge = { phase: 'windup', t: ch.windup }; m.dir = Math.abs(dxp) > Math.abs(dyp) ? (dxp < 0 ? 'left' : 'right') : (dyp < 0 ? 'up' : 'down'); Game.Audio.play('whirl'); }
         }
+        // 自爆兵(bomber): 接近で導火線点火→短い溜め(点滅・接近継続)→大爆発。爆風は地形/火/火薬樽/他の自爆兵を巻き込み連鎖。逃げれば回避可
+        if (m.def.bomber) {
+          const bd = m.def.bomber;
+          if (m.fuse != null) {
+            m.fuse--;
+            if (Game.state.tick % (m.fuse < 12 ? 3 : 6) === 0 && Game.Audio) Game.Audio.play('select');
+            if (distP < aggro) moveMob(m, dxp, dyp, m.def.speed * 0.7); // にじり寄る
+            if (m.fuse <= 0) {
+              if (Game.Projectiles.explode) Game.Projectiles.explode(m.x, m.y, bd.r || 2.6, bd.dmg || 30, 'fire');
+              const pdd = Math.hypot(p.x - m.x, p.y - m.y), R = (bd.r || 2.6) * TS;
+              if (pdd <= R && !p.vehicle) Game.Survival.damage(Math.max(5, Math.round((bd.dmg || 30) * (1 - pdd / R))), 'blast');
+              m.hp = 0; killMob(m); continue;
+            }
+            m.hopPhase += 0.3; continue;
+          }
+          if (distP < ((bd.trigger || 2.4) * TS)) {
+            m.fuse = bd.fuse || 26; m.fuseMax = m.fuse;
+            if (Game.Audio) Game.Audio.play('whirl');
+            if (Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - m.def.size, '⚠ 自爆!', '#ff5a3a', true);
+          }
+        }
         const rg = m.def.ranged;
         // 射撃の予兆(照準): 約300ms 静止して構えてから撃つ。スマホでも反応できる猶予を保証
         if (rg && m.aim != null) {
@@ -1321,7 +1342,7 @@ Game.Mobs = (function () {
       const r = m.def.size * 0.5 * (m.champion ? 1.55 : m.elite ? 1.3 : 1) * (m.sizeVar || 1);
       const hop = (m.def.hop ? Math.abs(Math.sin(m.hopPhase)) * 5 : 0) + (m.leapZ || 0) * (Game.Camera.zoom ? Game.Camera.zoom() : 1);
       // 予兆(!マーク): 溜め/照準/突進構え中の敵の頭上に点滅警告。スマホでも一目で分かる
-      const windup = m.slam != null || m.aim != null || m.radial != null || (m.charge && m.charge.phase === 'windup') || (m.leap && m.leap.phase === 'crouch');
+      const windup = m.slam != null || m.aim != null || m.radial != null || m.fuse != null || (m.charge && m.charge.phase === 'windup') || (m.leap && m.leap.phase === 'crouch');
       if (windup) {
         ctx.fillStyle = (Game.state.tick % 8) < 4 ? '#ffd24a' : '#ff7a3c';
         ctx.font = 'bold 15px sans-serif'; ctx.textAlign = 'center';
