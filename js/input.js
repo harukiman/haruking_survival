@@ -202,6 +202,7 @@ Game.Input = (function () {
   // ゲームパッド（PS4/DualShock4 標準配置）
   const padPrev = [];
   let padIdle = 0; // 右スティックを離してからの経過フレーム(自動照準切替用)
+  let padGone = 0; // パッド未検出が続いたフレーム数(切断→タッチボタン再表示の判定)
   // ===== ゲームパッドのボタン割当(再割当可能・Settings保存) =====
   const PAD_DEF = { mine: 0, fire: 7, place: 2, shift: 3, roll: 1, hotbarPrev: 4, hotbarNext: 5, dash: 6, inv: 9, map: 11, stats: 10, opts: 8 };
   const PAD_ACTIONS = [
@@ -221,7 +222,10 @@ Game.Input = (function () {
     const pads = navigator.getGamepads ? navigator.getGamepads() : [];
     let gp = null;
     for (let i = 0; i < pads.length; i++) if (pads[i]) { gp = pads[i]; break; }
-    if (!gp) return;
+    // 実際のパッド有無で has-pad を確定させる(gamepadconnectedイベントを取りこぼす端末対策)。
+    // スマホ: 接続中はタッチボタンを隠し、切断(約2秒無応答)で自動的に再表示する
+    if (!gp) { padGone++; if (padGone > 60 && document.body.classList.contains('has-pad')) { document.body.classList.remove('has-pad'); cursor.active = false; } return; }
+    padGone = 0; if (!document.body.classList.contains('has-pad')) document.body.classList.add('has-pad');
     const btn = function (i) { return gp.buttons[i] && gp.buttons[i].pressed; };
     const edge = function (i) { const p = btn(i); const e = p && !padPrev[i]; padPrev[i] = p; return e; };
     // リバインド捕捉中: 最初に押されたボタンを割当て、ゲーム操作は処理しない
