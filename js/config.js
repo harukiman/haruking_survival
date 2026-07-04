@@ -586,6 +586,7 @@ Game.ITEMS = {
   gate_key:      { name:'古の鍵', stack:8, color:'#e0cf90', flavor:'古の門をひらく鍵。金鉱と光素を門の紋様に合わせて鋳た。掲げれば沈黙の都市へ通じる。' },
   ruin_blade:    { name:'遺構の長剣', stack:1, color:'#cabf8a', tool:'sword', tier:4, attack:12, special:{type:'echo', name:'残響', pct:0.4, cd:60, color:'#e8dca0'}, flavor:'古代都市の兵が佩いた長剣。一撃が過去の残響を呼び、二度三度と斬り重なる。' },
   warden_plate:  { name:'守番の胸甲', stack:1, color:'#b8ac82', armor:6, slot:'chest', flavor:'都市を永く守り続けた守番の鎧。重いが、古代合金ゆえの堅牢さは折り紙付き。' },
+  thorn_plate:   { name:'棘鎧', stack:1, color:'#7a5a4a', armor:5, slot:'chest', thornsFixed:0.28, flavor:'無数の棘に覆われた鎧。触れた者は自らの攻撃で傷つく。棘28%反射(付与効果と加算)。' },
   ancient_charm: { name:'古の護符', stack:1, color:'#e0cf90', relic:{maxHp:16, armor:1}, flavor:'刻印の護符。古の守りが宿り、身を固くする。装身具として最大HP+16・防御+1。' },
   // 狭間の遺物
   void_shard:    { name:'虚無晶', stack:99, color:'#b088e8', flavor:'狭間の裂け目に結晶した虚。覗き込むと、光でも影でもない色が渦を巻いている。' },
@@ -795,6 +796,7 @@ Game.RECIPES = [
   { out:{id:'ancient_alloy', n:1}, in:{relic_shard:2, iron:1}, station:'furnace' },
   { out:{id:'ruin_blade', n:1}, in:{ancient_alloy:3, wood:1}, station:'crafting_table' },
   { out:{id:'warden_plate', n:1}, in:{ancient_alloy:4, iron:2}, station:'crafting_table' },
+  { out:{id:'thorn_plate', n:1}, in:{iron:6, cactus:4, obsidian:2}, station:'crafting_table' },
   { out:{id:'ancient_charm', n:1}, in:{relic_shard:4, gold_ore:2, lumen:1}, station:'crafting_table' },
   // 狭間: 虚ろな鍵で裂け目をひらき、虚無晶を合金にして最上位装備を鍛える(影核=影世界要素で後半ゲート)
   { out:{id:'void_key', n:1}, in:{shadow_core:1, lumen:3}, station:'crafting_table' },
@@ -1120,7 +1122,7 @@ Game.ITEM_GLYPH = {
   sand_greatsword:'⚔️', magma_hammer:'🔨', pharaoh_crown:'👑', mind_tome:'📖', wisdom_tome:'📗', xp_orb:'🔮', expand_pouch:'🎒',
   feather:'🪶', wind_crystal:'💠', wind_steel:'🌀', wind_feather:'🪶', wind_sword:'🗡️', sky_cloak:'🧥', cloud_boots:'👢',
   ring_crit:'💍', amulet_swift:'📿', fang_vamp:'🦷', heart_regen:'❤️‍🔥', eye_xp:'👁️', band_power:'💪', crest_guard:'🛡️',
-  energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️', prism_blade:'⚔️', dragon_fang:'⚔️', colossus_blade:'⚔️', mire_scythe:'⚔️', magma_maul:'🔨', starcore_greatsword:'⚔️', voidcore_blade:'⚔️', spore_scythe:'⚔️', star_aegis:'🛡️', void_helm:'⛑️', tempest_spear:'🔱', frostfang_blade:'🗡️', emberfang_axe:'🪓', echoedge:'🗡️', quakehammer:'🔨',
+  energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️', prism_blade:'⚔️', dragon_fang:'⚔️', colossus_blade:'⚔️', mire_scythe:'⚔️', magma_maul:'🔨', starcore_greatsword:'⚔️', voidcore_blade:'⚔️', spore_scythe:'⚔️', star_aegis:'🛡️', void_helm:'⛑️', thorn_plate:'🥷', tempest_spear:'🔱', frostfang_blade:'🗡️', emberfang_axe:'🪓', echoedge:'🗡️', quakehammer:'🔨',
 };
 
 Game.INV_SIZE = 36;       // 先頭9 = ホットバー

@@ -583,6 +583,8 @@ Game.Mobs = (function () {
               if (Game.Render.spawnHitDir) Game.Render.spawnHitDir(m.x, m.y); // 被弾方向インジケータ
               if (m.def.inflict) for (const k in m.def.inflict) Game.Status.add(k, m.def.inflict[k]);
               if (hasAffix(m, 'blazing')) Game.Status.add('burn', Game.ELITE_AFFIXES.blazing.burn); // 業火: 接触で炎上
+              // 棘(thorns)防具: 被弾時に攻撃元へダメージ反射
+              if (p.gearThorns > 0 && !m.def.boss) { const refl = Math.max(1, Math.round((m.dmg || m.def.dmg) * p.gearThorns)); Game.Render.spawnParticles(m.x, m.y, '#ff8a6a', 5); damageMob(m, refl, p.x, p.y, false); }
               const kl = distP || 1;
               p.x += (dxp / kl) * (m.def.boss ? 12 : 6); p.y += (dyp / kl) * (m.def.boss ? 12 : 6);
             }

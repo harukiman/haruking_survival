@@ -55,6 +55,7 @@ Game.Loot = (function () {
     { key: 'mending', name: '快癒の', regen: [1, 2] },
     { key: 'regenerating', name: '再生の', regen: [2, 3] },
     { key: 'scholar', name: '賢者の', xpBoost: [0.06, 0.14] },
+    { key: 'thorned', name: '棘の', thorns: [0.10, 0.25] },
   ];
 
   function rr(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
@@ -107,6 +108,7 @@ Game.Loot = (function () {
       if (pick.staminaMax) af.staminaMax = rr(pick.staminaMax[0], pick.staminaMax[1]);
       if (pick.regen) af.regen = rr(pick.regen[0], pick.regen[1]);
       if (pick.xpBoost) af.xpBoost = Math.round((pick.xpBoost[0] + Math.random() * (pick.xpBoost[1] - pick.xpBoost[0])) * 100) / 100;
+      if (pick.thorns) af.thorns = Math.round((pick.thorns[0] + Math.random() * (pick.thorns[1] - pick.thorns[0])) * 100) / 100;
       if (pick.sanity) af.sanity = true;
       affixes.push(af);
     }
@@ -115,7 +117,7 @@ Game.Loot = (function () {
 
   // 実効ステータス
   function stats(slot) {
-    const out = { atk: 0, armor: 0, hp: 0, lifesteal: 0, crit: 0, sanityResist: false, moveSpd: 0, staminaMax: 0, regen: 0, xpBoost: 0 };
+    const out = { atk: 0, armor: 0, hp: 0, lifesteal: 0, crit: 0, sanityResist: false, moveSpd: 0, staminaMax: 0, regen: 0, xpBoost: 0, thorns: 0 };
     if (!slot) return out;
     const def = Game.ITEMS[slot.id];
     if (!def) return out;
@@ -135,6 +137,7 @@ Game.Loot = (function () {
         if (a.staminaMax) out.staminaMax += a.staminaMax;
         if (a.regen) out.regen += a.regen;
         if (a.xpBoost) out.xpBoost += a.xpBoost;
+        if (a.thorns) out.thorns += a.thorns;
         if (a.sanity) out.sanityResist = true;
       });
     }
@@ -161,6 +164,7 @@ Game.Loot = (function () {
     if (s.staminaMax) parts.push('スタミナ +' + s.staminaMax);
     if (s.regen) parts.push('HP回復 +' + s.regen);
     if (s.xpBoost) parts.push('経験 +' + Math.round(s.xpBoost * 100) + '%');
+    if (s.thorns) parts.push('棘 ' + Math.round(s.thorns * 100) + '%反射');
     if (s.sanityResist) parts.push('正気耐性');
     return parts.join(' / ');
   }

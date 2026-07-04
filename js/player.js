@@ -1125,10 +1125,10 @@ Game.Player = (function () {
   // 装備由来の最大HP等を反映（VIT＋レベル＋ボス討伐の恒久報酬も加味）
   function applyEquipStats() {
     const p = Game.state.player;
-    let hpBonus = 0, gm = 0, gs = 0, gr = 0, gx = 0;
-    for (const k in p.armor) if (p.armor[k]) { const st = Game.Loot.stats(p.armor[k]); hpBonus += st.hp; gm += st.moveSpd || 0; gs += st.staminaMax || 0; gr += st.regen || 0; gx += st.xpBoost || 0; }
-    // 防具affixの実用チャンネルを集約(移動/スタミナ/HP回復/経験)。stats/skill/setと重畳
-    p.gearMoveSpd = gm; p.gearRegen = gr; p.gearXpBoost = gx;
+    let hpBonus = 0, gm = 0, gs = 0, gr = 0, gx = 0, gt = 0;
+    for (const k in p.armor) if (p.armor[k]) { const st = Game.Loot.stats(p.armor[k]); const d = Game.ITEMS[p.armor[k].id] || {}; hpBonus += st.hp; gm += st.moveSpd || 0; gs += st.staminaMax || 0; gr += st.regen || 0; gx += st.xpBoost || 0; gt += (st.thorns || 0) + (d.thornsFixed || 0); }
+    // 防具affixの実用チャンネルを集約(移動/スタミナ/HP回復/経験/棘反射)。stats/skill/setと重畳
+    p.gearMoveSpd = gm; p.gearRegen = gr; p.gearXpBoost = gx; p.gearThorns = Math.min(0.6, gt); // 棘は上限60%(過剰反射防止)
     const base = p.baseMaxHealth || 100;
     const sb = skillBonus();
     p.maxHealth = base + hpBonus + (p.vit || 0) * 5 + sb.hp + bossesDefeated() * 5; // ボス討伐ごとに最大HP+5
