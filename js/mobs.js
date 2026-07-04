@@ -1343,6 +1343,13 @@ Game.Mobs = (function () {
         }
       }
     }
+    // 撃破の手応え(インパクトフレーム): 格に応じた微小ヒットストップ＋大型は軽い揺れ。
+    // 雑魚は1tickでスウォーム掃討を阻害せず、大型/精鋭ほど「決めた」感を強調。ボスは専用アウトロ演出に委譲。
+    if (!m.def.boss) {
+      const kfreeze = m.champion ? 4 : m.elite ? 3 : (m.def.big || m.def.midboss) ? 2 : 1;
+      Game.state.hitstop = Math.max(Game.state.hitstop || 0, kfreeze);
+      if (kfreeze >= 2 && Game.Render.shake) Game.Render.shake(kfreeze >= 3 ? 4 : 2);
+    }
     Game.Audio.play('mobdie');
   }
 
