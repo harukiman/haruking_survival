@@ -604,6 +604,7 @@ Game.ITEMS = {
   thorn_plate:   { name:'棘鎧', stack:1, color:'#7a5a4a', armor:5, slot:'chest', thornsFixed:0.28, flavor:'無数の棘に覆われた鎧。触れた者は自らの攻撃で傷つく。棘28%反射(付与効果と加算)。' },
   combat_vest:   { name:'戦術タクティカルベスト', stack:1, color:'#3c4a38', armor:5, slot:'chest', ammoStack:2, flavor:'弾倉ポーチを備えた戦闘用ベスト。装備中は1スロットに携行できる弾薬の上限が2倍になる。銃使いの相棒。' },
   reflect_aegis: { name:'反射の盾核', stack:1, color:'#8fd0ff', relic:{armor:2}, reflect:0.4, flavor:'攻撃を跳ね返す不思議な盾核。受けたダメージの40%を、殴ってきた相手へ反射する(ボスにも有効)。装身具枠。' },
+  aqualung:      { name:'潜水呼吸器', stack:1, color:'#4ad0e0', relic:{}, diveGear:true, flavor:'古の海人が遺した呼吸器。装備すると水中で溺れなくなり、深い海の底まで潜っていける。装身具枠。' },
   ancient_charm: { name:'古の護符', stack:1, color:'#e0cf90', relic:{maxHp:16, armor:1}, flavor:'刻印の護符。古の守りが宿り、身を固くする。装身具として最大HP+16・防御+1。' },
   // 狭間の遺物
   void_shard:    { name:'虚無晶', stack:99, color:'#b088e8', flavor:'狭間の裂け目に結晶した虚。覗き込むと、光でも影でもない色が渦を巻いている。' },
@@ -642,6 +643,7 @@ Game.RECIPES = [
   { out:{id:'flashstep_edge', n:1}, in:{shadow_steel:2, shadow_crystal:6, lumen:3, gold_bar:2}, station:'enchant_table' },
   { out:{id:'combat_vest', n:1}, in:{iron:6, leather:4, string:3}, station:'crafting_table' },
   { out:{id:'reflect_aegis', n:1}, in:{shadow_steel:1, shadow_crystal:5, lumen:3, gold_bar:2}, station:'enchant_table' },
+  { out:{id:'aqualung', n:1}, in:{iron:5, lumen:2, string:3, gold_bar:1}, station:'crafting_table' },
   { out:{id:'iai_mumyo', n:1}, in:{shadow_steel:2, gold_bar:3, shadow_crystal:4, lumen:2}, station:'enchant_table' },
   { out:{id:'heavenfall_staff', n:1}, in:{star_core:1, gold_bar:3, shadow_crystal:5, lumen:3}, station:'enchant_table' },
   // 建築拡張
@@ -1167,7 +1169,7 @@ Game.ITEM_GLYPH = {
   sand_greatsword:'⚔️', magma_hammer:'🔨', pharaoh_crown:'👑', mind_tome:'📖', wisdom_tome:'📗', xp_orb:'🔮', expand_pouch:'🎒',
   feather:'🪶', wind_crystal:'💠', wind_steel:'🌀', wind_feather:'🪶', wind_sword:'🗡️', sky_cloak:'🧥', cloud_boots:'👢',
   ring_crit:'💍', amulet_swift:'📿', fang_vamp:'🦷', heart_regen:'❤️‍🔥', eye_xp:'👁️', band_power:'💪', crest_guard:'🛡️',
-  energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️', prism_blade:'⚔️', dragon_fang:'⚔️', colossus_blade:'⚔️', mire_scythe:'⚔️', magma_maul:'🔨', starcore_greatsword:'⚔️', voidcore_blade:'⚔️', spore_scythe:'⚔️', star_aegis:'🛡️', void_helm:'⛑️', thorn_plate:'🥷', tempest_spear:'🔱', sovereign_scepter:'👑', rift_crown:'👑', frostfang_blade:'🗡️', emberfang_axe:'🪓', echoedge:'🗡️', quakehammer:'🔨', flashstep_edge:'⚡', combat_vest:'🎽', reflect_aegis:'🛡️', iai_mumyo:'🗡️', heavenfall_staff:'☄️', gasoline:'⛽', repair_kit:'🔧', buggy:'🚙', tank:'🛡️', cannon_shell:'💣', battle_mech:'🤖',
+  energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️', prism_blade:'⚔️', dragon_fang:'⚔️', colossus_blade:'⚔️', mire_scythe:'⚔️', magma_maul:'🔨', starcore_greatsword:'⚔️', voidcore_blade:'⚔️', spore_scythe:'⚔️', star_aegis:'🛡️', void_helm:'⛑️', thorn_plate:'🥷', tempest_spear:'🔱', sovereign_scepter:'👑', rift_crown:'👑', frostfang_blade:'🗡️', emberfang_axe:'🪓', echoedge:'🗡️', quakehammer:'🔨', flashstep_edge:'⚡', combat_vest:'🎽', reflect_aegis:'🛡️', iai_mumyo:'🗡️', heavenfall_staff:'☄️', gasoline:'⛽', repair_kit:'🔧', buggy:'🚙', tank:'🛡️', cannon_shell:'💣', battle_mech:'🤖', aqualung:'🤿',
 };
 
 Game.INV_SIZE = 36;       // 先頭9 = ホットバー

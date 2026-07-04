@@ -253,7 +253,10 @@ Game.Player = (function () {
     // 遊泳(深水): 呼吸ゲージが減り、尽きると溺れて継続ダメージ。地上/ボート/浅瀬で急速回復。
     const submerged = !p.vehicle && gUnder === Game.TILE.DEEP_WATER;
     if (p.breath == null) p.breath = p.maxBreath || 360;
-    if (submerged) {
+    if (submerged && p.waterBreath) {
+      spd *= 0.7; // 呼吸器あり: 溺れず自在に潜れる(遊泳はやや遅い程度)
+      p.breath = p.maxBreath || 360;
+    } else if (submerged) {
       spd *= 0.6;
       p.breath = Math.max(0, p.breath - 1);
       if (Game.state.tick % 10 === 0 && Game.Render.spawnParticles) Game.Render.spawnParticles(p.x + (Math.random() - 0.5) * 8, p.y - 6, '#bfe2f5', 1); // 気泡
@@ -1213,8 +1216,10 @@ Game.Player = (function () {
     const p = Game.state.player;
     let hpBonus = 0, gm = 0, gs = 0, gr = 0, gx = 0, gt = 0, ammoMul = 1, reflect = 0;
     for (const k in p.armor) if (p.armor[k]) { const st = Game.Loot.stats(p.armor[k]); const d = Game.ITEMS[p.armor[k].id] || {}; hpBonus += st.hp; gm += st.moveSpd || 0; gs += st.staminaMax || 0; gr += st.regen || 0; gx += st.xpBoost || 0; gt += (st.thorns || 0) + (d.thornsFixed || 0); if (d.ammoStack) ammoMul = Math.max(ammoMul, d.ammoStack); if (d.reflect) reflect += d.reflect; }
-    // 装身具(accessory)の反射盾核も合流
-    [p.accessory, p.accessory2].forEach(function (acc) { if (!acc) return; const d = Game.ITEMS[acc.id || acc]; if (d && d.reflect) reflect += d.reflect; });
+    // 装身具(accessory)の反射盾核・潜水呼吸器も合流
+    let dive = false;
+    [p.accessory, p.accessory2].forEach(function (acc) { if (!acc) return; const d = Game.ITEMS[acc.id || acc]; if (d && d.reflect) reflect += d.reflect; if (d && d.diveGear) dive = true; });
+    p.waterBreath = dive;
     // 防具affixの実用チャンネルを集約(移動/スタミナ/HP回復/経験/棘反射/弾薬上限/ダメ反射)。stats/skill/setと重畳
     p.gearMoveSpd = gm; p.gearRegen = gr; p.gearXpBoost = gx; p.gearThorns = Math.min(0.6, gt); // 棘は上限60%(過剰反射防止)
     p.gearAmmoMul = ammoMul; p.gearReflect = Math.min(0.8, reflect); // 反射は上限80%
