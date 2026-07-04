@@ -253,7 +253,7 @@ Game.Combat = (function () {
     dmg = Math.round(dmg * comboMul);
     const baseDmg = dmg; // 特殊効果のスケール基準(会心補正前)
     // 会心（クリティカル）: 基礎8% ＋ スキル ＋ 装備affix。クリ時 1.8x。パッシブ「集中」は確定会心
-    const critCh = (Game.TUNE.BASE_CRIT || 0.08) + Game.Player.skillBonus().crit + (st.crit || 0) + (Game.Player.setBonus().crit || 0);
+    const critCh = (Game.TUNE.BASE_CRIT || 0.08) + Game.Player.skillBonus().crit + (st.crit || 0) + (Game.Player.setBonus().crit || 0) + (p.coopNear ? 0.05 : 0);
     const focusCrit = Game.Player.focusArmed && Game.Player.focusArmed();
     const isCrit = focusCrit || Math.random() < critCh;
     if (isCrit) { dmg = Math.round(dmg * (Game.TUNE.CRIT_MULT || 1.8)); Game.Render.shake(7); Game.Audio.play('crit'); }

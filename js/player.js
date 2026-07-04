@@ -1335,7 +1335,7 @@ Game.Player = (function () {
   function levelDmgBonus() { const p = Game.state.player; return (p.str || 0) + Math.floor((p.level - 1) * 0.5); }
   function levelArmorBonus() { const p = Game.state.player; return Math.floor(p.level / 4); }
   function attackCooldown() { const p = Game.state.player; return Math.max(7, Math.round(Game.TUNE.ATTACK_COOLDOWN * (1 - (p.dex || 0) * 0.02))); }
-  function effAttack(baseAtk) { return Math.max(1, baseAtk + levelDmgBonus() + skillBonus().atk + (Game.Status ? Game.Status.buffSum().atk : 0)); }
+  function effAttack(baseAtk) { return Math.max(1, baseAtk + levelDmgBonus() + skillBonus().atk + (Game.Status ? Game.Status.buffSum().atk : 0) + (Game.state.player.coopNear ? 2 : 0)); }
   // 魔法系: マナ消費(スキルでコスト減)。足りなければ false。magicPower は魔法ダメージ倍率
   function manaCost(base) { const p = Game.state.player; return Math.max(1, Math.round(base * (1 - (skillBonus().manaCostCut || 0)))); }
   function spendMana(base) { const p = Game.state.player; const c = manaCost(base); if ((p.mp || 0) < c) return false; p.mp -= c; if (Game.UI.refreshStats) Game.UI.refreshStats(); return true; }

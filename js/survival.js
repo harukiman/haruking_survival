@@ -65,12 +65,15 @@ Game.Survival = (function () {
       const totem = nearHealTotem();
       const regenSkill = Game.Player.skillBonus().regen + (Game.Status ? Game.Status.buffSum().regen : 0) + (p.gearRegen || 0);
       if (regenSkill > 0 && p.health < p.maxHealth) p.health = Math.min(p.maxHealth, p.health + regenSkill); // スキル不屈＋再生の薬＋装備affix
-      // 協力: 仲間の近く(8タイル)に居ると士気が上がり HP が少し回復(共闘=はぐれずに戦う動機)
-      if (p.health < p.maxHealth && Game.Net && Game.Net.isConnected && Game.Net.isConnected() && Game.Net.getPeers) {
-        const peers = Game.Net.getPeers(), TS = Game.CFG.TILE_SIZE, now = Date.now(); let near = false;
-        for (const id in peers) { const pe = peers[id]; if (!pe || pe.tx == null) continue; if (pe.world && pe.world !== Game.state.worldName) continue; if (pe.lastSeen && now - pe.lastSeen > 8000) continue; if (Math.hypot(pe.tx - p.x, pe.ty - p.y) <= 8 * TS) { near = true; break; } }
-        if (near) { p.health = Math.min(p.maxHealth, p.health + 2); Game.Render.spawnParticles(p.x, p.y - 6, '#7fd0ff', 1); }
+      // 協力: 仲間の近く(8タイル)に居ると「連携」で士気が上がる。HP回復＋戦闘ボーナス(共闘の動機付け)
+      let coopNear = false;
+      if (Game.Net && Game.Net.isConnected && Game.Net.isConnected() && Game.Net.getPeers) {
+        const peers = Game.Net.getPeers(), TS = Game.CFG.TILE_SIZE, now = Date.now();
+        for (const id in peers) { const pe = peers[id]; if (!pe || pe.tx == null) continue; if (pe.world && pe.world !== Game.state.worldName) continue; if (pe.lastSeen && now - pe.lastSeen > 8000) continue; if (Math.hypot(pe.tx - p.x, pe.ty - p.y) <= 8 * TS) { coopNear = true; break; } }
+        if (coopNear && p.health < p.maxHealth) { p.health = Math.min(p.maxHealth, p.health + 2); Game.Render.spawnParticles(p.x, p.y - 6, '#7fd0ff', 1); }
       }
+      if (coopNear && !p.coopNear && Game.UI && Game.UI.tipOnce) Game.UI.tipOnce('coop', '連携！ 仲間の近く(8マス)で戦うと攻撃力+2・会心+5%・HP微回復。はぐれず共闘しよう');
+      p.coopNear = coopNear; // effAttack/会心率で参照する連携バフ(ソロでは常にfalse=無影響)
       if (totem && p.health < p.maxHealth) {
         p.health = Math.min(p.maxHealth, p.health + 3); // 癒しの祭壇
         Game.Render.spawnParticles(p.x, p.y - 6, '#7fd0a0', 1);
