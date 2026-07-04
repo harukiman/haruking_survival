@@ -21,9 +21,9 @@ Game.WorldGen = (function () {
     else if (h < 0.09) o = O.LUMEN_ORE;
     else if (h < 0.12) o = O.IRON_ORE;
     else if (h < 0.135) o = O.SHADOW_CRYSTAL;
-    else if (h < 0.143) o = O.TREASURE_CHEST;
-    else if (h < 0.15) o = O.SPAWNER;
-    else if (h < 0.17) o = O.ROCK;
+    else if (h < 0.1354) o = O.TREASURE_CHEST; // 宝箱を約1/20に削減(0.008→0.0004)。星鉱等の価値を維持
+    else if (h < 0.1424) o = O.SPAWNER;        // 巣は据え置き(幅0.007)
+    else if (h < 0.1624) o = O.ROCK;           // 岩も据え置き(幅0.02)
     return { ground: T.STONE, obj: o };
   }
 
@@ -357,8 +357,8 @@ Game.WorldGen = (function () {
             if (cx === 0 && cy === 0 && ix === 1 && iy === 0) return { ground: T.DUNGEON_FLOOR, obj: O.EXIT_PORTAL };    // 隣に帰還の渦
             if (ix === 0 && iy === 0) { // 各セル中央に低確率で道中の宝/番人
               const hv = U.hash3(ax + cx * 31, ay + cy * 41, seed + 555);
-              if (hv < 0.08) return { ground: T.DUNGEON_FLOOR, obj: O.TREASURE_CHEST };
-              if (hv < 0.26) return { ground: T.DUNGEON_FLOOR, obj: O.SPAWNER };
+              if (hv < 0.03) return { ground: T.DUNGEON_FLOOR, obj: O.TREASURE_CHEST }; // 道中の宝箱を0.08→0.03に抑制(主宝箱は別途確定)
+              if (hv < 0.24) return { ground: T.DUNGEON_FLOOR, obj: O.SPAWNER };
             }
           }
           return { ground: T.DUNGEON_FLOOR, obj: O.NONE };
@@ -403,7 +403,7 @@ Game.WorldGen = (function () {
     if (walkableGround && !shadow && !(Game.state && Game.state.worldName === 'space')) {
       const CG = 53;
       const cax = Math.round(wx / CG) * CG, cay = Math.round(wy / CG) * CG;
-      if (U.hash3(cax, cay, seed + 44444) < 0.06) {
+      if (U.hash3(cax, cay, seed + 44444) < 0.035) { // 打ち捨て宝箱の出現率を0.06→0.035に抑制
         const cdx = wx - cax, cdy = wy - cay;
         if (cdx === 0 && cdy === 0) return { ground: ground, obj: O.TREASURE_CHEST };
         if (Math.abs(cdx) === 1 && Math.abs(cdy) === 1) return { ground: ground, obj: O.STONE_BLOCK };

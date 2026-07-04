@@ -967,7 +967,7 @@ Game.SKILL_TREE = [
 ];
 // 上位スキルはより多くのスキルポイントを要求(ユーザー指示)。序盤(tier1-2)は据え置き、tier3以降を段階的に重く。
 // 強力な終盤スキルを"投資"にし、レベリングの目標感を持たせる。desc末尾のコストは UI 側が cost を参照するので自動追従。
-(function () { const C = { 1: 2, 2: 4, 3: 16, 4: 24, 5: 40 }; Game.SKILL_TREE.forEach(function (n) { if (C[n.tier]) n.cost = C[n.tier]; }); })(); // 全スキル必要Pを2倍に(ユーザー指示)
+// 必要スキルP正規化はツリー生成/追加が全て終わった後(末尾)で一括適用する。ここでは適用しない
 // ===== スキルツリー大幅拡充(生成): 既存30 + 生成126 = 156ノード。数値は控えめ(インフレ防止) =====
 (function () {
   const T = Game.SKILL_TREE;
@@ -1022,6 +1022,10 @@ Game.SKILL_TREE.push(
 
 // 弾薬アイテムID(戦術ベスト装備で1スロット上限2倍の対象)
 Game.AMMO_IDS = ['bullet', 'ammo_9mm', 'ammo_556', 'ammo_762', 'ammo_50', 'shell_12g', 'rocket_ammo', 'energy_cell'];
+
+// 必要スキルP: 同じ段(tier)は必ず同一コストに揃える(高い方=設計値に統一)。
+// 手書き/自動生成/追加パッシブでバラついていたのを、全スキル追加後に一括正規化して解消。
+(function () { const C = { 1: 2, 2: 4, 3: 16, 4: 24, 5: 40 }; Game.SKILL_TREE.forEach(function (n) { if (C[n.tier]) n.cost = C[n.tier]; }); })();
 
 Game.SKILL_BY_ID = {};
 Game.SKILL_TREE.forEach(function (n) { Game.SKILL_BY_ID[n.id] = n; });
