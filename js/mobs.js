@@ -1492,6 +1492,8 @@ Game.Mobs = (function () {
       }
       // 種別ごとの特徴(角/枝角/耳/牙/トサカ/斑紋など)で形をより明確に差別化
       drawMobFeatures(ctx, m, r, bodyCol, shape);
+      // ボスは型ごとの装具(角/肩当て/フード＋魔法球/光輪/砲身)でシルエットを明確に差別化
+      if (m.def.boss) drawBossRegalia(ctx, m, r, litCol, dimCol, hiCol);
       // 目（orbは独自描画済）
       if (shape !== 'orb') {
         ctx.fillStyle = m.def.hostile ? '#e33' : '#222';
@@ -1573,6 +1575,49 @@ Game.Mobs = (function () {
     }
   }
 
+  // ボスの型別装具: 攻撃モーションの差別化(radial/zone/leap)と対になる視覚的差別化。
+  // 型が一目で分かる=どんな攻めが来るか予測できる(読み合いの土台)。
+  function drawBossRegalia(ctx, m, r, litCol, dimCol, hiCol) {
+    const arch = BOSS_ARCH[m.type] || 'bruiser';
+    const t = Game.state.tick, oCol = 'rgba(18,14,26,0.5)';
+    if (arch === 'berserker') {
+      // 猛る大角＋肩の棘: 攻撃的なシルエット(跳躍叩きつけ型)
+      ctx.fillStyle = '#9c2620'; ctx.strokeStyle = oCol; ctx.lineWidth = 1.5;
+      [-1, 1].forEach(sgn => { ctx.beginPath(); ctx.moveTo(sgn * r * 0.5, -r * 0.75); ctx.quadraticCurveTo(sgn * r * 1.35, -r * 1.25, sgn * r * 1.0, -r * 1.75); ctx.quadraticCurveTo(sgn * r * 0.88, -r * 1.15, sgn * r * 0.3, -r * 0.85); ctx.closePath(); ctx.fill(); ctx.stroke(); });
+      ctx.fillStyle = shadeHex(litCol, -28);
+      [-1, 1].forEach(sgn => { for (let k = 0; k < 3; k++) { const sx = sgn * (r * 0.65 + k * r * 0.2); ctx.beginPath(); ctx.moveTo(sx, -r * 0.05); ctx.lineTo(sx + sgn * r * 0.06, -r * 0.7); ctx.lineTo(sx + sgn * r * 0.22, -r * 0.02); ctx.closePath(); ctx.fill(); } });
+    } else if (arch === 'bruiser') {
+      // 重厚な肩当て＋鉄輪: 鈍重で頑強なシルエット(溜め叩き型)
+      ctx.strokeStyle = oCol; ctx.lineWidth = 2;
+      [-1, 1].forEach(sgn => { ctx.fillStyle = shadeHex(dimCol, -8); ctx.beginPath(); ctx.ellipse(sgn * r * 0.98, -r * 0.12, r * 0.52, r * 0.42, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); ctx.fillStyle = hiCol; ctx.beginPath(); ctx.arc(sgn * r * 0.98, -r * 0.26, r * 0.09, 0, 7); ctx.fill(); });
+      ctx.fillStyle = '#8a8f96'; ctx.fillRect(-r * 0.55, -r * 1.05, r * 1.1, r * 0.2); ctx.strokeRect(-r * 0.55, -r * 1.05, r * 1.1, r * 0.2);
+    } else if (arch === 'caster') {
+      // 尖ったフード＋周回する魔法球: 術者のシルエット(全方位弾/弾幕型)
+      ctx.fillStyle = shadeHex(dimCol, -6); ctx.strokeStyle = oCol; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(-r * 0.6, -r * 0.45); ctx.lineTo(0, -r * 1.55); ctx.lineTo(r * 0.6, -r * 0.45); ctx.closePath(); ctx.fill(); ctx.stroke();
+      const rgb = hexToRgb(m.def.color || '#c060ff'), cs = rgb[0] + ',' + rgb[1] + ',' + rgb[2];
+      for (let k = 0; k < 3; k++) { const a = t * 0.05 + k * (Math.PI * 2 / 3), ox = Math.cos(a) * r * 1.5, oy = Math.sin(a) * r * 0.95 - r * 0.2;
+        ctx.save(); ctx.globalCompositeOperation = 'lighter'; const g = ctx.createRadialGradient(ox, oy, 0, ox, oy, r * 0.5); g.addColorStop(0, 'rgba(' + cs + ',0.9)'); g.addColorStop(1, 'rgba(' + cs + ',0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(ox, oy, r * 0.5, 0, 7); ctx.fill(); ctx.restore();
+        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(ox, oy, r * 0.13, 0, 7); ctx.fill(); }
+    } else if (arch === 'summoner') {
+      // 頭上の光輪＋周回する眷属の魂: 召喚者のシルエット(設置爆撃/召喚型)
+      ctx.strokeStyle = 'rgba(200,170,255,0.85)'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.ellipse(0, -r * 1.28, r * 0.62, r * 0.22, 0, 0, Math.PI * 2); ctx.stroke();
+      for (let k = 0; k < 4; k++) { const a = t * 0.04 + k * (Math.PI / 2), ox = Math.cos(a) * r * 1.4, oy = Math.sin(a) * r * 0.9;
+        ctx.fillStyle = shadeHex(dimCol, -22); ctx.beginPath(); ctx.arc(ox, oy, r * 0.22, 0, 7); ctx.fill();
+        ctx.fillStyle = '#ff5a4a'; ctx.beginPath(); ctx.arc(ox, oy, r * 0.06, 0, 7); ctx.fill(); }
+    } else if (arch === 'artillery') {
+      // 前方の砲身2門＋銃口の熱: 砲台のシルエット(遠距離砲撃型)
+      const fdx = m.dir === 'left' ? -1 : m.dir === 'right' ? 1 : 0, fdy = m.dir === 'up' ? -1 : m.dir === 'down' ? 1 : 0;
+      const bx = fdx || 0, by = (fdx || fdy) ? fdy : 1;
+      ctx.save(); ctx.rotate(Math.atan2(by, bx));
+      ctx.fillStyle = shadeHex(dimCol, -15); ctx.strokeStyle = oCol; ctx.lineWidth = 2;
+      ctx.fillRect(r * 0.4, -r * 0.52, r * 0.95, r * 0.3); ctx.strokeRect(r * 0.4, -r * 0.52, r * 0.95, r * 0.3);
+      ctx.fillRect(r * 0.4, r * 0.22, r * 0.95, r * 0.3); ctx.strokeRect(r * 0.4, r * 0.22, r * 0.95, r * 0.3);
+      ctx.fillStyle = 'rgba(255,150,60,' + (0.55 + Math.sin(t * 0.2) * 0.3).toFixed(2) + ')';
+      ctx.beginPath(); ctx.arc(r * 1.35, -r * 0.37, r * 0.11, 0, 7); ctx.arc(r * 1.35, r * 0.37, r * 0.11, 0, 7); ctx.fill();
+      ctx.restore();
+    }
+  }
   function roundRect(ctx, x, y, w, h, r) {
     ctx.beginPath();
     ctx.moveTo(x + r, y);
