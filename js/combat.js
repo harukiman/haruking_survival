@@ -57,9 +57,12 @@ Game.Combat = (function () {
       const jd = Game.ITEMS.fighter_jet && Game.ITEMS.fighter_jet.jetGun;
       if (!jd) return true;
       if ((p.cannonCd || 0) > 0) return true;
-      if (Game.Inventory.count('bullet') <= 0) { if (Game.state.tick % 40 === 0) Game.UI.toast('弾丸がない — 機関銃の弾を補充を'); return true; }
-      Game.Inventory.remove('bullet', 1);
-      Game.Projectiles.fire(Game.Player.effAttack(jd.dmg), 'tracer', { count: 2, spread: jd.spread, speed: 12 });
+      // 増設した機関銃の基数だけ弾数が増える(基本2門+増設0-4=最大6門)。設置した数だけ掃射
+      const mounted = (p.vehGuns && p.vehGuns.jet) || 0;
+      const barrels = 2 + mounted;
+      if (Game.Inventory.count('bullet') < barrels) { if (Game.state.tick % 40 === 0) Game.UI.toast('弾丸がない — 機関銃の弾を補充を'); return true; }
+      Game.Inventory.remove('bullet', barrels);
+      Game.Projectiles.fire(Game.Player.effAttack(jd.dmg), 'tracer', { count: barrels, spread: jd.spread + mounted * 0.03, speed: 12 });
       Game.Audio.play('gun_smg'); if (Game.Render.shake) Game.Render.shake(2);
       if (Game.Render.spawnMuzzle) { let fx = 0, fy = 0; if (p.dir === 'up') fy = -1; else if (p.dir === 'down') fy = 1; else if (p.dir === 'left') fx = -1; else fx = 1; Game.Render.spawnMuzzle(p.x + fx * 14, p.y + fy * 14, Math.atan2(fy, fx), '#ffe06a', 1.1); }
       if (Game.Mobs.alertNoise) Game.Mobs.alertNoise(p.x, p.y, 10, 120);

@@ -71,7 +71,7 @@ Game.Save = (function () {
         baseMaxHealth: p.baseMaxHealth, status: p.status || {}, mp: p.mp, maxMp: p.maxMp,
         str: p.str || 0, vit: p.vit || 0, dex: p.dex || 0, skillPoints: p.skillPoints || 0, skills: p.skills || {},
         mags: p.mags || {}, loadouts: p.loadouts || null,
-        fuel: p.fuel || {}, vehDur: p.vehDur || {},
+        fuel: p.fuel || {}, vehDur: p.vehDur || {}, vehGuns: p.vehGuns || {},
       },
       ngLevel: s.ngLevel || 0,
       difficulty: s.difficulty || 'normal',

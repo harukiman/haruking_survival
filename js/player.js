@@ -40,6 +40,7 @@ Game.Player = (function () {
       breath: 360, maxBreath: 360, // 遊泳の呼吸ゲージ(12秒)
       vehicle: null, // null|'car'|'boat'|'plane'|'buggy'
       fuel: {}, // 現代乗り物の燃料(type→残量)
+      vehGuns: {}, // 航空機に増設した機関銃の基数(type→0..4)
       armor: { head: null, chest: null }, // {id, roll} インスタンス
       accessory: null, accessory2: null, // 遺物(relic) {id} ×2枠
       offhand: null, // 左手スロット(盾/呼吸器などユーティリティ装備を保持して常時機能)
@@ -821,6 +822,15 @@ Game.Player = (function () {
       Game.UI.toast('🔧 機体を修理した（耐久 ' + Math.round(pp.vehDur[pp.vehicle]) + '/' + max + '）'); Game.UI.refreshAll(); return;
     }
     if (def.food || def.cures || def.buff || def.skillTome || def.xpGain || def.invExpand || def.summonBoss || def.opensShop || def.recall || def.stasis) { Game.Inventory.useSelected(); return; }
+    if (def.installGun) {
+      const pp = Game.state.player;
+      if (pp.vehicle !== 'jet') { Game.UI.toast('機関銃は戦闘機に搭乗中のみ増設できる'); return; }
+      if (!pp.vehGuns) pp.vehGuns = {};
+      if ((pp.vehGuns[pp.vehicle] || 0) >= 4) { Game.UI.toast('機関銃は最大4基まで'); return; }
+      pp.vehGuns[pp.vehicle] = (pp.vehGuns[pp.vehicle] || 0) + 1;
+      Game.Inventory.remove(sel.id, 1); Game.Audio.play('craft');
+      Game.UI.toast('🔫 機関銃を増設（' + pp.vehGuns[pp.vehicle] + '/4基）'); Game.UI.refreshAll(); return;
+    }
     if (def.offhand) { equipOffhand(); return; }
     if (def.armor) { equipSelectedArmor(); return; }
     if (def.relic) { equipRelic(); return; }

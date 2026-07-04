@@ -217,6 +217,7 @@ window.Game = window.Game || {};
     p.fuel = sp.fuel || {}; // 現代乗り物の燃料残量を復元
     p.maxMp = sp.maxMp || 100; p.mp = sp.mp != null ? sp.mp : p.maxMp; // マナ復元
     p.vehDur = sp.vehDur || {}; // 乗り物の耐久値を復元
+    p.vehGuns = sp.vehGuns || {}; // 航空機の増設機関銃基数を復元
     Game.state.ngLevel = data.ngLevel || 0;
     // インベントリ（拡張済みなら容量も復元）
     if (data.inventory) {

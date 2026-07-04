@@ -527,6 +527,7 @@ Game.ITEMS = {
   aerial_bomb:   { name:'T-0S21 航空爆弾', stack:16, color:'#4a5240', bomb:{ dmg:90, radius:3.4 }, flavor:'爆撃機に搭載する制式航空爆弾。投下すると着弾点を広範囲に吹き飛ばす。' },
   heavy_bomb:    { name:'GBU-45 大型爆弾', stack:8, color:'#3a4030', bomb:{ dmg:180, radius:5.2 }, flavor:'重量級の誘導爆弾。一発で拠点を更地に変える破壊力。爆撃機専用。' },
   bomber:        { name:'爆撃機', stack:1, color:'#6a7060', vehicle:'bomber', fuelVeh:true, bomberBay:true, flavor:'一人乗りの爆撃機。空を進みながら攻撃ボタンで搭載した爆弾(T-0S21等)を投下する。積んだ分だけ落とせる。' },
+  aircraft_gun:  { name:'機載機関銃', stack:4, color:'#5a5e66', installGun:true, flavor:'戦闘機/爆撃機に増設できる機関銃。最大4基まで設置でき、設置した数だけ同時に掃射する。搭乗中に使うと1基設置。' },
   boat:          { name:'ボート', stack:1, color:'#9c6b3f', vehicle:'boat', flavor:'水を越えるための小舟。' },
   plane:         { name:'飛行機', stack:1, color:'#8a96c0', vehicle:'plane', flavor:'空を行く翼。すべての境界を越えて。' },
   // ロケット/宇宙
@@ -776,6 +777,7 @@ Game.RECIPES = [
   { out:{id:'tank', n:1}, in:{iron:48, shadow_steel:12, coal:18, gold_bar:5}, station:'crafting_table' },
   { out:{id:'battle_mech', n:1}, in:{iron:42, shadow_steel:14, lumen:12, gold_bar:5}, station:'crafting_table' },
   { out:{id:'fighter_jet', n:1}, in:{shadow_steel:22, iron:32, lumen:14, gold_bar:6}, station:'crafting_table' },
+  { out:{id:'aircraft_gun', n:1}, in:{iron:8, gun_parts:4, gunpowder:3, steel_plate:2}, station:'crafting_table' },
   { out:{id:'bomber', n:1}, in:{shadow_steel:20, iron:40, lumen:12, gold_bar:6}, station:'crafting_table' },
   { out:{id:'aerial_bomb', n:2}, in:{iron:4, sulfur:4, coal:3}, station:'furnace' },
   { out:{id:'heavy_bomb', n:1}, in:{iron:8, sulfur:6, coal:5, gold_bar:1}, station:'furnace' },
@@ -1239,7 +1241,7 @@ Game.ITEM_GLYPH = {
   sand_greatsword:'⚔️', magma_hammer:'🔨', pharaoh_crown:'👑', mind_tome:'📖', wisdom_tome:'📗', xp_orb:'🔮', expand_pouch:'🎒',
   feather:'🪶', wind_crystal:'💠', wind_steel:'🌀', wind_feather:'🪶', wind_sword:'🗡️', sky_cloak:'🧥', cloud_boots:'👢',
   ring_crit:'💍', amulet_swift:'📿', fang_vamp:'🦷', heart_regen:'❤️‍🔥', eye_xp:'👁️', band_power:'💪', crest_guard:'🛡️',
-  energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️', prism_blade:'⚔️', dragon_fang:'⚔️', colossus_blade:'⚔️', mire_scythe:'⚔️', magma_maul:'🔨', starcore_greatsword:'⚔️', voidcore_blade:'⚔️', spore_scythe:'⚔️', star_aegis:'🛡️', void_helm:'⛑️', thorn_plate:'🥷', tempest_spear:'🔱', sovereign_scepter:'👑', rift_crown:'👑', frostfang_blade:'🗡️', emberfang_axe:'🪓', echoedge:'🗡️', quakehammer:'🔨', flashstep_edge:'⚡', combat_vest:'🎽', reflect_aegis:'🛡️', iai_mumyo:'🗡️', heavenfall_staff:'☄️', gasoline:'⛽', repair_kit:'🔧', buggy:'🚙', tank:'🛡️', cannon_shell:'💣', battle_mech:'🤖', aqualung:'🤿', moonshard:'🌙', moon_charm:'🔮', fighter_jet:'✈️', bomber:'🛩️', aerial_bomb:'💣', heavy_bomb:'🧨', gunpowder:'⚫', gun_parts:'⚙️', steel_plate:'🔩', rope:'🪢', glass:'🔷', circuit:'🖥️', jerky:'🥓', fruit_salad:'🥗', energy_bar:'🍫', medkit:'🩹', deagle:'🔫', uzi:'🔫', p90:'🔫', scar_h:'🔫', barrett:'🔫', spas12:'🔫', minigun:'🔫', m79:'🧨', flamethrower:'🔥', plasma_rifle:'🔫', garage_door:'🚪', landing_pad:'🛬',
+  energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️', prism_blade:'⚔️', dragon_fang:'⚔️', colossus_blade:'⚔️', mire_scythe:'⚔️', magma_maul:'🔨', starcore_greatsword:'⚔️', voidcore_blade:'⚔️', spore_scythe:'⚔️', star_aegis:'🛡️', void_helm:'⛑️', thorn_plate:'🥷', tempest_spear:'🔱', sovereign_scepter:'👑', rift_crown:'👑', frostfang_blade:'🗡️', emberfang_axe:'🪓', echoedge:'🗡️', quakehammer:'🔨', flashstep_edge:'⚡', combat_vest:'🎽', reflect_aegis:'🛡️', iai_mumyo:'🗡️', heavenfall_staff:'☄️', gasoline:'⛽', repair_kit:'🔧', buggy:'🚙', tank:'🛡️', cannon_shell:'💣', battle_mech:'🤖', aqualung:'🤿', moonshard:'🌙', moon_charm:'🔮', fighter_jet:'✈️', bomber:'🛩️', aerial_bomb:'💣', heavy_bomb:'🧨', gunpowder:'⚫', gun_parts:'⚙️', steel_plate:'🔩', rope:'🪢', glass:'🔷', circuit:'🖥️', jerky:'🥓', fruit_salad:'🥗', energy_bar:'🍫', medkit:'🩹', deagle:'🔫', uzi:'🔫', p90:'🔫', scar_h:'🔫', barrett:'🔫', spas12:'🔫', minigun:'🔫', m79:'🧨', flamethrower:'🔥', plasma_rifle:'🔫', garage_door:'🚪', landing_pad:'🛬', aircraft_gun:'🔫',
 };
 
 Game.INV_SIZE = 36;       // 先頭9 = ホットバー
