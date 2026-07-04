@@ -285,6 +285,8 @@ Game.Input = (function () {
       if (edge(PB('mine'))) Game.UI.padNav('ok');              // ×=決定
       // □=アイテムの持ち上げ/設置/入替(マイクラ式・インベントリ⇔ホットバー移動)
       if (edge(PB('place')) && Game.UI.padGrab) Game.UI.padGrab();
+      // △=ワンボタンで捨てる(持ち上げ中 or フォーカス中スロットの1個を破棄)
+      if (edge(PB('shift')) && Game.UI.padDrop) Game.UI.padDrop();
       // ○=戻る/閉じる。ただしアイテム持ち上げ中はまず手放す(誤って閉じない)
       if (PB('mine') !== 1 && edge(1)) { if (Game.UI.isHoldingItem && Game.UI.isHoldingItem()) Game.UI.padGrabReturn(); else Game.UI.padNav('back'); }
       if (edge(PB('hotbarPrev'))) Game.UI.padNav('tabprev');   // L1=タブ←

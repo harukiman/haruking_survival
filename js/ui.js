@@ -1513,10 +1513,27 @@ Game.UI = (function () {
   function isHoldingItem() { return !!invHeld; }
   function renderHeldBadge() {
     let el = document.getElementById('inv-held-badge');
-    if (!invHeld) { if (el) el.remove(); return; }
+    if (!invHeld) { if (el) el.remove(); renderHeldCursor(); return; }
     if (!el) { el = document.createElement('div'); el.id = 'inv-held-badge'; document.body.appendChild(el); }
     const d = Game.ITEMS[invHeld.id]; const nm = (invHeld.roll && Game.Loot.displayName) ? Game.Loot.displayName(invHeld) : (d ? d.name : invHeld.id);
-    el.innerHTML = '✊ 持ち上げ中: <b>' + nm + '</b>' + (invHeld.count > 1 ? ' ×' + invHeld.count : '') + ' <span class="hb-hint">□で設置/入替 ・ ○で戻す</span>';
+    el.innerHTML = '✊ 持ち上げ中: <b>' + nm + '</b>' + (invHeld.count > 1 ? ' ×' + invHeld.count : '') + ' <span class="hb-hint">□で設置/入替 ・ △で捨てる ・ ○で戻す</span>';
+    renderHeldCursor();
+  }
+  // 持ち上げ中の小アイコン: フォーカス中のスロット(=カーソル)に沿わせ、掴んでいることを一目で示す
+  function renderHeldCursor() {
+    let g = document.getElementById('inv-held-cursor');
+    if (!invHeld) { if (g) g.remove(); return; }
+    if (!g) { g = document.createElement('div'); g.id = 'inv-held-cursor'; g.className = 'drag-ghost held-cursor'; document.body.appendChild(g); }
+    g.innerHTML = slotHTML(invHeld);
+    updateHeldCursorPos();
+  }
+  // フォーカス中スロット(コントローラ)の少し右上へアイコンを配置。カーソル移動のたびに追従
+  function updateHeldCursorPos() {
+    const g = document.getElementById('inv-held-cursor'); if (!g) return;
+    let pt = padLastPt;
+    if (padFocusEl && padFocusEl.isConnected) { const r = padFocusEl.getBoundingClientRect(); if (r.width > 2) pt = { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }
+    if (!pt) { g.style.display = 'none'; return; }
+    g.style.display = ''; g.style.left = (pt.x + 16) + 'px'; g.style.top = (pt.y - 14) + 'px';
   }
   // □ボタン: 現在フォーカス中のスロットで 持ち上げ / 設置 / 入替
   function padGrab() {
@@ -1544,6 +1561,25 @@ Game.UI = (function () {
     if (!invHeld) return false;
     if (Game.Inventory.add(invHeld.id, invHeld.count) !== 0 && invHeld.roll) Game.Inventory.addInstance(invHeld);
     invHeld = null; renderHeldBadge(); refreshInventory(); refreshHotbar(); Game.Audio.play('cursor');
+    return true;
+  }
+  // △ボタン: ワンボタンで捨てる。持ち上げ中ならその1個、無ければフォーカス中スロットの1個を破棄
+  function padDrop() {
+    const sc = document.getElementById('inv-screen');
+    if (!sc || sc.classList.contains('hidden')) return false; // インベントリ画面でのみ
+    let cur, nm;
+    if (invHeld) {
+      cur = invHeld; nm = (cur.roll && Game.Loot.displayName) ? Game.Loot.displayName(cur) : (Game.ITEMS[cur.id] ? Game.ITEMS[cur.id].name : cur.id);
+      cur.count--; if (cur.count <= 0) invHeld = null;
+      renderHeldBadge();
+    } else {
+      const idx = invSelected; if (idx == null || idx < 0) return false;
+      cur = Game.Inventory.slots()[idx]; if (!cur) return false;
+      nm = (cur.roll && Game.Loot.displayName) ? Game.Loot.displayName(cur) : (Game.ITEMS[cur.id] ? Game.ITEMS[cur.id].name : cur.id);
+      cur.count--; if (cur.count <= 0) { Game.Inventory.slots()[idx] = null; invSelected = -1; }
+    }
+    Game.Audio.play('select'); toast('捨てた: ' + nm);
+    refreshInventory(); refreshHotbar();
     return true;
   }
   function invPointerMove(e) {
@@ -2407,6 +2443,7 @@ Game.UI = (function () {
     n.classList.add('pad-focus');
     const r = n.getBoundingClientRect();
     padLastPt = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    if (invHeld) updateHeldCursorPos(); // 持ち上げ中アイコンをフォーカス(カーソル)へ追従
     try { n.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch (e) {}
     // コントローラ: インベントリ格子にカーソルを合わせたらそのアイテムの詳細を表示
     if (n.classList.contains('slot') && n.parentElement && n.parentElement.id === 'inv-grid' && n.dataset.index != null) {
@@ -2518,6 +2555,6 @@ Game.UI = (function () {
     showLore, closeLore, refreshQuest, openQuest, closeQuest, refreshBounty, showEnding, showDeath, showIntro, refreshNet, refreshStatus,
     toggleOptions, openEnchant, closeEnchant, flashSave, flashHotbarItem, flashCombo, refreshContext, refreshAmmo,
     toggleBigMap, isBigMapOpen, updateBigMap, openStats, closeStats, toggleStats, renderStats, refreshBossBar, openTrade, closeTrade, openShop, openStory, closeStory, openWaypoints, closeWaypoints, shakeHealthBar,
-    padNav, padMenuRoot, padActivateEl, padGrab, padGrabReturn, isHoldingItem,
+    padNav, padMenuRoot, padActivateEl, padGrab, padGrabReturn, padDrop, isHoldingItem,
   };
 })();

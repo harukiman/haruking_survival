@@ -461,9 +461,19 @@ body.shadow-mode #app::after {
 .grid .slot { touch-action: none; }
 .inv-quest { background: rgba(80,66,30,0.4); border: 1px solid #6a5a2a; color: #ffe9a0; font-size: .82rem;
   padding: 7px 10px; border-radius: 8px; margin-bottom: 10px; }
+/* コントローラ操作ヒント: パッド接続時のみ表示(body.has-pad) */
+#inv-pad-hint { display: none; background: rgba(16,24,42,0.7); border: 1px solid #2a3a56; color: #9fb6d0;
+  font-size: .76rem; padding: 6px 10px; border-radius: 8px; margin-bottom: 10px; line-height: 1.5; }
+.has-pad #inv-pad-hint { display: block; }
 .drag-ghost { position: fixed; z-index: 80; pointer-events: none; width: 46px; height: 46px;
   transform: translate(-50%, -50%); opacity: 0.85; }
 .drag-ghost .icon { width: 30px; height: 30px; }
+/* 持ち上げ中に「カーソル(フォーカス)へ沿う」小アイコン。掴んでいることを一目で伝える */
+.held-cursor { width: 30px; height: 30px; z-index: 82; opacity: 0.95;
+  filter: drop-shadow(0 2px 5px rgba(0,0,0,0.6)); animation: heldBob 0.9s ease-in-out infinite; }
+.held-cursor .icon { width: 26px; height: 26px; }
+.held-cursor .cnt { font-size: .62rem; }
+@keyframes heldBob { 0%,100% { transform: translate(-50%,-50%); } 50% { transform: translate(-50%,-58%); } }
 .inv-discard { background: #7a2f3a !important; border-color: #c0505a !important; }
 .chest-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
 /* バーツ商館/旅商人 トレード */

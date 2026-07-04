@@ -94,32 +94,40 @@ Game.Combat = (function () {
     const mobs = Game.state.mobs;
     // 飛ぶ斬撃などの projectile 武器: 標的の有無に関わらず発射
     const _slot = Game.Inventory.selectedSlot(), _def = _slot && Game.ITEMS[_slot.id];
-    // 流星召喚武器（流星の杖）: 範囲内の最寄り敵の頭上へ流星を落とす。敵が居なければ向いた先へ
+    // 流星召喚武器（流星の杖）: カーソルで指定した地点へ流星を落とす。カーソル未使用なら範囲内最寄り敵/向いた先へ
     if (_def && _def.strike) {
       if (!Game.Player.spendMana(_def.mpCost || 18)) { if (Game.state.tick % 30 === 0) Game.UI.toast('マナが足りない'); return true; }
       const stk = _def.strike;
-      const reach = (stk.range || 9) * TS;
-      let bm = null, bd = Infinity;
-      for (let i = 0; i < mobs.length; i++) { const m = mobs[i]; if (m.def.friendly) continue; const d = Math.hypot(m.x - p.x, m.y - p.y); if (d <= reach && d < bd) { bd = d; bm = m; } }
       let tx2, ty2;
-      if (bm) { tx2 = bm.x; ty2 = bm.y; }
-      else { let dx2 = 0, dy2 = 0; if (p.dir === 'up') dy2 = -1; else if (p.dir === 'down') dy2 = 1; else if (p.dir === 'left') dx2 = -1; else dx2 = 1; tx2 = p.x + dx2 * 4 * TS; ty2 = p.y + dy2 * 4 * TS; }
+      const it = Game.Input.intent;
+      if (it && it.usePointer && it.mouseTile) { tx2 = it.mouseTile.tx * TS + TS / 2; ty2 = it.mouseTile.ty * TS + TS / 2; }
+      else {
+        const reach = (stk.range || 9) * TS;
+        let bm = null, bd = Infinity;
+        for (let i = 0; i < mobs.length; i++) { const m = mobs[i]; if (m.def.friendly) continue; const d = Math.hypot(m.x - p.x, m.y - p.y); if (d <= reach && d < bd) { bd = d; bm = m; } }
+        if (bm) { tx2 = bm.x; ty2 = bm.y; }
+        else { let dx2 = 0, dy2 = 0; if (p.dir === 'up') dy2 = -1; else if (p.dir === 'down') dy2 = 1; else if (p.dir === 'left') dx2 = -1; else dx2 = 1; tx2 = p.x + dx2 * 4 * TS; ty2 = p.y + dy2 * 4 * TS; }
+      }
       Game.Projectiles.callMeteor(tx2, ty2, Math.round(Game.Player.effAttack(stk.dmg) * Game.Player.magicPower()), stk.radius);
       if (_def.wsfx) Game.Audio.play(_def.wsfx); else Game.Audio.play('swing');
       Game.Render.spawnSlash(p.x, p.y, p.dir, '#ffb24a');
       p.attackCd = stk.cd || Game.Player.attackCooldown();
       return true;
     }
-    // 渦召喚武器（渦の杖）: 範囲内最寄り敵の位置に渦を生む。無標的なら向いた先
+    // 渦召喚武器（渦の杖）: カーソルで指定した地点に渦を生む。カーソル未使用なら範囲内最寄り敵/向いた先
     if (_def && _def.vortex) {
       if (!Game.Player.spendMana(_def.mpCost || 22)) { if (Game.state.tick % 30 === 0) Game.UI.toast('マナが足りない'); return true; }
       const vx = _def.vortex;
-      const reach = (vx.range || 8) * TS;
-      let bm = null, bd = Infinity;
-      for (let i = 0; i < mobs.length; i++) { const m = mobs[i]; if (m.def.friendly) continue; const d = Math.hypot(m.x - p.x, m.y - p.y); if (d <= reach && d < bd) { bd = d; bm = m; } }
       let tx2, ty2;
-      if (bm) { tx2 = bm.x; ty2 = bm.y; }
-      else { let dx2 = 0, dy2 = 0; if (p.dir === 'up') dy2 = -1; else if (p.dir === 'down') dy2 = 1; else if (p.dir === 'left') dx2 = -1; else dx2 = 1; tx2 = p.x + dx2 * 4 * TS; ty2 = p.y + dy2 * 4 * TS; }
+      const it = Game.Input.intent;
+      if (it && it.usePointer && it.mouseTile) { tx2 = it.mouseTile.tx * TS + TS / 2; ty2 = it.mouseTile.ty * TS + TS / 2; }
+      else {
+        const reach = (vx.range || 8) * TS;
+        let bm = null, bd = Infinity;
+        for (let i = 0; i < mobs.length; i++) { const m = mobs[i]; if (m.def.friendly) continue; const d = Math.hypot(m.x - p.x, m.y - p.y); if (d <= reach && d < bd) { bd = d; bm = m; } }
+        if (bm) { tx2 = bm.x; ty2 = bm.y; }
+        else { let dx2 = 0, dy2 = 0; if (p.dir === 'up') dy2 = -1; else if (p.dir === 'down') dy2 = 1; else if (p.dir === 'left') dx2 = -1; else dx2 = 1; tx2 = p.x + dx2 * 4 * TS; ty2 = p.y + dy2 * 4 * TS; }
+      }
       Game.Projectiles.callVortex(tx2, ty2, Math.round(Game.Player.effAttack(vx.dmg) * Game.Player.magicPower()), vx.radius, vx.dur);
       Game.Audio.play('whirl');
       Game.Render.spawnSlash(p.x, p.y, p.dir, '#b66ad0');
