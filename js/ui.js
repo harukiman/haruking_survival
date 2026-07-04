@@ -636,7 +636,10 @@ Game.UI = (function () {
       types.forEach(function (id) {
         const m = Game.MOBS[id], got = best[id];
         if (!got) { lockedCount++; return; }
-        const info = '<br><span class="ach-d">撃破 ' + best[id] + ' 体' + (m.boss ? '・ボス' : (m.hostile ? '' : '・非敵対')) + ' ｜ HP ' + m.hp + (m.hostile ? '・攻 ' + (m.dmg || 0) : '') + '</span>' + dropNames(m);
+        // ボス/中ボス: 固有ドロップ確定(pity)までの進捗を表示。3体討伐ごとに固有装備確定
+        let pity = '';
+        if (m.boss || m.midboss) { const hasUnique = (m.drops || []).some(function (d) { const it = Game.ITEMS[d.item]; return d.n[0] === 0 && it && (it.tool || it.armor != null || it.relic); }); if (hasUnique) { const rem = 3 - (best[id] % 3); pity = '<br><span class="ach-d" style="color:#ffd86b">🎁 固有装備の確定まで あと ' + (rem === 3 ? 3 : rem) + ' 体</span>'; } }
+        const info = '<br><span class="ach-d">撃破 ' + best[id] + ' 体' + (m.boss ? '・ボス' : (m.hostile ? '' : '・非敵対')) + ' ｜ HP ' + m.hp + (m.hostile ? '・攻 ' + (m.dmg || 0) : '') + '</span>' + pity + dropNames(m);
         h += '<div class="ach-row got"><span class="ach-mk">' + (m.boss ? '👑' : '☠') + '</span><div><b>' + m.name + '</b>' + info + '</div></div>';
       });
       if (lockedCount > 0) h += '<div class="ach-row"><span class="ach-mk">❔</span><div><b>未発見 ' + lockedCount + ' 種</b><br><span class="ach-d" style="opacity:.7">世界のどこかに潜んでいる…</span></div></div>';
