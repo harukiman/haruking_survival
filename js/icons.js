@@ -36,6 +36,7 @@ Game.Icons = (function () {
     if (id === 'rocket') return 'rocket';
     if (def.respec) return 'book';
     if (def.throw) return 'bomb';
+    if (id === 'powder_keg' || /_keg$/.test(id)) return 'bomb'; // 火薬樽は爆弾系アイコン(place判定より前)
     if (def.plant != null) return 'material';
     if (def.cures || def.heal != null || def.buff) return 'potion';
     if (def.food != null) return 'food';

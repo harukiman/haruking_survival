@@ -220,7 +220,7 @@ Game.Survival = (function () {
     return true; // ダメージ成立
   }
 
-  const CAUSE_LABEL = { starve: '餓死', sanity: '正気の崩壊', status: '状態異常', thorns: '棘の反射', mob: '魔物の襲撃', cold: '凍死', sand: '砂嵐', storm: '落雷', drown: '溺死', wreck: '乗り物の爆発', nuke: '戦術核の直撃', fallout: '死の灰' };
+  const CAUSE_LABEL = { starve: '餓死', sanity: '正気の崩壊', status: '状態異常', thorns: '棘の反射', mob: '魔物の襲撃', cold: '凍死', sand: '砂嵐', storm: '落雷', drown: '溺死', wreck: '乗り物の爆発', nuke: '戦術核の直撃', fallout: '死の灰', blast: '爆発に巻き込まれた' };
   // 死亡時にバーツを守る手段(守銭の護符)を所持/装備しているか
   function hasBtsGuard() {
     const p = Game.state.player;

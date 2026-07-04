@@ -75,6 +75,7 @@ Game.OBJ = {
   // 建築・農業の拡張
   STONE_WALL:167, HEDGE:168, FOUNTAIN:169, LANTERN_POST:170, FLOWERBED:171, SCARECROW:172, WOOD_STAIRS:173, TRELLIS:174,
   EXIT_PORTAL:175, GARAGE_DOOR:176, LANDING_PAD:177,
+  POWDER_KEG:178,
 };
 
 // 地面の色（手続き描画のベース）
@@ -272,6 +273,7 @@ Game.OBJ_META = {
   [Game.OBJ.BANNER]:     { name:'旗', solid:false, mineable:true, tool:null, tier:0, hp:2, drops:[{item:'banner', n:[1,1]}], render:'banner' },
   [Game.OBJ.BRAZIER]:    { name:'かがり火', solid:false, mineable:true, tool:null, tier:0, hp:3, light:9, drops:[{item:'brazier', n:[1,1]}], render:'brazier', cook:true },
   [Game.OBJ.BARREL]:     { name:'樽', solid:true, mineable:true, tool:null, tier:0, hp:3, drops:[{item:'barrel', n:[1,1]}], render:'barrel' },
+  [Game.OBJ.POWDER_KEG]: { name:'火薬樽', solid:true, mineable:true, tool:null, tier:0, hp:5, drops:[{item:'powder_keg', n:[1,1]}], render:'powderkeg', keg:true },
   [Game.OBJ.POTTED_PLANT]:{ name:'植木鉢', solid:false, mineable:true, tool:null, tier:0, hp:2, drops:[{item:'potted_plant', n:[1,1]}], render:'potted' },
   // ===== 空島(スカイエンクレーブ) =====
   // 風の祭壇: 空島への門(破壊不可)。風の羽根を持って傍らに立つと空へ昇る
@@ -551,6 +553,7 @@ Game.ITEMS = {
   banner:        { name:'旗', stack:16, color:'#b03040', place:Game.OBJ.BANNER },
   brazier:       { name:'かがり火', stack:16, color:'#ff8a3a', place:Game.OBJ.BRAZIER },
   barrel:        { name:'樽', stack:16, color:'#8a5a30', place:Game.OBJ.BARREL },
+  powder_keg:    { name:'火薬樽', stack:16, color:'#9a4a2a', place:Game.OBJ.POWDER_KEG, flavor:'火や爆風で大爆発する樽。設置して離れてから火を放て。近くの火薬樽へ連鎖する。採掘なら安全に回収できる。' },
   potted_plant:  { name:'植木鉢', stack:16, color:'#7a9a4a', place:Game.OBJ.POTTED_PLANT },
   // 建築拡張
   stone_wall:    { name:'石壁', stack:99, color:'#9a9ea2', place:Game.OBJ.STONE_WALL },
@@ -816,6 +819,7 @@ Game.RECIPES = [
   { out:{id:'banner', n:1}, in:{string:2, wood:1}, station:'crafting_table' },
   { out:{id:'brazier', n:1}, in:{stone:3, coal:1}, station:'crafting_table' },
   { out:{id:'barrel', n:1}, in:{wood:4}, station:'crafting_table' },
+  { out:{id:'powder_keg', n:1}, in:{gunpowder:3, wood:2, iron:1}, station:'crafting_table' },
   { out:{id:'potted_plant', n:1}, in:{wood:1, flower:1}, station:'crafting_table' },
   { out:{id:'unity_core', n:1}, in:{shadow_core:3, lumen:10, shadow_crystal:10}, station:'crafting_table' }, // 世界統合
   // 建築・自由度
@@ -1271,7 +1275,7 @@ Game.ITEM_GLYPH = {
   glock17:'🔫', mp5:'🔫', m4:'🔫', ak47:'🔫', m870:'🔫', barrett:'🎯', rpg7:'🚀',
   rocket:'🚀', star_metal:'🌟', star_core:'💫', cosmic_blade:'🌠', star_cannon:'🔫', gravity_boots:'👢',
   warp_staff:'🪄', flame_staff:'🔥', frost_staff:'❄️', meteor_staff:'☄️', vortex_staff:'🌀', flying_carpet:'🧞', grapple_hook:'🪝', stasis_glass:'⏳',
-  healing_totem:'⛲', street_lamp:'🪔', table:'🪑', chair:'🪑', bookshelf:'📚', glass:'🪟', rug:'🟥', banner:'🚩', brazier:'🔥', barrel:'🛢️', potted_plant:'🪴',
+  healing_totem:'⛲', street_lamp:'🪔', table:'🪑', chair:'🪑', bookshelf:'📚', glass:'🪟', rug:'🟥', banner:'🚩', brazier:'🔥', barrel:'🛢️', powder_keg:'🧨', potted_plant:'🪴',
   chitin:'🦂', bone_club:'🦴', gold_sword:'⚔️', war_hammer:'🔨', crystal_blade:'⚔️', chitin_spear:'🔱',
   gold_helmet:'⛑️', gold_chest:'🛡️', crystal_helmet:'🪖', crystal_chest:'🛡️', star_helmet:'⛑️', chitin_armor:'🦺',
   sand_greatsword:'⚔️', magma_hammer:'🔨', pharaoh_crown:'👑', mind_tome:'📖', wisdom_tome:'📗', xp_orb:'🔮', expand_pouch:'🎒',

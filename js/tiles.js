@@ -132,7 +132,7 @@ Game.Tiles = (function () {
   }
 
   // 立ちオブジェクトの接地影（チャンクキャッシュにベイク＝毎フレーム負荷ゼロ）
-  const standing = { tree: 1, deadtree: 1, pine: 1, rock: 1, ore: 1, bush: 1, berry: 1, cactus: 1, flower: 1, sapling: 1, shadowtree: 1, shadowcrystal: 1, lumenore: 1, soulflower: 1, voidrock: 1, starore: 1, giantshroom: 1, glowshroom: 1, pmushroom: 1, obsidian: 1, sulfur: 1, barrel: 1, potted: 1, totem: 1, streetlamp: 1, torch: 1, lantern: 1, brazier: 1, stela: 1, sign: 1, campfire: 1, rocket_obj: 1, lumenlantern: 1, banner: 1, chair: 1, skytree: 1, skypillar: 1, windaltar: 1, returnaltar: 1, ancientgate: 1, returngate: 1, ruincolumn: 1, ruinstatue: 1, rifttear: 1, riftreturn: 1, riftspire: 1, waypoint: 1, stonewall: 1, hedge: 1, fountain: 1, lanternpost: 1, flowerbed: 1, scarecrow: 1, woodstairs: 1, trellis: 1, exitportal: 1, garagedoor: 1, landingpad: 1 };
+  const standing = { tree: 1, deadtree: 1, pine: 1, rock: 1, ore: 1, bush: 1, berry: 1, cactus: 1, flower: 1, sapling: 1, shadowtree: 1, shadowcrystal: 1, lumenore: 1, soulflower: 1, voidrock: 1, starore: 1, giantshroom: 1, glowshroom: 1, pmushroom: 1, obsidian: 1, sulfur: 1, barrel: 1, powderkeg: 1, potted: 1, totem: 1, streetlamp: 1, torch: 1, lantern: 1, brazier: 1, stela: 1, sign: 1, campfire: 1, rocket_obj: 1, lumenlantern: 1, banner: 1, chair: 1, skytree: 1, skypillar: 1, windaltar: 1, returnaltar: 1, ancientgate: 1, returngate: 1, ruincolumn: 1, ruinstatue: 1, rifttear: 1, riftreturn: 1, riftspire: 1, waypoint: 1, stonewall: 1, hedge: 1, fountain: 1, lanternpost: 1, flowerbed: 1, scarecrow: 1, woodstairs: 1, trellis: 1, exitportal: 1, garagedoor: 1, landingpad: 1 };
   function contactShadow(x, rx) {
     x.fillStyle = 'rgba(0,0,0,0.22)';
     x.beginPath(); x.ellipse(TS / 2, TS - 4, rx || 10, 3.2, 0, 0, Math.PI * 2); x.fill();
@@ -433,6 +433,15 @@ Game.Tiles = (function () {
       x.fillStyle = '#8a6030'; x.fillRect(7, 6, TS - 14, TS - 10);
       x.strokeStyle = '#3a2814'; x.lineWidth = 2; for (let yy = 9; yy < TS - 4; yy += 7) { x.beginPath(); x.moveTo(6, yy); x.lineTo(TS - 6, yy); x.stroke(); }
       x.fillStyle = '#9c6b3f'; x.fillRect(TS / 2 - 1, 5, 2, TS - 8);
+    } else if (r === 'powderkeg') {
+      x.fillStyle = '#6a3420'; x.fillRect(6, 5, TS - 12, TS - 8);
+      x.fillStyle = '#8a4226'; x.fillRect(7, 6, TS - 14, TS - 10);
+      x.strokeStyle = '#2a1810'; x.lineWidth = 2; for (let yy = 9; yy < TS - 4; yy += 7) { x.beginPath(); x.moveTo(6, yy); x.lineTo(TS - 6, yy); x.stroke(); }
+      x.fillStyle = '#3a2414'; x.fillRect(TS / 2 - 1, 5, 2, TS - 8);
+      // どくろ印(危険)＋導火線
+      x.fillStyle = '#e8d8b0'; circle(x, TS / 2, TS / 2, 3.2);
+      x.fillStyle = '#6a3420'; circle(x, TS / 2 - 1.2, TS / 2 - 0.5, 0.7); circle(x, TS / 2 + 1.2, TS / 2 - 0.5, 0.7);
+      x.strokeStyle = '#c8a060'; x.lineWidth = 1.4; x.beginPath(); x.moveTo(TS / 2 + 4, 6); x.quadraticCurveTo(TS - 6, 2, TS - 4, 6); x.stroke();
     } else if (r === 'potted') {
       x.fillStyle = '#a0623a'; x.beginPath(); x.moveTo(TS / 2 - 7, TS - 5); x.lineTo(TS / 2 + 7, TS - 5); x.lineTo(TS / 2 + 5, TS - 13); x.lineTo(TS / 2 - 5, TS - 13); x.closePath(); x.fill();
       x.fillStyle = '#3c8a2e'; circle(x, TS / 2, TS - 16, 6); x.fillStyle = '#4fae3a'; circle(x, TS / 2 - 3, TS - 18, 3);

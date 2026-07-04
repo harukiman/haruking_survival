@@ -386,7 +386,7 @@ Game.World = (function () {
   [Game.OBJ.TREE, Game.OBJ.PINE_TREE, Game.OBJ.DEAD_TREE, Game.OBJ.BUSH, Game.OBJ.BERRY_BUSH, Game.OBJ.FLOWER,
    Game.OBJ.SHADOW_TREE, Game.OBJ.GIANT_MUSHROOM, Game.OBJ.GLOW_SHROOM, Game.OBJ.POISON_MUSHROOM,
    Game.OBJ.WOOD_BLOCK, Game.OBJ.FENCE, Game.OBJ.DOOR, Game.OBJ.WOOD_FLOOR, Game.OBJ.BRIDGE, Game.OBJ.SIGN,
-   Game.OBJ.SAPLING, Game.OBJ.BED, Game.OBJ.CRAFTING_TABLE].forEach(function (o) { if (o != null) FLAMMABLE_OBJ[o] = 1; });
+   Game.OBJ.SAPLING, Game.OBJ.BED, Game.OBJ.CRAFTING_TABLE, Game.OBJ.POWDER_KEG].forEach(function (o) { if (o != null) FLAMMABLE_OBJ[o] = 1; });
   const WOODY = {};
   [Game.OBJ.TREE, Game.OBJ.PINE_TREE, Game.OBJ.DEAD_TREE, Game.OBJ.SHADOW_TREE, Game.OBJ.WOOD_BLOCK, Game.OBJ.FENCE, Game.OBJ.DOOR, Game.OBJ.WOOD_FLOOR, Game.OBJ.BRIDGE].forEach(function (o) { if (o != null) WOODY[o] = 1; });
   const FLAMMABLE_GROUND = {};
@@ -407,7 +407,9 @@ Game.World = (function () {
     for (let i = 0; i < fires.length; i++) if (fires[i].tx === tx && fires[i].ty === ty) return false;
     const kind = tileFlammable(tx, ty); if (!kind) return false;
     const isObj = kind === 'obj';
-    fires.push({ tx: tx, ty: ty, t: isObj ? (90 + ((tx * 7 + ty * 13) & 31)) : (40 + ((tx * 5 + ty * 11) & 15)), obj: isObj });
+    const keg = objAt(tx, ty) === Game.OBJ.POWDER_KEG;
+    // 火薬樽は短い導火線(約1.2秒)で爆発。それ以外は木質=長め/草=短め
+    fires.push({ tx: tx, ty: ty, t: keg ? 36 : isObj ? (90 + ((tx * 7 + ty * 13) & 31)) : (40 + ((tx * 5 + ty * 11) & 15)), obj: isObj, keg: keg });
     return true;
   }
   // 火属性攻撃/爆発の発火: 中心タイル＋周囲(半径)を確率で発火
@@ -464,6 +466,18 @@ Game.World = (function () {
       }
       if (f.t <= 0) {
         const o = objAt(f.tx, f.ty);
+        if (o === Game.OBJ.POWDER_KEG || f.keg) {
+          // 火薬樽の爆発: 導火線が尽きたら大爆発。爆風が周囲の火薬樽を発火させ連鎖する
+          setObj(f.tx, f.ty, Game.OBJ.NONE);
+          if (Game.Net && Game.Net.broadcastEdit) Game.Net.broadcastEdit(f.tx, f.ty, Game.OBJ.NONE, Game.state.worldName);
+          fires.splice(i, 1);
+          const kx = f.tx * TS + TS / 2, ky = f.ty * TS + TS / 2, KR = 3.2 * TS;
+          if (Game.Projectiles && Game.Projectiles.explode) Game.Projectiles.explode(kx, ky, 3.2, 90, 'fire');
+          // 爆風はプレイヤーも巻き込む(距離減衰・乗車中は機体が肩代わり)
+          const pl = Game.state.player, pd = Math.hypot(pl.x - kx, pl.y - ky);
+          if (pd <= KR) Game.Survival.damage(Math.max(6, Math.round(80 * (1 - pd / KR))), 'blast');
+          continue;
+        }
         if (FLAMMABLE_OBJ[o]) {
           setObj(f.tx, f.ty, Game.OBJ.NONE);
           if (Game.Net && Game.Net.broadcastEdit) Game.Net.broadcastEdit(f.tx, f.ty, Game.OBJ.NONE, Game.state.worldName);
