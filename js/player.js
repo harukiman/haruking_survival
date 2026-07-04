@@ -387,10 +387,17 @@ Game.Player = (function () {
 
     // 幻影鉱脈は正気度が低いときだけ掘れる
     if (meta.phantom && Game.state.sanity >= 40) { mining.active = false; return; }
+    // マイクラ踏襲: ツルハシが要る対象(石/鉱石)は素手では掘れない。上位素材は上位ツルハシが要る
+    const selT = Game.Inventory.selectedItemDef();
+    if (meta.tool === 'pickaxe' && !(selT && selT.tool === 'pickaxe')) {
+      mining.active = false; mining.progress = 0;
+      if (Game.state.tick % 30 === 0) Game.UI.toast('ツルハシが必要だ（素手で石は掘れない）。木を集めて木のツルハシを作ろう');
+      return;
+    }
     const tierUsed = toolTierFor(meta.tool);
     if (tierUsed < meta.tier) {
       mining.active = false; mining.progress = 0;
-      if (Game.state.tick % 30 === 0) Game.UI.toast('もっと良い道具が必要');
+      if (Game.state.tick % 30 === 0) Game.UI.toast(meta.tier >= 3 ? '更に上位のツルハシが必要' : 'もっと良い道具（上位のツルハシ）が必要');
       return;
     }
     if (mining.tx !== t.tx || mining.ty !== t.ty || mining.obj !== obj) {
