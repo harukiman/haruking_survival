@@ -396,6 +396,8 @@ Game.World = (function () {
   }
   function igniteTile(tx, ty) {
     if (!Game.state.fires) Game.state.fires = [];
+    const wt = Game.state.weather && Game.state.weather.type;
+    if (wt === 'storm') return false; // 豪雨(雷雨)の中では火は着かない
     const fires = Game.state.fires;
     if (fires.length >= FIRE_CAP) return false;
     for (let i = 0; i < fires.length; i++) if (fires[i].tx === tx && fires[i].ty === ty) return false;
@@ -415,14 +417,30 @@ Game.World = (function () {
     }
     return n;
   }
+  // 一定範囲の火を消火(じょうろ/雨など)。消したタイル数を返す
+  function extinguish(cx, cy, radiusTiles) {
+    const fires = Game.state.fires; if (!fires || !fires.length) return 0;
+    const TS = Game.CFG.TILE_SIZE, ctx = Math.floor(cx / TS), cty = Math.floor(cy / TS), R = radiusTiles || 2;
+    let n = 0;
+    for (let i = fires.length - 1; i >= 0; i--) {
+      const f = fires[i];
+      if (Math.abs(f.tx - ctx) <= R && Math.abs(f.ty - cty) <= R) {
+        if (Game.Render.spawnParticles) Game.Render.spawnParticles(f.tx * TS + TS / 2, f.ty * TS + TS / 2, '#bcdcef', 6);
+        fires.splice(i, 1); n++;
+      }
+    }
+    return n;
+  }
   function updateFire() {
     const fires = Game.state.fires; if (!fires || !fires.length) return;
     const TS = Game.CFG.TILE_SIZE, tick = Game.state.tick, p = Game.state.player, mobs = Game.state.mobs;
     const pTx = Math.floor(p.x / TS), pTy = Math.floor(p.y / TS);
-    const spreadPhase = tick % 3 === 0, dmgPhase = tick % 12 === 0;
+    const wt = Game.state.weather && Game.state.weather.type;
+    const wet = wt === 'rain' || wt === 'storm' || wt === 'snow'; // 雨/雷雨/雪は鎮火を早め延焼を止める
+    const spreadPhase = tick % 3 === 0 && !wet, dmgPhase = tick % 12 === 0;
     for (let i = fires.length - 1; i >= 0; i--) {
       const f = fires[i];
-      f.t--;
+      f.t -= wet ? 4 : 1; // 雨天は急速に鎮火
       if ((tick & 3) === (i & 3) && Game.Render.spawnParticles) Game.Render.spawnParticles(f.tx * TS + TS / 2 + (Math.random() - 0.5) * TS * 0.6, f.ty * TS + TS * 0.4, Math.random() < 0.5 ? '#ff8a3c' : '#ffd24a', 1);
       if (dmgPhase) {
         if (pTx === f.tx && pTy === f.ty && !p.vehicle) { if (Game.Status && Game.Status.add) Game.Status.add('burn', 72); else Game.Survival.damage(3, 'status'); }
@@ -455,7 +473,7 @@ Game.World = (function () {
 
   return {
     Chunk, getChunk, groundAt, objAt, setObj, setGround,
-    ignite, igniteTile, updateFire,
+    ignite, igniteTile, updateFire, extinguish,
     getTileData, setTileData, clearTileData,
     isWalkable, updateChunks, toChunkCoord, rescueStuck: nudgeToWalkable,
     setActiveWorld, shift, setObjBothWorlds, resonate, depthOf, inDepths, isSheltered, blastTerrain, travelTo,

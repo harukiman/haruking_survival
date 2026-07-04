@@ -701,7 +701,10 @@ Game.Player = (function () {
       const d = Game.World.getTileData(tx, ty);
       if (d && d.crop && d.crop.stage < 3) { d.crop.stage++; d.crop.timer = 0; n++; if (Game.Render.spawnParticles) Game.Render.spawnParticles(tx * TS + TS / 2, ty * TS + TS / 2, '#7fb8d8', 5); }
     }
-    if (n > 0) { Game.Audio.play('place'); Game.UI.toast('水をやった — ' + n + '株が育った'); }
+    // じょうろは火消しにも使える(世界の反応性: 水で延焼を止める)
+    const doused = Game.World.extinguish ? Game.World.extinguish(p.x, p.y, 2) : 0;
+    if (n > 0) { Game.Audio.play('place'); Game.UI.toast('水をやった — ' + n + '株が育った' + (doused ? '（火も消した）' : '')); }
+    else if (doused > 0) { Game.Audio.play('place'); Game.UI.toast('水をかけて火を消した — ' + doused + 'か所'); }
     else Game.UI.toast('近くに育つ作物がない');
   }
 
