@@ -337,6 +337,16 @@ Game.Mobs = (function () {
     return n;
   }
 
+  // ボスの色から弾幕の属性を推定(赤=炎/青=氷/緑=毒/他=呪)。ボスごとの個性を安価に付与
+  function bossElement(hex) {
+    if (typeof hex !== 'string' || hex[0] !== '#' || hex.length < 7) return 'hex';
+    const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+    if (r > g + 30 && r > b + 30) return 'fire';
+    if (b > r + 30 && b > g + 10) return 'frost';
+    if (g > r + 20 && g > b + 20) return 'venom';
+    return 'hex';
+  }
+
   // 反射の盾核(reflect_aegis): 受けたダメージの一定割合を攻撃元モブへ跳ね返す。ボスにも有効。
   function reflectShield(m, rawDmg, p) {
     if (!p || !p.gearReflect || p.gearReflect <= 0 || !m || m.hp <= 0) return;
@@ -565,7 +575,7 @@ Game.Mobs = (function () {
             if (Game.state.tick % 4 === 0) Game.Render.spawnParticles(m.x, m.y - m.def.size * 0.3, '#c884f0', 2);
             if (m.volleyAim <= 0) {
               m.volleyAim = null; m.volleyCd = m.enraged ? 100 : 170;
-              Game.Projectiles.enemyVolley(m, Math.round((m.dmg || m.def.dmg) * 0.7), 'hex', m.enraged ? 7 : 5, 0.65);
+              Game.Projectiles.enemyVolley(m, Math.round((m.dmg || m.def.dmg) * 0.7), bossElement(m.def.color), m.enraged ? 7 : 5, 0.65);
             }
             m.hopPhase += 0.2; continue; // 詠唱中は静止(回避猶予)
           }
