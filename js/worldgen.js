@@ -322,9 +322,9 @@ Game.WorldGen = (function () {
       const DG = 74;
       const ax = Math.round(wx / DG) * DG, ay = Math.round(wy / DG) * DG;
       if (U.hash3(ax, ay, seed + 8888) < 0.085) {
-        // サイズ: 約1/3 を大型(8x6)に。大型は巣2・宝箱複数・柱あり
-        const big = U.hash3(ax, ay, seed + 1212) < 0.34;
-        const hw = big ? 8 : 5, hh = big ? 6 : 4;
+        // サイズを拡大(ユーザー: 狭すぎ→即宝箱で達成感なし)。約半数を大型に。
+        const big = U.hash3(ax, ay, seed + 1212) < 0.5;
+        const hw = big ? 12 : 8, hh = big ? 9 : 6;
         const dx = wx - ax, dy = wy - ay;
         if (Math.abs(dx) <= hw && Math.abs(dy) <= hh) {
           // テーマを地形で決定（雪原は氷窟/水晶洞窟に分岐）
@@ -342,8 +342,11 @@ Game.WorldGen = (function () {
           const innerV = dx === 0 && Math.abs(dy) > 1;
           const innerH = dy === 0 && Math.abs(dx) > 1;
           if (innerV || innerH) return { ground: T.DUNGEON_FLOOR, obj: wall };
-          // 中央ハブに主宝箱
-          if (dx === 0 && dy === 0) return { ground: T.DUNGEON_FLOOR, obj: O.TREASURE_CHEST };
+          // 中央ハブは「守護者の間」: 主宝箱は置かず番人スポナー。宝は各部屋の奥(下記の隅)に配置し、
+          // 入ってすぐ宝に届く問題を解消(まず番人と戦い、迷宮の奥を探索して報酬を得る)
+          if (dx === 0 && dy === 0) return { ground: T.DUNGEON_FLOOR, obj: O.SPAWNER };
+          // ハブ周囲(隣接4マス)にも宝を置かない=即取り防止。番人の間を広く保つ
+          if (Math.abs(dx) + Math.abs(dy) === 1) return { ground: T.DUNGEON_FLOOR, obj: O.NONE };
           // 各部屋(4象限)の奥に特徴物: 宝箱/巣/空 をハッシュで決定
           if (Math.abs(dx) === hw - 2 && Math.abs(dy) === hh - 2) {
             const q = (dx > 0 ? 1 : 0) + (dy > 0 ? 2 : 0);

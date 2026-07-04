@@ -253,7 +253,8 @@ Game.Mobs = (function () {
         let type = null;
         if (Game.state.worldName === 'light' && spObj !== Game.OBJ.BANDIT_SPAWNER && theme && DZ && DZ.DUNGEON_BOSS[theme]) {
           const tb = DZ.DUNGEON_BOSS[theme];
-          if (Math.random() < 0.03 && countType(tb) === 0) type = tb;
+          // 各ダンジョンに番人が居るように出現率を大幅UP(ユーザー: 固有中ボスが居ない)。世界全体で最大3体まで
+          if (Math.random() < 0.14 && countType(tb) < 3) type = tb;
         }
         // 空島の固有ボス「嵐の主」(稀・1体まで)＞ 番人(中ボスD)
         if (!type && Game.state.worldName === 'light' && Game.WorldGen.inSkyEnclave && Game.WorldGen.inSkyEnclave(stx, sty, Game.state.seed)) {
