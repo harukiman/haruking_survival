@@ -961,7 +961,7 @@ Game.SKILL_TREE = [
 ];
 // 上位スキルはより多くのスキルポイントを要求(ユーザー指示)。序盤(tier1-2)は据え置き、tier3以降を段階的に重く。
 // 強力な終盤スキルを"投資"にし、レベリングの目標感を持たせる。desc末尾のコストは UI 側が cost を参照するので自動追従。
-(function () { const C = { 1: 1, 2: 2, 3: 8, 4: 12, 5: 20 }; Game.SKILL_TREE.forEach(function (n) { if (C[n.tier]) n.cost = C[n.tier]; }); })(); // 中上位を2倍以上に(㊳)
+(function () { const C = { 1: 2, 2: 4, 3: 16, 4: 24, 5: 40 }; Game.SKILL_TREE.forEach(function (n) { if (C[n.tier]) n.cost = C[n.tier]; }); })(); // 全スキル必要Pを2倍に(ユーザー指示)
 // ===== スキルツリー大幅拡充(生成): 既存30 + 生成126 = 156ノード。数値は控えめ(インフレ防止) =====
 (function () {
   const T = Game.SKILL_TREE;
