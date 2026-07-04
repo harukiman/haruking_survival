@@ -26,8 +26,13 @@ Game.Mobs = (function () {
     // 通常の敵対もプレイヤーLvで緩やかに強化(成長で雑魚化しすぎない)。+2%/Lv・最大+70%。ダメージは+1.2%/Lv・最大+45%
     const lvHp = (def.hostile && !def.boss && !def.midboss) ? 1 + Math.min(0.7, (plv - 1) * 0.02) : 1;
     const lvDmg = (def.hostile && !def.boss && !def.midboss) ? 1 + Math.min(0.45, (plv - 1) * 0.012) : 1;
-    const hp = Math.round(def.hp * mult * bandMult * bossMult * lvHp);
-    const dmgMult = mult * bandMult * lvDmg * (diff.dmgMult != null ? diff.dmgMult : 1);
+    // 深夜の高ぶり: 光世界の夜、敵対モブは目を光らせ HP/攻撃/速度が明確に上がる。
+    // その代わり撃破時のレア/固有ドロップ期待が上がる(killMob側)。血の月は別途さらに荒れる。
+    const nightAmp = (def.hostile && !def.boss && Game.state.worldName === 'light' && Game.DayNight && Game.DayNight.isNight());
+    const nightHp = nightAmp ? 1.35 : 1;
+    const nightDmg = nightAmp ? 1.25 : 1;
+    const hp = Math.round(def.hp * mult * bandMult * bossMult * lvHp * nightHp);
+    const dmgMult = mult * bandMult * lvDmg * nightDmg * (diff.dmgMult != null ? diff.dmgMult : 1);
     Game.state._mobId = (Game.state._mobId || 0) + 1;
     const m = {
       id: Game.state._mobId, type: type, def: def,
@@ -44,6 +49,8 @@ Game.Mobs = (function () {
       wobble: Math.random() * 6,
       band: band,
       xpMult: (DZ && def.hostile) ? 1 + DZ.XP_PER * bandOver : 1,
+      nightAmped: !!nightAmp, glowEyes: !!nightAmp,
+      nightSpeed: nightAmp ? 1.15 : 1,
     };
     // 精鋭(elite)抽選: 非ボスの敵対モブが低確率で精鋭化（HP/攻撃UP・発光オーラ・確定レアドロップ）
     // 帯別倍率: 安全圏0=精鋭なし / 辺境2倍 / 深域3倍 / 深域+4倍 → 奥地ほど戦利品厳選が捗る
@@ -340,6 +347,7 @@ Game.Mobs = (function () {
     const len = Math.hypot(dx, dy);
     if (len < 0.001) return;
     if (m.eliteSpeedMult) speed *= m.eliteSpeedMult; // 俊足アフィックス
+    if (m.nightSpeed && m.nightSpeed !== 1) speed *= m.nightSpeed; // 深夜の高ぶり
     if (m.dot && m.dot.slow > 0) speed *= 0.55; // 凍えで鈍足
     dx /= len; dy /= len;
     if (Math.abs(dx) > Math.abs(dy)) m.dir = dx < 0 ? 'left' : 'right';
@@ -852,12 +860,14 @@ Game.Mobs = (function () {
       m.def.drops.forEach(function (d) {
         let n = Game.Utils.randInt(Math.random, d.n[0], d.n[1]);
         // ドロップ調整(ユーザー指示): 素材のばら撒きを抑え、固有(稀)ドロップの出現率も下げる
-        if (d.n[0] === 0) { if (n > 0 && Math.random() < 0.45) n = 0; } // 固有/稀ドロップ(n[0]=0)を約45%減
-        else if (n > 1 && Math.random() < 0.35) n -= 1;                  // 通常素材の量を控えめに
+        if (d.n[0] === 0) {
+          const cut = m.nightAmped ? 0.15 : 0.45;     // 深夜は固有/稀ドロップを削りにくい(期待UP)
+          if (n > 0 && Math.random() < cut) n = 0;
+        } else if (n > 1 && Math.random() < 0.35) n -= 1;                  // 通常素材の量を控えめに
         for (let k = 0; k < n; k++) items.push({ id: d.item, count: 1 });
       });
     }
-    const gear = Game.Loot.rollMobDrop(m.def, m.x, m.y);
+    const gear = Game.Loot.rollMobDrop(m.def, m.x, m.y, m.nightAmped ? 0.10 : 0);
     for (let g = 0; g < gear.length; g++) items.push({ id: gear[g].id, count: gear[g].count, roll: gear[g].roll });
     // ボスの固有ドロップを「狙って集められる」手段(ユーザー指示): 撃破を重ねると確定入手。
     // 3回討伐ごとに、そのボス固有の装備(n[0]=0の武器/防具/遺物)を1つ確定ドロップ。再召喚アイテムと合わせ周回可能
@@ -1209,6 +1219,19 @@ Game.Mobs = (function () {
         ctx.fillStyle = m.def.hostile ? '#e33' : '#222';
         const ex = m.dir === 'left' ? -2 : m.dir === 'right' ? 2 : 0;
         ctx.fillRect(-3 + ex, eyeY, 2, 2); ctx.fillRect(2 + ex, eyeY, 2, 2);
+      }
+      // 深夜の高ぶり: 目を爛々と光らせる(加算発光で威圧)。宿主が居る間だけ
+      if (m.glowEyes) {
+        const ex = m.dir === 'left' ? -2 : m.dir === 'right' ? 2 : 0;
+        const gy = (shape === 'orb') ? -r * 0.1 : eyeY;
+        const pulse = 0.6 + Math.sin((Game.state.tick + (m.wobble || 0) * 9) * 0.2) * 0.4;
+        ctx.save(); ctx.globalCompositeOperation = 'lighter';
+        const eg = ctx.createRadialGradient(0, gy, 0, 0, gy, r * 0.9);
+        eg.addColorStop(0, 'rgba(255,90,60,' + (0.5 * pulse).toFixed(3) + ')'); eg.addColorStop(1, 'rgba(255,60,40,0)');
+        ctx.fillStyle = eg; ctx.beginPath(); ctx.arc(0, gy, r * 0.9, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = 'rgba(255,150,120,' + (0.6 + pulse * 0.4).toFixed(3) + ')';
+        ctx.fillRect(-3 + ex, gy - 0.5, 2.4, 2.4); ctx.fillRect(2 + ex, gy - 0.5, 2.4, 2.4);
+        ctx.restore();
       }
       ctx.restore();
       // NPCマーカー

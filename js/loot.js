@@ -206,14 +206,15 @@ Game.Loot = (function () {
   }
 
   // モブ撃破時の装備ドロップ（ground drop配列にpush）
-  function rollMobDrop(def, x, y) {
-    const chance = (def.boss ? 1.0 : 0.07) + lootBonus();
+  function rollMobDrop(def, x, y, luck) {
+    luck = luck || 0; // 深夜の高ぶり等でギアドロップ率＋レアリティを底上げ
+    const chance = (def.boss ? 1.0 : 0.07) + lootBonus() + luck;
     const drops = [];
     const n = def.boss ? 2 : (Math.random() < chance ? 1 : 0);
     const pool = gearPoolFor(def);
     for (let i = 0; i < n; i++) {
       const id = pool[Math.floor(Math.random() * pool.length)];
-      drops.push({ id: id, count: 1, roll: roll(id, lootBonus() + (def.boss ? 0.25 : 0)), x: x + (Math.random() - 0.5) * 16, y: y + (Math.random() - 0.5) * 16 });
+      drops.push({ id: id, count: 1, roll: roll(id, lootBonus() + luck + (def.boss ? 0.25 : 0)), x: x + (Math.random() - 0.5) * 16, y: y + (Math.random() - 0.5) * 16 });
     }
     return drops;
   }

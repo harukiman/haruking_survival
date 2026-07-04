@@ -2052,7 +2052,9 @@ Game.UI = (function () {
   // ミニマップ（周辺地形をダウンサンプル）
   function updateMinimap() {
     if (!mmCtx) return;
-    const size = 120, span = 48; // 48タイル四方
+    // 深夜は探知範囲が広がる: ミニマップの視野を拡大し、強化された敵をより遠くから察知できる
+    const nightSense = Game.DayNight && Game.DayNight.isNight() && Game.state.worldName !== 'shadow';
+    const size = 120, span = nightSense ? 66 : 48;
     const scale = size / span;
     const p = Game.state.player;
     const TS = Game.CFG.TILE_SIZE;
