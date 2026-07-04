@@ -427,8 +427,8 @@ Game.Player = (function () {
       else mineTick();
     } else { mining.active = false; if (mining.progress > 0) mining.progress -= 0.5; }
 
-    // 戦闘機のミサイル: L2(altFire) または PC右クリック(place)で発射。R2/攻撃は機銃。
-    if (p.vehicle === 'jet' && (intent.altFire || intent.place)) { Game.Combat.tryJetMissile(); intent.place = false; }
+    // 航空機のミサイル: L2(altFire) または PC右クリック(place)で発射。戦闘機=直進 / 爆撃機=自動追尾。R2/攻撃は機銃/爆弾。
+    if ((p.vehicle === 'jet' || p.vehicle === 'bomber') && (intent.altFire || intent.place)) { Game.Combat.tryJetMissile(); intent.place = false; }
     // 右クリック/設置ボタン: 対話/設置/使用
     if (intent.place) interact();
     // 開く/使うボタン: 近隣のチェスト等を開く（無ければ通常操作）
@@ -1047,9 +1047,12 @@ Game.Player = (function () {
     if (isCrit) { dmg = Math.round(dmg * (Game.TUNE.CRIT_MULT || 1.8)); Game.Audio.play('crit'); if (Game.Render.shake) Game.Render.shake(5); }
     const cfx = CALIBER_FX[sel.ammo] || null; // 口径別の着弾/薬莢演出(性能不変)
     const ang = Game.Projectiles.aimAngle ? Game.Projectiles.aimAngle() : 0;
+    // ミサイル系の銃(ロックオンランチャー等)は自動追尾＋一定距離で自爆
+    const isMissile = kind === 'missile';
+    const mLife = isMissile ? Math.round((sel.range || 22) * TS / (sel.bspeed || 14)) : 0;
     for (let i = 0; i < pellets; i++) {
       const spr = pellets > 1 ? (Math.random() - 0.5) * (sel.spread || 0.5) : (sel.spread || 0);
-      Game.Projectiles.fire(dmg, kind, { spread: spr, explosive: sel.explosive || 0, speed: sel.bspeed, crit: isCrit, impact: cfx ? cfx.imp : null });
+      Game.Projectiles.fire(dmg, kind, { spread: spr, explosive: sel.explosive || 0, speed: sel.bspeed, crit: isCrit, impact: cfx ? cfx.imp : null, homing: sel.homing, detonateAtEnd: isMissile, life: isMissile ? mLife : undefined });
     }
     p.attackCd = sel.cd || 12;
     if (Game.UI.tipOnce) Game.UI.tipOnce('gun_strafe', '銃は撃ちながら移動できます（ストレイフ）。射撃中は射撃方向が固定されます');

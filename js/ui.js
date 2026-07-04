@@ -1033,10 +1033,11 @@ Game.UI = (function () {
         ammoEl.innerHTML = '🎯 <span style="color:#9fb6d0">機銃</span> <b style="color:' + (b === 0 ? '#e0664a' : '#7fe0a0') + '">' + b + '</b>　🚀 <span style="color:#9fb6d0">ミサイル</span> <b style="color:' + (m === 0 ? '#e0664a' : '#ffb060') + '">' + m + '</b>';
         return;
       }
-      if (p.vehicle === 'bomber') {
+      if (p.vehicle === 'bomber') { // 搭載爆弾(攻撃) と 自動追尾ミサイル(L2) の両方を表示
         const n = Game.Inventory.count('heavy_bomb') + Game.Inventory.count('aerial_bomb');
+        const m = Game.Inventory.count('missile');
         ammoEl.style.display = 'block';
-        ammoEl.innerHTML = '🛩 <span style="color:#9fb6d0">搭載爆弾</span>　残弾 <b style="color:' + (n === 0 ? '#e0664a' : '#7fe0a0') + '">' + n + '</b>' + (n === 0 ? ' <span style="color:#e0664a">弾切れ</span>' : '');
+        ammoEl.innerHTML = '🛩 <span style="color:#9fb6d0">爆弾</span> <b style="color:' + (n === 0 ? '#e0664a' : '#7fe0a0') + '">' + n + '</b>　🚀 <span style="color:#9fb6d0">追尾ミサイル</span> <b style="color:' + (m === 0 ? '#e0664a' : '#ffb060') + '">' + m + '</b>';
         return;
       }
       const aid = VA[p.vehicle];

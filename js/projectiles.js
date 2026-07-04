@@ -80,6 +80,7 @@ Game.Projectiles = (function () {
       if (opts.crit) pr.crit = true;
       if (opts.life) pr.life = opts.life; // 到達距離で自爆させる用の寿命上書き
       if (opts.detonateAtEnd) pr.detonateAtEnd = true; // 命中しなくても寿命(=一定距離)で炸裂(ミサイル)
+      if (opts.homing) { pr.homing = true; pr.ang = ang; } // 最寄りの敵へ自動追尾(ロックオン/爆撃機ミサイル)
       if (opts.jetRound) pr.jetRound = true; // 戦闘機の機首砲弾: 特殊物以外の地形を破壊できる
       if (opts.impact) pr.icol = opts.impact; // 口径別の着弾スパーク色(演出のみ)
       if (opts.pierce || kind === 'slash' || kind === 'pierce' || kind === 'laser') { pr.pierce = true; pr.hits = {}; }
@@ -272,6 +273,19 @@ Game.Projectiles = (function () {
       const pr = arr[i];
       pr.prevX = pr.x; pr.prevY = pr.y;
       if (pr.spin != null) pr.spin += 0.5;
+      // 自動追尾ミサイル: 最寄りの敵へ最大旋回速度で機首を向ける(索敵圏内のみ)。敵が居なければ直進
+      if (pr.homing && !pr.hostile) {
+        let bm = null, bd = Infinity;
+        for (let m = 0; m < mobs.length; m++) { const mo = mobs[m]; if (mo.def.friendly) continue; const d = Math.hypot(mo.x - pr.x, mo.y - pr.y); if (d < bd) { bd = d; bm = mo; } }
+        if (bm && bd < 24 * TS) {
+          const sp = Math.hypot(pr.vx, pr.vy) || 1;
+          const desired = Math.atan2(bm.y - pr.y, bm.x - pr.x);
+          let cur = Math.atan2(pr.vy, pr.vx);
+          let diff = desired - cur; while (diff > Math.PI) diff -= Math.PI * 2; while (diff < -Math.PI) diff += Math.PI * 2;
+          const TURN = 0.2; cur += Math.max(-TURN, Math.min(TURN, diff));
+          pr.vx = Math.cos(cur) * sp; pr.vy = Math.sin(cur) * sp; pr.ang = cur;
+        }
+      }
       // ブーメラン: 一定距離で反転しプレイヤーへ戻る
       if (pr.boomerang) {
         if (!pr.returning && Math.hypot(pr.x - pr.ox, pr.y - pr.oy) > 5.5 * TS) pr.returning = true;
