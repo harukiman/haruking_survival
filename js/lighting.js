@@ -126,6 +126,18 @@ Game.Lighting = (function () {
         }
       }
     }
+    // 燃え盛る炎も光源(夜の森林火災が一帯を赤々と照らす)
+    const fires = Game.state.fires;
+    if (fires && fires.length) {
+      for (let i = 0; i < fires.length; i++) {
+        const f = fires[i];
+        if (f.tx < range.tx0 - 1 || f.tx > range.tx1 + 1 || f.ty < range.ty0 - 1 || f.ty > range.ty1 + 1) continue;
+        const s = Game.Camera.worldToScreen(f.tx * TS + TS / 2, f.ty * TS + TS / 2);
+        const fade = f.t < 12 ? f.t / 12 : 1;
+        punch(s.x, s.y, 2.0 * TS * fade, true, 0.85);
+        warmPts.push(s.x, s.y, 1.6 * TS * fade, 1);
+      }
+    }
     lctx.globalCompositeOperation = 'source-over';
     ctx.drawImage(lc, 0, 0);
 

@@ -510,6 +510,13 @@ Game.Mobs = (function () {
           if (Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - m.def.size * 0.5, d, m.dot.burn > 0 ? '#ff8a4a' : '#9fe04a');
           if (m.hp <= 0) { killMob(m); continue; }
         }
+        // 燃えている敵は可燃物に触れると延焼させる(創発: 火だるまの敵が森へ突っ込むと山火事に)。
+        // 低確率＋オブジェクト限定で暴走を抑制。草地へは燃え移らせない。
+        if (m.dot.burn > 0 && Game.state.tick % 15 === 0 && Math.random() < 0.25 && Game.World.igniteTile) {
+          const TS2 = Game.CFG.TILE_SIZE, mtx = Math.floor(m.x / TS2), mty = Math.floor(m.y / TS2);
+          const o = Game.World.objAt(mtx, mty);
+          if (o !== Game.OBJ.NONE) Game.World.igniteTile(mtx, mty);
+        }
         if (m.dot.burn > 0) m.dot.burn--;
         if (m.dot.poison > 0) m.dot.poison--;
       }
