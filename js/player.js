@@ -946,7 +946,7 @@ Game.Player = (function () {
     const def = Game.ITEMS[slot.id];
     if (!def || !def.armor || !def.slot) return;
     const prev = p.armor[def.slot];
-    p.armor[def.slot] = { id: slot.id, roll: slot.roll || null };
+    p.armor[def.slot] = { id: slot.id, roll: slot.roll || null, dur: slot.dur, durMax: slot.durMax };
     Game.Inventory.slots()[idx] = prev ? { id: prev.id, count: 1, roll: prev.roll || null } : null;
     applyEquipStats();
     Game.Audio.play('equip');
@@ -1143,7 +1143,7 @@ Game.Player = (function () {
     if (!def || !def.armor || !def.slot) return;
     const p = Game.state.player;
     const prev = p.armor[def.slot];
-    p.armor[def.slot] = { id: slot.id, roll: slot.roll || null };
+    p.armor[def.slot] = { id: slot.id, roll: slot.roll || null, dur: slot.dur, durMax: slot.durMax };
     Game.Inventory.slots()[idx] = prev ? { id: prev.id, count: 1, roll: prev.roll || null } : null;
     applyEquipStats();
     Game.Audio.play('equip');
@@ -1614,8 +1614,24 @@ Game.Player = (function () {
     }
   }
 
+  // 装備の修理: 修理キット(アイテム)＋鉄(素材)を消費して耐久を全回復。tierが高いほど鉄を多く要する
+  function repairEquip(slot) {
+    if (!slot || !Game.Loot.isEquip(slot.id)) { Game.UI.toast('修理できる装備ではない'); return false; }
+    Game.Loot.ensureDur(slot);
+    if (slot.dur >= slot.durMax) { Game.UI.toast('耐久は満タンだ'); return false; }
+    const def = Game.ITEMS[slot.id], ironCost = Math.max(1, (def.tier || 1));
+    if (Game.Inventory.count('repair_kit') < 1) { Game.UI.toast('修理キットが必要（クラフト: 鉄3+石炭1）'); return false; }
+    if (Game.Inventory.count('iron') < ironCost) { Game.UI.toast('修理に鉄が' + ironCost + '個必要'); return false; }
+    Game.Inventory.remove('repair_kit', 1); Game.Inventory.remove('iron', ironCost);
+    Game.Loot.repair(slot);
+    if (Game.Audio) Game.Audio.play('craft');
+    Game.UI.toast('🔧 ' + Game.Loot.displayName(slot) + ' を修理した（耐久全回復）');
+    Game.UI.refreshAll();
+    return true;
+  }
+
   return {
-    makeDefault, spawnAt, update, targetTile, mining, playerTile, breakBlock,
+    makeDefault, spawnAt, update, targetTile, mining, playerTile, breakBlock, repairEquip,
     interact, useNearby, gainXP, totalArmor, setBonus, sleep, checkGroupSleep, vehicleTakeDamage, updateWreck, equipSelectedArmor, equipFromInventory, equipRelic, equipOffhand, unequipSlot, applyEquipStats, bossesDefeated, bossTitle, travelToWaypoint,
     effAttack, spendMana, manaCost, magicPower, attackCooldown, levelDmgBonus, levelArmorBonus, spendStat, unlockSkill, respec,
     skillBonus, skillFlag, canUnlock, currentWeaponAtk, equippedArmorAt, xpForLevel,

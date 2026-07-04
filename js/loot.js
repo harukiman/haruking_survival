@@ -36,6 +36,9 @@ Game.Loot = (function () {
     { key: 'frenzied', name: '狂乱の', crit: [0.04, 0.08] },
     { key: 'gory', name: '血濡れの', life: [0.06, 0.14] },
     { key: 'wicked', name: '邪悪な', atk: [2, 4] },
+    // 耐久上限を伸ばすランダム効果(ユーザー: ランダム効果で耐久上限が変わる)
+    { key: 'tempered', name: '鍛えの', atk: [1, 2], durMul: [1.35, 1.7] },
+    { key: 'everlasting', name: '不朽の', durMul: [1.5, 2.0] },
   ];
   // 防具の付与効果(約20種)
   const ARMOR_AFFIXES = [
@@ -60,6 +63,8 @@ Game.Loot = (function () {
     { key: 'regenerating', name: '再生の', regen: [2, 3] },
     { key: 'scholar', name: '賢者の', xpBoost: [0.06, 0.14] },
     { key: 'thorned', name: '棘の', thorns: [0.10, 0.25] },
+    { key: 'reinforced', name: '補強の', arm: [1, 2], durMul: [1.35, 1.7] },
+    { key: 'immortal', name: '不滅の', durMul: [1.5, 2.0] },
   ];
 
   function rr(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
@@ -115,6 +120,7 @@ Game.Loot = (function () {
       if (pick.thorns) af.thorns = Math.round((pick.thorns[0] + Math.random() * (pick.thorns[1] - pick.thorns[0])) * 100) / 100;
       if (pick.sanity) af.sanity = true;
       if (pick.dot) af.dot = pick.dot; // 元素付与(業火/氷結/猛毒)を戦利品ロールに反映
+      if (pick.durMul) af.durMul = Math.round((pick.durMul[0] + Math.random() * (pick.durMul[1] - pick.durMul[0])) * 100) / 100; // 耐久上限倍率
       affixes.push(af);
     }
     return { rarity: rarity, affixes: affixes };
@@ -146,8 +152,41 @@ Game.Loot = (function () {
         if (a.sanity) out.sanityResist = true;
       });
     }
+    // 破損: 耐久0の装備は性能が大幅低下(攻撃/防御 40%)。破壊はせず、修理で復活できる
+    if (isBroken(slot)) { if (out.atk > 0) out.atk = Math.max(1, Math.round(out.atk * 0.4)); if (out.armor > 0) out.armor = Math.round(out.armor * 0.4); }
     return out;
   }
+  // ===== 装備の耐久値 =====
+  // 全装備(武器/防具)に耐久上限を設定。tier基礎 × レアリティ × ランダム耐久affix で変動。
+  const DUR_BASE = { 0: 90, 1: 120, 2: 160, 3: 210, 4: 270, 5: 340 };
+  function isEquip(id) { const d = Game.ITEMS[id]; return !!(d && (d.attack != null || (d.armor != null && d.slot))); }
+  function durMax(slot) {
+    const def = Game.ITEMS[slot.id]; if (!def) return 0;
+    let m = DUR_BASE[def.tier || 1] || 140;
+    const rl = slot.roll;
+    if (rl) { m *= (1 + 0.08 * rl.rarity); rl.affixes.forEach(function (a) { if (a.durMul) m *= a.durMul; }); }
+    return Math.round(m);
+  }
+  // 装備スロットに dur/durMax を遅延初期化(既存セーブ・素材直クラフト品も初回アクセスで付与)
+  function ensureDur(slot) {
+    if (!slot || !isEquip(slot.id)) return slot;
+    if (slot.durMax == null) slot.durMax = durMax(slot);
+    if (slot.dur == null) slot.dur = slot.durMax;
+    return slot;
+  }
+  function durFrac(slot) { if (!slot || slot.durMax == null || slot.durMax <= 0) return 1; return Math.max(0, slot.dur / slot.durMax); }
+  function isBroken(slot) { return !!(slot && slot.durMax != null && slot.dur <= 0); }
+  // 消耗: 武器は攻撃/防具は被弾で減少。0で「破損」(破壊はしない)。ちょうど壊れた瞬間 true を返す
+  function degrade(slot, amount) {
+    if (!slot || !isEquip(slot.id)) return false;
+    ensureDur(slot);
+    if (slot.dur <= 0) return false;
+    slot.dur = Math.max(0, slot.dur - (amount || 1));
+    return slot.dur <= 0;
+  }
+  // 修理: 耐久を回復(上限まで)。amount 省略で全回復
+  function repair(slot, amount) { if (!slot || !isEquip(slot.id)) return; ensureDur(slot); slot.dur = amount == null ? slot.durMax : Math.min(slot.durMax, slot.dur + amount); }
+
   // 武器に付いた元素付与(業火/氷結/猛毒)の kind 一覧。命中時 applyDot に使う
   function dotKinds(slot) {
     if (!slot) return null;
@@ -249,5 +288,5 @@ Game.Loot = (function () {
     return drops;
   }
 
-  return { roll, rollAt, stats, dotKinds, rarityColor, rarityName, displayName, statText, rollable, lootBonus, rollMobDrop, rollEliteDrop, reroll, upgrade, maxRarity, enchantCost, RARITY };
+  return { roll, rollAt, stats, dotKinds, durMax, ensureDur, durFrac, isBroken, isEquip, degrade, repair, rarityColor, rarityName, displayName, statText, rollable, lootBonus, rollMobDrop, rollEliteDrop, reroll, upgrade, maxRarity, enchantCost, RARITY };
 })();

@@ -934,6 +934,10 @@ Game.UI = (function () {
     const def = Game.ITEMS[stack.id]; if (!def) return null;
     let html = '<div class="tt-name" style="color:' + (stack.roll ? Game.Loot.rarityColor(stack) : (def.color || '#fff')) + '">' + (stack.roll ? Game.Loot.displayName(stack) : def.name) + '</div>';
     if (Game.Loot.rollable(stack.id)) html += '<div class="tt-stat">' + Game.Loot.statText(stack) + '</div>';
+    if (Game.Loot.isEquip && Game.Loot.isEquip(stack.id)) {
+      Game.Loot.ensureDur(stack); const broken = Game.Loot.isBroken(stack);
+      html += '<div class="tt-stat" style="color:' + (broken ? '#e0664a' : '#9fc0d0') + '">🛡 耐久 ' + Math.ceil(stack.dur) + '/' + stack.durMax + (broken ? '（破損・性能低下）' : '') + '</div>';
+    }
     if (def.special) html += '<div class="tt-stat" style="color:' + (def.special.color || '#ffe27a') + '">✦ ' + def.special.name + ' — ' + specialDesc(def.special) + '</div>';
     // 兵器の必要弾薬を分かりやすく明記(銃/戦車/戦闘機/爆撃機/核)
     const amL = weaponAmmoLabel(def);
@@ -1582,6 +1586,14 @@ Game.UI = (function () {
     if (!st) { el.invDetail.innerHTML = '<p class="hint">アイテムをタップで選択 ／ 同じ物を2回タップですぐ使用・装備 ／ なぞって並べ替え</p>'; return; }
     const def = Game.ITEMS[st.id];
     let h = '<div class="ench-name" style="color:' + (st.roll ? Game.Loot.rarityColor(st) : (def.color || '#fff')) + '">' + (st.roll ? Game.Loot.displayName(st) : def.name) + '</div>';
+    // 装備の耐久バー(全装備に耐久値)。破損は赤字警告
+    if (Game.Loot.isEquip && Game.Loot.isEquip(st.id)) {
+      Game.Loot.ensureDur(st);
+      const fr = Game.Loot.durFrac(st), broken = Game.Loot.isBroken(st);
+      const barCol = broken ? '#e0664a' : fr < 0.25 ? '#e0a84a' : '#7fc0d8';
+      h += '<div class="ench-stat" style="margin-bottom:4px">🛡 耐久 <b style="color:' + barCol + '">' + Math.ceil(st.dur) + '</b><span style="color:#5a6b80">/' + st.durMax + '</span>' + (broken ? ' <span style="color:#e0664a;font-weight:700">破損！性能低下中</span>' : fr < 0.25 ? ' <span style="color:#e0a84a">まもなく破損</span>' : '') +
+        '<div style="height:5px;background:#22304a;border-radius:3px;overflow:hidden;margin-top:3px"><div style="height:100%;width:' + Math.round(fr * 100) + '%;background:' + barCol + '"></div></div></div>';
+    }
     if (Game.Loot.rollable(st.id)) h += '<div class="ench-stat">' + Game.Loot.statText(st) + '</div>';
     if (def.attack != null) {
       const eff = Game.Player.effAttack(Game.Loot.stats(st).atk);
@@ -1626,6 +1638,11 @@ Game.UI = (function () {
     else if (def.relic) btns.push('<button id="inv-act" class="big-btn">遺物を装備</button>');
     else if (def.food || def.cures || def.buff || def.skillTome || def.xpGain || def.invExpand || def.summonBoss || def.opensShop || def.recall || def.stasis) btns.push('<button id="inv-act" class="big-btn">' + (def.food ? '食べる' : def.skillTome ? '読む' : def.summonBoss ? '掲げる' : def.opensShop ? '鳴らす' : '使う') + '</button>');
     else if (Game.Loot.rollable(st.id) || def.tool || def.throw) btns.push('<button id="inv-hot" class="big-btn alt">ホットバーへ装備</button>');
+    if (Game.Loot.isEquip && Game.Loot.isEquip(st.id) && Game.Loot.durFrac(st) < 1) {
+      const ironCost = Math.max(1, (def.tier || 1)), kits = Game.Inventory.count('repair_kit'), irons = Game.Inventory.count('iron');
+      const can = kits >= 1 && irons >= ironCost;
+      btns.push('<button id="inv-repair" class="big-btn alt"' + (can ? '' : ' disabled style="opacity:.5"') + '>🔧 修理（修理キット1＋鉄' + ironCost + '）</button>');
+    }
     if (Game.Net && Game.Net.isConnected()) btns.push('<button id="inv-give" class="big-btn alt">仲間に渡す</button>');
     btns.push('<button id="inv-drop" class="big-btn inv-discard">捨てる' + (st.count > 1 ? '（1個）' : '') + '</button>');
     el.invDetail.innerHTML = h + btns.join('');
@@ -1659,6 +1676,11 @@ Game.UI = (function () {
       const sl = Game.Inventory.slots(); const hb = Game.state.player.hotbarIndex;
       const tmp = sl[hb]; sl[hb] = sl[invSelected]; sl[invSelected] = tmp;
       toast('ホットバー' + (hb + 1) + 'に装備'); invSelected = -1; refreshInventory();
+    });
+    const rep = document.getElementById('inv-repair');
+    if (rep) rep.addEventListener('click', function () {
+      const cur = Game.Inventory.slots()[invSelected];
+      if (cur && Game.Player.repairEquip(cur)) { refreshInventory(); refreshHotbar(); }
     });
   }
 

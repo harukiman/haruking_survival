@@ -226,7 +226,7 @@ window.Game = window.Game || {};
       while (Game.state.inventory.length < data.inventory.length) Game.state.inventory.push(null);
       for (let i = 0; i < data.inventory.length && i < Game.state.inventory.length; i++) {
         const sl = data.inventory[i];
-        Game.state.inventory[i] = sl ? { id: sl.id, count: sl.count, roll: sl.roll || null } : null;
+        Game.state.inventory[i] = sl ? { id: sl.id, count: sl.count, roll: sl.roll || null, dur: sl.dur, durMax: sl.durMax } : null;
       }
       p.invSlots = Game.state.inventory.length;
     }

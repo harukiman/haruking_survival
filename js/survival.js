@@ -233,6 +233,10 @@ Game.Survival = (function () {
     if (physical && !envDot) {
       const armor = Game.Player.totalArmor();
       amount = Math.max(1, amount - armor);
+      // 装備耐久: 被弾で装備中の防具が消耗。0で「破損」(防御大幅低下・修理で復活)
+      if (p.armor && Game.Loot.degrade) {
+        for (const sl in p.armor) { const piece = p.armor[sl]; if (piece && Game.Loot.degrade(piece, 1) && Game.UI) Game.UI.toast('⚠ ' + Game.Loot.displayName(piece) + ' が破損した！ 修理を'); }
+      }
     }
     p.health -= amount;
     p.deathCause = source; // 死因追跡（直近のダメージ源）
