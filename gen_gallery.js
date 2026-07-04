@@ -89,5 +89,11 @@ figcaption{font-size:.66rem;color:#aeb8c8;margin-top:3px;word-break:break-word;l
 
   const out = path.join(__dirname, 'gallery.html');
   fs.writeFileSync(out, h);
-  console.log('gallery written:', out, '(' + Math.round(h.length / 1024) + 'KB, items=' + data.items.length + ', mobs=' + data.mobs.length + ')');
+  // 開発者マニュアル(gen_manual.js)が画像を差し込めるよう、id→dataURL のマップも書き出す
+  const iconMap = { items: {}, mobs: {} };
+  data.items.forEach(it => { if (it.img) iconMap.items[it.id] = it.img; });
+  data.mobs.forEach(m => { if (m.img) iconMap.mobs[m.id] = m.img; });
+  const mapPath = path.join(require('os').homedir(), 'hs_scratch', 'hs_icons.json');
+  try { fs.writeFileSync(mapPath, JSON.stringify(iconMap)); } catch (e) {}
+  console.log('gallery written:', out, '(' + Math.round(h.length / 1024) + 'KB, items=' + data.items.length + ', mobs=' + data.mobs.length + '); icon map:', mapPath);
 })();
