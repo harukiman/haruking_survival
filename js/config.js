@@ -497,6 +497,9 @@ Game.ITEMS = {
   tank:          { name:'戦車', stack:1, color:'#4a5a3c', vehicle:'tank', fuelVeh:true, tankCannon:{ dmg:70, radius:2.6, cd:26, range:11 }, flavor:'一人乗りの装甲戦車。鈍いが頑強で、主砲(戦車砲弾)は着弾点を吹き飛ばす。攻撃ボタンで砲撃。' },
   battle_mech:   { name:'戦闘ロボ', stack:1, color:'#7a8496', vehicle:'mech', fuelVeh:true, mechStomp:{ dmg:44, r:2.6, cd:20 }, flavor:'一人乗りの二足歩行兵器。機敏で頑強。攻撃ボタンで大地を踏み鳴らし、周囲の敵を衝撃波で薙ぐ。' },
   fighter_jet:   { name:'戦闘機', stack:1, color:'#8a96c0', vehicle:'jet', fuelVeh:true, jetGun:{ dmg:11, cd:5, spread:0.12 }, flavor:'一人乗りの戦闘機。空を高速で駆け、あらゆる地形を越える。攻撃ボタンで機首の二連機関銃を掃射(弾丸を消費)。' },
+  aerial_bomb:   { name:'T-0S21 航空爆弾', stack:16, color:'#4a5240', bomb:{ dmg:90, radius:3.4 }, flavor:'爆撃機に搭載する制式航空爆弾。投下すると着弾点を広範囲に吹き飛ばす。' },
+  heavy_bomb:    { name:'GBU-45 大型爆弾', stack:8, color:'#3a4030', bomb:{ dmg:180, radius:5.2 }, flavor:'重量級の誘導爆弾。一発で拠点を更地に変える破壊力。爆撃機専用。' },
+  bomber:        { name:'爆撃機', stack:1, color:'#6a7060', vehicle:'bomber', fuelVeh:true, bomberBay:true, flavor:'一人乗りの爆撃機。空を進みながら攻撃ボタンで搭載した爆弾(T-0S21等)を投下する。積んだ分だけ落とせる。' },
   boat:          { name:'ボート', stack:1, color:'#9c6b3f', vehicle:'boat', flavor:'水を越えるための小舟。' },
   plane:         { name:'飛行機', stack:1, color:'#8a96c0', vehicle:'plane', flavor:'空を行く翼。すべての境界を越えて。' },
   // ロケット/宇宙
@@ -726,17 +729,21 @@ Game.RECIPES = [
   { out:{id:'pistol', n:1}, in:{iron:5, wood:1}, station:'crafting_table' },
   { out:{id:'shadow_rifle', n:1}, in:{shadow_steel:4, lumen:2}, station:'crafting_table' },
   { out:{id:'boat', n:1}, in:{wood:8}, station:'crafting_table' },
-  { out:{id:'car', n:1}, in:{iron:8, coal:4}, station:'crafting_table' },
-  { out:{id:'buggy', n:1}, in:{iron:6, coal:2, string:2}, station:'crafting_table' },
-  { out:{id:'tank', n:1}, in:{iron:20, shadow_steel:4, coal:6, gold_bar:2}, station:'crafting_table' },
-  { out:{id:'battle_mech', n:1}, in:{iron:16, shadow_steel:6, lumen:4, gold_bar:2}, station:'crafting_table' },
-  { out:{id:'fighter_jet', n:1}, in:{shadow_steel:8, iron:10, lumen:5, gold_bar:3}, station:'crafting_table' },
+  // 現代の乗り物(ユーザー指示: 相当多い素材コスト。鉱石希少化と併せ「作る価値のある大目標」に)
+  { out:{id:'car', n:1}, in:{iron:24, coal:12, gold_bar:2}, station:'crafting_table' },
+  { out:{id:'buggy', n:1}, in:{iron:18, coal:8, string:4, gold_bar:1}, station:'crafting_table' },
+  { out:{id:'tank', n:1}, in:{iron:48, shadow_steel:12, coal:18, gold_bar:5}, station:'crafting_table' },
+  { out:{id:'battle_mech', n:1}, in:{iron:42, shadow_steel:14, lumen:12, gold_bar:5}, station:'crafting_table' },
+  { out:{id:'fighter_jet', n:1}, in:{shadow_steel:22, iron:32, lumen:14, gold_bar:6}, station:'crafting_table' },
+  { out:{id:'bomber', n:1}, in:{shadow_steel:20, iron:40, lumen:12, gold_bar:6}, station:'crafting_table' },
+  { out:{id:'aerial_bomb', n:2}, in:{iron:4, sulfur:4, coal:3}, station:'furnace' },
+  { out:{id:'heavy_bomb', n:1}, in:{iron:8, sulfur:6, coal:5, gold_bar:1}, station:'furnace' },
   { out:{id:'cannon_shell', n:4}, in:{iron:2, coal:2, sulfur:2}, station:'furnace' },
   { out:{id:'gasoline', n:3}, in:{coal:3, sulfur:1}, station:'furnace' },
   { out:{id:'repair_kit', n:1}, in:{iron:3, coal:1}, station:'crafting_table' },
-  { out:{id:'plane', n:1}, in:{shadow_steel:6, iron:6, lumen:4}, station:'crafting_table' },
-  // ロケット(高コスト)・宇宙装備
-  { out:{id:'rocket', n:1}, in:{iron:20, shadow_steel:10, lumen:10, shadow_core:3}, station:'crafting_table' },
+  { out:{id:'plane', n:1}, in:{shadow_steel:18, iron:24, lumen:12, gold_bar:4}, station:'crafting_table' },
+  // ロケット(最高コスト)・宇宙装備
+  { out:{id:'rocket', n:1}, in:{iron:50, shadow_steel:24, lumen:24, shadow_core:6, gold_bar:8}, station:'crafting_table' },
   { out:{id:'cosmic_blade', n:1}, in:{star_metal:5, shadow_steel:3}, station:'crafting_table' },
   { out:{id:'starcore_greatsword', n:1}, in:{star_core:1, star_metal:4, iron:2}, station:'enchant_table' },
   { out:{id:'voidcore_blade', n:1}, in:{shadow_core:1, void_heart:1, shadow_steel:4}, station:'enchant_table' },
@@ -1174,7 +1181,7 @@ Game.ITEM_GLYPH = {
   sand_greatsword:'⚔️', magma_hammer:'🔨', pharaoh_crown:'👑', mind_tome:'📖', wisdom_tome:'📗', xp_orb:'🔮', expand_pouch:'🎒',
   feather:'🪶', wind_crystal:'💠', wind_steel:'🌀', wind_feather:'🪶', wind_sword:'🗡️', sky_cloak:'🧥', cloud_boots:'👢',
   ring_crit:'💍', amulet_swift:'📿', fang_vamp:'🦷', heart_regen:'❤️‍🔥', eye_xp:'👁️', band_power:'💪', crest_guard:'🛡️',
-  energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️', prism_blade:'⚔️', dragon_fang:'⚔️', colossus_blade:'⚔️', mire_scythe:'⚔️', magma_maul:'🔨', starcore_greatsword:'⚔️', voidcore_blade:'⚔️', spore_scythe:'⚔️', star_aegis:'🛡️', void_helm:'⛑️', thorn_plate:'🥷', tempest_spear:'🔱', sovereign_scepter:'👑', rift_crown:'👑', frostfang_blade:'🗡️', emberfang_axe:'🪓', echoedge:'🗡️', quakehammer:'🔨', flashstep_edge:'⚡', combat_vest:'🎽', reflect_aegis:'🛡️', iai_mumyo:'🗡️', heavenfall_staff:'☄️', gasoline:'⛽', repair_kit:'🔧', buggy:'🚙', tank:'🛡️', cannon_shell:'💣', battle_mech:'🤖', aqualung:'🤿', moonshard:'🌙', moon_charm:'🔮', fighter_jet:'✈️',
+  energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️', prism_blade:'⚔️', dragon_fang:'⚔️', colossus_blade:'⚔️', mire_scythe:'⚔️', magma_maul:'🔨', starcore_greatsword:'⚔️', voidcore_blade:'⚔️', spore_scythe:'⚔️', star_aegis:'🛡️', void_helm:'⛑️', thorn_plate:'🥷', tempest_spear:'🔱', sovereign_scepter:'👑', rift_crown:'👑', frostfang_blade:'🗡️', emberfang_axe:'🪓', echoedge:'🗡️', quakehammer:'🔨', flashstep_edge:'⚡', combat_vest:'🎽', reflect_aegis:'🛡️', iai_mumyo:'🗡️', heavenfall_staff:'☄️', gasoline:'⛽', repair_kit:'🔧', buggy:'🚙', tank:'🛡️', cannon_shell:'💣', battle_mech:'🤖', aqualung:'🤿', moonshard:'🌙', moon_charm:'🔮', fighter_jet:'✈️', bomber:'🛩️', aerial_bomb:'💣', heavy_bomb:'🧨',
 };
 
 Game.INV_SIZE = 36;       // 先頭9 = ホットバー

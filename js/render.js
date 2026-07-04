@@ -975,6 +975,13 @@ Game.Render = (function () {
       ctx.fillStyle = '#c0407a'; roundRectC(ctx, x - 18, y + 4 + wob, 36, 12, 3); ctx.fill();
       ctx.fillStyle = '#ffd86b'; ctx.fillRect(x - 16, y + 6 + wob, 32, 2); ctx.fillRect(x - 16, y + 12 + wob, 32, 2);
       ctx.fillStyle = '#7fd0ff'; for (let i = -2; i <= 2; i++) ctx.fillRect(x + i * 7 - 1, y + 8 + wob, 2, 2);
+    } else if (type === 'bomber') {
+      // 爆撃機: 大きな主翼＋機体＋四発。飛行影
+      ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.beginPath(); ctx.ellipse(x, y + 28, 26, 6, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#6a7060'; ctx.fillRect(x - 26, y - 2, 52, 6); // 主翼
+      ctx.fillStyle = '#7a8070'; roundRectC(ctx, x - 5, y - 18, 10, 34, 4); ctx.fill(); // 胴
+      ctx.fillStyle = '#cfe0ff'; ctx.fillRect(x - 3, y - 15, 6, 5); // コックピット
+      ctx.fillStyle = '#3a3f34'; ctx.fillRect(x - 20, y + 3, 4, 5); ctx.fillRect(x - 10, y + 3, 4, 5); ctx.fillRect(x + 6, y + 3, 4, 5); ctx.fillRect(x + 16, y + 3, 4, 5); // 四発
     } else if (type === 'jet') {
       // 戦闘機: 三角翼＋機首＋双発。飛行影
       ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.beginPath(); ctx.ellipse(x, y + 26, 20, 5, 0, 0, Math.PI * 2); ctx.fill();

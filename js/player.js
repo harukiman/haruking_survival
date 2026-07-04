@@ -8,11 +8,11 @@ Game.Player = (function () {
   const mining = { active: false, tx: 0, ty: 0, obj: 0, progress: 0 };
 
   // 乗り物の加速/減速カーブ(最高速は従来と同一・立ち上がりと惰性だけを付与。バランス不変)
-  const VEH_ACCEL = { car: 0.085, buggy: 0.10, boat: 0.055, plane: 0.05, carpet: 0.075, tank: 0.045, mech: 0.08, jet: 0.06 };
-  const VEH_DRAG = { car: 0.85, buggy: 0.83, boat: 0.93, plane: 0.9, carpet: 0.88, tank: 0.9, mech: 0.86, jet: 0.92 };
-  const VEH_TRAIL = { car: '#c9b189', buggy: '#d8a060', boat: '#bfe2f5', plane: '#e6ecf5', carpet: '#e0bcf0', tank: '#5a5a44', mech: '#8a94a6', jet: '#dfe8f4' };
-  const FUEL_VEHICLES = { car: 1, buggy: 1, plane: 1, tank: 1, mech: 1, jet: 1 }; // 燃料で走る現代の乗り物(ボート/絨毯は燃料不要)
-  const VEH_MAXDUR = { car: 120, buggy: 90, plane: 140, boat: 70, tank: 240, mech: 180, jet: 130 }; // 耐久値(絨毯=魔法は不壊)。0で大破爆発
+  const VEH_ACCEL = { car: 0.085, buggy: 0.10, boat: 0.055, plane: 0.05, carpet: 0.075, tank: 0.045, mech: 0.08, jet: 0.06, bomber: 0.045 };
+  const VEH_DRAG = { car: 0.85, buggy: 0.83, boat: 0.93, plane: 0.9, carpet: 0.88, tank: 0.9, mech: 0.86, jet: 0.92, bomber: 0.9 };
+  const VEH_TRAIL = { car: '#c9b189', buggy: '#d8a060', boat: '#bfe2f5', plane: '#e6ecf5', carpet: '#e0bcf0', tank: '#5a5a44', mech: '#8a94a6', jet: '#dfe8f4', bomber: '#c8cebe' };
+  const FUEL_VEHICLES = { car: 1, buggy: 1, plane: 1, tank: 1, mech: 1, jet: 1, bomber: 1 }; // 燃料で走る現代の乗り物(ボート/絨毯は燃料不要)
+  const VEH_MAXDUR = { car: 120, buggy: 90, plane: 140, boat: 70, tank: 240, mech: 180, jet: 130, bomber: 160 }; // 耐久値(絨毯=魔法は不壊)。0で大破爆発
   // 口径ごとの着弾スパーク色/薬莢色(演出のみ・性能不変)
   const CALIBER_FX = {
     ammo_9mm: { imp: '#ffd86a', casing: '#d8b25a' },
@@ -55,7 +55,7 @@ Game.Player = (function () {
 
   function blocked(wx, wy) {
     const v = Game.state.player.vehicle;
-    if (v === 'plane' || v === 'carpet' || v === 'jet') return false; // 飛行機・戦闘機・絨毯は全障害を越える
+    if (v === 'plane' || v === 'carpet' || v === 'jet' || v === 'bomber') return false; // 飛行機・戦闘機・爆撃機・絨毯は全障害を越える
     const pts = [[wx - R, wy - R], [wx + R, wy - R], [wx - R, wy + R], [wx + R, wy + R]];
     for (let i = 0; i < pts.length; i++) {
       const tx = Math.floor(pts[i][0] / TS), ty = Math.floor(pts[i][1] / TS);
@@ -242,6 +242,7 @@ Game.Player = (function () {
     else if (p.vehicle === 'tank') spd = p.speed * 1.6;
     else if (p.vehicle === 'mech') spd = p.speed * 2.0;
     else if (p.vehicle === 'jet') spd = p.speed * 3.1;
+    else if (p.vehicle === 'bomber') spd = p.speed * 2.5;
     if (outOfFuel) spd *= 0.12; // 燃料切れは失速(徒歩以下)
     // 浅瀬は減速＋水音（乗り物なし・徒歩のみ）
     const gUnder = Game.World.groundAt(Math.floor(p.x / TS), Math.floor(p.y / TS));

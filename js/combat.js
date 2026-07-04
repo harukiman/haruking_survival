@@ -66,6 +66,21 @@ Game.Combat = (function () {
       p.cannonCd = jd.cd;
       return true;
     }
+    // 爆撃機: 攻撃ボタンで搭載爆弾を投下(所持している爆弾を消費)。重い爆弾を優先
+    if (p.vehicle === 'bomber') {
+      if ((p.cannonCd || 0) > 0) return true;
+      const bombIds = ['heavy_bomb', 'aerial_bomb'];
+      let use = null; for (let i = 0; i < bombIds.length; i++) { if (Game.Inventory.count(bombIds[i]) > 0) { use = bombIds[i]; break; } }
+      if (!use) { if (Game.state.tick % 40 === 0) Game.UI.toast('搭載爆弾がない — 爆弾をクラフトして搭載を'); return true; }
+      const bd = Game.ITEMS[use].bomb;
+      Game.Inventory.remove(use, 1);
+      // 進行方向のやや後方(投下点)へ落下爆発。callMeteor で落ちる爆弾を演出
+      let fx = 0, fy = 0; if (p.dir === 'up') fy = -1; else if (p.dir === 'down') fy = 1; else if (p.dir === 'left') fx = -1; else fx = 1;
+      Game.Projectiles.callMeteor(p.x - fx * TS * 0.8, p.y - fy * TS * 0.8, Game.Player.effAttack(bd.dmg), bd.radius);
+      Game.Audio.play('boom_sfx'); if (Game.Render.shake) Game.Render.shake(5);
+      p.cannonCd = 28;
+      return true;
+    }
     if (p.attackCd > 0) {
       // 先行入力バッファ: CD残り~200ms(6tick)以内の入力は予約し、CD明けに自動発動(コンボが途切れない)
       if (p.attackCd <= 6) p.attackBuf = true;
