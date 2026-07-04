@@ -124,6 +124,7 @@ Game.Render = (function () {
     drawMiningCrack(ctx);
     drawMeteorCast(ctx);
     drawBreath(ctx);
+    drawFuel(ctx);
     drawDrops(ctx);
     Game.Mobs.draw(ctx, alpha);
     drawPeers(ctx);
@@ -636,6 +637,22 @@ Game.Render = (function () {
     ctx.fillText('💨', sc.x, by - 3 * z); ctx.textAlign = 'left';
     ctx.restore();
   }
+  // 燃料ゲージ: 現代の乗り物に乗車中のみ、頭上に⛽メーター
+  function drawFuel(ctx) {
+    const p = Game.state.player; if (!p || !p.vehicle || !p.fuel) return;
+    const FUEL_MAX = 120; // 表示上の満タン目安(ガソリン2本相当)
+    const f = p.fuel[p.vehicle]; if (f == null) return;
+    const sc = Game.Camera.worldToScreen(p.x, p.y), z = Game.Camera.zoom ? Game.Camera.zoom() : 1;
+    const w = 46 * z, h = 5 * z, bx = sc.x - w / 2, by = sc.y - 40 * z;
+    const frac = Math.max(0, Math.min(1, f / FUEL_MAX));
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(bx - 1, by - 1, w + 2, h + 2);
+    ctx.fillStyle = f <= 0 ? '#ff5a5a' : frac < 0.25 ? '#ffb24a' : '#d8c24a';
+    ctx.fillRect(bx, by, w * frac, h);
+    ctx.fillStyle = '#e8dca0'; ctx.font = 'bold ' + Math.round(8 * z) + 'px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(f <= 0 ? '⛽空' : '⛽', sc.x, by - 3 * z); ctx.textAlign = 'left';
+    ctx.restore();
+  }
   function drawMeteorCast(ctx) {
     const p = Game.state.player; const c = p && p.casting; if (!c) return;
     const TS = Game.CFG.TILE_SIZE, sc = Game.Camera.worldToScreen(c.tx, c.ty);
@@ -897,6 +914,12 @@ Game.Render = (function () {
       ctx.fillStyle = '#c0444a'; roundRectC(ctx, x - 16, y - 4, 32, 18, 5); ctx.fill();
       ctx.fillStyle = '#88c0e0'; ctx.fillRect(x - 9, y - 1, 18, 7);
       ctx.fillStyle = '#222'; ctx.beginPath(); ctx.arc(x - 10, y + 14, 4, 0, 7); ctx.arc(x + 10, y + 14, 4, 0, 7); ctx.fill();
+    } else if (type === 'buggy') {
+      // オフロードバギー: 太いタイヤ＋ロールケージ
+      ctx.fillStyle = '#222'; ctx.beginPath(); ctx.arc(x - 12, y + 14, 5.5, 0, 7); ctx.arc(x + 12, y + 14, 5.5, 0, 7); ctx.fill();
+      ctx.fillStyle = '#d8863c'; roundRectC(ctx, x - 15, y - 2, 30, 16, 4); ctx.fill();
+      ctx.strokeStyle = '#5a3a1a'; ctx.lineWidth = 2; ctx.strokeRect(x - 9, y - 6, 18, 10); // ロールケージ
+      ctx.fillStyle = '#3a2a18'; ctx.fillRect(x - 7, y - 1, 14, 6);
     } else if (type === 'boat') {
       ctx.fillStyle = '#9c6b3f'; ctx.beginPath(); ctx.ellipse(x, y + 8, 20, 10, 0, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#7a5230'; ctx.fillRect(x - 16, y + 4, 32, 4);

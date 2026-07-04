@@ -8,9 +8,10 @@ Game.Player = (function () {
   const mining = { active: false, tx: 0, ty: 0, obj: 0, progress: 0 };
 
   // 乗り物の加速/減速カーブ(最高速は従来と同一・立ち上がりと惰性だけを付与。バランス不変)
-  const VEH_ACCEL = { car: 0.085, boat: 0.055, plane: 0.05, carpet: 0.075 };
-  const VEH_DRAG = { car: 0.85, boat: 0.93, plane: 0.9, carpet: 0.88 };
-  const VEH_TRAIL = { car: '#c9b189', boat: '#bfe2f5', plane: '#e6ecf5', carpet: '#e0bcf0' };
+  const VEH_ACCEL = { car: 0.085, buggy: 0.10, boat: 0.055, plane: 0.05, carpet: 0.075 };
+  const VEH_DRAG = { car: 0.85, buggy: 0.83, boat: 0.93, plane: 0.9, carpet: 0.88 };
+  const VEH_TRAIL = { car: '#c9b189', buggy: '#d8a060', boat: '#bfe2f5', plane: '#e6ecf5', carpet: '#e0bcf0' };
+  const FUEL_VEHICLES = { car: 1, buggy: 1, plane: 1 }; // 燃料で走る現代の乗り物(ボート/絨毯は燃料不要)
   // 口径ごとの着弾スパーク色/薬莢色(演出のみ・性能不変)
   const CALIBER_FX = {
     ammo_9mm: { imp: '#ffd86a', casing: '#d8b25a' },
@@ -35,7 +36,8 @@ Game.Player = (function () {
       baseMaxHealth: 100,
       stamina: 100, maxStamina: 100,
       breath: 360, maxBreath: 360, // 遊泳の呼吸ゲージ(12秒)
-      vehicle: null, // null|'car'|'boat'|'plane'
+      vehicle: null, // null|'car'|'boat'|'plane'|'buggy'
+      fuel: {}, // 現代乗り物の燃料(type→残量)
       armor: { head: null, chest: null }, // {id, roll} インスタンス
       accessory: null, accessory2: null, // 遺物(relic) {id} ×2枠
       // RPGステータス（スキルポイントで振る）
@@ -217,10 +219,23 @@ Game.Player = (function () {
     if (dashing) { p.stamina = Math.max(0, p.stamina - 1.1); }
     else if (p.stamina < p.maxStamina) { p.stamina = Math.min(p.maxStamina, p.stamina + (moving ? 0.3 : 0.7)); }
     let spd = p.speed * (dashing ? 1.85 : 1);
+    // 燃料: 現代の乗り物は走行で燃料を消費。尽きると推進力を失う(ガソリンで給油)
+    if (p.vehicle && FUEL_VEHICLES[p.vehicle]) {
+      if (!p.fuel) p.fuel = {};
+      const f = p.fuel[p.vehicle] || 0;
+      if (f <= 0) { if (moving && Game.state.tick % 90 === 0) Game.UI.toast('⛽ 燃料切れ… ガソリンを補給しよう'); }
+      else if (moving) {
+        p.fuel[p.vehicle] = Math.max(0, f - 0.06);
+        if (p.fuel[p.vehicle] === 0) { Game.UI.toast('⛽ 燃料が尽きた！'); if (Game.Audio) Game.Audio.play('select'); }
+      }
+    }
+    const outOfFuel = p.vehicle && FUEL_VEHICLES[p.vehicle] && !(p.fuel && p.fuel[p.vehicle] > 0);
     if (p.vehicle === 'car') spd = p.speed * 2.3;
+    else if (p.vehicle === 'buggy') spd = p.speed * 2.5;
     else if (p.vehicle === 'plane') spd = p.speed * 2.7;
     else if (p.vehicle === 'carpet') spd = p.speed * 2.4;
     else if (p.vehicle === 'boat') spd = p.speed * 1.5;
+    if (outOfFuel) spd *= 0.12; // 燃料切れは失速(徒歩以下)
     // 浅瀬は減速＋水音（乗り物なし・徒歩のみ）
     const gUnder = Game.World.groundAt(Math.floor(p.x / TS), Math.floor(p.y / TS));
     if (Game.Achievements && Game.Achievements.visitBiome && Game.state.worldName === 'light') Game.Achievements.visitBiome(gUnder);
@@ -761,6 +776,14 @@ Game.Player = (function () {
     if (def.shift) { Game.World.shift(); return; }
     if (def.waterCan) { waterNearbyCrops(); return; }
     if (def.respec) { const n = respec(); Game.Inventory.remove(sel.id, 1); Game.UI.toast('記憶の書を読んだ — スキルを振り直した（' + n + 'P返却）'); Game.UI.refreshAll(); return; }
+    if (def.fuel) {
+      const pp = Game.state.player;
+      if (!pp.vehicle || !FUEL_VEHICLES[pp.vehicle]) { Game.UI.toast('燃料は現代の乗り物に乗車中のみ補給できる'); return; }
+      if (!pp.fuel) pp.fuel = {};
+      pp.fuel[pp.vehicle] = (pp.fuel[pp.vehicle] || 0) + def.fuel;
+      Game.Inventory.remove(sel.id, 1); Game.Audio.play('craft');
+      Game.UI.toast('⛽ 給油した（燃料 +' + def.fuel + '）'); Game.UI.refreshAll(); return;
+    }
     if (def.food || def.cures || def.buff || def.skillTome || def.xpGain || def.invExpand || def.summonBoss || def.opensShop || def.recall || def.stasis) { Game.Inventory.useSelected(); return; }
     if (def.armor) { equipSelectedArmor(); return; }
     if (def.relic) { equipRelic(); return; }
