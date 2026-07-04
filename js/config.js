@@ -866,6 +866,9 @@ Game.SKILL_TREE = [
   { id:'a6', branch:'arcane', name:'明鏡止水', tier:3, cost:3, req:['a1'], eff:{crit:0.08, xpBoost:0.1}, desc:'会心+8%・経験+10%' },
   { id:'a7', branch:'arcane', name:'大賢者', tier:5, cost:5, req:['a5'], eff:{atk:5, hp:30, xpBoost:0.25, lifesteal:0.08}, desc:'攻撃+5・HP+30・経験+25%・吸血+8%' },
 ];
+// 上位スキルはより多くのスキルポイントを要求(ユーザー指示)。序盤(tier1-2)は据え置き、tier3以降を段階的に重く。
+// 強力な終盤スキルを"投資"にし、レベリングの目標感を持たせる。desc末尾のコストは UI 側が cost を参照するので自動追従。
+(function () { const C = { 1: 1, 2: 2, 3: 4, 4: 6, 5: 9 }; Game.SKILL_TREE.forEach(function (n) { if (C[n.tier]) n.cost = C[n.tier]; }); })();
 // ===== スキルツリー大幅拡充(生成): 既存30 + 生成126 = 156ノード。数値は控えめ(インフレ防止) =====
 (function () {
   const T = Game.SKILL_TREE;
