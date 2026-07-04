@@ -232,16 +232,17 @@ Game.Audio = (function () {
       case 'event_horde': sbeep(110, 0.35, 'sawtooth', 0.12, 0); sbeep(98, 0.4, 'sawtooth', 0.12, 0.18); sbeep(82, 0.5, 'triangle', 0.1, 0.4); if (ctx) noiseBurst(ctx.currentTime, 0.5, 0.1, 400); break;
       case 'enchant': beep(620, 0.1, 'sine', 0.09); beep(820, 0.12, 'sine', 0.08); beep(1040, 0.16, 'triangle', 0.07); break;
       case 'dash':   if (throttled('dash', 0.25)) { beep(520, 0.07, 'sine', 0.05); if (ctx) noisePiece(ctx.currentTime, 0.09, 0.03, 'highpass', 3000, 0.7, false); } break;
-      case 'gun':    if (throttled('gun', 0.05)) gunShot({ crackHz: 2500, crackVol: 0.45, crackDur: 0.04, bodyHz: 240, bodyLow: 60, bodyVol: 0.42, bodyDur: 0.08, midHz: 760, tailDur: 0.07, tailVol: 0.1, tailHz: 1500 }); break;
-      case 'gun_pistol': if (throttled('gp', 0.04)) gunShot({ crackHz: 2400, crackVol: 0.46, crackDur: 0.04, bodyHz: 250, bodyLow: 62, bodyVol: 0.44, bodyDur: 0.08, midHz: 780, tailDur: 0.07, tailVol: 0.1, tailHz: 1500 }); break;
-      case 'gun_smg':    if (throttled('gs', 0.02)) gunShot({ crackHz: 3000, crackVol: 0.34, crackDur: 0.022, bodyHz: 290, bodyLow: 80, bodyVol: 0.3, bodyDur: 0.04, midHz: 920, tailDur: 0.025, tailVol: 0.06, tailHz: 1700, vol: 0.9 }); break;
-      case 'gun_rifle':  if (throttled('gr', 0.04)) gunShot({ crackHz: 2800, crackVol: 0.52, crackDur: 0.045, bodyHz: 205, bodyLow: 50, bodyVol: 0.5, bodyDur: 0.1, midHz: 660, tailDur: 0.12, tailVol: 0.14, tailHz: 1300 }); break;
-      case 'gun_shotgun': if (throttled('gsh', 0.1)) gunShot({ crackHz: 1700, crackVol: 0.5, crackDur: 0.06, bodyHz: 150, bodyLow: 40, bodyVol: 0.62, bodyDur: 0.16, midHz: 440, tailDur: 0.2, tailVol: 0.2, tailHz: 900, vol: 1.05 }); break;
-      case 'gun_sniper': if (throttled('gsn', 0.1)) gunShot({ crackHz: 3200, crackVol: 0.6, crackDur: 0.05, bodyHz: 185, bodyLow: 44, bodyVol: 0.56, bodyDur: 0.14, midHz: 600, tailDur: 0.32, tailVol: 0.17, tailHz: 1100, vol: 1.12 }); break;
-      case 'gun_rocket': if (throttled('gro', 0.1)) gunShot({ crackHz: 900, crackVol: 0.3, crackDur: 0.1, bodyHz: 135, bodyLow: 36, bodyVol: 0.56, bodyDur: 0.26, midHz: 320, tailDur: 0.3, tailVol: 0.2, tailHz: 700, vol: 1.05 }); break;
+      // ㊴ 発砲音は全体に重く・リアルに: クラックを低め、body を深く、サブサンプの"ドスッ"を重ねて重量感を出す
+      case 'gun':    if (throttled('gun', 0.05)) { gunShot({ crackHz: 2000, crackVol: 0.48, crackDur: 0.035, bodyHz: 195, bodyLow: 46, bodyVol: 0.52, bodyDur: 0.1, midHz: 600, tailDur: 0.1, tailVol: 0.13, tailHz: 1150, vol: 1.02 }); if (ctx) subThump(112, 40, 0.09, 0.09); } break;
+      case 'gun_pistol': if (throttled('gp', 0.04)) { gunShot({ crackHz: 1950, crackVol: 0.5, crackDur: 0.035, bodyHz: 200, bodyLow: 48, bodyVol: 0.54, bodyDur: 0.1, midHz: 620, tailDur: 0.1, tailVol: 0.13, tailHz: 1150, vol: 1.04 }); if (ctx) subThump(112, 42, 0.09, 0.09); } break;
+      case 'gun_smg':    if (throttled('gs', 0.02)) { gunShot({ crackHz: 2500, crackVol: 0.38, crackDur: 0.02, bodyHz: 235, bodyLow: 60, bodyVol: 0.4, bodyDur: 0.05, midHz: 800, tailDur: 0.035, tailVol: 0.08, tailHz: 1500, vol: 1.0 }); if (ctx) subThump(120, 52, 0.045, 0.06); } break;
+      case 'gun_rifle':  if (throttled('gr', 0.04)) { gunShot({ crackHz: 2200, crackVol: 0.58, crackDur: 0.04, bodyHz: 170, bodyLow: 42, bodyVol: 0.6, bodyDur: 0.12, midHz: 540, tailDur: 0.15, tailVol: 0.16, tailHz: 1100, vol: 1.12 }); if (ctx) subThump(100, 38, 0.11, 0.11); } break;
+      case 'gun_shotgun': if (throttled('gsh', 0.1)) { gunShot({ crackHz: 1500, crackVol: 0.54, crackDur: 0.055, bodyHz: 135, bodyLow: 34, bodyVol: 0.7, bodyDur: 0.18, midHz: 400, tailDur: 0.24, tailVol: 0.22, tailHz: 820, vol: 1.14 }); if (ctx) subThump(92, 28, 0.2, 0.16); } break;
+      case 'gun_sniper': if (throttled('gsn', 0.1)) { gunShot({ crackHz: 2900, crackVol: 0.64, crackDur: 0.045, bodyHz: 165, bodyLow: 38, bodyVol: 0.62, bodyDur: 0.16, midHz: 560, tailDur: 0.38, tailVol: 0.2, tailHz: 1000, vol: 1.2 }); if (ctx) subThump(88, 28, 0.24, 0.15); } break;
+      case 'gun_rocket': if (throttled('gro', 0.1)) { gunShot({ crackHz: 700, crackVol: 0.4, crackDur: 0.1, bodyHz: 115, bodyLow: 30, bodyVol: 0.66, bodyDur: 0.3, midHz: 300, tailDur: 0.36, tailVol: 0.24, tailHz: 620, vol: 1.18 }); if (ctx) { subThump(115, 28, 0.32, 0.18); noiseShape(ctx.currentTime, 0.22, 0.12, 'lowpass', 700, 0, 1.2); } } break;
       // ㊴ 新銃の効果音: 重厚マグナム/ミニガン/対物狙撃/エネルギー/火炎/擲弾
-      case 'gun_heavy':  if (throttled('ghv', 0.08)) gunShot({ crackHz: 2100, crackVol: 0.6, crackDur: 0.05, bodyHz: 160, bodyLow: 42, bodyVol: 0.66, bodyDur: 0.16, midHz: 520, tailDur: 0.2, tailVol: 0.18, tailHz: 1000, vol: 1.15 }); break;
-      case 'gun_mini':   if (throttled('gmn', 0.012)) gunShot({ crackHz: 3200, crackVol: 0.28, crackDur: 0.015, bodyHz: 300, bodyLow: 90, bodyVol: 0.26, bodyDur: 0.03, midHz: 1000, tailDur: 0.02, tailVol: 0.05, tailHz: 1800, vol: 0.82 }); break;
+      case 'gun_heavy':  if (throttled('ghv', 0.08)) { gunShot({ crackHz: 1800, crackVol: 0.64, crackDur: 0.048, bodyHz: 145, bodyLow: 36, bodyVol: 0.72, bodyDur: 0.18, midHz: 480, tailDur: 0.24, tailVol: 0.2, tailHz: 940, vol: 1.22 }); if (ctx) subThump(88, 28, 0.2, 0.16); } break;
+      case 'gun_mini':   if (throttled('gmn', 0.012)) { gunShot({ crackHz: 2500, crackVol: 0.32, crackDur: 0.015, bodyHz: 240, bodyLow: 66, bodyVol: 0.34, bodyDur: 0.035, midHz: 860, tailDur: 0.024, tailVol: 0.06, tailHz: 1550, vol: 0.96 }); if (ctx) subThump(115, 50, 0.04, 0.06); } break;
       // 戦闘機の機首砲: 実機の対地攻撃機(GAU-8系)を想起させる、速く・重く・リアルな連射音。
       // 深い body + サブサンプの"ドスッ"を毎発重ね、低めのクラックで金属的すぎない重量感を出す。
       case 'gun_jet':    if (throttled('gjt', 0.016)) { gunShot({ crackHz: 1500, crackVol: 0.54, crackDur: 0.026, bodyHz: 150, bodyLow: 40, bodyVol: 0.64, bodyDur: 0.08, midHz: 460, tailDur: 0.07, tailVol: 0.13, tailHz: 820, vol: 1.14 }); if (ctx) subThump(88, 36, 0.07, 0.1); } break;
@@ -249,7 +250,10 @@ Game.Audio = (function () {
       case 'gun_energy': if (throttled('gen', 0.04)) { beep(1600, 0.05, 'sine', 0.08); beep(900, 0.09, 'sawtooth', 0.06); sbeep(2200, 0.05, 'triangle', 0.05, 0.03); } break;
       case 'gun_flame':  if (throttled('gfl', 0.05)) { if (ctx) noiseBurst(ctx.currentTime, 0.16, 0.1, 900); beep(180, 0.12, 'sawtooth', 0.05); } break;
       case 'gun_launch': if (throttled('gln', 0.14)) { beep(320, 0.06, 'square', 0.08); subThump(150, 55, 0.14, 0.1); } break;
-      case 'boom_sfx':   beep(110, 0.3, 'sawtooth', 0.16); beep(60, 0.4, 'triangle', 0.13); if (ctx) noiseBurst(ctx.currentTime, 0.4, 0.22, 600); break;
+      // 爆発: 鋭い初撃(高域ノイズ)＋深いサブ低音＋轟く尾で重くリアルに
+      case 'boom_sfx':   { const t0 = ctx ? ctx.currentTime : 0; beep(96, 0.32, 'sawtooth', 0.18); beep(52, 0.46, 'sine', 0.16); if (ctx) { noiseShape(t0, 0.05, 0.34, 'highpass', 1900, 0.7, 3); noiseBurst(t0, 0.46, 0.24, 560); subThump(120, 28, 0.44, 0.17); } } break;
+      // 戦車主砲: 巨砲の轟音。金属的な初撃＋極低サブ二段で腹に響く重量感
+      case 'cannon_tank': if (throttled('ctk', 0.05)) { gunShot({ crackHz: 1400, crackVol: 0.72, crackDur: 0.05, bodyHz: 125, bodyLow: 28, bodyVol: 0.82, bodyDur: 0.28, midHz: 400, tailDur: 0.52, tailVol: 0.26, tailHz: 720, vol: 1.32 }); if (ctx) { subThump(108, 24, 0.44, 0.2); subThump(66, 22, 0.54, 0.14); } } break;
       case 'slash_air':  if (throttled('sla', 0.06)) { beep(680, 0.06, 'sine', 0.06); beep(1200, 0.05, 'triangle', 0.05); } break;
       case 'beam':       if (throttled('bm', 0.05)) { beep(1400, 0.06, 'sine', 0.07); beep(700, 0.1, 'sawtooth', 0.05); } break;
       case 'thunder':    if (throttled('th', 0.08)) { beep(300, 0.05, 'square', 0.09); if (ctx) noiseBurst(ctx.currentTime, 0.12, 0.12, 3000, true); beep(120, 0.14, 'sawtooth', 0.08); } break;

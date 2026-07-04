@@ -405,8 +405,11 @@ Game.Player = (function () {
       if (p.reloadCd === 0 && p.reloadInfo) {
         const ri = p.reloadInfo; p.reloadInfo = null;
         const reserve = Game.Inventory.count(ri.ammo);
-        const take = Math.min(ri.need, reserve);
-        if (take > 0) { Game.Inventory.remove(ri.ammo, take); p.mags[ri.gid] = (p.mags[ri.gid] || 0) + take; Game.Audio.play('reload_done'); Game.UI.toast('リロード完了 — ' + (Game.ITEMS[ri.ammo] ? Game.ITEMS[ri.ammo].name : ri.ammo) + ' ' + p.mags[ri.gid] + '発'); }
+        // per: 弾薬1個あたりの補充量(火炎放射器のガソリン=25等)。既定1(通常銃は1発=1装填)
+        const per = ri.per || 1;
+        const ammoNeed = Math.ceil(ri.need / per);
+        const take = Math.min(ammoNeed, reserve);
+        if (take > 0) { Game.Inventory.remove(ri.ammo, take); p.mags[ri.gid] = Math.min(ri.cap || (p.mags[ri.gid] + take * per), (p.mags[ri.gid] || 0) + take * per); Game.Audio.play('reload_done'); Game.UI.toast('リロード完了 — ' + (Game.ITEMS[ri.ammo] ? Game.ITEMS[ri.ammo].name : ri.ammo) + ' ' + p.mags[ri.gid] + '発'); }
         Game.UI.refreshHotbar();
       }
     }
@@ -982,7 +985,7 @@ Game.Player = (function () {
     if (reserve <= 0) { if (Game.state.tick % 30 === 0) Game.UI.toast('弾切れ — ' + (Game.ITEMS[sel.ammo] ? Game.ITEMS[sel.ammo].name : sel.ammo) + ' が必要'); return false; }
     p.reloadCd = sel.reloadTime || 48; // ~1.6秒 @30Hz
     p.reloadMax = p.reloadCd; // 進捗バー用の総時間
-    p.reloadInfo = { gid: gid, ammo: sel.ammo, need: cap - cur };
+    p.reloadInfo = { gid: gid, ammo: sel.ammo, need: cap - cur, per: sel.refillPer || 1, cap: cap };
     Game.Audio.play('reload'); // マガジン交換のクリック音(発砲音と区別)
     Game.UI.toast('リロード中… 🔄');
     Game.UI.refreshHotbar();
@@ -1031,7 +1034,7 @@ Game.Player = (function () {
     const kind = sel.bkind || 'bullet';
     const pellets = sel.pellets || 1;
     const _gslot = Game.Inventory.selectedSlot();
-    let dmg = effAttack(sel.fireDmg || 6); // 銃もLv/STR補正
+    let dmg = effAttack((sel.fireDmg || 6) * 2); // 銃もLv/STR補正。銃器ダメージは全て2倍(ユーザー指示)
     if (_gslot && Game.Loot.isBroken && Game.Loot.isBroken(_gslot)) dmg = Math.max(1, Math.round(dmg * 0.4)); // 破損した銃は威力低下
     // 会心: 近接と同じ判定を遠距離にも適用(クリ時 1.8x ＋ 音/反動)。パッシブ「集中」は確定会心
     const critCh = (Game.TUNE.BASE_CRIT || 0.08) + skillBonus().crit + (setBonus().crit || 0);

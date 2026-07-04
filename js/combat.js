@@ -33,11 +33,11 @@ Game.Combat = (function () {
         directDmg: Game.Player.effAttack(tdef.directDmg), blastDmg: Game.Player.effAttack(tdef.blastDmg),
         blastRadius: tdef.blastRadius, range: tdef.range, speed: tdef.speed, knock: tdef.knock,
       });
-      Game.Audio.play('boom_sfx'); if (Game.Render.shake) Game.Render.shake(7);
+      Game.Audio.play('cannon_tank'); if (Game.Render.shake) Game.Render.shake(7);
       if (Game.Render.spawnMuzzle) Game.Render.spawnMuzzle(p.x + Math.cos(ang) * 22, p.y + Math.sin(ang) * 22, ang, '#ffd86b', 1.7);
       if (Game.Mobs.alertNoise) Game.Mobs.alertNoise(p.x, p.y, 14, 180);
-      // 戦車の反動: 発射ごとに砲撃方向と逆へ実際に少しノックバック(後退)。player側で壁を尊重しつつ減衰
-      const KB = 3.0; p.knockVX = -Math.cos(ang) * KB; p.knockVY = -Math.sin(ang) * KB;
+      // 戦車の反動: 発射ごとに砲撃方向と逆へ大きくノックバック(後退)。player側で壁を尊重しつつ減衰
+      const KB = 12.0; p.knockVX = -Math.cos(ang) * KB; p.knockVY = -Math.sin(ang) * KB;
       p.cannonCd = tdef.cd;
       return true;
     }

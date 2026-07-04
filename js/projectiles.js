@@ -302,6 +302,14 @@ Game.Projectiles = (function () {
         else { Game.Render.spawnParticles(pr.x, pr.y, '#caa86a', 3); if (Game.Render.spawnImpact && !pr.hostile) Game.Render.spawnImpact(pr.x, pr.y, pr.icol || '#c9cdd6'); }
         arr.splice(i, 1); continue;
       }
+      // 戦闘機弾: 非固形の破壊可能物(キノコ/茂み/花/作物/たいまつ等)も通過ざまに薙ぎ倒す。弾は貫通して飛び続ける。
+      // 同じタイルを毎tick二重加害しないよう直近タイルを記録。柔物は即破壊、硬物(鉱石脈)は耐久式。
+      if (pr.jetRound && !pr.hostile && meta && !meta.solid && meta.mineable && meta.hp != null &&
+          o !== Game.OBJ.CHEST && o !== Game.OBJ.TREASURE_CHEST && pr._brkTile !== (tx + ',' + ty)) {
+        pr._brkTile = tx + ',' + ty;
+        const hard2 = meta.tool === 'pickaxe' && (meta.tier || 0) >= 1;
+        damageObject(tx, ty, o, meta, hard2 ? Math.max(1, Math.ceil(meta.hp / 5)) : pr.dmg, pr.x, pr.y);
+      }
       let hit = false;
       if (pr.hostile) {
         if (Math.hypot(pl.x - pr.x, pl.y - pr.y) < 13) {

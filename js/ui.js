@@ -1023,7 +1023,26 @@ Game.UI = (function () {
     }
     // オーバーレイ(インベントリ/チェスト等)表示中・ポーズ中は隠す
     const overlayOpen = (el.invScreen && !el.invScreen.classList.contains('hidden')) || (el.chestScreen && !el.chestScreen.classList.contains('hidden')) || Game.state.paused;
-    if (!sel || sel.tool !== 'gun' || overlayOpen) { ammoEl.style.display = 'none'; return; }
+    if (overlayOpen) { ammoEl.style.display = 'none'; return; }
+    // 乗り物の武器(戦車/戦闘機/爆撃機)も残弾を表示。搭載弾薬はインベントリ在庫がそのまま残弾
+    if (p.vehicle) {
+      const VA = { tank: 'cannon_shell', jet: 'bullet' };
+      if (p.vehicle === 'bomber') {
+        const n = Game.Inventory.count('heavy_bomb') + Game.Inventory.count('aerial_bomb');
+        ammoEl.style.display = 'block';
+        ammoEl.innerHTML = '🛩 <span style="color:#9fb6d0">搭載爆弾</span>　残弾 <b style="color:' + (n === 0 ? '#e0664a' : '#7fe0a0') + '">' + n + '</b>' + (n === 0 ? ' <span style="color:#e0664a">弾切れ</span>' : '');
+        return;
+      }
+      const aid = VA[p.vehicle];
+      if (aid) {
+        const n = Game.Inventory.count(aid);
+        ammoEl.style.display = 'block';
+        ammoEl.innerHTML = '🎯 <span style="color:#9fb6d0">' + (Game.ITEMS[aid] ? Game.ITEMS[aid].name : aid) + '</span>　残弾 <b style="color:' + (n === 0 ? '#e0664a' : '#7fe0a0') + '">' + n + '</b>' + (n === 0 ? ' <span style="color:#e0664a">補充を</span>' : '');
+        return;
+      }
+      ammoEl.style.display = 'none'; return; // ロボ等 弾薬なしの乗り物
+    }
+    if (!sel || !sel.ammo || overlayOpen) { ammoEl.style.display = 'none'; return; }
     const ammoName = Game.ITEMS[sel.ammo] ? Game.ITEMS[sel.ammo].name : sel.ammo;
     const reserve = Game.Inventory.count(sel.ammo);
     ammoEl.style.display = 'block';
@@ -2472,8 +2491,8 @@ Game.UI = (function () {
     else if (def.buff || def.cures) sub = '🧪 薬 — 使うで効果';
     else if (def.place !== undefined) sub = '🧱 設置できる';
     else if (def.flavor) sub = def.flavor;
-    // 銃は残弾(装填/インベントリ)も併記して説明を充実
-    if (def.tool === 'gun' && def.ammo) {
+    // 弾薬を使う武器は残弾(装填/インベントリ)も併記して説明を充実
+    if (def.ammo) {
       const gid = st.id, mag = (p.mags && p.mags[gid] != null) ? p.mags[gid] : (def.mag || 0);
       const reserve = Game.Inventory.count(def.ammo);
       sub += '　🔢 装填 ' + mag + '/' + (def.mag || 0) + '・予備 ' + reserve;
@@ -2483,6 +2502,7 @@ Game.UI = (function () {
     hbInfoEl.innerHTML = '<div style="color:' + col + ';font-weight:700;font-size:.94rem">' + name + (st.count > 1 ? ' ×' + st.count : '') + '</div>' +
       (sub ? '<div style="color:#9fb6d0;font-size:.74rem;margin-top:1px">' + sub + '</div>' : '') +
       (flav ? '<div style="color:#7a8ba0;font-size:.68rem;margin-top:2px;font-style:italic">' + flav + '</div>' : '');
+    hbInfoEl.style.display = ''; // clearHudPopups(死亡等)が inline display:none を残すと以後表示されないバグを解消
     hbInfoEl.style.opacity = '1';
     if (hbInfoTimer) clearTimeout(hbInfoTimer);
     hbInfoTimer = setTimeout(function () { if (hbInfoEl) hbInfoEl.style.opacity = '0'; }, 2400);
