@@ -321,7 +321,10 @@ Game.Player = (function () {
       if (Game.state.tick % 2 === 0) Game.Render.spawnParticles(p.x, p.y, '#cfe0ff', 2);
     } else if (moving) {
       dx /= len; dy /= len;
-      p.dir = intent.dir || p.dir;
+      // 弾幕撃ち(ストレイフ): 銃を撃っている間は移動しても射撃方向を固定する(横移動＝ストレイフ)
+      const _sel = Game.Inventory.selectedSlot(), _sd = _sel && Game.ITEMS[_sel.id];
+      const firingGun = (intent.mine || intent.fire) && _sd && _sd.tool === 'gun';
+      if (!firingGun) p.dir = intent.dir || p.dir; // 射撃中は向きを更新しない=照準ロック
       const ox = p.x, oy = p.y;
       const mvSpd = p.vehicle ? spd * (0.3 + 0.7 * p.vThr) : spd; // 乗り物は出だし30%→滑らかに最高速へ
       const nx = p.x + dx * mvSpd;
