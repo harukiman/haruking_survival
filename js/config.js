@@ -531,6 +531,7 @@ Game.ITEMS = {
   frost_staff:   { name:'氷結の杖', stack:1, color:'#9fd8ff', tool:'staff', fireDmg:12, magic:'frost', flavor:'凍てつく弾で敵を縛る。' },
   meteor_staff:  { name:'流星の杖', stack:1, color:'#ffb24a', tool:'staff', strike:{ dmg:30, radius:2.4, range:9, cd:48 }, flavor:'天の破片を呼び、敵の頭上に落とす。星鋼に宿る空の記憶。' },
   vortex_staff:  { name:'渦の杖', stack:1, color:'#b66ad0', tool:'staff', vortex:{ dmg:5, radius:3, range:8, dur:66, cd:120 }, flavor:'空間を歪め渦を生む。群がる敵を一点へ引き寄せる。まとめて薙ぎ払え。' },
+  heavenfall_staff:{ name:'天墜の杖', stack:1, color:'#ff8a3c', tool:'staff', castMeteor:{ dur:300, radius:4, dmg:120, range:12 }, flavor:'狙いを定め、天に祈れ。約10秒の詠唱の間は無敵だが、その場を一歩も動いてはならない——詠唱の果て、巨大な隕石が指定した地に墜ち、あたり一面を焦土に変える。動けば、祈りは霧散する。' },
   flying_carpet: { name:'空飛ぶ絨毯', stack:1, color:'#c0407a', vehicle:'carpet', flavor:'古の魔法で織られた絨毯。空を自在に駆ける。' },
   shadow_altar:  { name:'影の祭壇', stack:4, color:'#3a2050', place:Game.OBJ.SHADOW_ALTAR },
   // ボス報酬
@@ -633,6 +634,7 @@ Game.RECIPES = [
   { out:{id:'combat_vest', n:1}, in:{iron:6, leather:4, string:3}, station:'crafting_table' },
   { out:{id:'reflect_aegis', n:1}, in:{shadow_steel:1, shadow_crystal:5, lumen:3, gold_bar:2}, station:'enchant_table' },
   { out:{id:'iai_mumyo', n:1}, in:{shadow_steel:2, gold_bar:3, shadow_crystal:4, lumen:2}, station:'enchant_table' },
+  { out:{id:'heavenfall_staff', n:1}, in:{star_core:1, gold_bar:3, shadow_crystal:5, lumen:3}, station:'enchant_table' },
   // 建築拡張
   { out:{id:'stone_wall', n:4}, in:{stone:4}, station:'crafting_table' },
   { out:{id:'hedge', n:4}, in:{wood:2, moonleaf:1}, station:'crafting_table' },
@@ -1150,7 +1152,7 @@ Game.ITEM_GLYPH = {
   sand_greatsword:'⚔️', magma_hammer:'🔨', pharaoh_crown:'👑', mind_tome:'📖', wisdom_tome:'📗', xp_orb:'🔮', expand_pouch:'🎒',
   feather:'🪶', wind_crystal:'💠', wind_steel:'🌀', wind_feather:'🪶', wind_sword:'🗡️', sky_cloak:'🧥', cloud_boots:'👢',
   ring_crit:'💍', amulet_swift:'📿', fang_vamp:'🦷', heart_regen:'❤️‍🔥', eye_xp:'👁️', band_power:'💪', crest_guard:'🛡️',
-  energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️', prism_blade:'⚔️', dragon_fang:'⚔️', colossus_blade:'⚔️', mire_scythe:'⚔️', magma_maul:'🔨', starcore_greatsword:'⚔️', voidcore_blade:'⚔️', spore_scythe:'⚔️', star_aegis:'🛡️', void_helm:'⛑️', thorn_plate:'🥷', tempest_spear:'🔱', sovereign_scepter:'👑', rift_crown:'👑', frostfang_blade:'🗡️', emberfang_axe:'🪓', echoedge:'🗡️', quakehammer:'🔨', flashstep_edge:'⚡', combat_vest:'🎽', reflect_aegis:'🛡️', iai_mumyo:'🗡️',
+  energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️', prism_blade:'⚔️', dragon_fang:'⚔️', colossus_blade:'⚔️', mire_scythe:'⚔️', magma_maul:'🔨', starcore_greatsword:'⚔️', voidcore_blade:'⚔️', spore_scythe:'⚔️', star_aegis:'🛡️', void_helm:'⛑️', thorn_plate:'🥷', tempest_spear:'🔱', sovereign_scepter:'👑', rift_crown:'👑', frostfang_blade:'🗡️', emberfang_axe:'🪓', echoedge:'🗡️', quakehammer:'🔨', flashstep_edge:'⚡', combat_vest:'🎽', reflect_aegis:'🛡️', iai_mumyo:'🗡️', heavenfall_staff:'☄️',
 };
 
 Game.INV_SIZE = 36;       // 先頭9 = ホットバー

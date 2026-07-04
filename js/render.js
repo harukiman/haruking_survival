@@ -122,6 +122,7 @@ Game.Render = (function () {
     drawPhantoms(ctx);
     drawTargetHighlight(ctx);
     drawMiningCrack(ctx);
+    drawMeteorCast(ctx);
     drawDrops(ctx);
     Game.Mobs.draw(ctx, alpha);
     drawPeers(ctx);
@@ -618,6 +619,26 @@ Game.Render = (function () {
     ctx.strokeRect(s.x + 1, s.y + 1, TS * z - 2, TS * z - 2);
   }
 
+  // 隕石詠唱の着弾予告リング(詠唱の進行に合わせて充填)
+  function drawMeteorCast(ctx) {
+    const p = Game.state.player; const c = p && p.casting; if (!c) return;
+    const TS = Game.CFG.TILE_SIZE, sc = Game.Camera.worldToScreen(c.tx, c.ty);
+    const rr = c.radius * TS, prog = 1 - Math.max(0, (c.until - Game.state.tick) / c.dur);
+    const pulse = 0.5 + Math.sin(Game.state.tick * 0.3) * 0.5;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,140,60,' + (0.5 + pulse * 0.3).toFixed(3) + ')'; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(sc.x, sc.y, rr, 0, Math.PI * 2); ctx.stroke();
+    // 充填(進行度)
+    ctx.strokeStyle = 'rgba(255,210,120,0.9)'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.arc(sc.x, sc.y, rr, -Math.PI / 2, -Math.PI / 2 + prog * Math.PI * 2); ctx.stroke();
+    // 内側の警告塗り
+    ctx.fillStyle = 'rgba(255,120,50,' + (0.06 + prog * 0.12).toFixed(3) + ')';
+    ctx.beginPath(); ctx.arc(sc.x, sc.y, rr, 0, Math.PI * 2); ctx.fill();
+    // 落下点の十字
+    ctx.strokeStyle = 'rgba(255,180,90,0.8)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(sc.x - 8, sc.y); ctx.lineTo(sc.x + 8, sc.y); ctx.moveTo(sc.x, sc.y - 8); ctx.lineTo(sc.x, sc.y + 8); ctx.stroke();
+    ctx.restore();
+  }
   function drawMiningCrack(ctx) {
     const m = Game.Player.mining;
     if (!m.active || m.progress <= 0) return;

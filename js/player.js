@@ -171,7 +171,29 @@ Game.Player = (function () {
     p.prevX = p.x; p.prevY = p.y;
 
     let dx = intent.dx, dy = intent.dy;
-    const len = Math.hypot(dx, dy);
+    let len = Math.hypot(dx, dy);
+    // 隕石詠唱: その場に停止して無敵で詠唱、完了で巨大隕石。動くと中断
+    if (p.casting) {
+      if (len > 0.05 || (p.health <= 0)) { // 移動入力 or 死亡で中断
+        Game.UI.toast('詠唱が中断された'); if (Game.Render.spawnFloat) Game.Render.spawnFloat(p.x, p.y - 24, '中断', '#8fa0b0');
+        p.casting = null;
+      } else {
+        dx = 0; dy = 0; len = 0;                       // その場停止
+        p.invuln = Math.max(p.invuln || 0, 8);         // 詠唱中は無敵
+        const c = p.casting, now = Game.state.tick;
+        const prog = 1 - Math.max(0, (c.until - now) / c.dur);
+        // 詠唱演出: 対象地点に集束する光と、足元の魔法陣
+        if (now % 6 === 0 && Game.Render.spawnParticles) { Game.Render.spawnParticles(c.tx + (Math.random() - 0.5) * 60, c.ty - 40 - Math.random() * 40, '#ffb24a', 2); Game.Render.spawnParticles(p.x, p.y, '#ffd88a', 2); }
+        if (now % 30 === 0 && Game.Render.spawnFloat) Game.Render.spawnFloat(p.x, p.y - 26, '詠唱 ' + Math.round(prog * 100) + '%', '#ffb24a');
+        if (Game.Render.markMeteorTarget) Game.Render.markMeteorTarget(c.tx, c.ty, c.radius, prog);
+        if (now >= c.until) {
+          Game.Projectiles.callMeteor(c.tx, c.ty, c.dmg, c.radius);
+          if (Game.Render.flash) Game.Render.flash('rgba(255,180,90,0.3)'); if (Game.Render.shake) Game.Render.shake(12);
+          Game.Audio.play('boom_sfx');
+          p.casting = null;
+        }
+      }
+    }
     // 就寝中に動いたら目を覚ます(MP: 全員就寝待ちから離脱)
     if (p.sleeping && len > 0.05) { p.sleeping = false; }
     // MP: 同じ世界の全員が就寝したら朝へ

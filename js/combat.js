@@ -111,6 +111,25 @@ Game.Combat = (function () {
       }
       return true;
     }
+    // 隕石詠唱の杖: カーソル(or最寄り敵/正面)を指定し、長い詠唱の末に巨大隕石を落とす。
+    // 詠唱中は無敵だがその場に停止する必要がある(動くと中断)。runSpecial ではなく状態(p.casting)で管理。
+    if (_def && _def.castMeteor && !p.casting) {
+      const cm = _def.castMeteor;
+      const it = Game.Input.intent;
+      let tx2, ty2;
+      if (it && it.usePointer && it.mouseTile) { tx2 = it.mouseTile.tx * TS + TS / 2; ty2 = it.mouseTile.ty * TS + TS / 2; }
+      else {
+        let bm = null, bd = Infinity, reach = (cm.range || 10) * TS;
+        for (let i = 0; i < mobs.length; i++) { const m = mobs[i]; if (m.def.friendly) continue; const d = Math.hypot(m.x - p.x, m.y - p.y); if (d <= reach && d < bd) { bd = d; bm = m; } }
+        if (bm) { tx2 = bm.x; ty2 = bm.y; }
+        else { let dx2 = 0, dy2 = 0; if (p.dir === 'up') dy2 = -1; else if (p.dir === 'down') dy2 = 1; else if (p.dir === 'left') dx2 = -1; else dx2 = 1; tx2 = p.x + dx2 * 5 * TS; ty2 = p.y + dy2 * 5 * TS; }
+      }
+      p.casting = { type: 'meteor', tx: tx2, ty: ty2, until: Game.state.tick + (cm.dur || 300), dur: (cm.dur || 300), radius: cm.radius || 4, dmg: Game.Player.effAttack(cm.dmg || 120), sfx: cm.sfx || 'whirl' };
+      Game.Audio.play('whirl');
+      if (Game.Render.spawnFloat) Game.Render.spawnFloat(p.x, p.y - 28, '詠唱開始…', '#ffb24a', true);
+      p.attackCd = 20;
+      return true;
+    }
     let projFired = false;
     if (_def && _def.proj) {
       const pj = _def.proj;
