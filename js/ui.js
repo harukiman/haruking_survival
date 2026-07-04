@@ -86,7 +86,10 @@ Game.UI = (function () {
     if (zmBtn) zmBtn.addEventListener('click', function (e) { e.stopPropagation(); bigMapZoom = (bigMapZoom + 1) % BM_SPANS.length; zmBtn.textContent = bigMapZoom === 0 ? '🔍 近景' : '🔍 広域'; updateBigMap(); });
     // マーカー設置モード + 地図タップ
     const mkBtn = document.getElementById('bigmap-mark');
-    if (mkBtn) mkBtn.addEventListener('click', function (e) { e.stopPropagation(); bigMapMarkMode = !bigMapMarkMode; mkBtn.classList.toggle('on', bigMapMarkMode); mkBtn.textContent = bigMapMarkMode ? '📍 設置中…' : '📍 マーク'; });
+    if (mkBtn) mkBtn.addEventListener('click', function (e) { e.stopPropagation(); bigMapMarkMode = !bigMapMarkMode; mkBtn.classList.toggle('on', bigMapMarkMode); mkBtn.textContent = bigMapMarkMode ? '📍 設置中…' : '📍 マーク'; if (bigMapMarkMode) toast('地図をタップしてマーカーを設置（既存を再タップで削除）'); });
+    // 現在地マーク: どの入力方式でも1押しで今いる場所にマーカー設置/削除(コントローラでも確実に置ける)
+    const mkHere = document.getElementById('bigmap-markhere');
+    if (mkHere) mkHere.addEventListener('click', function (e) { e.stopPropagation(); const p = Game.state.player, TS = Game.CFG.TILE_SIZE; toggleMarkAt(Math.floor(p.x / TS), Math.floor(p.y / TS)); });
     if (el.bigmap) el.bigmap.addEventListener('click', function (e) { if (bigMapMarkMode) { e.stopPropagation(); onBigMapTap(e); } });
     // ステータス画面: レベルバッジをタップで開く
     const lb = document.getElementById('level-badge');
@@ -720,9 +723,12 @@ Game.UI = (function () {
     const TS = Game.CFG.TILE_SIZE, p = Game.state.player;
     const ptx = Math.floor(p.x / TS), pty = Math.floor(p.y / TS), half = span / 2;
     const wtx = Math.round(ptx - half + px / scale), wty = Math.round(pty - half + py / scale);
+    toggleMarkAt(wtx, wty);
+  }
+  // 指定タイルにマーカーをトグル(タップ・現在地ボタン・将来のpad共通経路)
+  function toggleMarkAt(wtx, wty) {
     if (!Game.state.mapMarks) Game.state.mapMarks = [];
     const world = Game.state.worldName;
-    // 近く(6タイル以内)の既存マークがあれば削除(トグル)
     const near = Game.state.mapMarks.findIndex(function (m) { return m.world === world && Math.abs(m.tx - wtx) <= 6 && Math.abs(m.ty - wty) <= 6; });
     if (near >= 0) { Game.state.mapMarks.splice(near, 1); toast('マーカーを削除'); }
     else { if (Game.state.mapMarks.length >= 30) Game.state.mapMarks.shift(); Game.state.mapMarks.push({ tx: wtx, ty: wty, world: world }); toast('マーカーを設置'); Game.Audio.play('cursor'); }
