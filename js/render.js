@@ -975,6 +975,14 @@ Game.Render = (function () {
       ctx.fillStyle = '#c0407a'; roundRectC(ctx, x - 18, y + 4 + wob, 36, 12, 3); ctx.fill();
       ctx.fillStyle = '#ffd86b'; ctx.fillRect(x - 16, y + 6 + wob, 32, 2); ctx.fillRect(x - 16, y + 12 + wob, 32, 2);
       ctx.fillStyle = '#7fd0ff'; for (let i = -2; i <= 2; i++) ctx.fillRect(x + i * 7 - 1, y + 8 + wob, 2, 2);
+    } else if (type === 'jet') {
+      // 戦闘機: 三角翼＋機首＋双発。飛行影
+      ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.beginPath(); ctx.ellipse(x, y + 26, 20, 5, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#8a96c0'; ctx.beginPath(); ctx.moveTo(x, y - 18); ctx.lineTo(x - 16, y + 12); ctx.lineTo(x + 16, y + 12); ctx.closePath(); ctx.fill(); // デルタ翼
+      ctx.fillStyle = '#aab4d8'; roundRectC(ctx, x - 4, y - 16, 8, 30, 4); ctx.fill(); // 胴
+      ctx.fillStyle = '#cfe0ff'; ctx.fillRect(x - 3, y - 12, 6, 5); // キャノピー
+      ctx.fillStyle = '#3a4250'; ctx.fillRect(x - 12, y + 8, 3, 5); ctx.fillRect(x + 9, y + 8, 3, 5); // 双発ノズル
+      ctx.fillStyle = '#666'; ctx.fillRect(x - 10, y - 14, 2, 6); ctx.fillRect(x + 8, y - 14, 2, 6); // 機関銃
     } else if (type === 'plane') {
       ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.beginPath(); ctx.ellipse(x, y + 24, 22, 6, 0, 0, Math.PI * 2); ctx.fill(); // 影（飛行）
       ctx.fillStyle = '#8a96c0'; ctx.fillRect(x - 22, y - 2, 44, 6); // 翼

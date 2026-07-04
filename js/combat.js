@@ -52,6 +52,20 @@ Game.Combat = (function () {
       p.cannonCd = md.cd;
       return true;
     }
+    // 戦闘機の二連機関銃: 攻撃ボタンで前方へ弾丸を掃射(弾丸を消費)。高速連射・低CD
+    if (p.vehicle === 'jet') {
+      const jd = Game.ITEMS.fighter_jet && Game.ITEMS.fighter_jet.jetGun;
+      if (!jd) return true;
+      if ((p.cannonCd || 0) > 0) return true;
+      if (Game.Inventory.count('bullet') <= 0) { if (Game.state.tick % 40 === 0) Game.UI.toast('弾丸がない — 機関銃の弾を補充を'); return true; }
+      Game.Inventory.remove('bullet', 1);
+      Game.Projectiles.fire(Game.Player.effAttack(jd.dmg), 'tracer', { count: 2, spread: jd.spread, speed: 12 });
+      Game.Audio.play('gun_smg'); if (Game.Render.shake) Game.Render.shake(2);
+      if (Game.Render.spawnMuzzle) { let fx = 0, fy = 0; if (p.dir === 'up') fy = -1; else if (p.dir === 'down') fy = 1; else if (p.dir === 'left') fx = -1; else fx = 1; Game.Render.spawnMuzzle(p.x + fx * 14, p.y + fy * 14, Math.atan2(fy, fx), '#ffe06a', 1.1); }
+      if (Game.Mobs.alertNoise) Game.Mobs.alertNoise(p.x, p.y, 10, 120);
+      p.cannonCd = jd.cd;
+      return true;
+    }
     if (p.attackCd > 0) {
       // 先行入力バッファ: CD残り~200ms(6tick)以内の入力は予約し、CD明けに自動発動(コンボが途切れない)
       if (p.attackCd <= 6) p.attackBuf = true;
