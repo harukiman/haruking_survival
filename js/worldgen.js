@@ -322,12 +322,11 @@ Game.WorldGen = (function () {
       const DG = 74;
       const ax = Math.round(wx / DG) * DG, ay = Math.round(wy / DG) * DG;
       if (U.hash3(ax, ay, seed + 8888) < 0.085) {
-        // サイズを拡大(ユーザー: 狭すぎ→即宝箱で達成感なし)。約半数を大型に。
-        const big = U.hash3(ax, ay, seed + 1212) < 0.5;
-        const hw = big ? 12 : 8, hh = big ? 9 : 6;
+        // 大きく複雑な二分木迷路(ユーザー: 入って5秒で宝箱→長い経路/分岐/行き止まりの迷宮に)
+        const big = U.hash3(ax, ay, seed + 1212) < 0.55;
+        const hw = big ? 16 : 11, hh = big ? 12 : 8;
         const dx = wx - ax, dy = wy - ay;
         if (Math.abs(dx) <= hw && Math.abs(dy) <= hh) {
-          // テーマを地形で決定（雪原は氷窟/水晶洞窟に分岐）
           let wall;
           if (ground === T.SNOW) wall = (U.hash3(ax, ay, seed + 222) < 0.5) ? O.CRYSTAL_WALL : O.ICE_WALL;
           else if (ground === T.SAND) wall = O.TOMB_WALL;
@@ -335,47 +334,32 @@ Game.WorldGen = (function () {
           else wall = O.DUNGEON_WALL;
           const edge = Math.abs(dx) === hw || Math.abs(dy) === hh;
           const entrance = dy === hh && Math.abs(dx) <= 1; // 下側に入口
-          if (entrance) return { ground: T.DUNGEON_FLOOR, obj: O.NONE }; // 入口は確実に開ける
+          if (entrance) return { ground: T.DUNGEON_FLOOR, obj: O.NONE };
           if (edge) return { ground: T.DUNGEON_FLOOR, obj: wall };
-          // 内部を十字の通路(中央3x3ハブ＋幅1の縦横回廊)で4部屋に区切る迷路状レイアウト
-          // 縦仕切り(dx=0)・横仕切り(dy=0)。中央付近(|*|<=1)は開けてハブ＆回廊を残す → 連結性保証
-          const innerV = dx === 0 && Math.abs(dy) > 1;
-          const innerH = dy === 0 && Math.abs(dx) > 1;
-          if (innerV || innerH) return { ground: T.DUNGEON_FLOOR, obj: wall };
-          // 中央ハブは「守護者の間」: 主宝箱は置かず番人スポナー。宝は各部屋の奥(下記の隅)に配置し、
-          // 入ってすぐ宝に届く問題を解消(まず番人と戦い、迷宮の奥を探索して報酬を得る)
-          if (dx === 0 && dy === 0) return { ground: T.DUNGEON_FLOOR, obj: O.SPAWNER };
-          // ハブ周囲(隣接4マス)にも宝を置かない=即取り防止。番人の間を広く保つ
-          if (Math.abs(dx) + Math.abs(dy) === 1) return { ground: T.DUNGEON_FLOOR, obj: O.NONE };
-          // 最深部(入口の対角=左上の隅)は必ず主宝箱。その隣に「帰還の渦」で入口へ即ワープ
-          if (dx === -(hw - 2) && dy === -(hh - 2)) return { ground: T.DUNGEON_FLOOR, obj: O.TREASURE_CHEST };
-          if (dx === -(hw - 2) + 1 && dy === -(hh - 2)) return { ground: T.DUNGEON_FLOOR, obj: O.EXIT_PORTAL };
-          // 各部屋(4象限)の奥に特徴物: 宝箱/巣/空 をハッシュで決定
-          if (Math.abs(dx) === hw - 2 && Math.abs(dy) === hh - 2) {
-            const q = (dx > 0 ? 1 : 0) + (dy > 0 ? 2 : 0);
-            const hv = U.hash3(ax + q * 17, ay + q * 29, seed + 555);
-            if (hv < 0.5) return { ground: T.DUNGEON_FLOOR, obj: O.TREASURE_CHEST };
-            if (hv < 0.9) return { ground: T.DUNGEON_FLOOR, obj: O.SPAWNER };
-          }
-          // 迷路の複雑化: 各部屋にもう一段の短い仕切り(開口付き)を増設。中央回廊(|dx|<=1||dy|<=1)は必ず開けて連結保証
-          if (big && Math.abs(dx) > 1 && Math.abs(dy) > 1) {
-            // 部屋の中ほどに横仕切り(dyが部屋中央付近)。開口を1つ残す
-            const roomMidY = (dy > 0 ? 1 : -1) * (hh - 4);
-            if (dy === roomMidY && Math.abs(dx) >= 3 && Math.abs(dx) <= hw - 3) {
-              const gapX = 2 + (U.hash3(ax + (dy > 0 ? 3 : -3), ay + 13, seed + 61) < 0.5 ? 0 : 1);
-              if (Math.abs(dx) !== gapX && Math.abs(dx) !== hw - 2) return { ground: T.DUNGEON_FLOOR, obj: wall };
+          // ===== 内部: セル(2床+1壁)の二分木迷路。南東の根へ carveEast/carveSouth で連結=全セル到達保証 =====
+          const gx = dx + (hw - 1), gy = dy + (hh - 1);        // 内部を0基点に(外壁を除く)
+          const IW = 2 * (hw - 1) + 1, IH = 2 * (hh - 1) + 1;
+          const NX = Math.floor(IW / 3), NY = Math.floor(IH / 3);
+          const cx = Math.floor(gx / 3), cy = Math.floor(gy / 3), ix = gx % 3, iy = gy % 3;
+          const inGrid = cx < NX && cy < NY;
+          // 入口の吹き抜け(下辺中央→最下段セル内部へ確実に接続)
+          const foyer = Math.abs(dx) <= 1 && dy >= (hh - 1) - 1;
+          if (!inGrid && !foyer) return { ground: T.DUNGEON_FLOOR, obj: wall }; // 端数は壁
+          if (inGrid && !foyer) {
+            const isRight = cx === NX - 1, isBottom = cy === NY - 1;
+            const carveEast = !isRight && (isBottom || U.hash3(ax + cx * 13, ay + cy * 17, seed + 321) < 0.5);
+            const carveSouth = !isBottom && !carveEast;
+            if (ix === 2 && iy === 2) return { ground: T.DUNGEON_FLOOR, obj: wall };      // 柱
+            if (ix === 2 && iy < 2) return { ground: T.DUNGEON_FLOOR, obj: carveEast ? O.NONE : wall };  // 東通路
+            if (iy === 2 && ix < 2) return { ground: T.DUNGEON_FLOOR, obj: carveSouth ? O.NONE : wall }; // 南通路
+            // セル内部(2x2): 特徴物(最深宝箱/番人/道中の宝)
+            if (cx === 0 && cy === 0 && ix === 0 && iy === 0) return { ground: T.DUNGEON_FLOOR, obj: O.TREASURE_CHEST }; // 最深(北西の根から最遠)=主宝箱
+            if (cx === 0 && cy === 0 && ix === 1 && iy === 0) return { ground: T.DUNGEON_FLOOR, obj: O.EXIT_PORTAL };    // 隣に帰還の渦
+            if (ix === 0 && iy === 0) { // 各セル中央に低確率で道中の宝/番人
+              const hv = U.hash3(ax + cx * 31, ay + cy * 41, seed + 555);
+              if (hv < 0.08) return { ground: T.DUNGEON_FLOOR, obj: O.TREASURE_CHEST };
+              if (hv < 0.26) return { ground: T.DUNGEON_FLOOR, obj: O.SPAWNER };
             }
-          }
-          // 大型は各部屋にもう1段の仕切り(開口付き)で入り組ませる
-          if (big) {
-            const subV = Math.abs(dx) === 4 && Math.abs(dy) > 2 && Math.abs(dy) < hh;
-            if (subV) { const gapY = 3 + (U.hash3(ax + (dx > 0 ? 5 : -5), ay, seed + 71) < 0.5 ? 0 : 1); if (Math.abs(dy) !== gapY) return { ground: T.DUNGEON_FLOOR, obj: wall }; }
-          }
-          // 部屋内に散発的な柱/岩(回廊 |dx|<=1 or |dy|<=1 は除外して通路を確保)
-          if (Math.abs(dx) > 1 && Math.abs(dy) > 1) {
-            const rh = U.hash3(wx, wy, seed + 99);
-            if (rh < 0.05) return { ground: T.DUNGEON_FLOOR, obj: wall };
-            if (rh < 0.09) return { ground: T.DUNGEON_FLOOR, obj: O.ROCK };
           }
           return { ground: T.DUNGEON_FLOOR, obj: O.NONE };
         }
