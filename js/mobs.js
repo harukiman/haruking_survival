@@ -1181,26 +1181,32 @@ Game.Mobs = (function () {
     if (Game.Bounty && m.def && !m.def.npc) Game.Bounty.notifyKill(m.type);
     // ドロップを集約（ローカル生成＋マルチ配信用）
     const items = [];
-    // ドロップ抽選(ユーザー指示): ①まずドロップ有無を抽選 → ②当たれば最大2つをランダム抽選。
-    // レア(武器/固有=n[0]===0)は抽選重みを大きく下げ、滅多に出ないようにする。
+    // ドロップ抽選: ザコは絞る(ユーザー指示)。ボス/中ボスは討伐報酬なので手厚く保証する。
     if (m.def.drops && m.def.drops.length) {
-      const dropGate = m.nightAmped ? 0.8 : (m.def.boss || m.def.midboss) ? 0.95 : 0.55; // ①有無の抽選
-      if (Math.random() < dropGate) {
-        // ②重み付きプール: 通常素材/消耗品=1.0 / レア(武器/防具/遺物/特殊=固有装備)=0.1
-        const pool = m.def.drops.map(function (d) {
-          const it = Game.ITEMS[d.item];
-          const rare = it && (it.tool || it.attack != null || (it.armor != null && it.slot) || it.relic || it.special || it.summonBoss);
-          return { d: d, w: rare ? 0.1 : 1 };
+      if (m.def.boss || m.def.midboss) {
+        // ボス/中ボス: 看板ドロップは信頼できる報酬。n[0]>0の確定素材/看板武器は落とし、n[0]===0の固有は高確率で抽選(pityも別途保証)
+        m.def.drops.forEach(function (d) {
+          if (d.n[0] > 0) { const n = Game.Utils.randInt(Math.random, d.n[0], d.n[1]); for (let k = 0; k < n; k++) items.push({ id: d.item, count: 1 }); }
+          else if (Math.random() < 0.5) items.push({ id: d.item, count: 1 }); // 固有(n0=0)は50%(+3体毎pityで確定)
         });
-        let totalW = 0; for (let i = 0; i < pool.length; i++) totalW += pool[i].w;
-        const slots = 1 + (Math.random() < (m.nightAmped ? 0.55 : 0.3) ? 1 : 0); // 最大2つ
-        for (let s = 0; s < slots; s++) {
-          let r = Math.random() * totalW, e = pool[pool.length - 1];
-          for (let i = 0; i < pool.length; i++) { r -= pool[i].w; if (r <= 0) { e = pool[i]; break; } }
-          const d = e.d;
-          // 数量: レア/固有は1、通常素材は1〜2(控えめ)
-          const cnt = d.n[0] === 0 ? 1 : (d.n[1] > 1 && Math.random() < 0.3 ? 2 : 1);
-          for (let k = 0; k < cnt; k++) items.push({ id: d.item, count: 1 });
+      } else {
+        // ザコ: ①ドロップ有無を抽選 → ②当たれば最大2つを重み付き抽選。レア(装備/固有)は重み1/10で滅多に出ない
+        const dropGate = m.nightAmped ? 0.8 : 0.55;
+        if (Math.random() < dropGate) {
+          const pool = m.def.drops.map(function (d) {
+            const it = Game.ITEMS[d.item];
+            const rare = it && (it.tool || it.attack != null || (it.armor != null && it.slot) || it.relic || it.special || it.summonBoss);
+            return { d: d, w: rare ? 0.1 : 1 };
+          });
+          let totalW = 0; for (let i = 0; i < pool.length; i++) totalW += pool[i].w;
+          const slots = 1 + (Math.random() < (m.nightAmped ? 0.55 : 0.3) ? 1 : 0);
+          for (let s = 0; s < slots; s++) {
+            let r = Math.random() * totalW, e = pool[pool.length - 1];
+            for (let i = 0; i < pool.length; i++) { r -= pool[i].w; if (r <= 0) { e = pool[i]; break; } }
+            const d = e.d;
+            const cnt = d.n[0] === 0 ? 1 : (d.n[1] > 1 && Math.random() < 0.3 ? 2 : 1);
+            for (let k = 0; k < cnt; k++) items.push({ id: d.item, count: 1 });
+          }
         }
       }
     }
