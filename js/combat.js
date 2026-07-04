@@ -93,6 +93,9 @@ Game.Combat = (function () {
     const st = Game.Loot.stats(slot);
     // 武器ダメージにレベル/STR/スキル補正（同じ装備でもレベルで±）
     let dmg = Game.Player.effAttack(st.atk > 0 ? st.atk : 1);
+    // 連撃ボーナス: コンボ中は攻撃力が少し上がる(2%/連・最大+20%)。攻めるほど気持ちよく(Hades/Dead Cells調)
+    const comboMul = 1 + Math.min(0.20, (Game.state.combo || 0) * 0.02);
+    dmg = Math.round(dmg * comboMul);
     const baseDmg = dmg; // 特殊効果のスケール基準(会心補正前)
     // 会心（クリティカル）: 基礎8% ＋ スキル ＋ 装備affix。クリ時 1.8x。パッシブ「集中」は確定会心
     const critCh = (Game.TUNE.BASE_CRIT || 0.08) + Game.Player.skillBonus().crit + (st.crit || 0) + (Game.Player.setBonus().crit || 0);

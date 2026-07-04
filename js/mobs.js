@@ -982,7 +982,11 @@ Game.Mobs = (function () {
     if (m.def.hostile && !m.def.npc) {
       const s = Game.state;
       s.combo = (s.combo || 0) + 1; s.comboT = 90; // 3秒以内に次を倒せば継続
-      if (s.combo >= 3) { if (Game.UI.flashCombo) Game.UI.flashCombo(s.combo); if (Game.Audio.comboSound) Game.Audio.comboSound(s.combo); }
+      if (s.combo >= 3) {
+        if (Game.UI.flashCombo) Game.UI.flashCombo(s.combo);
+        if (Game.Audio.comboSound) Game.Audio.comboSound(s.combo);
+        Game.Player.gainXP(Math.min(20, Math.round(s.combo * 0.6))); // 連撃ごとに少額の追加経験
+      }
       if (s.combo > 0 && s.combo % 10 === 0) { // 10連ごとにボーナス(高連ほど豪華)
         Game.Player.gainXP(Math.min(80, s.combo * 1.5));
         const big = s.combo >= 20;
