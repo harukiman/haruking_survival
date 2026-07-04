@@ -1277,6 +1277,7 @@ Game.UI = (function () {
     { icon: '🕹', text: '画面の左半分をなぞると移動できる', life: 20, done: function () { const p = Game.state.player, sp = Game.state.spawn, TS = Game.CFG.TILE_SIZE; if (!sp || sp.tx == null) return false; return Math.hypot(p.x - (sp.tx + 0.5) * TS, p.y - (sp.ty + 0.5) * TS) > 140; } },
     { icon: '⛏', text: '「採掘」ボタンで木や石を集めよう', life: 40, done: function () { return Game.Inventory.count('wood') > 0 || Game.Inventory.count('stone') > 0; } },
     { icon: '🔨', text: '「袋」を開いてクラフトで道具を作ろう', life: 45, done: function () { return Game.Achievements && Game.Achievements.has('first_craft'); } },
+    { icon: '⚔️', text: '武器をホットバーで選び、敵に近づいて「攻撃」で戦う', life: 35, done: function () { const best = Game.state.bestiary || {}; for (const k in best) { const m = Game.MOBS[k]; if (m && m.hostile) return true; } return false; } },
     { icon: '🌙', text: '夜は敵が強くなる。松明と武器を備えよう', life: 25, done: function () { return Game.Inventory.count('torch') > 0; } },
     { icon: '💾', text: '進行は自動保存される。⚙からも保存できる', life: 12, done: function () { return false; } },
   ];
