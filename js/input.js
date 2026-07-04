@@ -275,7 +275,10 @@ Game.Input = (function () {
       const nd = stickNavDir(ax, ay); // 左スティック: 初回即時→ディレイ→リピート
       if (nd) Game.UI.padNav(nd);
       if (edge(PB('mine'))) Game.UI.padNav('ok');              // ×=決定
-      if (PB('mine') !== 1 && edge(1)) Game.UI.padNav('back'); // ○=戻る/閉じる(メニュー中は固定)
+      // □=アイテムの持ち上げ/設置/入替(マイクラ式・インベントリ⇔ホットバー移動)
+      if (edge(PB('place')) && Game.UI.padGrab) Game.UI.padGrab();
+      // ○=戻る/閉じる。ただしアイテム持ち上げ中はまず手放す(誤って閉じない)
+      if (PB('mine') !== 1 && edge(1)) { if (Game.UI.isHoldingItem && Game.UI.isHoldingItem()) Game.UI.padGrabReturn(); else Game.UI.padNav('back'); }
       if (edge(PB('hotbarPrev'))) Game.UI.padNav('tabprev');   // L1=タブ←
       if (edge(PB('hotbarNext'))) Game.UI.padNav('tabnext');   // R1=タブ→
       if (edge(PB('fire'))) clickAtCursor();                    // R2=右スティックカーソルでクリック(従来共存)

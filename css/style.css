@@ -58,6 +58,11 @@ button { font-family: inherit; touch-action: manipulation; }
 .title-box h1 { font-size: 2.2rem; line-height: 1.05; letter-spacing: 2px; color: #6fc46b; text-shadow: 0 2px 0 #1d3a1b; }
 .title-box h1 span { color: #e8c54a; }
 /* リファインしたタイトル */
+/* 持ち上げ中アイテムのバッジ(コントローラのアイテム移動) */
+#inv-held-badge { position: fixed; left: 50%; bottom: calc(14px + var(--ey, 16px)); transform: translateX(-50%); z-index: 60;
+  background: rgba(20, 28, 42, 0.95); border: 1px solid #ffd86b; color: #ffe9b0; padding: 8px 14px; border-radius: 10px;
+  font-size: .9rem; font-weight: 700; box-shadow: 0 4px 18px rgba(0,0,0,0.5); pointer-events: none; white-space: nowrap; }
+#inv-held-badge .hb-hint { color: #9fb6d0; font-weight: 500; font-size: .78rem; margin-left: 6px; }
 /* セーブスロット選択(タイトル) */
 .save-slots { margin: 4px 0 10px; animation: titleFadeUp .6s ease both .65s; }
 .slots-lbl { font-size: .74rem; color: #8a94a8; margin-bottom: 4px; letter-spacing: .5px; }

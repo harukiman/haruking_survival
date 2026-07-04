@@ -1440,6 +1440,44 @@ Game.UI = (function () {
     invSelected = -1; refreshInventory(); refreshHotbar();
     return true;
   }
+  // ===== コントローラでのアイテム移動/交換(マイクラ式: □で持ち上げ→対象で設置/入替) =====
+  let invHeld = null;    // 持ち上げ中のスタック {id,count,roll} or null
+  function isHoldingItem() { return !!invHeld; }
+  function renderHeldBadge() {
+    let el = document.getElementById('inv-held-badge');
+    if (!invHeld) { if (el) el.remove(); return; }
+    if (!el) { el = document.createElement('div'); el.id = 'inv-held-badge'; document.body.appendChild(el); }
+    const d = Game.ITEMS[invHeld.id]; const nm = (invHeld.roll && Game.Loot.displayName) ? Game.Loot.displayName(invHeld) : (d ? d.name : invHeld.id);
+    el.innerHTML = '✊ 持ち上げ中: <b>' + nm + '</b>' + (invHeld.count > 1 ? ' ×' + invHeld.count : '') + ' <span class="hb-hint">□で設置/入替 ・ ○で戻す</span>';
+  }
+  // □ボタン: 現在フォーカス中のスロットで 持ち上げ / 設置 / 入替
+  function padGrab() {
+    const sc = document.getElementById('inv-screen');
+    if (!sc || sc.classList.contains('hidden')) return; // インベントリ画面でのみ
+    const idx = invSelected; if (idx == null || idx < 0) return;
+    const sl = Game.Inventory.slots(); const s = sl[idx];
+    if (!invHeld) {
+      if (!s) return;                // 空スロットは何もしない
+      invHeld = s; sl[idx] = null;   // 持ち上げ
+      Game.Audio.play('cursor');
+    } else {
+      if (!s) { sl[idx] = invHeld; invHeld = null; }        // 空へ設置
+      else if (s.id === invHeld.id && !s.roll && !invHeld.roll) { // 同種スタックへ合流
+        const max = (Game.ITEMS[s.id] && Game.ITEMS[s.id].stack) || 99;
+        const mv = Math.min(max - s.count, invHeld.count); s.count += mv; invHeld.count -= mv;
+        if (invHeld.count <= 0) invHeld = null;              // 全部乗った→手放す
+      } else { sl[idx] = invHeld; invHeld = s; }             // 入替(入替先を持ち上げ直す)
+      Game.Audio.play('select');
+    }
+    renderHeldBadge(); refreshInventory(); refreshHotbar();
+  }
+  // ○ボタン等: 持ち上げ中のアイテムをインベントリへ戻す(キャンセル)
+  function padGrabReturn() {
+    if (!invHeld) return false;
+    if (Game.Inventory.add(invHeld.id, invHeld.count) !== 0 && invHeld.roll) Game.Inventory.addInstance(invHeld);
+    invHeld = null; renderHeldBadge(); refreshInventory(); refreshHotbar(); Game.Audio.play('cursor');
+    return true;
+  }
   function invPointerMove(e) {
     if (dragSrc < 0) return;
     if (!dragging) {
@@ -1857,6 +1895,7 @@ Game.UI = (function () {
   }
 
   function toggleInventory() {
+    if (invHeld && !el.invScreen.classList.contains('hidden')) padGrabReturn(); // 閉じる前に持ち上げ中を戻す
     el.invScreen.classList.toggle('hidden');
     Game.state.paused = !el.invScreen.classList.contains('hidden');
     if (!el.invScreen.classList.contains('hidden')) {
@@ -2356,6 +2395,6 @@ Game.UI = (function () {
     showLore, closeLore, refreshQuest, openQuest, closeQuest, refreshBounty, showEnding, showDeath, showIntro, refreshNet, refreshStatus,
     toggleOptions, openEnchant, closeEnchant, flashSave, flashHotbarItem, flashCombo, refreshContext, refreshAmmo,
     toggleBigMap, isBigMapOpen, updateBigMap, openStats, closeStats, toggleStats, renderStats, refreshBossBar, openTrade, closeTrade, openShop, openStory, closeStory, openWaypoints, closeWaypoints, shakeHealthBar,
-    padNav, padMenuRoot, padActivateEl,
+    padNav, padMenuRoot, padActivateEl, padGrab, padGrabReturn, isHoldingItem,
   };
 })();
