@@ -241,7 +241,8 @@ Game.UI = (function () {
   const SHOP_STOCK = [
     { id: 'bandage', n: 5, price: 6 }, { id: 'antidote', n: 3, price: 6 },
     { id: 'cooked_meat', n: 3, price: 5 }, { id: 'bread', n: 3, price: 4 }, { id: 'torch', n: 8, price: 5 },
-    { id: 'ammo_9mm', n: 24, price: 6 }, { id: 'ammo_762', n: 18, price: 8 },
+    { id: 'ammo_9mm', n: 24, price: 6 }, { id: 'ammo_762', n: 18, price: 8 }, { id: 'ammo_556', n: 18, price: 8 }, { id: 'shell_12g', n: 12, price: 8 },
+    { id: 'gasoline', n: 6, price: 10 }, { id: 'gunpowder', n: 8, price: 7 },
     { id: 'strength_potion', n: 1, price: 14 }, { id: 'swift_potion', n: 1, price: 14 }, { id: 'iron_potion', n: 1, price: 14 }, { id: 'regen_potion', n: 1, price: 14 },
     { id: 'bomb', n: 3, price: 16 }, { id: 'frost_grenade', n: 3, price: 18 },
     { id: 'carrot_seeds', n: 5, price: 6 }, { id: 'xp_orb', n: 1, price: 45 },
