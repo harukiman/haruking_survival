@@ -24,7 +24,9 @@ Game.Icons = (function () {
       if (/hammer|戦鎚|magma_hammer|war_hammer/.test(id)) return 'hammer';
       if (/spear|槍|chitin_spear|gae_bolg/.test(id)) return 'spear';
       if (/club|bone_club|棍/.test(id)) return 'club';
+      if (/scythe|鎌/.test(id)) return 'scythe';
       if (/axe|boomerang|斧/.test(id)) return 'axe';
+      if (/katana|居合|iai|blade|刀/.test(id)) return 'katana';
       if (/dagger|短剣/.test(id)) return 'sword';
       return 'sword';
     }
@@ -139,6 +141,24 @@ Game.Icons = (function () {
         glint(ctx, 0, -13, 2.6); // 切っ先近くの金属光
         ctx.restore(); break;
       }
+      case 'scythe': {
+        // 長柄＋大きく湾曲した刃
+        ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+        ctx.fillStyle = shade('#5a3a1e', 1); ctx.fillRect(M + 6, 8, 3, 32); ctx.strokeRect(M + 6, 8, 3, 32); // 柄
+        ctx.fillStyle = metalGradV(ctx, 8, 20, c.base); ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(M + 7, 10); ctx.quadraticCurveTo(M - 18, 8, M - 14, 26); ctx.quadraticCurveTo(M - 8, 14, M + 7, 15); ctx.closePath(); ctx.fill(); ctx.stroke(); // 刃
+        ctx.fillStyle = c.hi; ctx.beginPath(); ctx.moveTo(M + 6, 12); ctx.quadraticCurveTo(M - 12, 11, M - 12, 22); ctx.stroke(); glint(ctx, M - 12, 14, 2.2); break;
+      }
+      case 'katana': {
+        // 反りのある細身の刀身＋円形の鍔
+        ctx.save(); ctx.translate(M, M); ctx.rotate(-Math.PI / 4);
+        ctx.fillStyle = metalGradV(ctx, -3, 3, c.base);
+        ctx.beginPath(); ctx.moveTo(-2, -20); ctx.quadraticCurveTo(3, -6, 2.5, 8); ctx.lineTo(-2.5, 8); ctx.quadraticCurveTo(-2, -6, -2, -20); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = c.hi; ctx.fillRect(-1.4, -18, 1.2, 24); // 刃紋
+        ctx.fillStyle = c.accent; ctx.beginPath(); ctx.arc(0, 9, 4.5, 0, 7); ctx.fill(); ctx.stroke(); // 円鍔
+        ctx.fillStyle = shade(c.accent, 0.5); ctx.fillRect(-2, 11, 4, 10); ctx.strokeRect(-2, 11, 4, 10); // 柄
+        glint(ctx, 0, -15, 2.4); ctx.restore(); break;
+      }
       case 'hammer': {
         ctx.strokeStyle = 'rgba(0,0,0,0.85)';
         ctx.fillStyle = shade('#7a5a30', 1); ctx.fillRect(M - 2, 10, 4, 30); ctx.strokeRect(M - 2, 10, 4, 30); // 柄
@@ -165,7 +185,7 @@ Game.Icons = (function () {
       }
       case 'gun': {
         // 銃種ごとに実銃に即したシルエットを描き分ける（同形を作らない）
-        const FORM = { pistol: 'pistol', glock17: 'pistol', mp5: 'smg', m4: 'rifle', ak47: 'ak', shadow_rifle: 'rifle', m870: 'shotgun', barrett: 'sniper', rpg7: 'rpg', star_cannon: 'rpg', laser_rifle: 'energy', railgun: 'energy' };
+        const FORM = { pistol: 'pistol', glock17: 'pistol', deagle: 'pistol', mp5: 'smg', uzi: 'smg', p90: 'smg', m4: 'rifle', scar_h: 'rifle', minigun: 'rifle', ak47: 'ak', shadow_rifle: 'rifle', m870: 'shotgun', spas12: 'shotgun', barrett: 'sniper', rpg7: 'rpg', m79: 'rpg', star_cannon: 'rpg', flamethrower: 'energy', laser_rifle: 'energy', railgun: 'energy', plasma_rifle: 'energy' };
         const form = FORM[id] || 'pistol';
         const body = '#1a1a1e', dark = '#0e0e11', metal = '#3a3a42', wood = '#5a3a1e';
         const R = function (x, y, w, hh, col) { ctx.fillStyle = col; ctx.fillRect(x, y, w, hh); ctx.strokeRect(x, y, w, hh); };
