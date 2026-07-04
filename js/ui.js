@@ -1005,7 +1005,7 @@ Game.UI = (function () {
     if (!el.optionsScreen) return;
     const opening = el.optionsScreen.classList.contains('hidden');
     el.optionsScreen.classList.toggle('hidden');
-    Game.state.paused = opening;
+    if (Game.state) Game.state.paused = opening; // タイトルからも開けるよう state 未初期化を許容
     if (opening) renderOptions();
   }
 

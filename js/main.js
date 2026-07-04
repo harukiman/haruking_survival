@@ -336,6 +336,9 @@ window.Game = window.Game || {};
     }
     renderSlots();
     updateContinueBtn();
+    // タイトルから設定(音量/操作/コントローラ)を開けるように
+    const toBtn = document.getElementById('btn-title-options');
+    if (toBtn) toBtn.addEventListener('click', function () { if (Game.UI && Game.UI.toggleOptions) Game.UI.toggleOptions(); });
     // 難易度セレクタ
     let chosenDiff = 'normal';
     const diffBtns = document.querySelectorAll('#diff-row .diff-btn');
