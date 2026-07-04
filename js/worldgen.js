@@ -498,14 +498,14 @@ Game.WorldGen = (function () {
       if (h < 0.07) obj = O.PINE_TREE;
       else if (h < 0.11) obj = O.ROCK;
       else if (h < 0.15) obj = O.COAL_ORE;
-      else if (h < 0.18) obj = O.IRON_ORE;
-      else if (h < 0.19) obj = O.GOLD_ORE;
+      else if (h < 0.17) obj = O.IRON_ORE;   // 鉄=約2/3に希少化(0.03→0.02帯)
+      else if (h < 0.175) obj = O.GOLD_ORE;  // 金=半分に希少化(0.01→0.005帯)
     } else if (ground === T.STONE) {
       if (h < 0.10) obj = O.ROCK;
       else if (h < 0.145) obj = O.COAL_ORE;
-      else if (h < 0.175) obj = O.IRON_ORE;
-      else if (h < 0.185) obj = O.GOLD_ORE;
-      else if (h < 0.195) obj = O.PHANTOM_ORE;
+      else if (h < 0.165) obj = O.IRON_ORE;  // 鉄=約2/3に希少化(0.03→0.02帯)
+      else if (h < 0.170) obj = O.GOLD_ORE;  // 金=半分に希少化(0.01→0.005帯)
+      else if (h < 0.180) obj = O.PHANTOM_ORE;
     } else if (ground === T.SAND) {
       if (e > 0.40 && h < 0.03) obj = O.CACTUS;   // 砂漠のサボテン
       else if (h < 0.04) obj = O.ROCK;
