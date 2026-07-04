@@ -19,6 +19,18 @@ Game.Projectiles = (function () {
   }
 
   // 敵の遠距離攻撃: プレイヤー方向へ魔法弾を放つ
+  // ボスの弾幕: プレイヤー方向へ扇状に count 発。回避を要する読み合い攻撃
+  function enemyVolley(m, dmg, kind, count, spread) {
+    const p = Game.state.player;
+    const dx = p.x - m.x, dy = p.y - m.y, base = Math.atan2(dy, dx);
+    const sp = 5.8, k = kind || 'hex', n = count || 5, half = spread || 0.6;
+    for (let i = 0; i < n; i++) {
+      const a = base + (n > 1 ? (i / (n - 1) - 0.5) * half * 2 : 0);
+      spawn(m.x + Math.cos(a) * 14, m.y + Math.sin(a) * 14, Math.cos(a) * sp, Math.sin(a) * sp, dmg, k, true, null);
+    }
+    Game.Render.spawnParticles(m.x, m.y, KIND_COLOR[k] || '#c060ff', 8);
+    Game.Audio.play('beam');
+  }
   function enemyShoot(m, dmg, kind, status) {
     const p = Game.state.player;
     let dx = p.x - m.x, dy = p.y - m.y; const len = Math.hypot(dx, dy) || 1;
@@ -299,5 +311,5 @@ Game.Projectiles = (function () {
     }
   }
 
-  return { spawn, fire, enemyShoot, update, draw, explode, callMeteor, callVortex, aimAngle: aimDir };
+  return { spawn, fire, enemyShoot, enemyVolley, update, draw, explode, callMeteor, callVortex, aimAngle: aimDir };
 })();

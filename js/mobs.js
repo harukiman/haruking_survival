@@ -557,6 +557,24 @@ Game.Mobs = (function () {
           const cap = m.def.boss ? 8 : 4, n = m.def.boss ? 3 : 2;
           if (countType(minion) < cap) { for (let k = 0; k < n; k++) spawnMob(minion, m.x + (Math.random() - 0.5) * 60, m.y + (Math.random() - 0.5) * 60); Game.Audio.play('shift'); }
         }
+        // ボスの弾幕(扇状の魔法弾): 遠中距離で一定間隔。約0.8秒のテレグラフ後に発射(回避を要する)
+        if (m.def.boss) {
+          if (m.volleyAim != null) {
+            m.volleyAim--;
+            m.dir = Math.abs(dxp) > Math.abs(dyp) ? (dxp < 0 ? 'left' : 'right') : (dyp < 0 ? 'up' : 'down');
+            if (Game.state.tick % 4 === 0) Game.Render.spawnParticles(m.x, m.y - m.def.size * 0.3, '#c884f0', 2);
+            if (m.volleyAim <= 0) {
+              m.volleyAim = null; m.volleyCd = m.enraged ? 100 : 170;
+              Game.Projectiles.enemyVolley(m, Math.round((m.dmg || m.def.dmg) * 0.7), 'hex', m.enraged ? 7 : 5, 0.65);
+            }
+            m.hopPhase += 0.2; continue; // 詠唱中は静止(回避猶予)
+          }
+          if ((m.volleyCd || 0) > 0) m.volleyCd--;
+          else if (distP > 3 * TS && distP < 13 * TS && Math.random() < (m.enraged ? 0.05 : 0.028)) {
+            m.volleyAim = 24; Game.Audio.play('whirl');
+            if (Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - m.def.size, '弾幕!', '#c884f0', true);
+          }
+        }
         // ボスの溜め叩きつけ攻撃: テレグラフ(着弾予告)→範囲ダメージ。全ボスに戦闘の駆け引きを付与
         if (m.def.boss) {
           if (m.slam != null) {
