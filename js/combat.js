@@ -287,6 +287,7 @@ Game.Combat = (function () {
     // 装備耐久: 命中した攻撃で武器が消耗。0で「破損」(性能大幅低下・修理で復活)
     if (slot && Game.Loot.degrade && Game.Loot.isEquip(slot.id)) {
       if (Game.Loot.degrade(slot, 1)) { if (Game.UI) { Game.UI.toast('⚠ ' + Game.Loot.displayName(slot) + ' が破損した！ 修理キットで直せる'); if (Game.UI.refreshHotbar) Game.UI.refreshHotbar(); } if (Game.Audio) Game.Audio.play('select'); }
+      else if (Game.UI && Game.UI.tipOnce && Game.Loot.durFrac(slot) < 0.5) Game.UI.tipOnce('durability', '装備には耐久値がある。すり減ると性能が落ち、0で「破損」する。修理キット＋鉄でアイテム詳細から修理しよう');
     }
     // 上位武器の特殊効果(雷鳴/残光/衝撃波/吸命/纏い)。ホスト/ソロのみ(ゲストはダメージ権限なし)
     let kills = 0;
