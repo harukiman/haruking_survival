@@ -33,8 +33,8 @@ Game.Mobs = (function () {
     // 深夜の高ぶり: 光世界の夜、敵対モブは目を光らせ HP/攻撃/速度が明確に上がる。
     // その代わり撃破時のレア/固有ドロップ期待が上がる(killMob側)。血の月は別途さらに荒れる。
     const nightAmp = (def.hostile && !def.boss && Game.state.worldName === 'light' && Game.DayNight && Game.DayNight.isNight());
-    const nightHp = nightAmp ? 1.35 : 1;
-    const nightDmg = nightAmp ? 1.25 : 1;
+    const nightHp = nightAmp ? 1.55 : 1;   // 深夜個体はさらに強く(ユーザー: もっと強く)
+    const nightDmg = nightAmp ? 1.4 : 1;
     const hp = Math.round(def.hp * mult * bandMult * bossMult * lvHp * nightHp);
     const dmgMult = mult * bandMult * lvDmg * nightDmg * bossDmg * (diff.dmgMult != null ? diff.dmgMult : 1);
     Game.state._mobId = (Game.state._mobId || 0) + 1;
@@ -54,7 +54,7 @@ Game.Mobs = (function () {
       band: band,
       xpMult: (DZ && def.hostile) ? 1 + DZ.XP_PER * bandOver : 1,
       nightAmped: !!nightAmp, glowEyes: !!nightAmp,
-      nightSpeed: nightAmp ? 1.15 : 1,
+      nightSpeed: nightAmp ? 1.2 : 1,
     };
     // 精鋭(elite)抽選: 非ボスの敵対モブが低確率で精鋭化（HP/攻撃UP・発光オーラ・確定レアドロップ）
     // 帯別倍率: 安全圏0=精鋭なし / 辺境2倍 / 深域3倍 / 深域+4倍 → 奥地ほど戦利品厳選が捗る
@@ -440,7 +440,12 @@ Game.Mobs = (function () {
     const p = Game.state.player;
     if (Game.state.mobFreeze > 0) Game.state.mobFreeze--; // 時止め残り
 
-    if (Game.state.tick % TUNE.SPAWN_INTERVAL === 0) { trySpawn(); if (Game.state.bloodMoon) trySpawn(); }
+    if (Game.state.tick % TUNE.SPAWN_INTERVAL === 0) {
+      trySpawn();
+      if (Game.state.bloodMoon) trySpawn();
+      // 深夜は敵が増える(光世界の夜、追加スポーン)。血の月はさらに上乗せ
+      if (Game.state.worldName === 'light' && Game.DayNight && Game.DayNight.isNight()) { trySpawn(); if (Math.random() < 0.5) trySpawn(); }
+    }
     if (Game.state.tick % 80 === 0) spawnerSpawn();
 
     for (let i = mobs.length - 1; i >= 0; i--) {
@@ -916,8 +921,10 @@ Game.Mobs = (function () {
         for (let k = 0; k < n; k++) items.push({ id: d.item, count: 1 });
       });
     }
-    const gear = Game.Loot.rollMobDrop(m.def, m.x, m.y, m.nightAmped ? 0.10 : 0);
+    const gear = Game.Loot.rollMobDrop(m.def, m.x, m.y, m.nightAmped ? 0.18 : 0);
     for (let g = 0; g < gear.length; g++) items.push({ id: gear[g].id, count: gear[g].count, roll: gear[g].roll });
+    // 深夜限定の固有レアドロップ: 月光の欠片(夜間個体のみ)。集めて月光装備をクラフト
+    if (m.nightAmped && Math.random() < (m.def.boss || m.def.midboss ? 0.9 : m.elite ? 0.5 : 0.14)) items.push({ id: 'moonshard', count: 1 });
     // ボスの固有ドロップを「狙って集められる」手段(ユーザー指示): 撃破を重ねると確定入手。
     // 3回討伐ごとに、そのボス固有の装備(n[0]=0の武器/防具/遺物)を1つ確定ドロップ。再召喚アイテムと合わせ周回可能
     if (m.def.boss || m.def.midboss) {
