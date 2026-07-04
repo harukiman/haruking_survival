@@ -56,7 +56,15 @@ Game.Icons = (function () {
     return { base: base, accent: accent, edge: shade(base, 0.55), hi: mix(base, '#ffffff', 0.45) };
   }
 
-  function outline(ctx) { ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.strokeStyle = 'rgba(0,0,0,0.85)'; ctx.lineWidth = 2.4; }
+  function outline(ctx) { ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.strokeStyle = 'rgba(0,0,0,0.9)'; ctx.lineWidth = 2.7; }
+  // アイコンが背景(地形/スロット)に埋もれないよう、被写体の後ろに柔らかな暗いハロを敷いて視認性を上げる
+  function backdrop(ctx) {
+    ctx.save();
+    const g = ctx.createRadialGradient(SIZE / 2, SIZE / 2, 3, SIZE / 2, SIZE / 2, SIZE * 0.5);
+    g.addColorStop(0, 'rgba(6,10,18,0.42)'); g.addColorStop(0.72, 'rgba(6,10,18,0.24)'); g.addColorStop(1, 'rgba(6,10,18,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(SIZE / 2, SIZE / 2, SIZE * 0.5, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
 
   // ===== 質感ヘルパー（アイコンは一度だけ描いてキャッシュされるため、ここでの勾配生成は毎フレーム負荷にならない） =====
   // 金属のきらめき（十字の光点）
@@ -114,6 +122,7 @@ Game.Icons = (function () {
     const base = (def && def.color) || '#9aa';
     const c = nameColor(id, base);
     ctx.clearRect(0, 0, SIZE, SIZE);
+    backdrop(ctx); // 背景に埋もれない視認性ハロ
     outline(ctx);
     const M = SIZE / 2;
     switch (cls) {
