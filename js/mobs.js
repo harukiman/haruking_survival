@@ -5,6 +5,24 @@ Game.Mobs = (function () {
   const TS = Game.CFG.TILE_SIZE;
   const TUNE = Game.TUNE;
 
+  // ===== ㊼ ボスのアーキタイプ: 攻撃パターン/速度をボスごとに明確に変える =====
+  // berserker=高速猛攻/bruiser=重い近接/caster=距離を取り弾幕/summoner=召喚主体/artillery=遠距離砲撃
+  const BOSS_ARCH = {
+    hunger_beast: 'berserker', dire_alpha: 'berserker', shadow_knight: 'berserker', wanted_boss: 'berserker',
+    twilight_colossus: 'bruiser', forge_titan: 'bruiser', lava_lord: 'bruiser', stone_warden: 'bruiser', city_warden: 'bruiser', colossus: 'bruiser',
+    sovereign: 'caster', crystal_queen: 'caster', swamp_lord: 'caster', sky_warden: 'caster', rift_keeper: 'caster',
+    spore_queen: 'summoner', star_guardian: 'summoner', tomb_king: 'summoner', broodmother: 'summoner',
+    abyss_dragon: 'artillery', endbringer: 'artillery', storm_sovereign: 'artillery', void_emperor: 'artillery', ruin_king: 'artillery',
+  };
+  const ARCH = {
+    berserker: { speed: 1.5, volley: 0.4, slam: 1.8, summon: 0.4, keepDist: 0 },
+    bruiser: { speed: 1.15, volley: 0.5, slam: 1.6, summon: 0.6, keepDist: 0 },
+    caster: { speed: 0.8, volley: 2.4, slam: 0.4, summon: 0.8, keepDist: 1 },
+    summoner: { speed: 0.95, volley: 1.0, slam: 0.7, summon: 2.6, keepDist: 0.4 },
+    artillery: { speed: 1.0, volley: 2.8, slam: 0.7, summon: 1.0, keepDist: 0.7 },
+  };
+  function archOf(type) { return ARCH[BOSS_ARCH[type] || 'bruiser']; }
+
   function list() { return Game.state.mobs; }
 
   function spawnMob(type, wx, wy) {
@@ -62,6 +80,7 @@ Game.Mobs = (function () {
       xpMult: (DZ && def.hostile) ? 1 + DZ.XP_PER * bandOver : 1,
       nightAmped: !!nightAmp, glowEyes: !!nightAmp,
       nightSpeed: nightAmp ? 1.2 : 1,
+      archSpeed: def.boss ? archOf(type).speed : 1, // ㊼ ボスの機動性を型で差別化
     };
     // 精鋭(elite)抽選: 非ボスの敵対モブが低確率で精鋭化（HP/攻撃UP・発光オーラ・確定レアドロップ）
     // 帯別倍率: 安全圏0=精鋭なし / 辺境2倍 / 深域3倍 / 深域+4倍 → 奥地ほど戦利品厳選が捗る
@@ -394,6 +413,7 @@ Game.Mobs = (function () {
     if (len < 0.001) return;
     if (m.eliteSpeedMult) speed *= m.eliteSpeedMult; // 俊足アフィックス
     if (m.nightSpeed && m.nightSpeed !== 1) speed *= m.nightSpeed; // 深夜の高ぶり
+    if (m.archSpeed && m.archSpeed !== 1) speed *= m.archSpeed; // ボスのアーキタイプ機動
     if (m.dot && m.dot.slow > 0) speed *= 0.55; // 凍えで鈍足
     dx /= len; dy /= len;
     if (Math.abs(dx) > Math.abs(dy)) m.dir = dx < 0 ? 'left' : 'right';
@@ -566,7 +586,8 @@ Game.Mobs = (function () {
           }
         }
         // ボス/召喚持ち中ボスは手下を召喚(激昂中は倍速で召喚)
-        if ((m.def.boss || (m.def.midboss && m.def.summon)) && m.attackCd <= 0 && Game.state.tick % (m.enraged ? 120 : 200) === 0) {
+        const summonEvery = Math.max(40, Math.round((m.enraged ? 120 : 200) / (m.def.boss ? archOf(m.type).summon : 1))); // 召喚型ほど短間隔
+        if ((m.def.boss || (m.def.midboss && m.def.summon)) && m.attackCd <= 0 && Game.state.tick % summonEvery === 0) {
           const minion = m.def.summon || 'shadow_spawn';
           const cap = m.def.boss ? 8 : 4, n = m.def.boss ? 3 : 2;
           if (countType(minion) < cap) { for (let k = 0; k < n; k++) spawnMob(minion, m.x + (Math.random() - 0.5) * 60, m.y + (Math.random() - 0.5) * 60); Game.Audio.play('shift'); }
@@ -584,7 +605,7 @@ Game.Mobs = (function () {
             m.hopPhase += 0.2; continue; // 詠唱中は静止(回避猶予)
           }
           if ((m.volleyCd || 0) > 0) m.volleyCd--;
-          else if (distP > 3 * TS && distP < 13 * TS && Math.random() < (m.enraged ? 0.05 : 0.028)) {
+          else if (distP > 3 * TS && distP < 13 * TS && Math.random() < (m.enraged ? 0.05 : 0.028) * archOf(m.type).volley) {
             m.volleyAim = 24; Game.Audio.play('whirl');
             if (Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - m.def.size, '弾幕!', '#c884f0', true);
           }
@@ -612,7 +633,7 @@ Game.Mobs = (function () {
             m.hopPhase += 0.2; continue; // 溜め中は移動・他攻撃しない(回避猶予)
           }
           if ((m.slamCd || 0) > 0) m.slamCd--;
-          else if (distP < 6 * TS && Math.random() < (m.enraged ? 0.06 : 0.035)) { m.slam = m.enraged ? 14 : 18; m.slamMax = m.slam; m.slamR = (m.def.big ? 3 : 2.4); Game.Audio.play('whirl'); }
+          else if (distP < 6 * TS && Math.random() < (m.enraged ? 0.06 : 0.035) * archOf(m.type).slam) { m.slam = m.enraged ? 14 : 18; m.slamMax = m.slam; m.slamR = (m.def.big ? 3 : 2.4); Game.Audio.play('whirl'); }
         }
         // 重量級の溜め叩きつけ(非ボス): ボスslamのテレグラフ描画を流用。回避ゲーで攻撃に幅
         if (m.def.pound && !m.def.boss) {
