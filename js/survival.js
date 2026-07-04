@@ -282,7 +282,16 @@ Game.Survival = (function () {
     }
     p.health = p.maxHealth; p.hunger = Math.max(40, p.hunger);
     p.invuln = 60;
-    Game.Player.spawnAt(Game.state.spawn.tx, Game.state.spawn.ty);
+    // 協力: MPで同じ世界に生存中の仲間が居れば、その傍らに復活してはぐれない
+    let spawnTx = Game.state.spawn.tx, spawnTy = Game.state.spawn.ty, atAlly = false;
+    if (Game.Net && Game.Net.isConnected && Game.Net.isConnected() && Game.Net.getPeers) {
+      const peers = Game.Net.getPeers(), TS = Game.CFG.TILE_SIZE, now = Date.now();
+      let best = null;
+      for (const id in peers) { const pe = peers[id]; if (!pe || pe.tx == null) continue; if (pe.world && pe.world !== Game.state.worldName) continue; if (pe.lastSeen && now - pe.lastSeen > 8000) continue; best = pe; break; }
+      if (best) { spawnTx = Math.floor(best.tx / TS) + 1; spawnTy = Math.floor(best.ty / TS); atAlly = true; }
+    }
+    Game.Player.spawnAt(spawnTx, spawnTy);
+    if (atAlly) Game.UI.toast('仲間のもとへ駆けつけた');
     Game.UI.refreshAll();
     // はじめて斃れ再び立ち上がったとき、記憶回廊「名もなき者」を解放
     if (Game.Story && !Game.Story.seen('traveler')) Game.Story.unlock('traveler', true);
