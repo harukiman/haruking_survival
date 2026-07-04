@@ -1110,7 +1110,7 @@ Game.UI = (function () {
       slider('btnSize', '📐 ボタンサイズ', 70, 140) +
       slider('btnOpacity', '👁 ボタン透明度', 30, 100) +
       slider('joySens', '🕹 スティック感度', 60, 160) +
-      slider('padCursor', '🎯 カーソル感度(パッド)', 60, 320) +
+      slider('padCursor', '🎯 カーソル感度(パッド)', 40, 250) +
       toggle('joyFollow', '🕹 スティック追従(指を追う)') +
       toggle('leftHanded', '✋ 左利き(操作左右反転)') +
       toggle('dmgNumbers', '🔢 ダメージ数値表示') +
@@ -1469,32 +1469,40 @@ Game.UI = (function () {
   function invCols() { return (window.matchMedia && window.matchMedia('(max-width:560px)').matches) ? 6 : 9; }
   const INV_ROWS_PER_PAGE = 4;
   let invPage = 0;
+  // 1スロットのDOMを生成(固定ホットバー行とカルーセルで共用)
+  function buildInvSlot(i, st) {
+    const d = document.createElement('div');
+    d.className = 'slot';
+    d.dataset.index = i;
+    d.innerHTML = slotHTML(st);
+    // 埋まったスロット=ドラッグ(並べ替え/結合)のためタッチスクロールを止める。空きは横スワイプでページ送り可
+    d.style.touchAction = st ? 'none' : 'pan-x';
+    if (st) { d.title = Game.ITEMS[st.id] ? Game.ITEMS[st.id].name : st.id; if (i === invSelected) d.classList.add('selected'); }
+    d.addEventListener('pointerdown', (function (idx) { return function (e) { invPointerDown(e, idx); }; })(i));
+    return d;
+  }
   function refreshInventory() {
     if (!Game.state || el.invScreen.classList.contains('hidden')) return;
     const s = Game.Inventory.slots();
+    const HB = Game.HOTBAR_SIZE;
+    // 固定ホットバー行(スロット0..HB-1): 横スクロールしても常に見えるので、どのページのアイテムもホットバーへ入替できる
+    const hbRow = document.getElementById('inv-hotbar-fixed');
+    if (hbRow) { hbRow.innerHTML = ''; for (let i = 0; i < HB && i < s.length; i++) hbRow.appendChild(buildInvSlot(i, s[i])); }
+    // カルーセル: ホットバー以外の持ち物(HB..end)を4行/ページで横送り
     const savedScroll = el.invGrid.scrollLeft; // 再描画で位置が戻らないよう保持
     const perPage = invCols() * INV_ROWS_PER_PAGE;
-    const pages = Math.max(1, Math.ceil(s.length / perPage));
+    const rest = Math.max(0, s.length - HB);
+    const pages = Math.max(1, Math.ceil(rest / perPage));
     el.invGrid.innerHTML = '';
     const pageEls = [];
     for (let pg = 0; pg < pages; pg++) { const pe = document.createElement('div'); pe.className = 'inv-page'; el.invGrid.appendChild(pe); pageEls.push(pe); }
-    for (let i = 0; i < s.length; i++) {
-      const d = document.createElement('div');
-      d.className = 'slot';
-      d.dataset.index = i;
-      d.innerHTML = slotHTML(s[i]);
-      // 埋まったスロット=ドラッグ(並べ替え/結合)のためタッチスクロールを止める。空きは横スワイプでページ送り可
-      d.style.touchAction = s[i] ? 'none' : 'pan-x';
-      if (s[i]) {
-        d.title = Game.ITEMS[s[i].id] ? Game.ITEMS[s[i].id].name : s[i].id;
-        if (i === invSelected) d.classList.add('selected');
-      }
-      d.addEventListener('pointerdown', (function (idx) { return function (e) { invPointerDown(e, idx); }; })(i));
-      pageEls[Math.floor(i / perPage)].appendChild(d);
+    for (let i = HB; i < s.length; i++) {
+      pageEls[Math.floor((i - HB) / perPage)].appendChild(buildInvSlot(i, s[i]));
     }
     el.invGrid.scrollLeft = savedScroll;
     renderInvPager(pages);
     setupTooltip(el.invGrid);
+    if (hbRow) setupTooltip(hbRow);
     renderEquipPanel();
     renderInvQuest();
     renderInvDetail();
@@ -1517,7 +1525,9 @@ Game.UI = (function () {
       dot.addEventListener('click', function () { invScrollToPage(parseInt(dot.dataset.page, 10)); });
     });
   }
-  function invPageCount() { const s = Game.Inventory.slots(); return Math.max(1, Math.ceil(s.length / (invCols() * INV_ROWS_PER_PAGE))); }
+  function invPageCount() { const rest = Math.max(0, Game.Inventory.slots().length - Game.HOTBAR_SIZE); return Math.max(1, Math.ceil(rest / (invCols() * INV_ROWS_PER_PAGE))); }
+  // インベントリのスロット判定: カルーセル(#inv-grid)と固定ホットバー行の両方を対象にする
+  function inInvSlots(n) { const hb = document.getElementById('inv-hotbar-fixed'); return (el.invGrid && el.invGrid.contains(n)) || (hb && hb.contains(n)); }
   function invScrollToPage(pg) {
     const pages = invPageCount(); pg = Math.max(0, Math.min(pages - 1, pg));
     invPage = pg; const w = el.invGrid.clientWidth;
@@ -1721,7 +1731,7 @@ Game.UI = (function () {
     const tgt = document.elementFromPoint(e.clientX, e.clientY);
     const slotEl = tgt && tgt.closest && tgt.closest('.slot');
     const s = Game.Inventory.slots();
-    if (slotEl && slotEl.dataset.index != null && el.invGrid.contains(slotEl)) {
+    if (slotEl && slotEl.dataset.index != null && inInvSlots(slotEl)) {
       const dst = parseInt(slotEl.dataset.index, 10);
       if (dst !== src) {
         const a = s[src], b = s[dst];
@@ -2579,7 +2589,7 @@ Game.UI = (function () {
     if (invHeld) updateHeldCursorPos(); // 持ち上げ中アイコンをフォーカス(カーソル)へ追従
     try { n.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch (e) {}
     // コントローラ: インベントリ格子にカーソルを合わせたらそのアイテムの詳細を表示
-    if (n.classList.contains('slot') && el.invGrid && el.invGrid.contains(n) && n.dataset.index != null) {
+    if (n.classList.contains('slot') && inInvSlots(n) && n.dataset.index != null) {
       const idx = parseInt(n.dataset.index, 10);
       if (invSelected !== idx) { invSelected = idx; if (typeof renderInvDetail === 'function') renderInvDetail(); }
     }
@@ -2618,7 +2628,7 @@ Game.UI = (function () {
     if (n.tagName === 'INPUT' && n.type !== 'range') { try { n.focus(); } catch (e) {} return; }
     if (n.tagName === 'INPUT') return; // スライダーは左右キーで調整
     // インベントリ格子: ×で直接 装備/使用/ホットバー装備(invPrimaryAction)。2連タップ不要でコントローラでも確実に
-    if (n.classList.contains('slot') && el.invGrid && el.invGrid.contains(n) && n.dataset.index != null) {
+    if (n.classList.contains('slot') && inInvSlots(n) && n.dataset.index != null) {
       const idx = parseInt(n.dataset.index, 10);
       invSelected = idx;
       if (invPrimaryAction(idx)) { Game.Audio.play('select'); }

@@ -474,6 +474,13 @@ body.shadow-mode #app::after {
 #inv-grid .inv-page { flex: 0 0 100%; display: grid; grid-template-columns: repeat(9, 1fr); gap: 5px;
   align-content: start; scroll-snap-align: start; }
 @media (max-width: 560px) { #inv-grid .inv-page { grid-template-columns: repeat(6, 1fr); } }
+/* 固定ホットバー行: 横スクロールしても常に見える。9スロットを1行で(狭い画面でも折り返さない) */
+.inv-hb-label { font-size: .7rem; color: #8fa0b8; font-weight: 600; margin: 4px 0 3px; }
+.inv-bp-label { margin-top: 9px; }
+#inv-hotbar-fixed { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; padding: 5px;
+  background: rgba(46,60,86,0.35); border: 1px solid #3a4c6a; border-radius: 8px; }
+#inv-hotbar-fixed .slot { width: 100%; max-width: 46px; height: auto; aspect-ratio: 1; margin: 0 auto; }
+@media (max-width: 560px) { #inv-hotbar-fixed { grid-template-columns: repeat(9, 1fr); gap: 3px; } }
 /* ページ送り(◀ ドット ▶) */
 .inv-pager { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 8px 0 2px; }
 .inv-page-arrow { background: #2a3a56; border: 1px solid #3a4c6a; color: #cfe0f0; width: 34px; height: 30px;
