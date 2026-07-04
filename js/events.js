@@ -13,14 +13,15 @@ Game.Events = (function () {
   const FLOCK_DUR = 30 * 13;       // 渡り鳥(約13秒)
   const MERCHANT_DUR = 30 * 75;    // 行商人の焚き火(約75秒)
   const QUAKE_DUR = 30 * 45;       // 地鳴りの鉱脈マーカー(約45秒)
+  const RAINBOW_DUR = 30 * 55;     // 虹の宝(約55秒)
 
   const SUPPLY = ['bandage', 'cooked_meat', 'bread', 'torch', 'antidote'];
   const HORDE_POOL = ['zombie', 'skeleton', 'spider', 'slime', 'leech', 'bat', 'gazer', 'harpy', 'viper'];
   const WISH_BUFFS = ['swiftness', 'regen_buff', 'wellfed'];   // 既存バフのみ・控えめな持続
   const WISH_LABEL = { swiftness: '足取りが軽くなる', regen_buff: '傷が癒えていく', wellfed: '身体の芯が温かい' };
   const DIR_NAMES = ['東', '南東', '南', '南西', '西', '北西', '北', '北東']; // atan2 の八分円順
-  const EVENT_NAME = { meteor: '☄️ 流星群', horde: '⚔️ 魔物の侵攻', supply: '📦 物資投下', star: '🌠 流れ星', flock: '🕊 渡り鳥', merchant: '🔥 行商人の焚き火', quake: '⛰ 地鳴りの残響' };
-  const EVENT_COLOR = { meteor: '#ffe27a', horde: '#ff6a5a', supply: '#caa86a', star: '#ffe9a0', flock: '#bfe0ff', merchant: '#ffab5a', quake: '#d8a05a' };
+  const EVENT_NAME = { meteor: '☄️ 流星群', horde: '⚔️ 魔物の侵攻', supply: '📦 物資投下', star: '🌠 流れ星', flock: '🕊 渡り鳥', merchant: '🔥 行商人の焚き火', quake: '⛰ 地鳴りの残響', rainbow: '🌈 虹のたもと' };
+  const EVENT_COLOR = { meteor: '#ffe27a', horde: '#ff6a5a', supply: '#caa86a', star: '#ffe9a0', flock: '#bfe0ff', merchant: '#ffab5a', quake: '#d8a05a', rainbow: '#8fd0ff' };
 
   let cd = 30 * 35;
   let active = null;
@@ -40,6 +41,7 @@ Game.Events = (function () {
         case 'flock': tickFlock(s); break;
         case 'merchant': tickMerchant(s); break;
         case 'quake': tickQuake(s); break;
+        case 'rainbow': tickRainbow(s); break;
       }
       return;
     }
@@ -60,6 +62,7 @@ Game.Events = (function () {
         else if (r < 0.027) startSupply();
         else if (r < 0.038) startFlock();
         else if (r < 0.046) startQuake();
+        else if (r < 0.056 && s.weather && (s.weather.type === 'rain' || s.weather.type === 'clear')) startRainbow();
         else cd = 30 * 10;
       }
     } else {
@@ -208,6 +211,33 @@ Game.Events = (function () {
       return;
     }
     if (a.t <= 0) { active = null; cd = COOLDOWN; }
+  }
+
+  // ---- 虹のたもと: 雨上がりに虹が架かり、その根元に一時的な宝箱が現れる。行きたくなる報酬 ----
+  function startRainbow() {
+    const p = Game.state.player, TS = Game.CFG.TILE_SIZE;
+    // 12〜18タイル先の歩ける陸地を探して宝箱を置く
+    let placed = null;
+    for (let a = 0; a < 14; a++) {
+      const ang = Math.random() * Math.PI * 2, dist = (12 + Math.random() * 6) * TS;
+      const tx = Math.floor((p.x + Math.cos(ang) * dist) / TS), ty = Math.floor((p.y + Math.sin(ang) * dist) / TS);
+      if (Game.World.isWalkable(tx, ty) && Game.World.objAt(tx, ty) === Game.OBJ.NONE) { placed = { tx: tx, ty: ty }; break; }
+    }
+    if (!placed) { cd = 30 * 30; return; }
+    Game.World.setObj(placed.tx, placed.ty, Game.OBJ.TREASURE_CHEST);
+    active = { type: 'rainbow', t: RAINBOW_DUR, lx: placed.tx * TS + TS / 2, ly: placed.ty * TS + TS / 2, tx: placed.tx, ty: placed.ty };
+    if (Game.UI) Game.UI.toast('🌈 虹が架かった… そのたもとに宝が現れたようだ。消える前に辿り着け');
+    if (Game.Audio && Game.Audio.cue) Game.Audio.cue('shimmer');
+  }
+  function tickRainbow(s) {
+    const a = active; a.t--;
+    // 宝箱が開封/破壊されて消えたら虹も消える(報酬取得)
+    if (Game.World.objAt(a.tx, a.ty) !== Game.OBJ.TREASURE_CHEST) { active = null; cd = COOLDOWN; return; }
+    if (a.t <= 0) { // 時間切れで宝箱ごと消える
+      if (Game.World.objAt(a.tx, a.ty) === Game.OBJ.TREASURE_CHEST) Game.World.setObj(a.tx, a.ty, Game.OBJ.NONE);
+      if (Game.UI) Game.UI.toast('🌈 虹は消え、宝も陽炎のように失われた…');
+      active = null; cd = COOLDOWN;
+    }
   }
 
   // ---- 金喰い: 宝を抱えて逃げる稀少モブ。追って仕留めれば大量の金塊 ----
@@ -447,12 +477,21 @@ Game.Events = (function () {
       g.addColorStop(1, 'rgba(150,10,10,' + pulse.toFixed(3) + ')');
       ctx.fillStyle = g; ctx.fillRect(0, 0, v.w, v.h);
     }
+    // 虹: 宝箱の方向へ弧を描く(画面上部に半円)
+    if (active.type === 'rainbow') {
+      const sc = Game.Camera.worldToScreen(active.lx, active.ly);
+      const cx = (sc.x + v.w / 2) / 2, cy = v.h * 0.95, rad = v.h * 0.7;
+      const cols = ['#ff5a5a', '#ffab5a', '#ffe27a', '#7fe08a', '#5fb8ff', '#8f6fe0'];
+      for (let i = 0; i < cols.length; i++) { ctx.strokeStyle = cols[i]; ctx.globalAlpha = 0.5; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(cx, cy, rad - i * 5, Math.PI * 1.08, Math.PI * 1.92); ctx.stroke(); }
+      ctx.globalAlpha = 1;
+    }
     // 誘導マーカー: 報酬地点へ(侵攻は群れ自体が目標・流れ星/渡り鳥は空の演出なのでマーカー無し)
     const gcol = EVENT_COLOR[active.type] || '#caa86a';
     const targets = active.type === 'meteor' ? active.meteors.filter(function (m) { return m.land; })
       : active.type === 'supply' ? active.crates
       : active.type === 'merchant' ? [{ lx: active.x, ly: active.y }]
       : active.type === 'quake' ? [{ lx: active.lx, ly: active.ly }]
+      : active.type === 'rainbow' ? [{ lx: active.lx, ly: active.ly }]
       : [];
     for (let i = 0; i < targets.length; i++) drawGuide(ctx, cam, v, targets[i].lx, targets[i].ly, gcol);
 
@@ -480,6 +519,7 @@ Game.Events = (function () {
     else if (name === 'flock') startFlock();
     else if (name === 'merchant') startMerchant();
     else if (name === 'quake') startQuake();
+    else if (name === 'rainbow') startRainbow();
     else if (name === 'goldthief') startGoldThief();
     return active ? active.type : null;
   }
