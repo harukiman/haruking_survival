@@ -440,6 +440,17 @@ Game.Icons = (function () {
         ctx.strokeStyle = c.edge; ctx.lineWidth = 1; for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.moveTo(18, 19 + i * 5); ctx.lineTo(32, 19 + i * 5); ctx.stroke(); } break;
       }
       case 'relic': {
+        if (/ring|指輪|band|指環/.test(id)) { // 指輪: 金の輪＋宝石
+          ctx.strokeStyle = metalGradV ? shade('#e8c54a', 1) : '#e8c54a'; ctx.lineWidth = 4;
+          ctx.strokeStyle = '#d8b24a'; ctx.beginPath(); ctx.arc(M, M + 4, 11, 0, Math.PI * 2); ctx.stroke();
+          ctx.fillStyle = c.base; ctx.beginPath(); ctx.moveTo(M, M - 12); ctx.lineTo(M + 6, M - 5); ctx.lineTo(M, M + 1); ctx.lineTo(M - 6, M - 5); ctx.closePath(); ctx.fill(); ctx.stroke();
+          ctx.fillStyle = c.hi; ctx.globalAlpha = 0.7; ctx.beginPath(); ctx.arc(M - 2, M - 6, 1.6, 0, 7); ctx.fill(); ctx.globalAlpha = 1; break;
+        }
+        if (/charm|talisman|護符|お守り|符|keep|coin/.test(id)) { // 護符: 紐付きの札/石
+          ctx.strokeStyle = '#b89a5a'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(M - 8, 10); ctx.lineTo(M, 16); ctx.lineTo(M + 8, 10); ctx.stroke(); // 紐
+          ctx.fillStyle = c.base; ctx.beginPath(); ctx.moveTo(M - 8, 16); ctx.lineTo(M + 8, 16); ctx.lineTo(M + 7, 40); ctx.lineTo(M - 7, 40); ctx.closePath(); ctx.fill(); ctx.stroke(); // 札
+          ctx.fillStyle = c.accent; ctx.beginPath(); ctx.arc(M, 26, 3, 0, 7); ctx.fill(); ctx.strokeStyle = c.accent; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(M, 30); ctx.lineTo(M, 36); ctx.stroke(); break; // 符文
+        }
         // 遺物: 鎖の付いたペンダント＋輝く宝石
         ctx.strokeStyle = mix(c.base, '#fff', 0.4); ctx.lineWidth = 2;
         ctx.beginPath(); ctx.arc(M, 16, 9, Math.PI * 0.15, Math.PI * 0.85); ctx.stroke();
