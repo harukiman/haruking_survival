@@ -159,7 +159,7 @@ Game.Loot = (function () {
   // ===== 装備の耐久値 =====
   // 全装備(武器/防具)に耐久上限を設定。tier基礎 × レアリティ × ランダム耐久affix で変動。
   const DUR_BASE = { 0: 90, 1: 120, 2: 160, 3: 210, 4: 270, 5: 340 };
-  function isEquip(id) { const d = Game.ITEMS[id]; return !!(d && (d.attack != null || (d.armor != null && d.slot))); }
+  function isEquip(id) { const d = Game.ITEMS[id]; return !!(d && (d.attack != null || d.tool === 'gun' || (d.armor != null && d.slot))); }
   function durMax(slot) {
     const def = Game.ITEMS[slot.id]; if (!def) return 0;
     let m = DUR_BASE[def.tier || 1] || 140;

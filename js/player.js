@@ -1018,7 +1018,9 @@ Game.Player = (function () {
     } else p.mags[gid] = loaded - 1; // マガジンから1発消費
     const kind = sel.bkind || 'bullet';
     const pellets = sel.pellets || 1;
+    const _gslot = Game.Inventory.selectedSlot();
     let dmg = effAttack(sel.fireDmg || 6); // 銃もLv/STR補正
+    if (_gslot && Game.Loot.isBroken && Game.Loot.isBroken(_gslot)) dmg = Math.max(1, Math.round(dmg * 0.4)); // 破損した銃は威力低下
     // 会心: 近接と同じ判定を遠距離にも適用(クリ時 1.8x ＋ 音/反動)。パッシブ「集中」は確定会心
     const critCh = (Game.TUNE.BASE_CRIT || 0.08) + skillBonus().crit + (setBonus().crit || 0);
     const focusCrit = focusArmed();
@@ -1059,6 +1061,8 @@ Game.Player = (function () {
     // 銃声は騒音: 周囲の敵を警戒させ引き寄せる(爆発武器ほど遠くまで響く)。近接/採掘は静か
     if (Game.Mobs.alertNoise) Game.Mobs.alertNoise(p.x, p.y, sel.explosive ? 16 : sel.pellets ? 11 : 9, 150);
     if (p.mags[gid] <= 0 && Game.Inventory.count(sel.ammo) > 0) startReload(sel, gid); // 0になったら自動リロード
+    // 装備耐久: 銃は弾薬で消耗を賄うため耐久減は緩やか(約3発に1回)。0で破損=威力低下
+    if (_gslot && Math.random() < 0.34 && Game.Loot.degrade && Game.Loot.degrade(_gslot, 1) && Game.UI) Game.UI.toast('⚠ ' + Game.Loot.displayName(_gslot) + ' が破損した！ 修理を');
     Game.UI.refreshHotbar();
   }
 
