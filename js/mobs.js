@@ -830,6 +830,17 @@ Game.Mobs = (function () {
     }
     const gear = Game.Loot.rollMobDrop(m.def, m.x, m.y);
     for (let g = 0; g < gear.length; g++) items.push({ id: gear[g].id, count: gear[g].count, roll: gear[g].roll });
+    // ボスの固有ドロップを「狙って集められる」手段(ユーザー指示): 撃破を重ねると確定入手。
+    // 3回討伐ごとに、そのボス固有の装備(n[0]=0の武器/防具/遺物)を1つ確定ドロップ。再召喚アイテムと合わせ周回可能
+    if (m.def.boss || m.def.midboss) {
+      const killNo = ((Game.state.bestiary && Game.state.bestiary[m.type]) || 0) + 1; // 今回で killNo 体目
+      const uniques = (m.def.drops || []).filter(function (d) { const it = Game.ITEMS[d.item]; return d.n[0] === 0 && it && (it.tool || it.armor != null || it.relic); });
+      if (uniques.length && killNo % 3 === 0) {
+        const u = uniques[Math.floor(Math.random() * uniques.length)];
+        if (!items.some(function (x) { return x.id === u.item; })) items.push({ id: u.item, count: 1 });
+        if (Game.UI && Game.UI.toast) Game.UI.toast('討伐の褒賞（' + killNo + '体目）— 固有装備を確実に入手！');
+      }
+    }
     // 精鋭(elite): 確定レアドロップ
     if (m.elite && Game.Loot.rollEliteDrop) {
       const ed = Game.Loot.rollEliteDrop(m.def);
