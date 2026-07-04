@@ -2469,10 +2469,20 @@ Game.UI = (function () {
     else if (def.buff || def.cures) sub = '🧪 薬 — 使うで効果';
     else if (def.place !== undefined) sub = '🧱 設置できる';
     else if (def.flavor) sub = def.flavor;
-    hbInfoEl.innerHTML = '<div style="color:' + col + ';font-weight:700;font-size:.94rem">' + name + (st.count > 1 ? ' ×' + st.count : '') + '</div>' + (sub ? '<div style="color:#9fb6d0;font-size:.74rem;margin-top:1px">' + sub + '</div>' : '');
+    // 銃は残弾(装填/インベントリ)も併記して説明を充実
+    if (def.tool === 'gun' && def.ammo) {
+      const gid = st.id, mag = (p.mags && p.mags[gid] != null) ? p.mags[gid] : (def.mag || 0);
+      const reserve = Game.Inventory.count(def.ammo);
+      sub += '　🔢 装填 ' + mag + '/' + (def.mag || 0) + '・予備 ' + reserve;
+    }
+    // 種別の説明とは別に、風味テキストがあれば2行目に添えて「説明」らしくする
+    const flav = (def.flavor && sub !== def.flavor) ? def.flavor : '';
+    hbInfoEl.innerHTML = '<div style="color:' + col + ';font-weight:700;font-size:.94rem">' + name + (st.count > 1 ? ' ×' + st.count : '') + '</div>' +
+      (sub ? '<div style="color:#9fb6d0;font-size:.74rem;margin-top:1px">' + sub + '</div>' : '') +
+      (flav ? '<div style="color:#7a8ba0;font-size:.68rem;margin-top:2px;font-style:italic">' + flav + '</div>' : '');
     hbInfoEl.style.opacity = '1';
     if (hbInfoTimer) clearTimeout(hbInfoTimer);
-    hbInfoTimer = setTimeout(function () { if (hbInfoEl) hbInfoEl.style.opacity = '0'; }, 1500);
+    hbInfoTimer = setTimeout(function () { if (hbInfoEl) hbInfoEl.style.opacity = '0'; }, 2400);
   }
 
   // 連続撃破コンボ表示(中央上にエスカレートして点滅)
