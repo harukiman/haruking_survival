@@ -253,6 +253,42 @@ Game.World = (function () {
     return Game.state.worldName === 'shadow' && depthOf() >= Game.TUNE.DEEP_THRESHOLD;
   }
 
+  // ===== 住宅=セーフエリア判定 =====
+  // 「建てた床の上」で「四方(8方向)が壁/扉/窓などの障害物で囲まれている」なら屋内=天候から守られる。
+  // 軽量なレイキャスト方式。床を必須にすることで自然地形の偶然の囲いを排除し"住宅を建てる"ことに結びつける。
+  // 結果は数フレームキャッシュして負荷を抑える。
+  let shelterCache = { tick: -999, val: false };
+  function isSheltered() {
+    const p = Game.state.player; if (!p) return false;
+    if (Game.state.tick === shelterCache.tick) return shelterCache.val;
+    const TS = Game.CFG.TILE_SIZE;
+    const ptx = Math.floor(p.x / TS), pty = Math.floor(p.y / TS);
+    let val = false;
+    const floor = objAt(ptx, pty);
+    if (floor === Game.OBJ.WOOD_FLOOR || floor === Game.OBJ.STONE_FLOOR) {
+      const MAX = 9; // これ以上壁が遠ければ屋外扱い
+      const isBarrier = function (tx, ty) {
+        const o = objAt(tx, ty);
+        if (o === Game.OBJ.DOOR || o === Game.OBJ.WINDOW) return true; // 出入口も囲いとして密閉扱い
+        const meta = Game.OBJ_META[o];
+        if (meta && meta.solid) return true;
+        return !!Game.SOLID_TILE[groundAt(tx, ty)]; // 水などの自然障害も囲いに使える
+      };
+      const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
+      let enclosed = true;
+      for (let d = 0; d < dirs.length && enclosed; d++) {
+        let hit = false;
+        for (let s = 1; s <= MAX; s++) {
+          if (isBarrier(ptx + dirs[d][0] * s, pty + dirs[d][1] * s)) { hit = true; break; }
+        }
+        if (!hit) enclosed = false;
+      }
+      val = enclosed;
+    }
+    shelterCache = { tick: Game.state.tick, val: val };
+    return val;
+  }
+
   // ===== エリア危険度バンド =====
   // 既存地理からの決定論的な純導出(worldgen レイアウト不変・セーブ互換)。定義表は Game.DANGER (config.js) 参照。
   // band: 0=安全圏(〜40タイル) 1=開拓圏(〜90) 2=辺境(〜160) 3=深域(160+) 4=深域+(補正上限)
@@ -318,7 +354,7 @@ Game.World = (function () {
     Chunk, getChunk, groundAt, objAt, setObj, setGround,
     getTileData, setTileData, clearTileData,
     isWalkable, updateChunks, toChunkCoord, rescueStuck: nudgeToWalkable,
-    setActiveWorld, shift, setObjBothWorlds, resonate, depthOf, inDepths, travelTo,
+    setActiveWorld, shift, setObjBothWorlds, resonate, depthOf, inDepths, isSheltered, travelTo,
     dangerBandAt, dangerBandName, teleport, currentAreaMood,
   };
 })();

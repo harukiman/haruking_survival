@@ -51,7 +51,48 @@ Game.DayNight = (function () {
         const lx = s.player.x + (Math.random() - 0.5) * 320;
         const ly = s.player.y + (Math.random() - 0.5) * 220;
         Game.Render.spawnLightning(lx, ly - 340, lx, ly);
+        // 屋外(住宅の外)で無防備なら落雷が直撃しうる。屋内(セーフエリア)なら安全
+        if (!sheltered() && !peaceful() && Math.random() < 0.22) {
+          Game.Survival.damage(4, 'storm');
+          if (Game.Render.flash) Game.Render.flash('rgba(255,255,255,0.7)');
+          expoToast('⚡ 落雷を受けた！ 嵐の間は屋根の下へ避難を', 'storm');
+        }
       }
+    }
+    weatherExposure(s);
+  }
+
+  // ---- 天候ダメージと住宅セーフエリア ----
+  // 住宅(床＋四方を壁で囲う)に入れば天候の脅威を完全に無効化。屋外では吹雪=凍え/砂嵐=消耗で
+  // じわりと削られる(のんびりは免除)。焚火/ランタンの暖 or 暖かい防具でも凍えは防げる。
+  let expoTick = 0, expoMsgAt = -9999, wasShel = false;
+  function peaceful() { const d = Game.DIFFICULTIES[Game.state.difficulty]; return !d || d.dmgMult === 0; }
+  function sheltered() { return Game.World.isSheltered && Game.World.isSheltered(); }
+  function nearWarmth() { return Game.Survival.nearLight && Game.Survival.nearLight(); } // 焚火/ランタン等の光=暖
+  function hasWarmGear() {
+    const p = Game.state.player; if (!p || !p.armor) return false;
+    for (const k in p.armor) { const a = p.armor[k]; if (!a) continue; const def = Game.ITEMS[a.id || a]; if (def && def.warm) return true; }
+    return false;
+  }
+  function expoToast(msg, snd) {
+    if (Game.state.tick - expoMsgAt < 360) return; // 連呼しない
+    expoMsgAt = Game.state.tick; Game.UI.toast(msg); if (snd && Game.Audio) Game.Audio.play('hurt');
+  }
+  function weatherExposure(s) {
+    if (s.paused || !s.player || s.player.health <= 0) return;
+    if (s.worldName === 'space') return;
+    const shel = sheltered();
+    // セーフエリア出入りのフィードバック
+    if (shel && !wasShel) Game.UI.toast('🏠 住まいの中は安全だ。天候の脅威が届かない');
+    wasShel = shel;
+    if (shel || peaceful()) return;         // 屋内 or のんびり=天候無効
+    const w = s.weather && s.weather.type; if (!w || w === 'clear' || w === 'fog' || w === 'rain') return;
+    expoTick++;
+    if (w === 'blizzard') {
+      if (nearWarmth() || hasWarmGear()) return; // 暖があれば凍えない
+      if (expoTick % 150 === 0) { Game.Survival.damage(1, 'cold'); expoToast('❄ 凍えている… 火のそばへ、毛皮を、あるいは屋根の下へ', 'cold'); }
+    } else if (w === 'sandstorm') {
+      if (expoTick % 200 === 0) { Game.Survival.damage(1, 'sand'); expoToast('🏜 砂塵に削られている… 屋内に逃れよう', 'sand'); }
     }
   }
 
