@@ -113,6 +113,7 @@ Game.Projectiles = (function () {
       }
     }
     if (Game.Mobs.alertNoise) Game.Mobs.alertNoise(x, y, 13 + radiusTiles, 180); // 爆発音で周囲の敵を引き寄せる
+    if (Game.World.blastTerrain) Game.World.blastTerrain(x, y, radiusTiles); // 木/岩/基本構造物を破壊しアイテム化(鉱石除く)
     Game.Render.spawnParticles(x, y, '#ff8a3c', 24);
     Game.Render.spawnParticles(x, y, '#ffe27a', 16);
     Game.Render.spawnParticles(x, y, '#57504a', 10); // 破片(デブリ)が飛び散る

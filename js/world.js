@@ -258,6 +258,27 @@ Game.World = (function () {
     return Game.state.worldName === 'shadow' && depthOf() >= Game.TUNE.DEEP_THRESHOLD;
   }
 
+  // ===== 範囲攻撃で基本構造物(木/岩/茂み/花/ブロック等)を破壊してアイテム化。鉱石は対象外 =====
+  const BLAST_RENDER = { tree: 1, deadtree: 1, pine: 1, rock: 1, bush: 1, berry: 1, cactus: 1, flower: 1, sapling: 1, block: 1, giantshroom: 1, glowshroom: 1, pmushroom: 1, shadowtree: 1, soulflower: 1, obsidian: 1, flowerbed: 1, hedge: 1, trellis: 1, wheat: 1 };
+  function blastTerrain(cx, cy, radiusTiles) {
+    const TS = Game.CFG.TILE_SIZE, r = Math.ceil(radiusTiles || 2);
+    const ptx = Math.floor(cx / TS), pty = Math.floor(cy / TS), rr = (radiusTiles || 2) * (radiusTiles || 2);
+    for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+      if (dx * dx + dy * dy > rr) continue;
+      const tx = ptx + dx, ty = pty + dy, o = objAt(tx, ty);
+      if (o === Game.OBJ.NONE) continue;
+      const meta = Game.OBJ_META[o];
+      if (!meta || !meta.mineable) continue;
+      if (meta.oreColor || meta.dungeonWall) continue;     // 鉱石・ダンジョン壁は破壊しない
+      if (!BLAST_RENDER[meta.render]) continue;             // 自然物/基本ブロックのみ(チェスト等の機能物は除外)
+      // 破壊してドロップを生成
+      const wx = tx * TS + TS / 2, wy = ty * TS + TS / 2;
+      (meta.drops || []).forEach(function (d) { const n = Game.Utils.randInt(Math.random, d.n[0], d.n[1]); for (let k = 0; k < n; k++) Game.state.drops.push({ id: d.item, count: 1, x: wx + (Math.random() - 0.5) * 12, y: wy + (Math.random() - 0.5) * 12 }); });
+      setObj(tx, ty, Game.OBJ.NONE);
+      if (Game.Render && Game.Render.spawnParticles) Game.Render.spawnParticles(wx, wy, meta.blockColor || '#9c6b3f', 4);
+    }
+  }
+
   // ===== 住宅=セーフエリア判定 =====
   // 「建てた床の上」で「四方(8方向)が壁/扉/窓などの障害物で囲まれている」なら屋内=天候から守られる。
   // 軽量なレイキャスト方式。床を必須にすることで自然地形の偶然の囲いを排除し"住宅を建てる"ことに結びつける。
@@ -359,7 +380,7 @@ Game.World = (function () {
     Chunk, getChunk, groundAt, objAt, setObj, setGround,
     getTileData, setTileData, clearTileData,
     isWalkable, updateChunks, toChunkCoord, rescueStuck: nudgeToWalkable,
-    setActiveWorld, shift, setObjBothWorlds, resonate, depthOf, inDepths, isSheltered, travelTo,
+    setActiveWorld, shift, setObjBothWorlds, resonate, depthOf, inDepths, isSheltered, blastTerrain, travelTo,
     dangerBandAt, dangerBandName, teleport, currentAreaMood,
   };
 })();

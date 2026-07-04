@@ -48,6 +48,7 @@ Game.Combat = (function () {
       if (Game.Render.spawnParticles) Game.Render.spawnParticles(p.x, p.y, '#aab4c6', 14);
       if (Game.Render.shake) Game.Render.shake(7);
       Game.Audio.play('boom_sfx');
+      if (Game.World.blastTerrain) Game.World.blastTerrain(p.x, p.y, md.r); // 踏み鳴らしで周囲の木/岩を破壊
       if (Game.Mobs.alertNoise) Game.Mobs.alertNoise(p.x, p.y, 11, 150);
       p.cannonCd = md.cd;
       return true;
