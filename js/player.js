@@ -245,7 +245,7 @@ Game.Player = (function () {
     if (Game.Achievements && Game.Achievements.visitBiome && Game.state.worldName === 'light') Game.Achievements.visitBiome(gUnder);
     // ダンジョン侵入時に自動セーブ(進入のたび一度)。床がダンジョンに変わった瞬間を検出
     const inDun = gUnder === Game.TILE.DUNGEON_FLOOR;
-    if (inDun && !p._inDungeon) { p._inDungeon = true; if (Game.Save) Game.Save.autosave('dungeon'); if (Game.Story && !Game.Story.seen('depths')) Game.Story.unlock('depths', true); }
+    if (inDun && !p._inDungeon) { p._inDungeon = true; Game.state.dungeonEntry = { x: p.x, y: p.y, world: Game.state.worldName }; if (Game.Save) Game.Save.autosave('dungeon'); if (Game.Story && !Game.Story.seen('depths')) Game.Story.unlock('depths', true); }
     else if (!inDun && p._inDungeon) { p._inDungeon = false; }
     const onWater = !p.vehicle && gUnder === Game.TILE.WATER;
     if (onWater) spd *= 0.5;
@@ -581,6 +581,7 @@ Game.Player = (function () {
       if (o === O.WAYPOINT_STONE) { if (Game.UI.openWaypoints) Game.UI.openWaypoints(); return; }
       if (o === O.SHADOW_ALTAR) { Game.Mobs.summonBoss(tx, ty); return; }
       if (o === O.ENCHANT_TABLE) { Game.UI.openEnchant(); return; }
+      if (o === O.EXIT_PORTAL) { dungeonExitWarp(); return; }
       if (o === O.BED) { sleep(); return; }
     }
     interact(); // 近隣に対話対象が無ければ通常操作（手持ち使用/設置など）
@@ -749,6 +750,7 @@ Game.Player = (function () {
       if (obj === Game.OBJ.BOUNTY_BOARD) { Game.Bounty.open(t.tx, t.ty); return; }
       if (obj === Game.OBJ.SHADOW_ALTAR) { Game.Mobs.summonBoss(t.tx, t.ty); return; }
       if (obj === Game.OBJ.ENCHANT_TABLE) { Game.UI.openEnchant(); return; }
+      if (obj === Game.OBJ.EXIT_PORTAL) { dungeonExitWarp(); return; }
       if (obj === Game.OBJ.ROCKET) { Game.Rocket.board(); return; }
       if (obj === Game.OBJ.BED) { sleep(); return; }
       if (obj === Game.OBJ.WHEAT && Game.Farming.isGrown(t.tx, t.ty)) { Game.Farming.harvest(t.tx, t.ty); return; }
@@ -1336,6 +1338,16 @@ Game.Player = (function () {
       for (let i = 0; i < mobs.length; i++) { const m = mobs[i]; if (Math.hypot(m.x - w.x, m.y - w.y) <= dmgR) Game.Mobs.damageMob(m, 120, w.x, w.y, false); }
       Game.state.vehWreck = null;
     }
+  }
+  // 最深部の「帰還の渦」: 入ってきた入口へ即ワープ(達成後の帰り道を短縮)
+  function dungeonExitWarp() {
+    const p = Game.state.player, e = Game.state.dungeonEntry;
+    if (!e || e.world !== Game.state.worldName) { Game.UI.toast('入口の記録が見つからない…そのまま歩いて戻ろう'); return; }
+    Game.Render.spawnParticles(p.x, p.y, '#9fd8ff', 20);
+    p.x = e.x; p.y = e.y; p.prevX = e.x; p.prevY = e.y;
+    Game.Render.spawnParticles(p.x, p.y, '#9fd8ff', 20);
+    if (Game.Audio) Game.Audio.play('shift');
+    Game.UI.toast('🌀 帰還の渦に飛び込み、ダンジョンの入口へ戻った');
   }
   function morningSkip() {
     const p = Game.state.player;

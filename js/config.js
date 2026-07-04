@@ -74,6 +74,7 @@ Game.OBJ = {
   WAYPOINT_STONE:166,
   // 建築・農業の拡張
   STONE_WALL:167, HEDGE:168, FOUNTAIN:169, LANTERN_POST:170, FLOWERBED:171, SCARECROW:172, WOOD_STAIRS:173, TRELLIS:174,
+  EXIT_PORTAL:175,
 };
 
 // 地面の色（手続き描画のベース）
@@ -174,6 +175,7 @@ Game.LIGHT_LEVEL = {
   [Game.OBJ.GLOW_SHROOM]: 4,
   [Game.OBJ.WIND_ALTAR]: 7,
   [Game.OBJ.RETURN_ALTAR]: 7,
+  [Game.OBJ.EXIT_PORTAL]: 6,
   [Game.OBJ.WIND_ORE]: 3,
   [Game.OBJ.ANCIENT_GATE]: 5,
   [Game.OBJ.RETURN_GATE]: 5,
@@ -276,6 +278,7 @@ Game.OBJ_META = {
   [Game.OBJ.WIND_ALTAR]:  { name:'風の祭壇', solid:true, mineable:false, tool:null, tier:0, hp:999, light:7, drops:[], render:'windaltar', windAltar:true },
   // 帰還の祭壇: 空島の中心。傍らに立つと大地へ還る(破壊不可)
   [Game.OBJ.RETURN_ALTAR]:{ name:'帰還の祭壇', solid:true, mineable:false, tool:null, tier:0, hp:999, light:7, drops:[], render:'returnaltar', returnAltar:true },
+  [Game.OBJ.EXIT_PORTAL]:{ name:'帰還の渦', solid:false, mineable:false, tool:null, tier:0, hp:999, light:6, drops:[], render:'exitportal', dungeonExit:true },
   [Game.OBJ.SKY_PILLAR]:  { name:'風化した柱', solid:true, mineable:true, tool:'pickaxe', tier:2, hp:14, drops:[{item:'stone', n:[1,2]}], render:'skypillar' },
   [Game.OBJ.SKY_TREE]:    { name:'空の樹', solid:true, mineable:true, tool:'axe', tier:0, hp:7, drops:[{item:'wood', n:[2,3]},{item:'feather', n:[0,1]}], render:'skytree' },
   [Game.OBJ.WIND_ORE]:    { name:'風晶鉱', solid:true, mineable:true, tool:'pickaxe', tier:3, hp:16, drops:[{item:'wind_crystal', n:[1,2]}], render:'ore', oreColor:'#8fe8e0' },

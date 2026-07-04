@@ -347,12 +347,24 @@ Game.WorldGen = (function () {
           if (dx === 0 && dy === 0) return { ground: T.DUNGEON_FLOOR, obj: O.SPAWNER };
           // ハブ周囲(隣接4マス)にも宝を置かない=即取り防止。番人の間を広く保つ
           if (Math.abs(dx) + Math.abs(dy) === 1) return { ground: T.DUNGEON_FLOOR, obj: O.NONE };
+          // 最深部(入口の対角=左上の隅)は必ず主宝箱。その隣に「帰還の渦」で入口へ即ワープ
+          if (dx === -(hw - 2) && dy === -(hh - 2)) return { ground: T.DUNGEON_FLOOR, obj: O.TREASURE_CHEST };
+          if (dx === -(hw - 2) + 1 && dy === -(hh - 2)) return { ground: T.DUNGEON_FLOOR, obj: O.EXIT_PORTAL };
           // 各部屋(4象限)の奥に特徴物: 宝箱/巣/空 をハッシュで決定
           if (Math.abs(dx) === hw - 2 && Math.abs(dy) === hh - 2) {
             const q = (dx > 0 ? 1 : 0) + (dy > 0 ? 2 : 0);
             const hv = U.hash3(ax + q * 17, ay + q * 29, seed + 555);
             if (hv < 0.5) return { ground: T.DUNGEON_FLOOR, obj: O.TREASURE_CHEST };
             if (hv < 0.9) return { ground: T.DUNGEON_FLOOR, obj: O.SPAWNER };
+          }
+          // 迷路の複雑化: 各部屋にもう一段の短い仕切り(開口付き)を増設。中央回廊(|dx|<=1||dy|<=1)は必ず開けて連結保証
+          if (big && Math.abs(dx) > 1 && Math.abs(dy) > 1) {
+            // 部屋の中ほどに横仕切り(dyが部屋中央付近)。開口を1つ残す
+            const roomMidY = (dy > 0 ? 1 : -1) * (hh - 4);
+            if (dy === roomMidY && Math.abs(dx) >= 3 && Math.abs(dx) <= hw - 3) {
+              const gapX = 2 + (U.hash3(ax + (dy > 0 ? 3 : -3), ay + 13, seed + 61) < 0.5 ? 0 : 1);
+              if (Math.abs(dx) !== gapX && Math.abs(dx) !== hw - 2) return { ground: T.DUNGEON_FLOOR, obj: wall };
+            }
           }
           // 大型は各部屋にもう1段の仕切り(開口付き)で入り組ませる
           if (big) {

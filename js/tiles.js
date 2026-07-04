@@ -132,7 +132,7 @@ Game.Tiles = (function () {
   }
 
   // 立ちオブジェクトの接地影（チャンクキャッシュにベイク＝毎フレーム負荷ゼロ）
-  const standing = { tree: 1, deadtree: 1, pine: 1, rock: 1, ore: 1, bush: 1, berry: 1, cactus: 1, flower: 1, sapling: 1, shadowtree: 1, shadowcrystal: 1, lumenore: 1, soulflower: 1, voidrock: 1, starore: 1, giantshroom: 1, glowshroom: 1, pmushroom: 1, obsidian: 1, sulfur: 1, barrel: 1, potted: 1, totem: 1, streetlamp: 1, torch: 1, lantern: 1, brazier: 1, stela: 1, sign: 1, campfire: 1, rocket_obj: 1, lumenlantern: 1, banner: 1, chair: 1, skytree: 1, skypillar: 1, windaltar: 1, returnaltar: 1, ancientgate: 1, returngate: 1, ruincolumn: 1, ruinstatue: 1, rifttear: 1, riftreturn: 1, riftspire: 1, waypoint: 1, stonewall: 1, hedge: 1, fountain: 1, lanternpost: 1, flowerbed: 1, scarecrow: 1, woodstairs: 1, trellis: 1 };
+  const standing = { tree: 1, deadtree: 1, pine: 1, rock: 1, ore: 1, bush: 1, berry: 1, cactus: 1, flower: 1, sapling: 1, shadowtree: 1, shadowcrystal: 1, lumenore: 1, soulflower: 1, voidrock: 1, starore: 1, giantshroom: 1, glowshroom: 1, pmushroom: 1, obsidian: 1, sulfur: 1, barrel: 1, potted: 1, totem: 1, streetlamp: 1, torch: 1, lantern: 1, brazier: 1, stela: 1, sign: 1, campfire: 1, rocket_obj: 1, lumenlantern: 1, banner: 1, chair: 1, skytree: 1, skypillar: 1, windaltar: 1, returnaltar: 1, ancientgate: 1, returngate: 1, ruincolumn: 1, ruinstatue: 1, rifttear: 1, riftreturn: 1, riftspire: 1, waypoint: 1, stonewall: 1, hedge: 1, fountain: 1, lanternpost: 1, flowerbed: 1, scarecrow: 1, woodstairs: 1, trellis: 1, exitportal: 1 };
   function contactShadow(x, rx) {
     x.fillStyle = 'rgba(0,0,0,0.22)';
     x.beginPath(); x.ellipse(TS / 2, TS - 4, rx || 10, 3.2, 0, 0, Math.PI * 2); x.fill();
@@ -595,6 +595,14 @@ Game.Tiles = (function () {
       x.fillStyle = '#7fd0e0'; x.beginPath(); x.moveTo(TS / 2, 4); x.lineTo(TS / 2 + 5, TS / 2 - 1); x.lineTo(TS / 2, TS - 12); x.lineTo(TS / 2 - 5, TS / 2 - 1); x.closePath(); x.fill();
       x.fillStyle = '#c8f0f8'; x.beginPath(); x.moveTo(TS / 2, 6); x.lineTo(TS / 2 + 2.5, TS / 2 - 2); x.lineTo(TS / 2, TS - 14); x.closePath(); x.fill();
       x.fillStyle = 'rgba(200,240,248,0.9)'; circle(x, TS / 2, TS / 2 - 3, 1.4);
+    } else if (r === 'exitportal') {
+      // 帰還の渦: 水青の渦巻き(石枠)。入口へ即ワープ
+      x.fillStyle = '#3a4658'; circle(x, TS / 2, TS / 2, TS / 2 - 2);
+      x.fillStyle = '#1a2436'; circle(x, TS / 2, TS / 2, TS / 2 - 4);
+      x.strokeStyle = '#7fd0ff'; x.lineWidth = 2; x.beginPath();
+      for (let a = 0; a < 24; a++) { const t = a / 24 * Math.PI * 3, rr = 2 + t * 1.4; const px = TS / 2 + Math.cos(t) * rr, py = TS / 2 + Math.sin(t) * rr; if (a === 0) x.moveTo(px, py); else x.lineTo(px, py); }
+      x.stroke();
+      x.fillStyle = '#c8f0ff'; circle(x, TS / 2, TS / 2, 2);
     }
     objAtlas[id] = c;
   }
