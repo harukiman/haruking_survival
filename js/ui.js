@@ -1024,6 +1024,8 @@ Game.UI = (function () {
     // オーバーレイ(インベントリ/チェスト等)表示中・ポーズ中は隠す
     const overlayOpen = (el.invScreen && !el.invScreen.classList.contains('hidden')) || (el.chestScreen && !el.chestScreen.classList.contains('hidden')) || Game.state.paused;
     if (overlayOpen) { ammoEl.style.display = 'none'; return; }
+    // 航空機は🚀ミサイルボタン等でアクション群が背高になり残弾表示と重なるため、右上寄りに逃がす
+    ammoEl.classList.toggle('ammo-veh', p.vehicle === 'jet' || p.vehicle === 'bomber');
     // 乗り物の武器(戦車/戦闘機/爆撃機)も残弾を表示。搭載弾薬はインベントリ在庫がそのまま残弾
     if (p.vehicle) {
       const VA = { tank: 'cannon_shell' };

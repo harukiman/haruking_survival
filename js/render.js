@@ -128,7 +128,7 @@ Game.Render = (function () {
     drawBreath(ctx);
     drawFuel(ctx);
     drawVehDur(ctx);
-    drawVehAmmo(ctx);
+    // drawVehAmmo は撤去: 残弾は右側の #ammo-hud に集約(ゲージ近く・機体上に重ねない)
     drawWreck(ctx);
     drawFires(ctx);
     drawDowned(ctx);

@@ -1343,8 +1343,9 @@ Game.HOTBAR_SIZE = 9;
 // 航空機のミサイルモード(戦闘機/爆撃機で切替可能)。カタパルト射出→その場停留→点火加速の共通プロファイル。
 //  normal: 通常ミサイル = 1発・高威力・直進(命中が難しい)  /  homing: 誘導ミサイル = 小型4発・中威力・自動追尾
 Game.MISSILE_MODES = {
-  normal: { label: '通常', ammo: 'missile',        count: 1, homing: false, dmg: 95, explosive: 2.9, speedStart: 9, speedMax: 26, accel: 1.6, dur: 46, cd: 26, launch: 9,  ejectSpd: 1.6 },
-  homing: { label: '追尾', ammo: 'homing_missile', count: 4, homing: true,  dmg: 28, explosive: 1.8, speedStart: 5, speedMax: 22, accel: 1.0, dur: 64, cd: 46, launch: 9,  ejectSpd: 1.4, every: 4, spread: 0.42, small: true },
+  normal: { label: '通常', ammo: 'missile',        count: 1, homing: false, dmg: 95, explosive: 2.9, speedStart: 9, speedMax: 26, accel: 1.6, dur: 46, cd: 26, launch: 9, ejectSpd: 1.6 },
+  // 誘導も通常と同じ発射モーション(射出→停留→点火加速)を取る。加速/最高速/射出プロファイルを通常に合わせる
+  homing: { label: '追尾', ammo: 'homing_missile', count: 4, homing: true,  dmg: 28, explosive: 1.8, speedStart: 9, speedMax: 26, accel: 1.6, dur: 60, cd: 46, launch: 9, ejectSpd: 1.6, every: 4, spread: 0.42, small: true },
 };
 Game.DAY_LENGTH = 24000;  // 1日のtick数（昼夜は次波で本格化）
 
