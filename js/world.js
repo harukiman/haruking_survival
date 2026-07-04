@@ -131,6 +131,10 @@ Game.World = (function () {
     Game.state.tileData = w.tileData;
     Game.state.mobs = w.mobs;
     Game.state.drops = w.drops;
+    // 世界固有でないグローバルな一時効果(火災/弾/死の灰)は移動先へ持ち越さない(座標は元の世界のもの)
+    if (Game.state.fires) Game.state.fires.length = 0;
+    if (Game.state.projectiles) Game.state.projectiles.length = 0;
+    if (Game.state.fallout) Game.state.fallout.length = 0;
   }
 
   // 影鏡で光⇄影をシフト
