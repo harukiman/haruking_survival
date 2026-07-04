@@ -474,6 +474,7 @@ Game.ITEMS = {
   prism_blade: { name:'プリズムの刃', stack:1, color:'#c884f0', tool:'sword', tier:5, attack:19, proj:{kind:'slash', dmg:16, count:3, spread:0.4, cd:30}, wsfx:'beam', special:{type:'echo', name:'三閃残光', hits:2, pct:0.35, cd:70, color:'#c884f0'}, flavor:'水晶の女王の刃。光を七色に砕き、三閃となって奔る。' },
   dragon_fang: { name:'竜牙の大剣', stack:1, color:'#8a2fb0', tool:'sword', tier:5, attack:24, proj:{kind:'slash', dmg:28, big:true, cd:36}, wsfx:'beam', special:{type:'shock', name:'竜咆', pct:0.5, r:2.4, cd:75, color:'#8a2fb0'}, flavor:'深淵の竜の牙より鍛えし大剣。振るえば闇を裂く咆哮が奔る。' },
   endblade:    { name:'終焉の剣', stack:1, color:'#ff5a7a', tool:'sword', tier:5, attack:26, aoe:true, proj:{kind:'slash', dmg:32, big:true, cd:32}, wsfx:'beam', special:{type:'echo', name:'終焉の三連', hits:2, pct:0.4, cd:60, color:'#ff5a7a'}, flavor:'全ての強敵を退けし者に託される、終焉と再生の剣。一閃は三たび木霊する。' },
+  flashstep_edge:{ name:'瞬雷・迅歩の刃', stack:1, color:'#7fe0ff', tool:'sword', tier:5, attack:17, wsfx:'slash_air', special:{type:'blink', name:'瞬歩', tiles:4, pct:0.85, shockPct:0.5, stam:12, cd:16, width:0.95, color:'#8fd0ff'}, flavor:'斬ると同時に前方へ雷の速さで瞬歩し、駆け抜けた軌跡の敵を斬り裂き感電させる。ただし瞬歩はスタミナを喰らう——乱発は許されない。' },
   colossus_blade:{ name:'巨像の大剣', stack:1, color:'#d08a4a', tool:'sword', tier:5, attack:23, proj:{kind:'slash', dmg:22, big:true, cd:38}, wsfx:'beam', special:{type:'shock', name:'大地断ち', pct:0.5, r:2.4, cd:75, color:'#d08a4a'}, flavor:'黄昏の巨像の核より鍛えし剛剣。一振りで大地を断つ。' },
   mire_scythe: { name:'澱みの大鎌', stack:1, color:'#7a9a3a', tool:'sword', tier:5, attack:21, proj:{kind:'venom', dmg:18, count:2, spread:0.3, cd:34}, wsfx:'beam', special:{type:'reap', name:'吸命', healPct:0.03, cd:30, color:'#8fe06a'}, flavor:'沼の主の骸より鍛えし大鎌。刈り取った命が使い手を潤す。' },
   magma_maul:  { name:'溶岩の大槌', stack:1, color:'#d8521f', tool:'sword', tier:5, attack:25, aoe:true, proj:{kind:'fire', dmg:20, explosive:1.6, cd:40}, wsfx:'beam', special:{type:'brand', name:'焔纏', dot:'fire', color:'#ff7a3a'}, flavor:'溶岩の王の核より鍛えし大槌。打たれた者は炎を纏う。' },
@@ -625,6 +626,7 @@ Game.RECIPES = [
   { out:{id:'emberfang_axe', n:1}, in:{iron:6, coal:6, gold_bar:1}, station:'enchant_table' },
   { out:{id:'echoedge', n:1}, in:{iron:5, shadow_steel:1, lumen:1}, station:'enchant_table' },
   { out:{id:'quakehammer', n:1}, in:{iron:8, stone:12, gold_bar:1}, station:'enchant_table' },
+  { out:{id:'flashstep_edge', n:1}, in:{shadow_steel:2, shadow_crystal:6, lumen:3, gold_bar:2}, station:'enchant_table' },
   // 建築拡張
   { out:{id:'stone_wall', n:4}, in:{stone:4}, station:'crafting_table' },
   { out:{id:'hedge', n:4}, in:{wood:2, moonleaf:1}, station:'crafting_table' },
@@ -1136,7 +1138,7 @@ Game.ITEM_GLYPH = {
   sand_greatsword:'⚔️', magma_hammer:'🔨', pharaoh_crown:'👑', mind_tome:'📖', wisdom_tome:'📗', xp_orb:'🔮', expand_pouch:'🎒',
   feather:'🪶', wind_crystal:'💠', wind_steel:'🌀', wind_feather:'🪶', wind_sword:'🗡️', sky_cloak:'🧥', cloud_boots:'👢',
   ring_crit:'💍', amulet_swift:'📿', fang_vamp:'🦷', heart_regen:'❤️‍🔥', eye_xp:'👁️', band_power:'💪', crest_guard:'🛡️',
-  energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️', prism_blade:'⚔️', dragon_fang:'⚔️', colossus_blade:'⚔️', mire_scythe:'⚔️', magma_maul:'🔨', starcore_greatsword:'⚔️', voidcore_blade:'⚔️', spore_scythe:'⚔️', star_aegis:'🛡️', void_helm:'⛑️', thorn_plate:'🥷', tempest_spear:'🔱', sovereign_scepter:'👑', rift_crown:'👑', frostfang_blade:'🗡️', emberfang_axe:'🪓', echoedge:'🗡️', quakehammer:'🔨',
+  energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️', prism_blade:'⚔️', dragon_fang:'⚔️', colossus_blade:'⚔️', mire_scythe:'⚔️', magma_maul:'🔨', starcore_greatsword:'⚔️', voidcore_blade:'⚔️', spore_scythe:'⚔️', star_aegis:'🛡️', void_helm:'⛑️', thorn_plate:'🥷', tempest_spear:'🔱', sovereign_scepter:'👑', rift_crown:'👑', frostfang_blade:'🗡️', emberfang_axe:'🪓', echoedge:'🗡️', quakehammer:'🔨', flashstep_edge:'⚡',
 };
 
 Game.INV_SIZE = 36;       // 先頭9 = ホットバー

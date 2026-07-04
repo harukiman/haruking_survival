@@ -258,6 +258,41 @@ Game.Combat = (function () {
       const hits = sp.hits || 2;
       for (let i = 1; i <= hits; i++) p.echoQ.push({ t: now + i * 4, m: best, d: d, color: sp.color || '#ffe9f0' });
       procFx(best.x, best.y, sp);
+    } else if (sp.type === 'blink') {
+      // 瞬歩斬: 前方 tiles マスへ瞬間移動し、その軌跡上の敵に斬撃+感電追加ダメージ。
+      // 攻撃毎にスタミナを消費して無限連続移動(インフレ)を防ぐ。スタミナ不足なら発動せず通常斬りのみ。
+      const cost = sp.stam || 12;
+      if ((p.stamina || 0) < cost) return;      // CDも据え置き=消費なしで再挑戦できる
+      p.spCd[key] = now + (sp.cd || 18);
+      p.stamina = Math.max(0, p.stamina - cost);
+      let dx = best.x - p.x, dy = best.y - p.y; const dl = Math.hypot(dx, dy) || 1; dx /= dl; dy /= dl;
+      const sx = p.x, sy = p.y, maxT = sp.tiles || 4;
+      let ex = sx, ey = sy;
+      for (let s = 1; s <= maxT; s++) {
+        const nx = sx + dx * s * TS, ny = sy + dy * s * TS;
+        if (!Game.World.isWalkable(Math.floor(nx / TS), Math.floor(ny / TS))) break;
+        ex = nx; ey = ny;
+      }
+      const bd = Math.max(1, Math.round(baseDmg * (sp.pct || 0.85)));
+      const shock = Math.max(1, Math.round(baseDmg * (sp.shockPct || 0.5)));
+      const corr = TS * (sp.width || 0.9), col = sp.color || '#8fd0ff';
+      const segLen2 = ((ex - sx) * (ex - sx) + (ey - sy) * (ey - sy)) || 1;
+      for (let i = 0; i < Game.state.mobs.length; i++) {
+        const m = Game.state.mobs[i]; if (m.def.friendly || m.hp <= 0) continue;
+        let t = ((m.x - sx) * (ex - sx) + (m.y - sy) * (ey - sy)) / segLen2; t = t < 0 ? 0 : t > 1 ? 1 : t;
+        const cx = sx + (ex - sx) * t, cy = sy + (ey - sy) * t;
+        if (Math.hypot(m.x - cx, m.y - cy) <= corr + m.def.size * 0.4) {
+          Game.Mobs.damageMob(m, bd, sx, sy, false);
+          Game.Mobs.damageMob(m, shock, sx, sy, false);          // 感電追加ダメージ
+          Game.Render.spawnLightning(m.x + (Math.random() - 0.5) * 16, m.y - 120, m.x, m.y);
+          Game.Render.spawnImpact(m.x, m.y, col);
+        }
+      }
+      p.x = ex; p.y = ey; p.invuln = Math.max(p.invuln || 0, 6); // 瞬歩の一瞬だけ受け流し
+      Game.Render.spawnParticles(sx, sy, col, 8); Game.Render.spawnParticles(ex, ey, col, 10);
+      if (Game.Render.spawnSlash) Game.Render.spawnSlash(ex, ey, p.dir, col);
+      Game.Audio.play('dodge_just');
+      procFx(ex, ey, sp);
     }
   }
 
