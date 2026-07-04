@@ -103,7 +103,7 @@ Game.Net = (function () {
     a1[1](safe('pos', function (d, id) {
       const p = peers[id] || (peers[id] = {});
       if (p.x == null) { p.x = d.x; p.y = d.y; }
-      p.tx = d.x; p.ty = d.y; p.dir = d.dir; p.world = d.world; p.lastSeen = Date.now();
+      p.tx = d.x; p.ty = d.y; p.dir = d.dir; p.world = d.world; p.sl = d.sl || 0; p.lastSeen = Date.now();
       if (id === hostId) lastHostSeen = Date.now(); // ホストのposも生存証明
     }));
     a3[1](safe('hello', function (d, id) {
@@ -295,17 +295,39 @@ Game.Net = (function () {
   // 送信（main から定期）。静止中は帯域節約のため間引き（1.5秒毎のハートビートのみ）
   let posTimer = 0;
   let lastSent = { x: null, y: null, dir: null, w: null, t: 0 };
+  // 就寝同期(ベッドで夜スキップ): 同じ世界に居る全員が眠っているか。自分の就寝状態は呼び出し側が担保
+  function activePeersInWorld(w) {
+    const out = []; const now = Date.now();
+    for (const id in peers) { const pe = peers[id]; if (!pe) continue; if (pe.lastSeen && now - pe.lastSeen > 8000) continue; if (pe.world && pe.world !== w) continue; out.push(pe); }
+    return out;
+  }
+  function allAsleep() {
+    if (!connected) return false;
+    const w = Game.state.worldName;
+    const list = activePeersInWorld(w);
+    for (let i = 0; i < list.length; i++) if (!list[i].sl) return false;
+    return true;
+  }
+  function sleepCount() {
+    const w = Game.state.worldName;
+    const list = activePeersInWorld(w);
+    let asleep = Game.state.player && Game.state.player.sleeping ? 1 : 0;
+    for (let i = 0; i < list.length; i++) if (list[i].sl) asleep++;
+    return [asleep, list.length + 1];
+  }
+
   function tick() {
     if (!connected || !sendPos) return;
     posTimer++;
     if (posTimer < 6) return; posTimer = 0; // ~10Hz
     const p = Game.state.player;
     const x = Math.round(p.x), y = Math.round(p.y), w = Game.state.worldName;
+    const sl = p.sleeping ? 1 : 0;
     const now = Date.now();
-    const moved = (x !== lastSent.x || y !== lastSent.y || p.dir !== lastSent.dir || w !== lastSent.w);
+    const moved = (x !== lastSent.x || y !== lastSent.y || p.dir !== lastSent.dir || w !== lastSent.w || sl !== lastSent.sl);
     if (!moved && now - lastSent.t < 1500) return; // 静止中スロットル
-    lastSent.x = x; lastSent.y = y; lastSent.dir = p.dir; lastSent.w = w; lastSent.t = now;
-    try { sendPos({ x: x, y: y, dir: p.dir, world: w }); } catch (e) {}
+    lastSent.x = x; lastSent.y = y; lastSent.dir = p.dir; lastSent.w = w; lastSent.sl = sl; lastSent.t = now;
+    try { sendPos({ x: x, y: y, dir: p.dir, world: w, sl: sl }); } catch (e) {}
   }
 
   // ローカル編集をブロードキャスト
@@ -366,5 +388,5 @@ Game.Net = (function () {
   // テスト用フック（本番動作には未使用）: ホスト無音状態を注入してウォッチドッグを即時評価
   function _simHostSilence() { lastHostSeen = Date.now() - HOST_TIMEOUT - 1; watchdogTick(); }
 
-  return { available, start, leave, tick, broadcastEdit, getPeers, peerCount, isConnected, setName, chat, sendMobsSnapshot, sendHit, sendMobDeath, sendLaunchReady, broadcastLaunch, broadcastDiscovery, giveItem, giveBts, statusText, currentCode, _simHostSilence, get host() { return isHost; } };
+  return { available, start, leave, tick, broadcastEdit, getPeers, peerCount, isConnected, setName, chat, sendMobsSnapshot, sendHit, sendMobDeath, sendLaunchReady, broadcastLaunch, broadcastDiscovery, giveItem, giveBts, statusText, currentCode, allAsleep, sleepCount, _simHostSilence, get host() { return isHost; } };
 })();

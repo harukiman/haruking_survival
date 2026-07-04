@@ -172,6 +172,10 @@ Game.Player = (function () {
 
     let dx = intent.dx, dy = intent.dy;
     const len = Math.hypot(dx, dy);
+    // 就寝中に動いたら目を覚ます(MP: 全員就寝待ちから離脱)
+    if (p.sleeping && len > 0.05) { p.sleeping = false; }
+    // MP: 同じ世界の全員が就寝したら朝へ
+    if (p.sleeping) checkGroupSleep();
     // ダッシュ（スタミナ消費）
     const moving = len > 0;
     const dashing = intent.dash && moving && p.stamina > 0;
@@ -1205,22 +1209,54 @@ Game.Player = (function () {
     return refunded;
   }
 
+  function morningSkip() {
+    const p = Game.state.player;
+    const cur = Game.state.tick % Game.DAY_LENGTH;
+    const morning = Math.floor(0.30 * Game.DAY_LENGTH);
+    Game.state.tick += ((morning - cur) + Game.DAY_LENGTH) % Game.DAY_LENGTH;
+    p.health = Math.min(p.maxHealth, p.health + 20);
+  }
   function sleep() {
     const p = Game.state.player;
     // リスポーン地点をこのベッドに更新（死亡時はここへ戻る）
     const pt = playerTile();
     Game.state.spawn = { tx: pt.tx, ty: pt.ty };
     if (Game.Lighting.ambientDarkness() < 0.3) {
+      p.sleeping = false;
       Game.UI.toast('リスポーン地点をここに設定した（昼は眠れない）');
       Game.Audio.play('select'); Game.UI.refreshAll(); return;
     }
-    const cur = Game.state.tick % Game.DAY_LENGTH;
-    const morning = Math.floor(0.30 * Game.DAY_LENGTH);
-    Game.state.tick += ((morning - cur) + Game.DAY_LENGTH) % Game.DAY_LENGTH;
-    p.health = Math.min(p.maxHealth, p.health + 20);
+    // マルチプレイ: マイクラ式に「同じ世界の全員が眠ると朝になる」。一人でも起きていれば待機
+    if (Game.Net.isConnected()) {
+      if (p.sleeping) { p.sleeping = false; Game.UI.toast('目を覚ました'); Game.Audio.play('select'); Game.UI.refreshAll(); return; }
+      p.sleeping = true;
+      const c = Game.Net.sleepCount(); // [asleep, total]
+      Game.Audio.play('select');
+      if (c[0] >= c[1]) { // 自分で最後の一人 → すぐ判定される
+        Game.UI.toast('全員が眠りについた… 朝になる');
+      } else {
+        Game.UI.toast('💤 眠りについた（' + c[0] + '/' + c[1] + '）… 全員が眠ると朝になる。もう一度ベッドで起きる');
+      }
+      Game.UI.refreshAll(); return;
+    }
+    // ソロ: 即座に朝へ
+    morningSkip();
     Game.Audio.play('craft');
     Game.UI.toast('おやすみ… 朝になった（リスポーン地点をここに設定）');
     Game.UI.refreshAll();
+  }
+  // 毎フレーム判定: MPで同じ世界の全員が就寝したら朝へ(各クライアントが独立に検知し同じ朝時刻へ収束)
+  function checkGroupSleep() {
+    const p = Game.state.player;
+    if (!p || !p.sleeping || !Game.Net.isConnected()) return;
+    if (Game.Lighting.ambientDarkness() < 0.3) { p.sleeping = false; return; } // 朝になったら解除
+    if (Game.Net.allAsleep()) {
+      morningSkip();
+      p.sleeping = false;
+      Game.Audio.play('craft');
+      Game.UI.toast('🌅 全員が眠り、夜が明けた');
+      Game.UI.refreshAll();
+    }
   }
 
   // レベル必要EXP曲線（序盤は緩やか・レベルが上がるほど急峻に=cubic尾。最大Lv9999まで破綻しない）
@@ -1297,7 +1333,7 @@ Game.Player = (function () {
 
   return {
     makeDefault, spawnAt, update, targetTile, mining, playerTile, breakBlock,
-    interact, useNearby, gainXP, totalArmor, setBonus, sleep, equipSelectedArmor, equipFromInventory, equipRelic, unequipSlot, applyEquipStats, bossesDefeated, bossTitle, travelToWaypoint,
+    interact, useNearby, gainXP, totalArmor, setBonus, sleep, checkGroupSleep, equipSelectedArmor, equipFromInventory, equipRelic, unequipSlot, applyEquipStats, bossesDefeated, bossTitle, travelToWaypoint,
     effAttack, attackCooldown, levelDmgBonus, levelArmorBonus, spendStat, unlockSkill, respec,
     skillBonus, skillFlag, canUnlock, currentWeaponAtk, equippedArmorAt, xpForLevel,
     reloadCurrent, magLoaded, magCap, selGunId, contextAction,
