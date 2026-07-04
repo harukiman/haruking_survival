@@ -902,6 +902,11 @@ Game.Mobs = (function () {
       }
       Game.Audio.play('hit');
     }
+    // 群れの怯え(世界の反応性): 動物が倒されると周囲の動物が一斉に逃げ出す
+    if (!m.def.hostile && !m.def.npc) {
+      const all = Game.state.mobs, R = 10 * TS;
+      for (let i = 0; i < all.length; i++) { const o = all[i]; if (o === m || o.def.hostile || o.def.npc) continue; if (Math.hypot(o.x - m.x, o.y - m.y) <= R) o.fleeTimer = Math.max(o.fleeTimer || 0, 220); }
+    }
     // 撃破ポーフ: 体の色＋白い飛沫で消滅を強調(ボスは専用ムービーがあるので控えめ)
     if (Game.Render.spawnParticles && !m.def.boss) {
       const sz = m.def.size || 12, n = Math.min(18, 6 + Math.round(sz / 2));
