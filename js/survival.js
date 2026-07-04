@@ -65,6 +65,12 @@ Game.Survival = (function () {
       const totem = nearHealTotem();
       const regenSkill = Game.Player.skillBonus().regen + (Game.Status ? Game.Status.buffSum().regen : 0) + (p.gearRegen || 0);
       if (regenSkill > 0 && p.health < p.maxHealth) p.health = Math.min(p.maxHealth, p.health + regenSkill); // スキル不屈＋再生の薬＋装備affix
+      // 協力: 仲間の近く(8タイル)に居ると士気が上がり HP が少し回復(共闘=はぐれずに戦う動機)
+      if (p.health < p.maxHealth && Game.Net && Game.Net.isConnected && Game.Net.isConnected() && Game.Net.getPeers) {
+        const peers = Game.Net.getPeers(), TS = Game.CFG.TILE_SIZE, now = Date.now(); let near = false;
+        for (const id in peers) { const pe = peers[id]; if (!pe || pe.tx == null) continue; if (pe.world && pe.world !== Game.state.worldName) continue; if (pe.lastSeen && now - pe.lastSeen > 8000) continue; if (Math.hypot(pe.tx - p.x, pe.ty - p.y) <= 8 * TS) { near = true; break; } }
+        if (near) { p.health = Math.min(p.maxHealth, p.health + 2); Game.Render.spawnParticles(p.x, p.y - 6, '#7fd0ff', 1); }
+      }
       if (totem && p.health < p.maxHealth) {
         p.health = Math.min(p.maxHealth, p.health + 3); // 癒しの祭壇
         Game.Render.spawnParticles(p.x, p.y - 6, '#7fd0a0', 1);
