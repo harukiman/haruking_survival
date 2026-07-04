@@ -19,6 +19,22 @@ Game.Combat = (function () {
   function tryAttack() {
     const p = Game.state.player;
     const rangePx = Game.TUNE.ATTACK_RANGE * TS;
+    // 戦車の主砲: 乗車中は攻撃ボタンで砲撃。戦車砲弾を消費し、着弾点で炸裂(範囲大ダメージ)
+    if (p.vehicle === 'tank') {
+      const tdef = Game.ITEMS.tank && Game.ITEMS.tank.tankCannon;
+      if (!tdef) return true;
+      if ((p.cannonCd || 0) > 0) return true;
+      if (Game.Inventory.count('cannon_shell') <= 0) { if (Game.state.tick % 40 === 0) Game.UI.toast('戦車砲弾がない — クラフトして補充を'); return true; }
+      Game.Inventory.remove('cannon_shell', 1);
+      const it = Game.Input.intent; let tx, ty;
+      if (it && it.usePointer && it.mouseTile) { tx = it.mouseTile.tx * TS + TS / 2; ty = it.mouseTile.ty * TS + TS / 2; }
+      else { let dx = 0, dy = 0; if (p.dir === 'up') dy = -1; else if (p.dir === 'down') dy = 1; else if (p.dir === 'left') dx = -1; else dx = 1; tx = p.x + dx * tdef.range * TS * 0.6; ty = p.y + dy * tdef.range * TS * 0.6; }
+      Game.Projectiles.callMeteor(tx, ty, Game.Player.effAttack(tdef.dmg), tdef.radius);
+      Game.Audio.play('boom_sfx'); if (Game.Render.shake) Game.Render.shake(6);
+      if (Game.Render.spawnMuzzle) Game.Render.spawnMuzzle(p.x, p.y, Math.atan2(ty - p.y, tx - p.x), '#ffd86b', 1.5);
+      p.cannonCd = tdef.cd;
+      return true;
+    }
     if (p.attackCd > 0) {
       // 先行入力バッファ: CD残り~200ms(6tick)以内の入力は予約し、CD明けに自動発動(コンボが途切れない)
       if (p.attackCd <= 6) p.attackBuf = true;
