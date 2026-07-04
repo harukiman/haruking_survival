@@ -385,6 +385,36 @@ Game.WorldGen = (function () {
     // 影世界: 同じ地形形状(標高)・別オブジェクト
     const shadow = Game.state && Game.state.worldName === 'shadow';
 
+    // 海底神殿(深海の中心・船で到達): 深水域の稀な地点に石造の宝物殿の島。周囲は深海で船が要る
+    // (呼吸ゲージのため泳いで渡ろうとすると溺れる=潜水呼吸器 or 船が到達の鍵)。財宝が豊富な探索の目的地。
+    if (ground === T.DEEP_WATER && !shadow && !(Game.state && Game.state.worldName === 'space')) {
+      const SG = 128;
+      const sax = Math.round(wx / SG) * SG, say = Math.round(wy / SG) * SG;
+      if (U.hash3(sax, say, seed + 55555) < 0.05) {
+        const sdx = wx - sax, sdy = wy - say, hw = 7, hh = 6;
+        if (Math.abs(sdx) <= hw + 2 && Math.abs(sdy) <= hh + 2) {
+          // 外周の砂浜(桟橋。船を寄せられる)
+          if (Math.abs(sdx) > hw || Math.abs(sdy) > hh) return { ground: T.SAND, obj: O.NONE };
+          const wall = O.STONE_WALL;
+          const edge = Math.abs(sdx) === hw || Math.abs(sdy) === hh;
+          const entrance = sdy === hh && Math.abs(sdx) <= 1; // 南に入口
+          if (entrance) return { ground: T.DUNGEON_FLOOR, obj: O.NONE };
+          if (edge) return { ground: T.DUNGEON_FLOOR, obj: wall };
+          // 十字仕切り(中央ハブ|*|<=1は開けて連結保証)
+          const innerV = sdx === 0 && Math.abs(sdy) > 1, innerH = sdy === 0 && Math.abs(sdx) > 1;
+          if (innerV || innerH) return { ground: T.DUNGEON_FLOOR, obj: wall };
+          // 中央=番人スポナー、最深(左上隅)=主宝箱、他の隅=宝箱/スポナー(財宝豊富)
+          if (sdx === 0 && sdy === 0) return { ground: T.DUNGEON_FLOOR, obj: O.SPAWNER };
+          if (sdx === -(hw - 2) && sdy === -(hh - 2)) return { ground: T.DUNGEON_FLOOR, obj: O.TREASURE_CHEST };
+          if (Math.abs(sdx) === hw - 2 && Math.abs(sdy) === hh - 2) {
+            const hv = U.hash3(sax + sdx * 7, say + sdy * 11, seed + 556);
+            return { ground: T.DUNGEON_FLOOR, obj: hv < 0.7 ? O.TREASURE_CHEST : O.SPAWNER };
+          }
+          return { ground: T.DUNGEON_FLOOR, obj: O.NONE };
+        }
+      }
+    }
+
     // 打ち捨てられた宝箱（地上=光世界のみ・ダンジョン外の探索報酬。石ブロックの小廃墟＋宝箱）
     if (walkableGround && !shadow && !(Game.state && Game.state.worldName === 'space')) {
       const CG = 53;
