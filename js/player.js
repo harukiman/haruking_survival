@@ -258,6 +258,22 @@ Game.Player = (function () {
       }
     }
     const outOfFuel = p.vehicle && FUEL_VEHICLES[p.vehicle] && !(p.fuel && p.fuel[p.vehicle] > 0);
+    // 戦闘機ブースト: 同じ方向(コミット方位)へ進み続けると加速。大きく曲がるとブーストを失い、直進し直すと再加速。
+    if (p.vehicle === 'jet') {
+      if (moving && len > 0.01) {
+        const nx = dx / len, ny = dy / len;
+        if (p.jetHX == null) { p.jetHX = nx; p.jetHY = ny; }
+        const dot = nx * p.jetHX + ny * p.jetHY;
+        if (dot > 0.93) { // ほぼ直進(緩いバンクは許容) → 加速。コミット方位を少しずつ現在へ寄せる
+          p.jetBoost = Math.min(1, (p.jetBoost || 0) + 0.011);
+          p.jetHX += (nx - p.jetHX) * 0.05; p.jetHY += (ny - p.jetHY) * 0.05;
+          const hl = Math.hypot(p.jetHX, p.jetHY) || 1; p.jetHX /= hl; p.jetHY /= hl;
+        } else { // 大きく曲がった → ブースト急減。十分減速したら新しい方位にコミット
+          p.jetBoost = Math.max(0, (p.jetBoost || 0) - 0.2);
+          if (p.jetBoost <= 0.05) { p.jetHX = nx; p.jetHY = ny; }
+        }
+      } else p.jetBoost = Math.max(0, (p.jetBoost || 0) - 0.05); // 停止 → 緩やかに解除
+    } else if (p.jetBoost || p.jetHX != null) { p.jetBoost = 0; p.jetHX = null; p.jetHY = null; }
     if (p.vehicle === 'car') spd = p.speed * 2.3;
     else if (p.vehicle === 'buggy') spd = p.speed * 2.5;
     else if (p.vehicle === 'plane') spd = p.speed * 2.7;
@@ -265,8 +281,9 @@ Game.Player = (function () {
     else if (p.vehicle === 'boat') spd = p.speed * 1.5;
     else if (p.vehicle === 'tank') spd = p.speed * 1.6;
     else if (p.vehicle === 'mech') spd = p.speed * 2.0;
-    else if (p.vehicle === 'jet') spd = p.speed * 3.1;
-    else if (p.vehicle === 'bomber') spd = p.speed * 4.375; // 2.5 × 1.75(ユーザー指示で高速化)
+    // 戦闘機: 基本3.3 → 直進加速で最大5.25(爆撃機3.5の1.5倍)
+    else if (p.vehicle === 'jet') spd = p.speed * (3.3 + 1.95 * (p.jetBoost || 0));
+    else if (p.vehicle === 'bomber') spd = p.speed * 3.5; // 4.375 × 0.8(ユーザー指示で減速)
     if (outOfFuel) spd *= 0.12; // 燃料切れは失速(徒歩以下)
     // 浅瀬は減速＋水音（乗り物なし・徒歩のみ）
     const gUnder = Game.World.groundAt(Math.floor(p.x / TS), Math.floor(p.y / TS));
