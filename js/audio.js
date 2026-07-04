@@ -237,6 +237,13 @@ Game.Audio = (function () {
       case 'gun_shotgun': if (throttled('gsh', 0.1)) gunShot({ crackHz: 1700, crackVol: 0.5, crackDur: 0.06, bodyHz: 150, bodyLow: 40, bodyVol: 0.62, bodyDur: 0.16, midHz: 440, tailDur: 0.2, tailVol: 0.2, tailHz: 900, vol: 1.05 }); break;
       case 'gun_sniper': if (throttled('gsn', 0.1)) gunShot({ crackHz: 3200, crackVol: 0.6, crackDur: 0.05, bodyHz: 185, bodyLow: 44, bodyVol: 0.56, bodyDur: 0.14, midHz: 600, tailDur: 0.32, tailVol: 0.17, tailHz: 1100, vol: 1.12 }); break;
       case 'gun_rocket': if (throttled('gro', 0.1)) gunShot({ crackHz: 900, crackVol: 0.3, crackDur: 0.1, bodyHz: 135, bodyLow: 36, bodyVol: 0.56, bodyDur: 0.26, midHz: 320, tailDur: 0.3, tailVol: 0.2, tailHz: 700, vol: 1.05 }); break;
+      // ㊴ 新銃の効果音: 重厚マグナム/ミニガン/対物狙撃/エネルギー/火炎/擲弾
+      case 'gun_heavy':  if (throttled('ghv', 0.08)) gunShot({ crackHz: 2100, crackVol: 0.6, crackDur: 0.05, bodyHz: 160, bodyLow: 42, bodyVol: 0.66, bodyDur: 0.16, midHz: 520, tailDur: 0.2, tailVol: 0.18, tailHz: 1000, vol: 1.15 }); break;
+      case 'gun_mini':   if (throttled('gmn', 0.012)) gunShot({ crackHz: 3200, crackVol: 0.28, crackDur: 0.015, bodyHz: 300, bodyLow: 90, bodyVol: 0.26, bodyDur: 0.03, midHz: 1000, tailDur: 0.02, tailVol: 0.05, tailHz: 1800, vol: 0.82 }); break;
+      case 'gun_antimat':if (throttled('gam', 0.16)) { gunShot({ crackHz: 2600, crackVol: 0.7, crackDur: 0.06, bodyHz: 120, bodyLow: 34, bodyVol: 0.72, bodyDur: 0.22, midHz: 480, tailDur: 0.42, tailVol: 0.22, tailHz: 900, vol: 1.25 }); if (ctx) subThump(150, 48, 0.2, 0.12); } break;
+      case 'gun_energy': if (throttled('gen', 0.04)) { beep(1600, 0.05, 'sine', 0.08); beep(900, 0.09, 'sawtooth', 0.06); sbeep(2200, 0.05, 'triangle', 0.05, 0.03); } break;
+      case 'gun_flame':  if (throttled('gfl', 0.05)) { if (ctx) noiseBurst(ctx.currentTime, 0.16, 0.1, 900); beep(180, 0.12, 'sawtooth', 0.05); } break;
+      case 'gun_launch': if (throttled('gln', 0.14)) { beep(320, 0.06, 'square', 0.08); subThump(150, 55, 0.14, 0.1); } break;
       case 'boom_sfx':   beep(110, 0.3, 'sawtooth', 0.16); beep(60, 0.4, 'triangle', 0.13); if (ctx) noiseBurst(ctx.currentTime, 0.4, 0.22, 600); break;
       case 'slash_air':  if (throttled('sla', 0.06)) { beep(680, 0.06, 'sine', 0.06); beep(1200, 0.05, 'triangle', 0.05); } break;
       case 'beam':       if (throttled('bm', 0.05)) { beep(1400, 0.06, 'sine', 0.07); beep(700, 0.1, 'sawtooth', 0.05); } break;

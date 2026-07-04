@@ -456,6 +456,17 @@ Game.ITEMS = {
   m4:          { name:'M4カービン', stack:1, color:'#23231f', tool:'gun', mag:30, ammo:'ammo_556', fireDmg:12, cd:7, bkind:'tracer', gunsfx:'gun_rifle', flavor:'扱いやすい主力アサルトライフル。' },
   ak47:        { name:'AK-47', stack:1, color:'#2a2118', tool:'gun', mag:30, ammo:'ammo_762', fireDmg:15, cd:8, bkind:'tracer', gunsfx:'gun_rifle', flavor:'頑強で威力に優れる名銃。' },
   m870:        { name:'レミントンM870', stack:1, color:'#1e1e22', tool:'gun', mag:6, ammo:'shell_12g', fireDmg:6, cd:24, pellets:5, spread:0.5, bkind:'bullet', gunsfx:'gun_shotgun', flavor:'散弾を撒くポンプアクション。' },
+  // ㊴ 追加の銃系統(見た目=色/サウンド=専用sfxにこだわる)
+  deagle:      { name:'デザートイーグル', stack:1, color:'#c8a84a', tool:'gun', mag:7, ammo:'ammo_50', fireDmg:24, cd:19, bkind:'bullet', gunsfx:'gun_heavy', flavor:'黄金に輝く超大型拳銃。一発の重みが違う。反動も凶暴。' },
+  uzi:         { name:'ウージー', stack:1, color:'#26262a', tool:'gun', mag:32, ammo:'ammo_9mm', fireDmg:6, cd:3, bkind:'bullet', gunsfx:'gun_smg', flavor:'ばら撒く小型短機関銃。取り回し軽快、弾はあっという間に尽きる。' },
+  p90:         { name:'FN P90', stack:1, color:'#3a3a42', tool:'gun', mag:50, ammo:'ammo_9mm', fireDmg:7, cd:4, bkind:'tracer', gunsfx:'gun_smg', flavor:'50連の大容量マガジンを上部に備えたブルパップSMG。' },
+  scar_h:      { name:'SCAR-H', stack:1, color:'#3a3222', tool:'gun', mag:20, ammo:'ammo_762', fireDmg:18, cd:8, bkind:'tracer', gunsfx:'gun_rifle', flavor:'高威力弾を扱うモジュラー・バトルライフル。中距離の王。' },
+  barrett:     { name:'バレットM82', stack:1, color:'#2e3228', tool:'gun', mag:10, ammo:'ammo_50', fireDmg:62, cd:44, bkind:'tracer', pierce:true, gunsfx:'gun_antimat', flavor:'対物ライフル。装甲も敵も貫く一撃。狙って撃て。' },
+  spas12:      { name:'SPAS-12', stack:1, color:'#20242a', tool:'gun', mag:8, ammo:'shell_12g', fireDmg:7, cd:21, pellets:7, spread:0.55, bkind:'bullet', gunsfx:'gun_shotgun', flavor:'戦闘用セミオート散弾銃。至近の制圧力は圧巻。' },
+  minigun:     { name:'M134 ミニガン', stack:1, color:'#33352e', tool:'gun', mag:100, ammo:'ammo_556', fireDmg:8, cd:1, bkind:'tracer', gunsfx:'gun_mini', flavor:'回転式多銃身の弾幕製造機。抱えて撃てば嵐が吹く。' },
+  m79:         { name:'M79 擲弾銃', stack:1, color:'#3a3a2a', tool:'gun', mag:1, ammo:'rocket_ammo', fireDmg:14, cd:34, explosive:true, bkind:'rocket', gunsfx:'gun_launch', flavor:'単発の擲弾発射器。放物線を描いて着弾、炸裂。' },
+  flamethrower:{ name:'火炎放射器', stack:1, color:'#a83a2a', tool:'gun', mag:100, ammo:'gasoline', fireDmg:5, cd:3, bkind:'fire', gunsfx:'gun_flame', flavor:'ガソリンを噴射し敵を焼き尽くす。近距離で群れを炎に包め。' },
+  plasma_rifle:{ name:'プラズマライフル', stack:1, color:'#8a4ad0', tool:'gun', mag:24, ammo:'energy_cell', fireDmg:22, cd:9, bkind:'laser', pierce:true, gunsfx:'gun_energy', flavor:'高エネルギープラズマを撃ち出す未来兵器。光の刃が敵列を貫く。' },
   barrett:     { name:'バレットM82', stack:1, color:'#18181c', tool:'gun', mag:10, ammo:'ammo_50', fireDmg:34, cd:42, bspeed:14, bkind:'tracer', gunsfx:'gun_sniper', flavor:'対物狙撃銃。隔絶した一撃。' },
   rpg7:        { name:'RPG-7', stack:1, color:'#26261e', tool:'gun', mag:1, ammo:'rocket_ammo', fireDmg:46, cd:55, explosive:2.4, bspeed:6, bkind:'rocket', gunsfx:'gun_rocket', flavor:'携行式ロケット。着弾で爆発し範囲を吹き飛ばす。' },
   // ===== P33 ワクワク武器（飛ぶ斬撃/雷/ブーメラン/ビーム）＋Fate風レジェンダリ =====
@@ -847,6 +858,16 @@ Game.RECIPES = [
   { out:{id:'m4', n:1}, in:{iron:10, gun_parts:4, gunpowder:3, steel_plate:2, coal:2}, station:'crafting_table' },
   { out:{id:'ak47', n:1}, in:{iron:12, gun_parts:4, gunpowder:4, steel_plate:2}, station:'crafting_table' },
   { out:{id:'m870', n:1}, in:{iron:8, gun_parts:2, gunpowder:3, wood:3}, station:'crafting_table' },
+  { out:{id:'deagle', n:1}, in:{iron:6, gun_parts:3, gunpowder:2, gold_bar:2}, station:'crafting_table' },
+  { out:{id:'uzi', n:1}, in:{iron:7, gun_parts:3, gunpowder:3, steel_plate:1}, station:'crafting_table' },
+  { out:{id:'p90', n:1}, in:{iron:9, gun_parts:4, gunpowder:3, steel_plate:2}, station:'crafting_table' },
+  { out:{id:'scar_h', n:1}, in:{iron:12, gun_parts:5, gunpowder:4, steel_plate:2}, station:'crafting_table' },
+  { out:{id:'barrett', n:1}, in:{iron:14, gun_parts:6, gunpowder:5, steel_plate:3, gold_bar:2}, station:'crafting_table' },
+  { out:{id:'spas12', n:1}, in:{iron:10, gun_parts:3, gunpowder:4, wood:2}, station:'crafting_table' },
+  { out:{id:'minigun', n:1}, in:{iron:20, gun_parts:8, gunpowder:6, steel_plate:4, gold_bar:3}, station:'crafting_table' },
+  { out:{id:'m79', n:1}, in:{iron:10, gun_parts:4, gunpowder:6, steel_plate:1}, station:'crafting_table' },
+  { out:{id:'flamethrower', n:1}, in:{iron:10, gun_parts:3, steel_plate:2, sulfur:4}, station:'crafting_table' },
+  { out:{id:'plasma_rifle', n:1}, in:{iron:8, circuit:4, lumen:6, gun_parts:5, star_metal:1}, station:'crafting_table' },
   { out:{id:'barrett', n:1}, in:{iron:20, gold_bar:5, shadow_steel:2}, station:'crafting_table' },
   { out:{id:'rpg7', n:1}, in:{iron:24, gold_bar:6, shadow_steel:3}, station:'crafting_table' },
   // ===== P33 ワクワク武器 =====
@@ -1205,7 +1226,7 @@ Game.ITEM_GLYPH = {
   sand_greatsword:'⚔️', magma_hammer:'🔨', pharaoh_crown:'👑', mind_tome:'📖', wisdom_tome:'📗', xp_orb:'🔮', expand_pouch:'🎒',
   feather:'🪶', wind_crystal:'💠', wind_steel:'🌀', wind_feather:'🪶', wind_sword:'🗡️', sky_cloak:'🧥', cloud_boots:'👢',
   ring_crit:'💍', amulet_swift:'📿', fang_vamp:'🦷', heart_regen:'❤️‍🔥', eye_xp:'👁️', band_power:'💪', crest_guard:'🛡️',
-  energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️', prism_blade:'⚔️', dragon_fang:'⚔️', colossus_blade:'⚔️', mire_scythe:'⚔️', magma_maul:'🔨', starcore_greatsword:'⚔️', voidcore_blade:'⚔️', spore_scythe:'⚔️', star_aegis:'🛡️', void_helm:'⛑️', thorn_plate:'🥷', tempest_spear:'🔱', sovereign_scepter:'👑', rift_crown:'👑', frostfang_blade:'🗡️', emberfang_axe:'🪓', echoedge:'🗡️', quakehammer:'🔨', flashstep_edge:'⚡', combat_vest:'🎽', reflect_aegis:'🛡️', iai_mumyo:'🗡️', heavenfall_staff:'☄️', gasoline:'⛽', repair_kit:'🔧', buggy:'🚙', tank:'🛡️', cannon_shell:'💣', battle_mech:'🤖', aqualung:'🤿', moonshard:'🌙', moon_charm:'🔮', fighter_jet:'✈️', bomber:'🛩️', aerial_bomb:'💣', heavy_bomb:'🧨', gunpowder:'⚫', gun_parts:'⚙️', steel_plate:'🔩', rope:'🪢', glass:'🔷', circuit:'🖥️', jerky:'🥓', fruit_salad:'🥗', energy_bar:'🍫', medkit:'🩹',
+  energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️', prism_blade:'⚔️', dragon_fang:'⚔️', colossus_blade:'⚔️', mire_scythe:'⚔️', magma_maul:'🔨', starcore_greatsword:'⚔️', voidcore_blade:'⚔️', spore_scythe:'⚔️', star_aegis:'🛡️', void_helm:'⛑️', thorn_plate:'🥷', tempest_spear:'🔱', sovereign_scepter:'👑', rift_crown:'👑', frostfang_blade:'🗡️', emberfang_axe:'🪓', echoedge:'🗡️', quakehammer:'🔨', flashstep_edge:'⚡', combat_vest:'🎽', reflect_aegis:'🛡️', iai_mumyo:'🗡️', heavenfall_staff:'☄️', gasoline:'⛽', repair_kit:'🔧', buggy:'🚙', tank:'🛡️', cannon_shell:'💣', battle_mech:'🤖', aqualung:'🤿', moonshard:'🌙', moon_charm:'🔮', fighter_jet:'✈️', bomber:'🛩️', aerial_bomb:'💣', heavy_bomb:'🧨', gunpowder:'⚫', gun_parts:'⚙️', steel_plate:'🔩', rope:'🪢', glass:'🔷', circuit:'🖥️', jerky:'🥓', fruit_salad:'🥗', energy_bar:'🍫', medkit:'🩹', deagle:'🔫', uzi:'🔫', p90:'🔫', scar_h:'🔫', barrett:'🔫', spas12:'🔫', minigun:'🔫', m79:'🧨', flamethrower:'🔥', plasma_rifle:'🔫',
 };
 
 Game.INV_SIZE = 36;       // 先頭9 = ホットバー
