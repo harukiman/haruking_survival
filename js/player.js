@@ -445,8 +445,9 @@ Game.Player = (function () {
       else mineTick();
     } else { mining.active = false; if (mining.progress > 0) mining.progress -= 0.5; }
 
-    // 航空機のミサイル: L2(altFire) または PC右クリック(place)で発射。戦闘機=直進 / 爆撃機=自動追尾。R2/攻撃は機銃/爆弾。
-    if ((p.vehicle === 'jet' || p.vehicle === 'bomber') && (intent.altFire || intent.place)) { Game.Combat.tryJetMissile(); intent.place = false; }
+    // 航空機のミサイル: L2 / スマホの🚀ボタン / PC右クリック(=altFire)で発射。戦闘機=直進 / 爆撃機=自動追尾。R2/攻撃は機銃/爆弾。
+    // ※ intent.place(使う/設置)は乗り物の降車・対話に使うのでミサイルには使わない
+    if ((p.vehicle === 'jet' || p.vehicle === 'bomber') && intent.altFire) Game.Combat.tryJetMissile();
     // 右クリック/設置ボタン: 対話/設置/使用
     if (intent.place) interact();
     // 開く/使うボタン: 近隣のチェスト等を開く（無ければ通常操作）
@@ -1457,6 +1458,7 @@ Game.Player = (function () {
     // 手持ちの当該乗り物アイテムを1つ破壊
     Game.Inventory.remove(type, 1);
     if (p.vehDur) delete p.vehDur[type];
+    if (p.vehGuns) delete p.vehGuns[type]; // 機体ごとの増設機関銃はリセット(別の同型機は素の状態から)
     Game.state.vehWreck = { x: p.x, y: p.y, t: 150, type: type }; // 5秒(30fps)
     Game.UI.toast('💥 機体が大破！ 搭乗者は致命傷——さらに5秒後に大爆発する！');
     if (Game.Audio) Game.Audio.play('event_horde');

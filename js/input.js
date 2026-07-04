@@ -12,6 +12,7 @@ Game.Input = (function () {
   let placeQueued = false;   // 設置エッジ
   let useQueued = false;     // 開く/使うエッジ
   let shiftBtnShown = null;  // 影渡りボタンの表示状態キャッシュ(影鏡所持時のみ表示)
+  let missileBtnShown = null; // 🚀ミサイルボタンの表示状態キャッシュ(航空機搭乗中のみ表示)
   let rollQueued = false;    // 回避ロールエッジ
   let altFireQueued = false; // 副射撃エッジ(戦闘機のミサイル等 = L2)
   let lastDir = 'down';
@@ -76,7 +77,7 @@ Game.Input = (function () {
       const r = cv.getBoundingClientRect();
       mouse.x = e.clientX - r.left; mouse.y = e.clientY - r.top;
       if (e.button === 0) mouse.down = true;
-      else if (e.button === 2) placeQueued = true;
+      else if (e.button === 2) { const v = Game.state && Game.state.player && Game.state.player.vehicle; if (v === 'jet' || v === 'bomber') altFireQueued = true; else placeQueued = true; } // 航空機搭乗中の右クリックはミサイル
     });
     window.addEventListener('mouseup', function (e) { if (e.button === 0) mouse.down = false; });
     cv.addEventListener('contextmenu', function (e) { e.preventDefault(); });
@@ -173,6 +174,8 @@ Game.Input = (function () {
     if (useBtn) { const doUse = function (e) { e.preventDefault(); useQueued = true; }; useBtn.addEventListener('touchstart', doUse, { passive: false }); useBtn.addEventListener('click', doUse); }
     const rollBtn = document.getElementById('btn-roll');
     if (rollBtn) { const doRoll = function (e) { e.preventDefault(); rollQueued = true; }; rollBtn.addEventListener('touchstart', doRoll, { passive: false }); rollBtn.addEventListener('click', doRoll); }
+    const missileBtn = document.getElementById('btn-missile');
+    if (missileBtn) { const doMsl = function (e) { e.preventDefault(); altFireQueued = true; }; missileBtn.addEventListener('touchstart', doMsl, { passive: false }); missileBtn.addEventListener('click', doMsl); }
     const shiftBtn = document.getElementById('btn-shift');
     if (shiftBtn) shiftBtn.addEventListener('click', function (e) { e.preventDefault(); Game.World.shift(); });
     const dashBtn = document.getElementById('btn-dash');
@@ -404,6 +407,9 @@ Game.Input = (function () {
     // 影渡りボタンは影鏡を持つ時だけ表示(使えないボタンでスマホの親指領域を圧迫しない)
     const canShift = !!(Game.Inventory && Game.Inventory.count && Game.Inventory.count('shadow_mirror') > 0);
     if (canShift !== shiftBtnShown) { shiftBtnShown = canShift; const sb = document.getElementById('btn-shift'); if (sb) sb.style.display = canShift ? '' : 'none'; }
+    // 🚀ミサイルボタンは戦闘機/爆撃機に搭乗中だけ表示
+    const canMsl = !!(Game.state && Game.state.player && (Game.state.player.vehicle === 'jet' || Game.state.player.vehicle === 'bomber'));
+    if (canMsl !== missileBtnShown) { missileBtnShown = canMsl; const mb = document.getElementById('btn-missile'); if (mb) mb.style.display = canMsl ? '' : 'none'; }
     return intent;
   }
 
