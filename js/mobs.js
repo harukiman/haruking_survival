@@ -1179,19 +1179,28 @@ Game.Mobs = (function () {
     if (Game.Bounty && m.def && !m.def.npc) Game.Bounty.notifyKill(m.type);
     // ドロップを集約（ローカル生成＋マルチ配信用）
     const items = [];
-    if (m.def.drops) {
-      m.def.drops.forEach(function (d) {
-        let n = Game.Utils.randInt(Math.random, d.n[0], d.n[1]);
-        // ドロップ調整(ユーザー指示): 素材のばら撒きを抑え、固有(稀)ドロップの出現率も下げる
-        if (d.n[0] === 0) {
-          const cut = m.nightAmped ? 0.2 : 0.55;      // 固有/稀ドロップをさらに絞る
-          if (n > 0 && Math.random() < cut) n = 0;
-        } else { // 通常素材もドロップ率/量を全体的に低下(ユーザー: アイテムのドロップ率を低く)
-          if (n > 0 && Math.random() < (m.nightAmped ? 0.2 : 0.35)) n = 0; // 一定確率で丸ごと出ない
-          else if (n > 1 && Math.random() < 0.45) n -= 1;                  // 量も控えめ
+    // ドロップ抽選(ユーザー指示): ①まずドロップ有無を抽選 → ②当たれば最大2つをランダム抽選。
+    // レア(武器/固有=n[0]===0)は抽選重みを大きく下げ、滅多に出ないようにする。
+    if (m.def.drops && m.def.drops.length) {
+      const dropGate = m.nightAmped ? 0.8 : (m.def.boss || m.def.midboss) ? 0.95 : 0.55; // ①有無の抽選
+      if (Math.random() < dropGate) {
+        // ②重み付きプール: 通常素材/消耗品=1.0 / レア(武器/防具/遺物/特殊=固有装備)=0.1
+        const pool = m.def.drops.map(function (d) {
+          const it = Game.ITEMS[d.item];
+          const rare = it && (it.tool || it.attack != null || (it.armor != null && it.slot) || it.relic || it.special || it.summonBoss);
+          return { d: d, w: rare ? 0.1 : 1 };
+        });
+        let totalW = 0; for (let i = 0; i < pool.length; i++) totalW += pool[i].w;
+        const slots = 1 + (Math.random() < (m.nightAmped ? 0.55 : 0.3) ? 1 : 0); // 最大2つ
+        for (let s = 0; s < slots; s++) {
+          let r = Math.random() * totalW, e = pool[pool.length - 1];
+          for (let i = 0; i < pool.length; i++) { r -= pool[i].w; if (r <= 0) { e = pool[i]; break; } }
+          const d = e.d;
+          // 数量: レア/固有は1、通常素材は1〜2(控えめ)
+          const cnt = d.n[0] === 0 ? 1 : (d.n[1] > 1 && Math.random() < 0.3 ? 2 : 1);
+          for (let k = 0; k < cnt; k++) items.push({ id: d.item, count: 1 });
         }
-        for (let k = 0; k < n; k++) items.push({ id: d.item, count: 1 });
-      });
+      }
     }
     const gear = Game.Loot.rollMobDrop(m.def, m.x, m.y, m.nightAmped ? 0.18 : 0);
     for (let g = 0; g < gear.length; g++) items.push({ id: gear[g].id, count: gear[g].count, roll: gear[g].roll });
