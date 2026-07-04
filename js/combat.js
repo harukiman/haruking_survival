@@ -160,6 +160,8 @@ Game.Combat = (function () {
       if (f > 0.6 && Game.Render.flash) Game.Render.flash('rgba(255,220,140,' + (0.1 + f * 0.16).toFixed(3) + ')');
       Game.Audio.play(f > 0.8 ? 'crit' : 'swing');
       if (Game.Render.spawnFloat) Game.Render.spawnFloat(p.x, p.y - 26, f >= 0.999 ? '真・一閃!' : '一閃', col, true);
+      // 装備耐久: 溜め斬りも武器を消耗させる(通常近接と整合)
+      { const cslot = Game.Inventory.selectedSlot(); if (cslot && Game.Loot.degrade && Game.Loot.isEquip(cslot.id) && Game.Loot.degrade(cslot, 1) && Game.UI) { Game.UI.toast('⚠ ' + Game.Loot.displayName(cslot) + ' が破損した！ 修理を'); if (Game.UI.refreshHotbar) Game.UI.refreshHotbar(); } }
       if (!best) return true; // 空振りでも溜めは解放される
       const canDirect = !(Game.Net.isConnected() && !Game.Net.host);
       // 範囲: 溜めが乗るほど周囲も巻き込む
