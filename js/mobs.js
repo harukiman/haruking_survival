@@ -507,6 +507,18 @@ Game.Mobs = (function () {
       if (Game.state.mobFreeze > 0) { m.frozen = true; continue; }
       m.frozen = false;
 
+      // 激昂の決死ノヴァ: テレグラフ後に半径 novaR の爆発。範囲外へ逃げれば回避(読み合い)
+      if (m.novaT > 0) {
+        m.novaT--;
+        if (Game.state.tick % 3 === 0 && Game.Render.spawnParticles) Game.Render.spawnParticles(m.x + (Math.random() - 0.5) * m.novaR * TS, m.y + (Math.random() - 0.5) * m.novaR * TS, '#ff5a3a', 1);
+        if (m.novaT <= 0) {
+          const R = (m.novaR || 4) * TS;
+          if (Game.Render.spawnParticles) Game.Render.spawnParticles(m.x, m.y, '#ff7a3c', 36);
+          if (Game.Render.flash) Game.Render.flash('rgba(255,80,40,0.3)'); if (Game.Render.shake) Game.Render.shake(11);
+          Game.Audio.play('boom_sfx');
+          if (distP <= R && Game.Survival.damage(Math.round((m.dmg || m.def.dmg) * 2.2), m.def.name || 'mob') !== false) { const kl = distP || 1; p.x += (dxp / kl) * 22; p.y += (dyp / kl) * 22; }
+        }
+      }
       // ボスの隙(スタン/弱点窓): 大技を回避された後の反撃猶予。動かず攻撃もしない=絶好の攻めどき
       if (m.vulnerable > 0) m.vulnerable--;
       if (m.stunned > 0) {
@@ -823,7 +835,8 @@ Game.Mobs = (function () {
       if (Game.Audio.cue) Game.Audio.cue('riser');
       if (Game.Audio.duckBGM) { Game.Audio.duckBGM(0.35); setTimeout(function () { Game.Audio.duckBGM(1); }, 1200); }
       if (Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - m.def.size, '激昂!!', '#ff5a4a', true);
-      if (Game.UI && Game.UI.toast) Game.UI.toast('⚠ ' + (m.def.name || 'ボス') + ' が激昂した！');
+      if (Game.UI && Game.UI.toast) Game.UI.toast('⚠ ' + (m.def.name || 'ボス') + ' が激昂した！ 離れろ！');
+      m.novaT = 42; m.novaR = 4.2; // 決死のノヴァ: 42tick後に半径4.2タイルの爆発(テレグラフ→離れれば回避)
     }
     // 棘鎧アフィックス: 被ダメの一定割合を反射
     if (hasAffix(m, 'thorns') && m.hp > 0) {
@@ -1122,6 +1135,17 @@ Game.Mobs = (function () {
         ctx.textAlign = 'left';
       }
       ctx.save();
+      // 決死ノヴァのテレグラフ: 爆発範囲を赤リングで予告し、内側が満ちるほど爆発が近い(離れれば回避)
+      if (m.novaT > 0) {
+        const z3 = Game.Camera.zoom ? Game.Camera.zoom() : 1, TS2 = Game.CFG.TILE_SIZE;
+        const R = (m.novaR || 4) * TS2 * z3, prog = 1 - m.novaT / 42;
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,70,40,0.9)'; ctx.lineWidth = 2.5 * z3;
+        ctx.beginPath(); ctx.arc(s.x, s.y - hop, R, 0, Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = 'rgba(255,60,30,' + (0.06 + prog * 0.22).toFixed(3) + ')';
+        ctx.beginPath(); ctx.arc(s.x, s.y - hop, R * prog, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      }
       // 弱点窓(隙): 眩い黄色の脈動リング＋「!」で「今が攻めどき」を明示
       if (m.vulnerable > 0) {
         const z2 = Game.Camera.zoom ? Game.Camera.zoom() : 1;
