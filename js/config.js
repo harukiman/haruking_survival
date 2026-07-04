@@ -495,6 +495,7 @@ Game.ITEMS = {
   car:           { name:'車', stack:1, color:'#c0444a', vehicle:'car', fuelVeh:true, flavor:'大地を駆ける鉄の馬。燃料で走る。' },
   cannon_shell:  { name:'戦車砲弾', stack:32, color:'#6a6a4a', flavor:'戦車の主砲弾。着弾で炸裂し範囲に大ダメージ。乗車中に主砲として撃つ。' },
   tank:          { name:'戦車', stack:1, color:'#4a5a3c', vehicle:'tank', fuelVeh:true, tankCannon:{ dmg:70, radius:2.6, cd:26, range:11 }, flavor:'一人乗りの装甲戦車。鈍いが頑強で、主砲(戦車砲弾)は着弾点を吹き飛ばす。攻撃ボタンで砲撃。' },
+  battle_mech:   { name:'戦闘ロボ', stack:1, color:'#7a8496', vehicle:'mech', fuelVeh:true, mechStomp:{ dmg:44, r:2.6, cd:20 }, flavor:'一人乗りの二足歩行兵器。機敏で頑強。攻撃ボタンで大地を踏み鳴らし、周囲の敵を衝撃波で薙ぐ。' },
   boat:          { name:'ボート', stack:1, color:'#9c6b3f', vehicle:'boat', flavor:'水を越えるための小舟。' },
   plane:         { name:'飛行機', stack:1, color:'#8a96c0', vehicle:'plane', flavor:'空を行く翼。すべての境界を越えて。' },
   // ロケット/宇宙
@@ -722,6 +723,7 @@ Game.RECIPES = [
   { out:{id:'car', n:1}, in:{iron:8, coal:4}, station:'crafting_table' },
   { out:{id:'buggy', n:1}, in:{iron:6, coal:2, string:2}, station:'crafting_table' },
   { out:{id:'tank', n:1}, in:{iron:20, shadow_steel:4, coal:6, gold_bar:2}, station:'crafting_table' },
+  { out:{id:'battle_mech', n:1}, in:{iron:16, shadow_steel:6, lumen:4, gold_bar:2}, station:'crafting_table' },
   { out:{id:'cannon_shell', n:4}, in:{iron:2, coal:2, sulfur:2}, station:'furnace' },
   { out:{id:'gasoline', n:3}, in:{coal:3, sulfur:1}, station:'furnace' },
   { out:{id:'repair_kit', n:1}, in:{iron:3, coal:1}, station:'crafting_table' },
@@ -1165,7 +1167,7 @@ Game.ITEM_GLYPH = {
   sand_greatsword:'⚔️', magma_hammer:'🔨', pharaoh_crown:'👑', mind_tome:'📖', wisdom_tome:'📗', xp_orb:'🔮', expand_pouch:'🎒',
   feather:'🪶', wind_crystal:'💠', wind_steel:'🌀', wind_feather:'🪶', wind_sword:'🗡️', sky_cloak:'🧥', cloud_boots:'👢',
   ring_crit:'💍', amulet_swift:'📿', fang_vamp:'🦷', heart_regen:'❤️‍🔥', eye_xp:'👁️', band_power:'💪', crest_guard:'🛡️',
-  energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️', prism_blade:'⚔️', dragon_fang:'⚔️', colossus_blade:'⚔️', mire_scythe:'⚔️', magma_maul:'🔨', starcore_greatsword:'⚔️', voidcore_blade:'⚔️', spore_scythe:'⚔️', star_aegis:'🛡️', void_helm:'⛑️', thorn_plate:'🥷', tempest_spear:'🔱', sovereign_scepter:'👑', rift_crown:'👑', frostfang_blade:'🗡️', emberfang_axe:'🪓', echoedge:'🗡️', quakehammer:'🔨', flashstep_edge:'⚡', combat_vest:'🎽', reflect_aegis:'🛡️', iai_mumyo:'🗡️', heavenfall_staff:'☄️', gasoline:'⛽', repair_kit:'🔧', buggy:'🚙', tank:'🛡️', cannon_shell:'💣',
+  energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️', prism_blade:'⚔️', dragon_fang:'⚔️', colossus_blade:'⚔️', mire_scythe:'⚔️', magma_maul:'🔨', starcore_greatsword:'⚔️', voidcore_blade:'⚔️', spore_scythe:'⚔️', star_aegis:'🛡️', void_helm:'⛑️', thorn_plate:'🥷', tempest_spear:'🔱', sovereign_scepter:'👑', rift_crown:'👑', frostfang_blade:'🗡️', emberfang_axe:'🪓', echoedge:'🗡️', quakehammer:'🔨', flashstep_edge:'⚡', combat_vest:'🎽', reflect_aegis:'🛡️', iai_mumyo:'🗡️', heavenfall_staff:'☄️', gasoline:'⛽', repair_kit:'🔧', buggy:'🚙', tank:'🛡️', cannon_shell:'💣', battle_mech:'🤖',
 };
 
 Game.INV_SIZE = 36;       // 先頭9 = ホットバー

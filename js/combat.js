@@ -35,6 +35,21 @@ Game.Combat = (function () {
       p.cannonCd = tdef.cd;
       return true;
     }
+    // 戦闘ロボの踏み鳴らし: 攻撃ボタンで自分中心の衝撃波(弾薬不要・CD付き)
+    if (p.vehicle === 'mech') {
+      const md = Game.ITEMS.battle_mech && Game.ITEMS.battle_mech.mechStomp;
+      if (!md) return true;
+      if ((p.cannonCd || 0) > 0) return true;
+      const rr = md.r * TS, d = Game.Player.effAttack(md.dmg);
+      const mobs2 = Game.state.mobs;
+      for (let i = 0; i < mobs2.length; i++) { const m = mobs2[i]; if (m.def.friendly) continue; if (Math.hypot(m.x - p.x, m.y - p.y) <= rr + m.def.size * 0.5) Game.Mobs.damageMob(m, d, p.x, p.y, false); }
+      if (Game.Render.spawnImpact) Game.Render.spawnImpact(p.x, p.y, '#cfd6e0');
+      if (Game.Render.spawnParticles) Game.Render.spawnParticles(p.x, p.y, '#aab4c6', 14);
+      if (Game.Render.shake) Game.Render.shake(7);
+      Game.Audio.play('boom_sfx');
+      p.cannonCd = md.cd;
+      return true;
+    }
     if (p.attackCd > 0) {
       // 先行入力バッファ: CD残り~200ms(6tick)以内の入力は予約し、CD明けに自動発動(コンボが途切れない)
       if (p.attackCd <= 6) p.attackBuf = true;

@@ -945,6 +945,14 @@ Game.Render = (function () {
       ctx.fillStyle = '#c0444a'; roundRectC(ctx, x - 16, y - 4, 32, 18, 5); ctx.fill();
       ctx.fillStyle = '#88c0e0'; ctx.fillRect(x - 9, y - 1, 18, 7);
       ctx.fillStyle = '#222'; ctx.beginPath(); ctx.arc(x - 10, y + 14, 4, 0, 7); ctx.arc(x + 10, y + 14, 4, 0, 7); ctx.fill();
+    } else if (type === 'mech') {
+      // 二足歩行ロボ: 脚＋胴＋頭＋肩アーマー
+      const step = Math.sin(Game.state.tick * 0.3) * 3;
+      ctx.fillStyle = '#5a6474'; ctx.fillRect(x - 7, y + 4, 5, 12 + step); ctx.fillRect(x + 2, y + 4, 5, 12 - step); // 脚
+      ctx.fillStyle = '#7a8496'; roundRectC(ctx, x - 10, y - 8, 20, 16, 4); ctx.fill(); // 胴
+      ctx.fillStyle = '#9aa4b6'; ctx.fillRect(x - 13, y - 6, 5, 9); ctx.fillRect(x + 8, y - 6, 5, 9); // 肩
+      ctx.fillStyle = '#3a4250'; ctx.fillRect(x - 5, y - 14, 10, 7); // 頭
+      ctx.fillStyle = '#ff6a4a'; ctx.fillRect(x - 3, y - 12, 6, 2); // バイザー
     } else if (type === 'tank') {
       // 戦車: 履帯＋車体＋砲塔＋向いた方向の砲身
       ctx.fillStyle = '#2e3226'; ctx.fillRect(x - 18, y + 8, 36, 8); // 履帯
