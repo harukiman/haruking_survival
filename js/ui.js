@@ -1029,11 +1029,13 @@ Game.UI = (function () {
     ammoEl.style.display = 'block';
     if (p.reloadCd > 0) {
       const prog = p.reloadMax ? Math.max(0, Math.min(1, 1 - p.reloadCd / p.reloadMax)) : 0;
-      ammoEl.innerHTML = '🔄 <b style="color:#ffd86b">リロード中</b> <span style="display:inline-block;vertical-align:middle;width:80px;height:7px;background:#22304a;border-radius:4px;overflow:hidden"><span style="display:block;height:100%;width:' + Math.round(prog * 100) + '%;background:linear-gradient(90deg,#ffb84a,#ffe06a)"></span></span> <span style="color:#9fb6d0">' + ammoName + ' 予備' + reserve + '</span>';
+      const loaded0 = Game.Player.magLoaded(sel);
+      ammoEl.innerHTML = '🔄 <b style="color:#ffd86b">リロード中</b> <span style="display:inline-block;vertical-align:middle;width:80px;height:7px;background:#22304a;border-radius:4px;overflow:hidden"><span style="display:block;height:100%;width:' + Math.round(prog * 100) + '%;background:linear-gradient(90deg,#ffb84a,#ffe06a)"></span></span> <span style="color:#9fb6d0">' + ammoName + ' 総弾数' + (loaded0 + reserve) + '</span>';
     } else {
       const loaded = Game.Player.magLoaded(sel), cap = Game.Player.magCap(sel);
       const col = loaded === 0 ? '#e0664a' : (loaded <= cap * 0.25 ? '#e0a84a' : '#7fe0a0');
-      ammoEl.innerHTML = '🔫 <span style="color:#9fb6d0">' + ammoName + '</span>　装填 <b style="color:' + col + '">' + loaded + '</b><span style="color:#5a6b80">/' + cap + '</span>　予備 <b>' + reserve + '</b>' + (loaded === 0 && reserve === 0 ? ' <span style="color:#e0664a">弾切れ</span>' : '');
+      // 装填(マガジン残弾) と 総弾数(装填+インベントリ予備) の両方を常に表示
+      ammoEl.innerHTML = '🔫 <span style="color:#9fb6d0">' + ammoName + '</span>　装填 <b style="color:' + col + '">' + loaded + '</b><span style="color:#5a6b80">/' + cap + '</span>　予備 <b>' + reserve + '</b> <span style="color:#5a6b80">(総弾数 ' + (loaded + reserve) + ')</span>' + (loaded === 0 && reserve === 0 ? ' <span style="color:#e0664a">弾切れ</span>' : '');
     }
   }
 

@@ -1082,6 +1082,18 @@ Game.Render = (function () {
 
   function drawVehicle(ctx, x, y, type, dir) {
     ctx.save();
+    // 進行方向へ機体を向ける。飛行機/爆撃機/戦闘機/絨毯は全回転、ロボットは左右反転(直立は保つ)。
+    // 向きは乗り物の進行方向(vDirX/vDirY, 停止中は最後の値を保持)。未設定なら現在の向きdir
+    const FLY_ROT = { jet: 1, bomber: 1, plane: 1, carpet: 1 };
+    if (FLY_ROT[type] || type === 'mech') {
+      const pl = Game.state.player;
+      let hx = (pl && pl.vDirX) || 0, hy = (pl && pl.vDirY) || 0;
+      if (Math.abs(hx) < 0.01 && Math.abs(hy) < 0.01) { hx = dir === 'left' ? -1 : dir === 'right' ? 1 : 0; hy = dir === 'up' ? -1 : dir === 'down' ? 1 : 0; }
+      ctx.translate(x, y);
+      if (FLY_ROT[type]) ctx.rotate(Math.atan2(hy, hx) + Math.PI / 2); // スプライトは上向き基準
+      else if (hx < -0.01) ctx.scale(-1, 1); // ロボットは進行が左向きなら反転(直立のまま)
+      x = 0; y = 0;
+    }
     if (type === 'car') {
       ctx.fillStyle = '#c0444a'; roundRectC(ctx, x - 16, y - 4, 32, 18, 5); ctx.fill();
       ctx.fillStyle = '#88c0e0'; ctx.fillRect(x - 9, y - 1, 18, 7);
