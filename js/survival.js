@@ -179,11 +179,13 @@ Game.Survival = (function () {
   function damage(amount, source) {
     const p = Game.state.player;
     const physical = source !== 'starve' && source !== 'sanity' && source !== 'status';
+    // 環境DoT(死の灰/寒さ/砂嵐/落雷/溺れ)は無敵時間を貫通し、毎秒確実に蝕む
+    const envDot = source === 'fallout' || source === 'cold' || source === 'sand' || source === 'storm' || source === 'drown';
     // 乗り物搭乗中の被ダメは機体の耐久が肩代わり(爆発ダメージ自体は素通り)
     if (physical && source !== 'wreck' && p.vehicle && Game.Player.vehicleTakeDamage) {
       if (Game.Player.vehicleTakeDamage(amount)) return true;
     }
-    if (p.invuln > 0 && physical) {
+    if (p.invuln > 0 && physical && !envDot) {
       // ジャスト回避: ロール無敵中に攻撃を受け流したら報酬(1ロール1回)
       if ((p.rolling || 0) > 0 && !p.rollRewarded) {
         p.rollRewarded = true;
@@ -200,21 +202,22 @@ Game.Survival = (function () {
       return false; // ブロック: 呼び出し側は状態異常/被弾演出も抑止すること
     }
     // 防具で軽減（飢餓・正気崩壊は無視）
-    if (physical) {
+    if (physical && !envDot) {
       const armor = Game.Player.totalArmor();
       amount = Math.max(1, amount - armor);
     }
     p.health -= amount;
     p.deathCause = source; // 死因追跡（直近のダメージ源）
     if (Game.Render.spawnFloat) Game.Render.spawnFloat(p.x, p.y - 16, '-' + amount, '#ff6a6a');
-    if (physical) { p.invuln = 30; Game.Audio.play('hurt'); if (Game.Render.hurtFlash) Game.Render.hurtFlash(); if (Game.Render.shake && amount >= 6) Game.Render.shake(Math.min(9, 3 + amount * 0.4)); }
+    if (physical && !envDot) { p.invuln = 30; }
+    if (physical) { Game.Audio.play('hurt'); if (Game.Render.hurtFlash) Game.Render.hurtFlash(); if (Game.Render.shake && amount >= 6) Game.Render.shake(Math.min(9, 3 + amount * 0.4)); }
     if (Game.UI.shakeHealthBar) Game.UI.shakeHealthBar(); // HPバーを揺らして被弾を明確に
     if (p.health <= 0) { p.health = 0; die(); }
     Game.UI.refreshStats();
     return true; // ダメージ成立
   }
 
-  const CAUSE_LABEL = { starve: '餓死', sanity: '正気の崩壊', status: '状態異常', thorns: '棘の反射', mob: '魔物の襲撃', cold: '凍死', sand: '砂嵐', storm: '落雷', drown: '溺死', wreck: '乗り物の爆発' };
+  const CAUSE_LABEL = { starve: '餓死', sanity: '正気の崩壊', status: '状態異常', thorns: '棘の反射', mob: '魔物の襲撃', cold: '凍死', sand: '砂嵐', storm: '落雷', drown: '溺死', wreck: '乗り物の爆発', nuke: '戦術核の直撃', fallout: '死の灰' };
   // 死亡時にバーツを守る手段(守銭の護符)を所持/装備しているか
   function hasBtsGuard() {
     const p = Game.state.player;

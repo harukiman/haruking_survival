@@ -191,7 +191,7 @@ Game.LIGHT_LEVEL = {
 
 // オブジェクトのメタ情報。solid=移動阻害, drops=破壊時ドロップ
 Game.OBJ_META = {
-  [Game.OBJ.TREE]:      { name:'木', solid:true,  mineable:true, tool:'axe',     tier:0, hp:6,  drops:[{item:'wood', n:[2,4]}], render:'tree' },
+  [Game.OBJ.TREE]:      { name:'木', solid:true,  mineable:true, tool:'axe',     tier:0, hp:6,  drops:[{item:'wood', n:[1,3]}], render:'tree' },
   [Game.OBJ.ROCK]:      { name:'岩', solid:true,  mineable:true, tool:'pickaxe', tier:0, hp:5,  drops:[{item:'stone', n:[1,3]}], render:'rock' },
   [Game.OBJ.COAL_ORE]:  { name:'石炭鉱', solid:true, mineable:true, tool:'pickaxe', tier:1, hp:8, drops:[{item:'coal', n:[1,3]}], render:'ore', oreColor:'#2b2b2b' },
   [Game.OBJ.IRON_ORE]:  { name:'鉄鉱', solid:true, mineable:true, tool:'pickaxe', tier:2, hp:12, drops:[{item:'iron_ore', n:[1,2]}], render:'ore', oreColor:'#c98f6b' },
@@ -205,7 +205,7 @@ Game.OBJ_META = {
   [Game.OBJ.TORCH]:     { name:'たいまつ', solid:false, mineable:true, tool:null, tier:0, hp:1, light:8, drops:[{item:'torch', n:[1,1]}], render:'torch' },
   [Game.OBJ.CHEST]:     { name:'チェスト', solid:true, mineable:true, tool:null, tier:0, hp:4, drops:[{item:'chest', n:[1,1]}], render:'chest' },
   [Game.OBJ.BERRY_BUSH]:{ name:'木の実', solid:false, mineable:true, tool:null, tier:0, hp:2, drops:[{item:'berry', n:[1,3]}], render:'berry' },
-  [Game.OBJ.PINE_TREE]: { name:'松', solid:true, mineable:true, tool:'axe', tier:0, hp:7, drops:[{item:'wood', n:[2,4]}], render:'pine' },
+  [Game.OBJ.PINE_TREE]: { name:'松', solid:true, mineable:true, tool:'axe', tier:0, hp:7, drops:[{item:'wood', n:[1,3]}], render:'pine' },
   [Game.OBJ.CACTUS]:    { name:'サボテン', solid:true, mineable:true, tool:null, tier:0, hp:3, drops:[{item:'cactus', n:[1,2]}], render:'cactus', touchDamage:1 },
   [Game.OBJ.DEAD_TREE]: { name:'枯れ木', solid:true, mineable:true, tool:'axe', tier:0, hp:5, drops:[{item:'wood', n:[1,3]}], render:'deadtree' },
   [Game.OBJ.POISON_MUSHROOM]:{ name:'毒キノコ', solid:false, mineable:true, tool:null, tier:0, hp:1, drops:[{item:'glow_spore', n:[1,2]}], render:'pmushroom' },
@@ -222,7 +222,7 @@ Game.OBJ_META = {
   [Game.OBJ.BED]:       { name:'ベッド', solid:false, mineable:true, tool:null, tier:0, hp:3, drops:[{item:'bed', n:[1,1]}], render:'bed', bed:true },
   [Game.OBJ.SAPLING]:   { name:'苗木', solid:false, mineable:true, tool:null, tier:0, hp:1, drops:[{item:'sapling', n:[1,1]}], render:'sapling', sapling:true },
   // 影世界固有オブジェクト
-  [Game.OBJ.SHADOW_TREE]:  { name:'影樹', solid:true, mineable:true, tool:'axe', tier:0, hp:8, drops:[{item:'shadow_wood', n:[2,4]}], render:'shadowtree', shadowOnly:true },
+  [Game.OBJ.SHADOW_TREE]:  { name:'影樹', solid:true, mineable:true, tool:'axe', tier:0, hp:8, drops:[{item:'shadow_wood', n:[1,3]}], render:'shadowtree', shadowOnly:true },
   [Game.OBJ.SHADOW_CRYSTAL]:{ name:'影晶', solid:true, mineable:true, tool:'pickaxe', tier:2, hp:14, drops:[{item:'shadow_crystal', n:[1,3]}], render:'shadowcrystal', shadowOnly:true },
   [Game.OBJ.LUMEN_ORE]:    { name:'光鉱', solid:true, mineable:true, tool:'pickaxe', tier:3, hp:16, drops:[{item:'lumen', n:[1,2]}], render:'lumenore', shadowOnly:true },
   [Game.OBJ.SOUL_FLOWER]:  { name:'月光草', solid:false, mineable:true, tool:null, tier:0, hp:1, drops:[{item:'moonleaf', n:[1,2]}], render:'soulflower', shadowOnly:true },
@@ -493,6 +493,7 @@ Game.ITEMS = {
   dragon_fang: { name:'竜牙の大剣', stack:1, color:'#8a2fb0', tool:'sword', tier:5, attack:24, proj:{kind:'slash', dmg:28, big:true, cd:36}, wsfx:'beam', special:{type:'shock', name:'竜咆', pct:0.5, r:2.4, cd:75, color:'#8a2fb0'}, flavor:'深淵の竜の牙より鍛えし大剣。振るえば闇を裂く咆哮が奔る。' },
   endblade:    { name:'終焉の剣', stack:1, color:'#ff5a7a', tool:'sword', tier:5, attack:26, aoe:true, proj:{kind:'slash', dmg:32, big:true, cd:32}, wsfx:'beam', special:{type:'echo', name:'終焉の三連', hits:2, pct:0.4, cd:60, color:'#ff5a7a'}, flavor:'全ての強敵を退けし者に託される、終焉と再生の剣。一閃は三たび木霊する。' },
   flashstep_edge:{ name:'瞬雷・迅歩の刃', stack:1, color:'#7fe0ff', tool:'sword', tier:5, attack:17, wsfx:'slash_air', special:{type:'blink', name:'瞬歩', tiles:4, pct:0.85, shockPct:0.5, stam:12, cd:16, width:0.95, color:'#8fd0ff'}, flavor:'斬ると同時に前方へ雷の速さで瞬歩し、駆け抜けた軌跡の敵を斬り裂き感電させる。ただし瞬歩はスタミナを喰らう——乱発は許されない。' },
+  voidrend_edge:{ name:'虚空断ち「セツナ」', stack:1, color:'#c48aff', tool:'sword', tier:5, attack:20, wsfx:'slash_air', special:{type:'blink', name:'刹那斬', tiles:6, pct:0.9, shockPct:0, stam:16, cd:22, width:1.0, color:'#c48aff', bleed:{pct:0.55, dur:90, every:30}}, flavor:'虚空を裂いて前方6マスへ跳び、軌跡上の敵をずたずたに斬り裂く。刻まれた深傷は3秒間、毎秒血を噴き続ける——逃げても無駄だ。' },
   iai_mumyo:   { name:'居合・無明', stack:1, color:'#c8a860', tool:'sword', tier:5, attack:0, wsfx:'slash_air', chg:{min:5, max:12, dmg:16, dmgScale:3.0, critBase:0.15, critScale:0.85, hits:3, cd:14, range:2.0, color:'#ffb24a'}, flavor:'通常の斬撃は空を斬るのみ。だが5秒以上の静寂ののち放つ一閃は、溜めた時間の分だけ会心・威力・斬撃数を増す。長く鞘に納めるほど、一撃は必殺に近づく。忍耐こそ刃。' },
   colossus_blade:{ name:'巨像の大剣', stack:1, color:'#d08a4a', tool:'sword', tier:5, attack:23, proj:{kind:'slash', dmg:22, big:true, cd:38}, wsfx:'beam', special:{type:'shock', name:'大地断ち', pct:0.5, r:2.4, cd:75, color:'#d08a4a'}, flavor:'黄昏の巨像の核より鍛えし剛剣。一振りで大地を断つ。' },
   mire_scythe: { name:'澱みの大鎌', stack:1, color:'#7a9a3a', tool:'sword', tier:5, attack:21, proj:{kind:'venom', dmg:18, count:2, spread:0.3, cd:34}, wsfx:'beam', special:{type:'reap', name:'吸命', healPct:0.03, cd:30, color:'#8fe06a'}, flavor:'沼の主の骸より鍛えし大鎌。刈り取った命が使い手を潤す。' },
@@ -528,6 +529,8 @@ Game.ITEMS = {
   heavy_bomb:    { name:'GBU-45 大型爆弾', stack:8, color:'#3a4030', bomb:{ dmg:180, radius:5.2 }, flavor:'重量級の誘導爆弾。一発で拠点を更地に変える破壊力。爆撃機専用。' },
   bomber:        { name:'爆撃機', stack:1, color:'#6a7060', vehicle:'bomber', fuelVeh:true, bomberBay:true, flavor:'一人乗りの爆撃機。空を進みながら攻撃ボタンで搭載した爆弾(T-0S21等)を投下する。積んだ分だけ落とせる。' },
   aircraft_gun:  { name:'機載機関銃', stack:4, color:'#5a5e66', installGun:true, flavor:'戦闘機/爆撃機に増設できる機関銃。最大4基まで設置でき、設置した数だけ同時に掃射する。搭乗中に使うと1基設置。' },
+  nuke_warhead:  { name:'戦術核弾頭「デイブレイク」', stack:4, color:'#8ae04a', flavor:'一発で戦域を消し飛ばす戦術核。装填には投射機が要る。使えば戻れない。' },
+  nuke_launcher: { name:'審判の核投射機「ラグナロク」', stack:1, color:'#c8d04a', tool:'gun', nukeLauncher:true, gunsfx:'gun_launch', flavor:'戦術核弾頭を指定地点へ撃ち込む最終兵器。10秒のけたたましい警報ののち着弾、1000の直撃と辺り一帯を焦土に。その地は7日間、死の灰が降り続ける——味方も敵も等しく蝕む。乱用は世界を焼く。' },
   boat:          { name:'ボート', stack:1, color:'#9c6b3f', vehicle:'boat', flavor:'水を越えるための小舟。' },
   plane:         { name:'飛行機', stack:1, color:'#8a96c0', vehicle:'plane', flavor:'空を行く翼。すべての境界を越えて。' },
   // ロケット/宇宙
@@ -675,6 +678,7 @@ Game.RECIPES = [
   { out:{id:'echoedge', n:1}, in:{iron:5, shadow_steel:1, lumen:1}, station:'enchant_table' },
   { out:{id:'quakehammer', n:1}, in:{iron:8, stone:12, gold_bar:1}, station:'enchant_table' },
   { out:{id:'flashstep_edge', n:1}, in:{shadow_steel:2, shadow_crystal:6, lumen:3, gold_bar:2}, station:'enchant_table' },
+  { out:{id:'voidrend_edge', n:1}, in:{shadow_steel:4, void_heart:1, shadow_crystal:10, lumen:4, gold_bar:4}, station:'enchant_table' },
   { out:{id:'combat_vest', n:1}, in:{iron:6, leather:4, string:3}, station:'crafting_table' },
   { out:{id:'reflect_aegis', n:1}, in:{shadow_steel:1, shadow_crystal:5, lumen:3, gold_bar:2}, station:'enchant_table' },
   { out:{id:'aqualung', n:1}, in:{iron:5, lumen:2, string:3, gold_bar:1}, station:'crafting_table' },
@@ -778,6 +782,8 @@ Game.RECIPES = [
   { out:{id:'battle_mech', n:1}, in:{iron:42, shadow_steel:14, lumen:12, gold_bar:5}, station:'crafting_table' },
   { out:{id:'fighter_jet', n:1}, in:{shadow_steel:22, iron:32, lumen:14, gold_bar:6}, station:'crafting_table' },
   { out:{id:'aircraft_gun', n:1}, in:{iron:8, gun_parts:4, gunpowder:3, steel_plate:2}, station:'crafting_table' },
+  { out:{id:'nuke_launcher', n:1}, in:{iron:80, steel_plate:24, circuit:18, gun_parts:24, shadow_steel:18, gold_bar:16, star_metal:6}, station:'enchant_table' },
+  { out:{id:'nuke_warhead', n:1}, in:{star_core:3, sulfur:24, circuit:12, gold_bar:12, void_heart:1, shadow_core:4}, station:'enchant_table' },
   { out:{id:'bomber', n:1}, in:{shadow_steel:20, iron:40, lumen:12, gold_bar:6}, station:'crafting_table' },
   { out:{id:'aerial_bomb', n:2}, in:{iron:4, sulfur:4, coal:3}, station:'furnace' },
   { out:{id:'heavy_bomb', n:1}, in:{iron:8, sulfur:6, coal:5, gold_bar:1}, station:'furnace' },
@@ -1267,7 +1273,7 @@ Game.ITEM_GLYPH = {
   sand_greatsword:'⚔️', magma_hammer:'🔨', pharaoh_crown:'👑', mind_tome:'📖', wisdom_tome:'📗', xp_orb:'🔮', expand_pouch:'🎒',
   feather:'🪶', wind_crystal:'💠', wind_steel:'🌀', wind_feather:'🪶', wind_sword:'🗡️', sky_cloak:'🧥', cloud_boots:'👢',
   ring_crit:'💍', amulet_swift:'📿', fang_vamp:'🦷', heart_regen:'❤️‍🔥', eye_xp:'👁️', band_power:'💪', crest_guard:'🛡️',
-  energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️', prism_blade:'⚔️', dragon_fang:'⚔️', colossus_blade:'⚔️', mire_scythe:'⚔️', magma_maul:'🔨', starcore_greatsword:'⚔️', voidcore_blade:'⚔️', spore_scythe:'⚔️', star_aegis:'🛡️', void_helm:'⛑️', thorn_plate:'🥷', tempest_spear:'🔱', sovereign_scepter:'👑', rift_crown:'👑', frostfang_blade:'🗡️', emberfang_axe:'🪓', echoedge:'🗡️', quakehammer:'🔨', flashstep_edge:'⚡', combat_vest:'🎽', reflect_aegis:'🛡️', iai_mumyo:'🗡️', heavenfall_staff:'☄️', gasoline:'⛽', repair_kit:'🔧', buggy:'🚙', tank:'🛡️', cannon_shell:'💣', battle_mech:'🤖', aqualung:'🤿', moonshard:'🌙', moon_charm:'🔮', fighter_jet:'✈️', bomber:'🛩️', aerial_bomb:'💣', heavy_bomb:'🧨', gunpowder:'⚫', gun_parts:'⚙️', steel_plate:'🔩', rope:'🪢', glass:'🔷', circuit:'🖥️', jerky:'🥓', fruit_salad:'🥗', energy_bar:'🍫', medkit:'🩹', deagle:'🔫', uzi:'🔫', p90:'🔫', scar_h:'🔫', barrett:'🔫', spas12:'🔫', minigun:'🔫', m79:'🧨', flamethrower:'🔥', plasma_rifle:'🔫', garage_door:'🚪', landing_pad:'🛬', aircraft_gun:'🔫',
+  energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️', prism_blade:'⚔️', dragon_fang:'⚔️', colossus_blade:'⚔️', mire_scythe:'⚔️', magma_maul:'🔨', starcore_greatsword:'⚔️', voidcore_blade:'⚔️', spore_scythe:'⚔️', star_aegis:'🛡️', void_helm:'⛑️', thorn_plate:'🥷', tempest_spear:'🔱', sovereign_scepter:'👑', rift_crown:'👑', frostfang_blade:'🗡️', emberfang_axe:'🪓', echoedge:'🗡️', quakehammer:'🔨', flashstep_edge:'⚡', voidrend_edge:'🗡️', combat_vest:'🎽', reflect_aegis:'🛡️', iai_mumyo:'🗡️', heavenfall_staff:'☄️', gasoline:'⛽', repair_kit:'🔧', buggy:'🚙', tank:'🛡️', cannon_shell:'💣', battle_mech:'🤖', aqualung:'🤿', moonshard:'🌙', moon_charm:'🔮', fighter_jet:'✈️', bomber:'🛩️', aerial_bomb:'💣', heavy_bomb:'🧨', gunpowder:'⚫', gun_parts:'⚙️', steel_plate:'🔩', rope:'🪢', glass:'🔷', circuit:'🖥️', jerky:'🥓', fruit_salad:'🥗', energy_bar:'🍫', medkit:'🩹', deagle:'🔫', uzi:'🔫', p90:'🔫', scar_h:'🔫', barrett:'🔫', spas12:'🔫', minigun:'🔫', m79:'🧨', flamethrower:'🔥', plasma_rifle:'🔫', garage_door:'🚪', landing_pad:'🛬', aircraft_gun:'🔫', nuke_launcher:'☢️', nuke_warhead:'☢️',
 };
 
 Game.INV_SIZE = 45;       // 先頭9 = ホットバー。初期から1行多め(ユーザー指示: 36→45)

@@ -225,6 +225,20 @@ Game.Combat = (function () {
       if (d < bestD) { bestD = d; best = m; }
     }
     if (!best) {
+      // 瞬歩武器は近接標的が無くても向いている方向へ踏み込める(ギャップクローザー)
+      if (_def && _def.special && _def.special.type === 'blink') {
+        const sp = _def.special, now2 = Game.state.tick;
+        const slot0 = Game.Inventory.selectedSlot(), key2 = sp.type + ':' + (slot0 && slot0.id);
+        if ((p.stamina || 0) >= (sp.stam || 12) && (p.spCd[key2] || 0) <= now2) {
+          const st0 = Game.Loot.stats(slot0);
+          const baseDmg0 = Game.Player.effAttack(st0.atk > 0 ? st0.atk : 1);
+          p.spCd[key2] = now2 + (sp.cd || 18);
+          const aim = blinkAim(p, sp);
+          blinkStrike(p, sp, baseDmg0, aim[0], aim[1]);
+          p.attackCd = Game.Player.attackCooldown();
+          return true;
+        }
+      }
       // 近接標的が無くても、飛ぶ斬撃等は撃ったのでクールダウンを消費
       if (projFired) { p.attackCd = (_def.proj.cd) || Game.Player.attackCooldown(); Game.Audio.play('swing'); return true; }
       return false;
@@ -311,6 +325,56 @@ Game.Combat = (function () {
     return out.slice(0, n).map(function (e) { return e[1]; });
   }
 
+  function facingVec(p) { return p.dir === 'left' ? [-1, 0] : p.dir === 'right' ? [1, 0] : p.dir === 'up' ? [0, -1] : [0, 1]; }
+  // 瞬歩斬の本体: (dirx,diry)方向へ sp.tiles マス瞬間移動し、軌跡上の敵に斬撃+(感電)+(出血DoT)。
+  // 標的が無くても向いている方向へ踏み込める(ギャップクローザー)。スタミナ消費でインフレ防止。
+  function blinkStrike(p, sp, baseDmg, dirx, diry) {
+    const cost = sp.stam || 12;
+    if ((p.stamina || 0) < cost) { if (Game.UI && Game.state.tick % 30 === 0) Game.UI.toast('スタミナ不足 — 瞬歩できない'); return false; }
+    p.stamina = Math.max(0, p.stamina - cost);
+    const dl = Math.hypot(dirx, diry) || 1, dx = dirx / dl, dy = diry / dl;
+    const sx = p.x, sy = p.y, maxT = sp.tiles || 4;
+    let ex = sx, ey = sy;
+    for (let s = 1; s <= maxT; s++) {
+      const nx = sx + dx * s * TS, ny = sy + dy * s * TS;
+      if (!Game.World.isWalkable(Math.floor(nx / TS), Math.floor(ny / TS))) break;
+      ex = nx; ey = ny;
+    }
+    const bd = Math.max(1, Math.round(baseDmg * (sp.pct || 0.85)));
+    const shock = sp.shockPct ? Math.max(1, Math.round(baseDmg * sp.shockPct)) : 0;
+    const corr = TS * (sp.width || 0.9), col = sp.color || '#8fd0ff';
+    const segLen2 = ((ex - sx) * (ex - sx) + (ey - sy) * (ey - sy)) || 1;
+    for (let i = 0; i < Game.state.mobs.length; i++) {
+      const m = Game.state.mobs[i]; if (m.def.friendly || m.def.npc || m.hp <= 0) continue;
+      let t = ((m.x - sx) * (ex - sx) + (m.y - sy) * (ey - sy)) / segLen2; t = t < 0 ? 0 : t > 1 ? 1 : t;
+      const cx = sx + (ex - sx) * t, cy = sy + (ey - sy) * t;
+      if (Math.hypot(m.x - cx, m.y - cy) <= corr + m.def.size * 0.4) {
+        Game.Mobs.damageMob(m, bd, sx, sy, false);
+        if (shock > 0) { Game.Mobs.damageMob(m, shock, sx, sy, false); Game.Render.spawnLightning(m.x + (Math.random() - 0.5) * 16, m.y - 120, m.x, m.y); }
+        if (sp.bleed && Game.Mobs.applyBleed) { const bdmg = Math.max(1, Math.round(baseDmg * (sp.bleed.pct || 0.5))); Game.Mobs.applyBleed(m, bdmg, sp.bleed.dur || 90, sp.bleed.every || 30, col); }
+        Game.Render.spawnImpact(m.x, m.y, col);
+      }
+    }
+    p.x = ex; p.y = ey; p.invuln = Math.max(p.invuln || 0, 6);
+    Game.Render.spawnParticles(sx, sy, col, 8); Game.Render.spawnParticles(ex, ey, col, 10);
+    if (Game.Render.spawnSlash) Game.Render.spawnSlash(ex, ey, p.dir, col);
+    Game.Audio.play('dodge_just');
+    procFx(ex, ey, sp);
+    return true;
+  }
+  // 向き優先で瞬歩先を決める: 射程内かつ前方寄りの最寄り敵へ、居なければ向いている方向へ
+  function blinkAim(p, sp) {
+    const fv = facingVec(p), reach = (sp.tiles || 4) * TS * 1.2, mobs = Game.state.mobs;
+    let best = null, bd = Infinity;
+    for (let i = 0; i < mobs.length; i++) {
+      const m = mobs[i]; if (m.def.friendly || m.def.npc || m.hp <= 0) continue;
+      const dx = m.x - p.x, dy = m.y - p.y, d = Math.hypot(dx, dy);
+      if (d > reach) continue;
+      if (d > 20 && (dx * fv[0] + dy * fv[1]) < 0) continue; // 背後は無視
+      if (d < bd) { bd = d; best = m; }
+    }
+    return best ? [best.x - p.x, best.y - p.y] : fv;
+  }
   function runSpecial(p, wdef, slot, targets, best, baseDmg, kills, rangePx) {
     const sp = wdef && wdef.special;
     if (!sp) return;
@@ -400,40 +464,11 @@ Game.Combat = (function () {
       for (let i = 1; i <= hits; i++) p.echoQ.push({ t: now + i * 4, m: best, d: d, color: sp.color || '#ffe9f0' });
       procFx(best.x, best.y, sp);
     } else if (sp.type === 'blink') {
-      // 瞬歩斬: 前方 tiles マスへ瞬間移動し、その軌跡上の敵に斬撃+感電追加ダメージ。
-      // 攻撃毎にスタミナを消費して無限連続移動(インフレ)を防ぐ。スタミナ不足なら発動せず通常斬りのみ。
-      const cost = sp.stam || 12;
-      if ((p.stamina || 0) < cost) return;      // CDも据え置き=消費なしで再挑戦できる
+      // 瞬歩斬: スタミナが足りれば発動(足りなければCD据え置きで通常斬りのみ)
+      if ((p.stamina || 0) < (sp.stam || 12)) return;
       p.spCd[key] = now + (sp.cd || 18);
-      p.stamina = Math.max(0, p.stamina - cost);
-      let dx = best.x - p.x, dy = best.y - p.y; const dl = Math.hypot(dx, dy) || 1; dx /= dl; dy /= dl;
-      const sx = p.x, sy = p.y, maxT = sp.tiles || 4;
-      let ex = sx, ey = sy;
-      for (let s = 1; s <= maxT; s++) {
-        const nx = sx + dx * s * TS, ny = sy + dy * s * TS;
-        if (!Game.World.isWalkable(Math.floor(nx / TS), Math.floor(ny / TS))) break;
-        ex = nx; ey = ny;
-      }
-      const bd = Math.max(1, Math.round(baseDmg * (sp.pct || 0.85)));
-      const shock = Math.max(1, Math.round(baseDmg * (sp.shockPct || 0.5)));
-      const corr = TS * (sp.width || 0.9), col = sp.color || '#8fd0ff';
-      const segLen2 = ((ex - sx) * (ex - sx) + (ey - sy) * (ey - sy)) || 1;
-      for (let i = 0; i < Game.state.mobs.length; i++) {
-        const m = Game.state.mobs[i]; if (m.def.friendly || m.hp <= 0) continue;
-        let t = ((m.x - sx) * (ex - sx) + (m.y - sy) * (ey - sy)) / segLen2; t = t < 0 ? 0 : t > 1 ? 1 : t;
-        const cx = sx + (ex - sx) * t, cy = sy + (ey - sy) * t;
-        if (Math.hypot(m.x - cx, m.y - cy) <= corr + m.def.size * 0.4) {
-          Game.Mobs.damageMob(m, bd, sx, sy, false);
-          Game.Mobs.damageMob(m, shock, sx, sy, false);          // 感電追加ダメージ
-          Game.Render.spawnLightning(m.x + (Math.random() - 0.5) * 16, m.y - 120, m.x, m.y);
-          Game.Render.spawnImpact(m.x, m.y, col);
-        }
-      }
-      p.x = ex; p.y = ey; p.invuln = Math.max(p.invuln || 0, 6); // 瞬歩の一瞬だけ受け流し
-      Game.Render.spawnParticles(sx, sy, col, 8); Game.Render.spawnParticles(ex, ey, col, 10);
-      if (Game.Render.spawnSlash) Game.Render.spawnSlash(ex, ey, p.dir, col);
-      Game.Audio.play('dodge_just');
-      procFx(ex, ey, sp);
+      const aim = blinkAim(p, sp);
+      blinkStrike(p, sp, baseDmg, aim[0], aim[1]);
     }
   }
 

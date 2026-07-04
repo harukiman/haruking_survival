@@ -882,12 +882,38 @@ Game.UI = (function () {
       cell.addEventListener('mouseleave', hideTip);
     });
   }
+  // 兵器→必要弾薬の表示名。無し(近接/魔法/燃料のみ)は null
+  function weaponAmmoLabel(def) {
+    if (!def) return null;
+    const nm = function (id) { return (Game.ITEMS[id] && Game.ITEMS[id].name) || id; };
+    if (def.nukeLauncher) return nm('nuke_warhead');
+    if (def.ammo) { let s = nm(def.ammo) + (def.mag ? '（装填' + def.mag + '発）' : ''); return s; }
+    if (def.tankCannon) return nm('cannon_shell');
+    if (def.jetGun) return nm('bullet') + '（機関銃）';
+    if (def.bomberBay) return nm('aerial_bomb') + ' 等の航空爆弾';
+    if (def.mechStomp || def.fuelVeh) return null; // 弾薬不要(ガソリンで駆動)
+    return null;
+  }
+  // 兵器→必要弾薬 {id,label}。近接/魔法/燃料のみ=null
+  function ammoNeed(def) {
+    if (!def) return null;
+    const nm = function (id) { return (Game.ITEMS[id] && Game.ITEMS[id].name) || id; };
+    if (def.nukeLauncher) return { id: 'nuke_warhead', label: nm('nuke_warhead') };
+    if (def.ammo) return { id: def.ammo, label: nm(def.ammo) };
+    if (def.tankCannon) return { id: 'cannon_shell', label: nm('cannon_shell') };
+    if (def.jetGun) return { id: 'bullet', label: nm('bullet') + '（機関銃）' };
+    if (def.bomberBay) return { id: 'aerial_bomb', label: '航空爆弾（' + nm('aerial_bomb') + '等）' };
+    return null;
+  }
   function tipFor(stack) {
     if (!stack) return null;
     const def = Game.ITEMS[stack.id]; if (!def) return null;
     let html = '<div class="tt-name" style="color:' + (stack.roll ? Game.Loot.rarityColor(stack) : (def.color || '#fff')) + '">' + (stack.roll ? Game.Loot.displayName(stack) : def.name) + '</div>';
     if (Game.Loot.rollable(stack.id)) html += '<div class="tt-stat">' + Game.Loot.statText(stack) + '</div>';
     if (def.special) html += '<div class="tt-stat" style="color:' + (def.special.color || '#ffe27a') + '">✦ ' + def.special.name + ' — ' + specialDesc(def.special) + '</div>';
+    // 兵器の必要弾薬を分かりやすく明記(銃/戦車/戦闘機/爆撃機/核)
+    const amL = weaponAmmoLabel(def);
+    if (amL) html += '<div class="tt-stat" style="color:#ffcf6a">▣ 必要弾薬: ' + amL + '</div>';
     // 装備比較（武器=手持ち比 / 防具=装備中比）
     if (Game.Player.currentWeaponAtk) {
       if (def.attack != null) { const eff = Game.Player.effAttack(Game.Loot.stats(stack).atk); html += '<div class="tt-stat">攻撃 ' + eff + ' ' + cmpDelta(eff - Game.Player.currentWeaponAtk()) + '</div>'; }
@@ -958,7 +984,8 @@ Game.UI = (function () {
       ammoEl = document.getElementById('ammo-hud');
       if (!ammoEl) {
         ammoEl = document.createElement('div'); ammoEl.id = 'ammo-hud';
-        ammoEl.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:calc(74px + max(var(--ey,16px), env(safe-area-inset-bottom)));z-index:55;background:rgba(16,24,42,.82);border:1px solid #33455e;border-radius:9px;padding:4px 11px;font-size:.82rem;color:#e8edf2;pointer-events:none;display:none;white-space:nowrap';
+        // 中央下はホットバー/クエスト/アイテム名表示と重なるため、右下(弾薬表示の定番位置)へ隔離
+        ammoEl.style.cssText = 'position:fixed;right:calc(10px + env(safe-area-inset-right));bottom:calc(150px + max(var(--ey,16px), env(safe-area-inset-bottom)));z-index:55;background:rgba(16,24,42,.9);border:1px solid #33455e;border-radius:9px;padding:5px 11px;font-size:.82rem;color:#e8edf2;pointer-events:none;display:none;white-space:nowrap;text-align:right;box-shadow:0 2px 8px rgba(0,0,0,.4)';
         (document.getElementById('app') || document.body).appendChild(ammoEl);
       }
     }
@@ -1544,14 +1571,20 @@ Game.UI = (function () {
       h += '<div class="ench-stat">💠 遺物効果 <b style="color:#ffd86b">' + parts.join('・') + '</b></div>';
       const eq = Game.state.player.accessory; if (eq) { const ed = Game.ITEMS[eq.id || eq]; if (ed) h += '<div class="tt-flavor" style="color:#7a8494">装備中: ' + ed.name + '（入替）</div>'; }
     }
-    // 銃: 必要弾・装弾数・使い方を明示
-    if (def.tool === 'gun') {
-      const an = Game.ITEMS[def.ammo] ? Game.ITEMS[def.ammo].name : def.ammo;
-      const reserve = Game.Inventory.count(def.ammo);
-      h += '<div class="ench-stat">🔫 必要な弾: <b style="color:#ffd86b">' + an + '</b>（所持 ' + reserve + '）</div>';
+    // 兵器の必要弾薬を一目で: どの弾を積めばよいかを所持数つきで明記
+    const wa = ammoNeed(def);
+    if (wa) {
+      const own = wa.id ? Game.Inventory.count(wa.id) : null;
+      h += '<div class="ench-stat">🎯 必要弾薬: <b style="color:#ffd86b">' + wa.label + '</b>' + (own != null ? '（所持 ' + own + '）' : '') + '</div>';
+    }
+    // 銃: 装弾数・使い方を明示
+    if (def.tool === 'gun' && !def.nukeLauncher) {
       h += '<div class="ench-stat">🧮 装弾数: <b style="color:#9fd8ff">' + (def.mag || 12) + '</b>発　·　弾を撃ち切ると<b>自動リロード</b></div>';
       h += '<div class="tt-flavor" style="color:#9fb6d0">▶ ホットバーに置いて攻撃ボタン/画面タップで発射。弾が無いと撃てません</div>';
     }
+    // 車両兵器・核: 撃ち方の補足
+    if (def.vehicle && (def.tankCannon || def.jetGun || def.bomberBay)) h += '<div class="tt-flavor" style="color:#9fb6d0">▶ 搭乗中に攻撃ボタン/画面タップで発射（弾薬とガソリンを消費）</div>';
+    if (def.nukeLauncher) h += '<div class="tt-flavor" style="color:#ff9a6a">☢ 指定地点に照準→10秒の警報後に着弾。爆心地からは離れろ（味方にも死の灰）</div>';
     // 時止め等の特殊消費: 効果を明示
     if (def.stasis) {
       h += '<div class="ench-stat">⏳ 効果: <b style="color:#bfe4ff">約' + (def.stasis / 30).toFixed(0) + '秒 すべての敵が静止</b>（攻撃は通る）</div>';

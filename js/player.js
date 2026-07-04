@@ -178,6 +178,8 @@ Game.Player = (function () {
     ensurePassiveHooks();
     updatePassives(p);
     if (Game.state.vehWreck) updateWreck(); // 大破カウントダウン→爆発
+    if (Game.state.nuke) updateNuke();      // 戦術核の警報→着弾
+    if (Game.state.fallout && Game.state.fallout.length) updateFallout(); // 死の灰
     if (p.cannonCd > 0) p.cannonCd--; // 戦車主砲のクールダウン
     p.prevX = p.x; p.prevY = p.y;
 
@@ -231,8 +233,17 @@ Game.Player = (function () {
     // 燃料: 現代の乗り物は走行で燃料を消費。尽きると推進力を失う(ガソリンで給油)
     if (p.vehicle && FUEL_VEHICLES[p.vehicle]) {
       if (!p.fuel) p.fuel = {};
-      const f = p.fuel[p.vehicle] || 0;
-      if (f <= 0) { if (moving && Game.state.tick % 90 === 0) Game.UI.toast('⛽ 燃料切れ… ガソリンを補給しよう'); }
+      let f = p.fuel[p.vehicle] || 0;
+      // 繰越給油(自動): 燃料が15を切ったら、携行中のガソリンから自動で継ぎ足す。
+      // 毎回手動で入れる手間を無くす(所持している限り走り続けられる)。p.autoRefuel=false でOFF
+      if (f < 15 && p.autoRefuel !== false && Game.Inventory.count('gasoline') > 0) {
+        const gdef = Game.ITEMS.gasoline, add = (gdef && gdef.fuel) || 40;
+        Game.Inventory.remove('gasoline', 1);
+        f = Math.min(120, f + add); p.fuel[p.vehicle] = f;
+        if (Game.state.tick % 30 === 0) Game.UI.toast('⛽ 自動給油（ガソリン −1 / 燃料 ' + Math.round(f) + '）');
+        if (Game.UI.refreshAll) Game.UI.refreshAll();
+      }
+      if (f <= 0) { if (moving && Game.state.tick % 90 === 0) Game.UI.toast('⛽ 燃料切れ… ガソリンを携行すると自動給油'); }
       else if (moving) {
         p.fuel[p.vehicle] = Math.max(0, f - 0.06);
         if (p.fuel[p.vehicle] === 0) { Game.UI.toast('⛽ 燃料が尽きた！'); if (Game.Audio) Game.Audio.play('select'); }
@@ -521,7 +532,7 @@ Game.Player = (function () {
     if (meta.drops) {
       for (let i = 0; i < meta.drops.length; i++) {
         const d = meta.drops[i];
-        const n = Game.Utils.randInt(Math.random, d.n[0], d.n[1]);
+        const n = Game.Utils.harvestQty(Math.random, d.n[0], d.n[1]);
         for (let k = 0; k < n; k++) {
           Game.state.drops.push({ id: d.item, count: 1, x: wx + (Math.random() - 0.5) * 14, y: wy + (Math.random() - 0.5) * 14 });
         }
@@ -966,6 +977,21 @@ Game.Player = (function () {
 
   function tryFire(sel) {
     const p = Game.state.player;
+    // 戦術核投射機: 弾頭を1発消費して指定地点へ撃ち込む。10秒警報→着弾→死の灰
+    if (sel.nukeLauncher) {
+      if (p.attackCd > 0) return;
+      if (Game.state.nuke) { Game.UI.toast('すでに核が飛行中だ'); p.attackCd = 20; return; }
+      if (Game.Inventory.count('nuke_warhead') <= 0) { if (Game.state.tick % 30 === 0) Game.UI.toast('戦術核弾頭が装填されていない'); p.attackCd = 20; return; }
+      const it = Game.Input.intent; let tx, ty;
+      if (it && it.usePointer && it.mouseTile) { tx = it.mouseTile.tx * TS + TS / 2; ty = it.mouseTile.ty * TS + TS / 2; }
+      else { let dx = 0, dy = 0; if (p.dir === 'up') dy = -1; else if (p.dir === 'down') dy = 1; else if (p.dir === 'left') dx = -1; else dx = 1; tx = p.x + dx * 7 * TS; ty = p.y + dy * 7 * TS; }
+      Game.Inventory.remove('nuke_warhead', 1);
+      Game.state.nuke = { tx: tx, ty: ty, t: 300, dmg: 1000, radius: 8 }; // 10秒(30fps)
+      Game.UI.toast('☢ 戦術核を発射！ 10秒後に着弾——今すぐ退避せよ！');
+      Game.Audio.play('event_horde'); if (Game.Render.shake) Game.Render.shake(8);
+      p.attackCd = 40; Game.UI.refreshAll();
+      return;
+    }
     if (p.reloadCd > 0) return;       // リロード中は撃てない
     if (p.attackCd > 0) return;
     if (!p.mags) p.mags = {};
@@ -1413,6 +1439,47 @@ Game.Player = (function () {
     Game.Render.spawnParticles(p.x, p.y, '#9fd8ff', 20);
     if (Game.Audio) Game.Audio.play('shift');
     Game.UI.toast('🌀 帰還の渦に飛び込み、ダンジョンの入口へ戻った');
+  }
+  // 戦術核: 発射→10秒警報→着弾大爆発→死の灰(7ゲーム内日間の継続ダメージ、味方も敵も)
+  function updateNuke() {
+    const nk = Game.state.nuke; if (!nk) return;
+    nk.t--;
+    // けたたましいアラーム音＋画面の揺れ(残り時間で加速)
+    const beatEvery = nk.t < 60 ? 5 : nk.t < 150 ? 9 : 15;
+    if (nk.t % beatEvery === 0 && Game.Audio) Game.Audio.play('select');
+    if (nk.t % 6 === 0 && Game.Render.shake) Game.Render.shake(nk.t < 60 ? 6 : 3);
+    if (Game.state.tick % 4 === 0 && Game.Render.spawnParticles) Game.Render.spawnParticles(nk.tx + (Math.random() - 0.5) * nk.radius * TS, nk.ty + (Math.random() - 0.5) * nk.radius * TS, '#8ae04a', 2);
+    if (nk.t === 90 && Game.UI) Game.UI.toast('☢ 着弾3秒前——爆心地から離れろ！');
+    if (nk.t <= 0) {
+      const R = nk.radius * TS, p = Game.state.player;
+      if (Game.Render.flash) Game.Render.flash('rgba(255,255,240,0.85)');
+      if (Game.Render.shake) Game.Render.shake(20);
+      if (Game.Render.spawnParticles) { Game.Render.spawnParticles(nk.tx, nk.ty, '#ffffff', 60); Game.Render.spawnParticles(nk.tx, nk.ty, '#ffd86b', 40); Game.Render.spawnParticles(nk.tx, nk.ty, '#8ae04a', 30); }
+      Game.Audio.play('boom_sfx'); Game.Audio.play('thunder');
+      // 直撃1000: 圏内の全モブ即消滅、プレイヤーも圏内なら1000ダメージ(即死級)
+      const mobs = Game.state.mobs;
+      for (let i = mobs.length - 1; i >= 0; i--) { const m = mobs[i]; if (Math.hypot(m.x - nk.tx, m.y - nk.ty) <= R) Game.Mobs.damageMob(m, nk.dmg, nk.tx, nk.ty, false); }
+      if (Math.hypot(p.x - nk.tx, p.y - nk.ty) <= R) Game.Survival.damage(nk.dmg, 'nuke');
+      // 構造物を広範囲に破壊
+      if (Game.World.blastTerrain) Game.World.blastTerrain(nk.tx, nk.ty, nk.radius);
+      // 死の灰: 7ゲーム内日間、圏内に毎秒25の継続ダメージ(味方も敵も)
+      if (!Game.state.fallout) Game.state.fallout = [];
+      Game.state.fallout.push({ x: nk.tx, y: nk.ty, r: R, until: Game.state.tick + 7 * (Game.DAY_LENGTH || 3600) });
+      Game.UI.toast('☢ 大爆発——一帯は死の灰に包まれた。7日間、近づく者すべてを蝕む');
+      Game.state.nuke = null;
+    }
+  }
+  // 死の灰ゾーン: 毎秒、圏内のプレイヤー/モブに25ダメージ。期限切れで消滅
+  function updateFallout() {
+    const fs = Game.state.fallout; if (!fs || !fs.length) return;
+    const now = Game.state.tick, p = Game.state.player, mobs = Game.state.mobs;
+    for (let i = fs.length - 1; i >= 0; i--) { if (now >= fs[i].until) fs.splice(i, 1); }
+    if (now % 30 !== 0) return; // 毎秒(30fps)
+    for (let i = 0; i < fs.length; i++) {
+      const z = fs[i];
+      if (Math.hypot(p.x - z.x, p.y - z.y) <= z.r) { Game.Survival.damage(25, 'fallout'); }
+      for (let m = 0; m < mobs.length; m++) { const mo = mobs[m]; if (!mo.def.boss && Math.hypot(mo.x - z.x, mo.y - z.y) <= z.r) Game.Mobs.damageMob(mo, 25, z.x, z.y, false); }
+    }
   }
   function morningSkip() {
     const p = Game.state.player;

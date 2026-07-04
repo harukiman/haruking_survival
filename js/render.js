@@ -123,6 +123,8 @@ Game.Render = (function () {
     drawTargetHighlight(ctx);
     drawMiningCrack(ctx);
     drawMeteorCast(ctx);
+    drawFallout(ctx);
+    drawNuke(ctx);
     drawBreath(ctx);
     drawFuel(ctx);
     drawVehDur(ctx);
@@ -687,6 +689,39 @@ Game.Render = (function () {
     ctx.beginPath(); ctx.arc(sc.x, sc.y + 3 * z, (5.5 * 16) * z * (w.t / 150), 0, Math.PI * 2); ctx.stroke();
     ctx.fillStyle = '#ff5a2a'; ctx.font = 'bold ' + Math.round(13 * z) + 'px sans-serif'; ctx.textAlign = 'center';
     ctx.fillText('💥 ' + Math.ceil(w.t / 30), sc.x, sc.y - 10 * z); ctx.textAlign = 'left';
+    ctx.restore();
+  }
+  // 死の灰ゾーン: 放射性の緑の円＋うごめく粒子(常時危険)
+  function drawFallout(ctx) {
+    const fs = Game.state.fallout; if (!fs || !fs.length) return;
+    const z = Game.Camera.zoom ? Game.Camera.zoom() : 1, t = Game.state.tick;
+    for (let i = 0; i < fs.length; i++) {
+      const f = fs[i], sc = Game.Camera.worldToScreen(f.x, f.y), rr = f.r * z;
+      const pulse = 0.5 + Math.sin(t * 0.12 + i) * 0.5;
+      const g = ctx.createRadialGradient(sc.x, sc.y, rr * 0.2, sc.x, sc.y, rr);
+      g.addColorStop(0, 'rgba(120,220,60,' + (0.10 + pulse * 0.06).toFixed(3) + ')'); g.addColorStop(1, 'rgba(90,180,40,0)');
+      ctx.save(); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(sc.x, sc.y, rr, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = 'rgba(140,240,80,' + (0.35 + pulse * 0.3).toFixed(2) + ')'; ctx.lineWidth = 2; ctx.setLineDash([6, 5]);
+      ctx.beginPath(); ctx.arc(sc.x, sc.y, rr, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+      // 舞い上がる灰
+      for (let k = 0; k < 5; k++) { const a = (t * 0.03 + k * 1.3 + i) % 6.28, pr = rr * (0.3 + (k / 5) * 0.6); ctx.fillStyle = 'rgba(160,220,120,0.5)'; ctx.fillRect(sc.x + Math.cos(a) * pr, sc.y + Math.sin(a) * pr - (t % 40) * 0.3, 2, 2); }
+      ctx.restore();
+    }
+  }
+  // 戦術核の着弾予告: 巨大な赤い照準リング＋残り秒＋警告
+  function drawNuke(ctx) {
+    const nk = Game.state.nuke; if (!nk) return;
+    const sc = Game.Camera.worldToScreen(nk.tx, nk.ty), z = Game.Camera.zoom ? Game.Camera.zoom() : 1;
+    const rr = nk.radius * Game.CFG.TILE_SIZE * z, blink = (Game.state.tick % (nk.t < 60 ? 6 : 12)) < 4;
+    ctx.save();
+    ctx.strokeStyle = blink ? 'rgba(255,40,40,0.95)' : 'rgba(255,180,40,0.7)'; ctx.lineWidth = 3 * z;
+    ctx.beginPath(); ctx.arc(sc.x, sc.y, rr, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,60,40,' + (0.05 + (1 - nk.t / 300) * 0.16).toFixed(3) + ')'; ctx.beginPath(); ctx.arc(sc.x, sc.y, rr, 0, Math.PI * 2); ctx.fill();
+    // 照準十字
+    ctx.strokeStyle = blink ? '#ff4040' : '#ffd040'; ctx.lineWidth = 2 * z;
+    ctx.beginPath(); ctx.moveTo(sc.x - rr, sc.y); ctx.lineTo(sc.x + rr, sc.y); ctx.moveTo(sc.x, sc.y - rr); ctx.lineTo(sc.x, sc.y + rr); ctx.stroke();
+    ctx.fillStyle = blink ? '#ff5a5a' : '#ffe27a'; ctx.font = 'bold ' + Math.round(20 * z) + 'px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('☢ ' + Math.ceil(nk.t / 30), sc.x, sc.y - rr - 8 * z); ctx.textAlign = 'left';
     ctx.restore();
   }
   function drawMeteorCast(ctx) {

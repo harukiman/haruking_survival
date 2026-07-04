@@ -75,6 +75,7 @@ Game.Save = (function () {
       },
       ngLevel: s.ngLevel || 0,
       tips: s._tips || {},
+      fallout: s.fallout || [],
       difficulty: s.difficulty || 'normal',
       zoom: s.zoom || 1,
       inventory: s.inventory.map(function (sl) { return sl ? { id: sl.id, count: sl.count, roll: sl.roll || null } : null; }),

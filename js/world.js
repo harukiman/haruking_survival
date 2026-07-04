@@ -273,7 +273,7 @@ Game.World = (function () {
       if (!BLAST_RENDER[meta.render]) continue;             // 自然物/基本ブロックのみ(チェスト等の機能物は除外)
       // 破壊してドロップを生成
       const wx = tx * TS + TS / 2, wy = ty * TS + TS / 2;
-      (meta.drops || []).forEach(function (d) { const n = Game.Utils.randInt(Math.random, d.n[0], d.n[1]); for (let k = 0; k < n; k++) Game.state.drops.push({ id: d.item, count: 1, x: wx + (Math.random() - 0.5) * 12, y: wy + (Math.random() - 0.5) * 12 }); });
+      (meta.drops || []).forEach(function (d) { const n = Game.Utils.harvestQty(Math.random, d.n[0], d.n[1]); for (let k = 0; k < n; k++) Game.state.drops.push({ id: d.item, count: 1, x: wx + (Math.random() - 0.5) * 12, y: wy + (Math.random() - 0.5) * 12 }); });
       setObj(tx, ty, Game.OBJ.NONE);
       if (Game.Render && Game.Render.spawnParticles) Game.Render.spawnParticles(wx, wy, meta.blockColor || '#9c6b3f', 4);
     }

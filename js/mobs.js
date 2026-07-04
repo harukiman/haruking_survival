@@ -345,6 +345,12 @@ Game.Mobs = (function () {
     const e = KIND_DOT[kind]; if (!e) return;
     m.dot = m.dot || {}; m.dot[e[0]] = Math.max(m.dot[e[0]] || 0, e[1]);
   }
+  // 武器由来の出血DoT: dmg/秒相当を dur フレーム継続(既存より深手を優先)
+  function applyBleed(m, dmg, dur, every, col) {
+    if (!m || !m.def || m.def.npc || m.def.friendly) return;
+    const total = (m.bleed && m.bleed.left) || 0;
+    if (!m.bleed || dur > total) m.bleed = { dmg: dmg, left: dur, every: every || 30, col: col || '#ff5a6a' };
+  }
 
   // 騒音アグロ(C: 世界の反応性): 銃声/爆発など大きな音は周囲の敵を警戒させ引き寄せる。
   // 近接/採掘は静かで音を出さない=ステルス寄りに遊べる。alertT を立てると aggro 範囲1.7倍+遠方から駆けつける。
@@ -504,6 +510,17 @@ Game.Mobs = (function () {
         }
         if (m.dot.burn > 0) m.dot.burn--;
         if (m.dot.poison > 0) m.dot.poison--;
+      }
+      // 武器由来の出血(斬撃DoT): 一定間隔で武器スケールのダメージ。3秒間毎秒など
+      if (m.bleed && m.bleed.left > 0) {
+        m.bleed.left--;
+        if (m.bleed.left % (m.bleed.every || 30) === 0) {
+          m.hp -= m.bleed.dmg; m.hurt = Math.max(m.hurt, 2);
+          if (Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - m.def.size * 0.5, m.bleed.dmg, m.bleed.col || '#ff5a6a');
+          if (Game.Render.spawnParticles) Game.Render.spawnParticles(m.x, m.y, m.bleed.col || '#c0303a', 3);
+          if (m.hp <= 0) { killMob(m); continue; }
+        }
+        if (m.bleed.left <= 0) m.bleed = null;
       }
       if (m.leaveTimer) { m.leaveTimer--; if (m.leaveTimer <= 0) { mobs.splice(i, 1); continue; } }
       if (m.stateTimer > 0) m.stateTimer--;
@@ -1462,5 +1479,5 @@ Game.Mobs = (function () {
     ctx.closePath();
   }
 
-  return { list, update, draw, spawnMob, damageMob, killMob, applyDot, alertNoise, summonBoss, nearbyNPC, interactNPC, applyMobSnapshot, applyRemoteHit, spawnNetDrops, buildSnapshot };
+  return { list, update, draw, spawnMob, damageMob, killMob, applyDot, applyBleed, alertNoise, summonBoss, nearbyNPC, interactNPC, applyMobSnapshot, applyRemoteHit, spawnNetDrops, buildSnapshot };
 })();

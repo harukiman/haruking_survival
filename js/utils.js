@@ -34,6 +34,9 @@ Game.Utils = (function () {
   function mod(a, b) { return ((a % b) + b) % b; }
 
   function randInt(rnd, lo, hi) { return lo + Math.floor(rnd() * (hi - lo + 1)); }
+  // 採集ドロップ数: 基本は最小値。確率で1つずつ増える(乱獲インフレ防止)。
+  // 例 [1,3] → 約68% 1個 / 22% 2個 / 10% 3個。p=0.32
+  function harvestQty(rnd, lo, hi) { let n = lo; while (n < hi && rnd() < 0.32) n++; return n; }
 
-  return { clamp, lerp, fade, rng, hash3, tileKey, chunkKey, floorDiv, mod, randInt };
+  return { clamp, lerp, fade, rng, hash3, tileKey, chunkKey, floorDiv, mod, randInt, harvestQty };
 })();
