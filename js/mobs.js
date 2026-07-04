@@ -353,11 +353,31 @@ Game.Mobs = (function () {
     if (Game.Audio) Game.Audio.play('crit');
     damageMob(m, dmg, m.x, m.y, false);
   }
+  // 敵の属性(名前/種別から導出、キャッシュ)。火/氷/null(無属性)
+  function mobElement(m) {
+    if (m._elem !== undefined) return m._elem;
+    const t = m.type || '';
+    let e = null;
+    if (/ember|salamander|magma|lava|cinder|forge|flame|scorch|fire|sun|solar|blaze/.test(t)) e = 'fire';
+    else if (/frost|^ice|_ice|glacier|snow|rime|winter|chill|blizzard|frozen/.test(t)) e = 'ice';
+    m._elem = e; return e;
+  }
   function applyDot(m, kind) {
     if (!m || !m.def || m.def.npc) return;
     const e = KIND_DOT[kind]; if (!e) return;
     m.dot = m.dot || {};
+    // 元素相性: 同属性は無効(炎の敵に炎/氷の敵に凍結は効かない)。逆属性は弱点。
+    const elem = mobElement(m);
+    if ((kind === 'fire' && elem === 'fire') || (kind === 'frost' && elem === 'ice')) {
+      if (Game.Render.spawnFloat && Game.state.tick % 4 === 0) Game.Render.spawnFloat(m.x, m.y - m.def.size * 0.5, '無効', '#9aa', false);
+      if (Game.UI && Game.UI.tipOnce) Game.UI.tipOnce('elem_affinity', '属性相性！ 炎の敵に炎/氷の敵に氷は効かない。逆属性(炎の敵には氷、氷の敵には炎)が弱点だ');
+      return;
+    }
+    const weak = (kind === 'fire' && elem === 'ice') || (kind === 'frost' && elem === 'fire');
+    if (weak && Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - m.def.size * 0.5, '弱点!', '#ffe27a', true);
     if ((kind === 'fire' && (m.dot.slow || 0) > 0) || (kind === 'frost' && (m.dot.burn || 0) > 0)) { thermalShock(m); m.chill = 0; return; }
+    // 弱点属性は状態が強く入る(氷の敵は炎で長く燃え、火の敵は氷で早く凍る)
+    if (weak && kind === 'frost' && !m.def.boss) { m.chill = (m.chill || 0) + 1; } // 追加で凍結が早い(通常の加算と合わせ実質2倍)
     // 氷結: 氷を重ねがけ(3スタック)すると敵が凍りつき停止。ボスは免疫、中ボスは短縮。
     if (kind === 'frost' && !m.def.boss && (m.iced || 0) <= 0) {
       m.chill = (m.chill || 0) + 1;
@@ -369,7 +389,7 @@ Game.Mobs = (function () {
         return;
       }
     }
-    m.dot[e[0]] = Math.max(m.dot[e[0]] || 0, e[1]);
+    m.dot[e[0]] = Math.max(m.dot[e[0]] || 0, weak ? Math.round(e[1] * 1.6) : e[1]); // 弱点は状態異常が長い
   }
   // 武器由来の出血DoT: dmg/秒相当を dur フレーム継続(既存より深手を優先)
   function applyBleed(m, dmg, dur, every, col) {
