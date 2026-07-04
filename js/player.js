@@ -1392,7 +1392,7 @@ Game.Player = (function () {
     else if (dur <= max * 0.3 && Game.state.tick % 45 === 0) { if (Game.Audio) Game.Audio.play('select'); Game.UI.toast('⚠ 機体が損傷している… 修理キットを'); }
     return true; // 機体が肩代わり=搭乗者は無傷
   }
-  // 大破: 搭乗者を放出→5秒間の異音警告→一定範囲に大爆発(範囲内プレイヤーは即死)
+  // 大破: 搭乗者は破壊の巻き添えで即死級ダメージ→放出→5秒間の異音警告→一定範囲に大爆発
   function startWreck(type) {
     const p = Game.state.player;
     p.vehicle = null; p.vThr = 0;
@@ -1401,9 +1401,13 @@ Game.Player = (function () {
     Game.Inventory.remove(type, 1);
     if (p.vehDur) delete p.vehDur[type];
     Game.state.vehWreck = { x: p.x, y: p.y, t: 150, type: type }; // 5秒(30fps)
-    Game.UI.toast('💥 機体が大破する！ 5秒後に爆発——今すぐ離れろ！');
+    Game.UI.toast('💥 機体が大破！ 搭乗者は致命傷——さらに5秒後に大爆発する！');
     if (Game.Audio) Game.Audio.play('event_horde');
     if (Game.Render.spawnParticles) Game.Render.spawnParticles(p.x, p.y, '#ff5a2a', 24);
+    if (Game.Render.shake) Game.Render.shake(16);
+    // 兵器/乗り物の破壊は搭乗者に即死級ダメージ(強力な兵器ほどリスクも高い)。
+    // 「執念」等の致死耐性があれば HP1 で生還し、追撃の大爆発から逃げる猶予が残る。
+    Game.Survival.damage(9999, 'wreck');
   }
   // 毎フレーム: 大破カウントダウン(異音)→爆発
   function updateWreck() {

@@ -45,6 +45,7 @@ Game.Icons = (function () {
     // 追加素材(中間素材/有機/鉱物系)も material へ回して形を付ける
     if (/gunpowder|gun_parts|steel_plate|rope|glass|circuit|^guts$|^hide$|^leather$|^bone$|^string$|slime_ball|shadow_wood|^sulfur$|obsidian|moonshard|silk|feather|scale|web|wool|fiber|cloth|^wood$|glow_spore|luminous_cap|spore|_steel$|_alloy$|kokuhen|_metal$|wind_ore|wind_feather/.test(id)) return 'material';
     if (/aerial_bomb|heavy_bomb|cannon_shell|_bomb$/.test(id)) return 'bomb'; // 爆弾類は爆弾アイコン
+    if (/_key$|^key$|鍵/.test(id) || def.summonBoss && /key/.test(id)) return 'key'; // 鍵系は鍵アイコン
     return 'misc';
   }
 
@@ -441,6 +442,33 @@ Game.Icons = (function () {
         ctx.fillStyle = c.accent; ctx.fillRect(12, 12, 24, 28); ctx.strokeRect(12, 12, 24, 28);
         ctx.fillStyle = mix(c.accent, '#fff', 0.7); ctx.fillRect(16, 14, 18, 24);
         ctx.strokeStyle = c.edge; ctx.lineWidth = 1; for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.moveTo(18, 19 + i * 5); ctx.lineTo(32, 19 + i * 5); ctx.stroke(); } break;
+      }
+      case 'key': {
+        // 鍵: 上部の輪(ボウ)＋軸(シャフト)＋下部の歯(ビット)。金属光沢＋アイテム色
+        ctx.save();
+        ctx.translate(M, M); ctx.rotate(-Math.PI / 5); // 斜めに構えて鍵らしく
+        const km = metalGradV ? metalGradV(ctx, -18, 18, c.base) : c.base;
+        ctx.lineWidth = 2; ctx.strokeStyle = c.edge || 'rgba(0,0,0,0.8)';
+        // ボウ(持ち手の輪)
+        ctx.fillStyle = km;
+        ctx.beginPath(); ctx.arc(0, -14, 8.5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        // 輪の抜き穴
+        ctx.save(); ctx.globalCompositeOperation = 'destination-out';
+        ctx.beginPath(); ctx.arc(0, -14, 3.8, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+        ctx.strokeStyle = c.edge || 'rgba(0,0,0,0.8)'; ctx.beginPath(); ctx.arc(0, -14, 3.8, 0, Math.PI * 2); ctx.stroke();
+        // シャフト(軸)
+        ctx.fillStyle = km;
+        ctx.beginPath(); ctx.rect(-2, -6, 4, 24); ctx.fill(); ctx.stroke();
+        // ビット(歯) — 下端から右へ2枚
+        ctx.beginPath(); ctx.rect(2, 12, 6, 4); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.rect(2, 6, 4, 3.5); ctx.fill(); ctx.stroke();
+        // 光沢
+        ctx.fillStyle = c.hi || '#fff'; ctx.globalAlpha = 0.65;
+        ctx.beginPath(); ctx.arc(-3, -16, 1.8, 0, 7); ctx.fill();
+        ctx.fillRect(-1.4, -4, 1, 14); ctx.globalAlpha = 1;
+        ctx.restore();
+        if (typeof glint === 'function') glint(ctx, M - 5, M - 10, 2);
+        break;
       }
       case 'relic': {
         if (/ring|指輪|band|指環/.test(id)) { // 指輪: 金の輪＋宝石

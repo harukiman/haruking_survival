@@ -586,7 +586,7 @@ Game.Audio = (function () {
       return;
     }
     const k = 0.85 + 0.35 * veh.inten;              // 走行強度でわずかに回転数が上がる
-    const v = cfg.vol * (0.7 + 0.5 * veh.inten);    // アイドル→巡航で音量も少しだけ
+    const v = cfg.vol * (0.7 + 0.5 * veh.inten) * 0.5; // 乗車中のエンジン音のみ50%に(他のSFX/BGMは据え置き)
     veh.osc.type = cfg.osc; veh.osc.frequency.setTargetAtTime(cfg.hz * k, t, 0.12);
     veh.oscG.gain.setTargetAtTime(cfg.oscVol, t, 0.12);
     veh.nF.type = cfg.filt; veh.nF.frequency.setTargetAtTime(cfg.cut * k, t, 0.12); veh.nF.Q.value = cfg.q;
