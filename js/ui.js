@@ -503,11 +503,18 @@ Game.UI = (function () {
   function toggleStats() { const sc = document.getElementById('stats-screen'); if (!sc) return; if (sc.classList.contains('hidden')) openStats(); else closeStats(); }
   const skOpen = {}; // スキル系統の開閉状態
   let achBase = null; // 実績のセッション開始時スナップショット(以後の解除に NEW を付ける)
+  let statsTab = 'status'; // ステータス画面のタブ(status|skill|bestiary|ach)。縦積みが長くて辿るのが大変→タブ分割
   function renderStats() {
     const p = Game.state.player; const body = document.getElementById('stats-body'); if (!body || !p) return;
     const slot = Game.Inventory.selectedSlot(); const wst = Game.Loot.stats(slot);
     const eff = Game.Player.effAttack(wst.atk > 0 ? wst.atk : 1);
     let h = '';
+    // タブバー(コントローラのL1/R1でも切替: .craft-tabs/.craft-tab を流用)＋タブ本体コンテナ
+    const TABS = [['status', '📊 ステータス'], ['skill', '✦ スキル'], ['bestiary', '📖 図鑑'], ['ach', '🏆 実績']];
+    h += '<div class="craft-tabs stats-tabs">';
+    TABS.forEach(function (t) { h += '<button class="craft-tab' + (statsTab === t[0] ? ' on' : '') + '" data-pane="' + t[0] + '">' + t[1] + '</button>'; });
+    h += '</div>';
+    h += '<div class="stats-tabbed" data-active="' + statsTab + '"><div class="stp" data-pane="status">';
     h += '<div class="ench-stat">Lv.' + p.level + '（EXP ' + p.xp + '/' + p.xpNext + '）　スキルP: <span class="sp-badge">' + (p.skillPoints || 0) + '</span>　称号 <b style="color:#ffd86b">' + Game.Player.bossTitle() + '</b></div>';
     h += '<div class="ench-stat">攻撃力(手持ち) <b style="color:#ffd86b">' + eff + '</b>　防御力 <b style="color:#9fd8ff">' + Game.Player.totalArmor() + '</b>　最大HP <b style="color:#ff8a8a">' + p.maxHealth + '</b></div>';
     // ===== 装備サマリー＆派生ステータス =====
@@ -547,6 +554,7 @@ Game.UI = (function () {
     derived.forEach(function (d) { h += '<span class="ds-chip">' + d[0] + ' <b style="color:' + d[2] + '">' + d[1] + '</b></span>'; });
     h += '</div>';
     if (setb.name) h += '<div class="set-bonus" style="margin-top:4px;color:#caa86a;font-size:.82rem">✨ ' + setb.name + ' セット効果 発動中</div>';
+    h += '</div><div class="stp" data-pane="bestiary">'; // → 図鑑タブへ(討伐の証)
     // ===== 討伐の証（ボス図鑑・恒久報酬） =====
     if (Game.MOBS) {
       const best = Game.state.bestiary || {};
@@ -560,6 +568,7 @@ Game.UI = (function () {
       });
       h += '</div>';
     }
+    h += '</div><div class="stp" data-pane="status">'; // ステータスタブへ戻る(STR/VIT/DEX振り分け)
     const stats = [['str', '力 STR', '攻撃 +1 / pt'], ['vit', '体 VIT', '最大HP +5 / pt'], ['dex', '技 DEX', '攻撃速度UP / pt']];
     const pendTotal = pendStat.str + pendStat.vit + pendStat.dex;
     const remain = (p.skillPoints || 0) - pendTotal; // 確定前の残りポイント
@@ -575,6 +584,7 @@ Game.UI = (function () {
       h += '<div class="stat-row" style="justify-content:flex-end;gap:8px"><span style="color:#9fb6d0;font-size:.82rem;margin-right:auto">未確定 ' + pendTotal + 'P（残 ' + remain + '）</span>' +
         '<button id="stat-cancel" class="map-btn">取消</button><button id="stat-confirm" class="map-btn" style="background:#2a6a3a;border-color:#3f9a5a">確定</button></div>';
     }
+    h += '</div><div class="stp" data-pane="skill">'; // スキルタブ
     const totalSk = Game.SKILL_TREE.length;
     const ownedSk = p.skills ? Object.keys(p.skills).filter(function (k) { return p.skills[k]; }).length : 0;
     h += '<h2>スキルツリー <span style="color:#ffe27a;font-size:.85rem">' + ownedSk + ' / ' + totalSk + '</span><span style="color:#7a8494;font-size:.74rem">　系統名をタップで開閉</span></h2>';
@@ -605,6 +615,7 @@ Game.UI = (function () {
       h += '</div>';
     });
     h += '<p class="hint">前提スキルを習得すると次が解放。振り直しは「記憶の書」(レア)。レベル上限 ' + (Game.MAX_LEVEL || 9999) + '。</p>';
+    h += '</div><div class="stp" data-pane="ach">'; // 実績タブ
     // 実績一覧（達成サマリー＋バー、セッション中の新規解除は NEW 強調）
     if (Game.ACHIEVEMENTS && Game.Achievements) {
       if (!achBase) { achBase = {}; for (const id in Game.ACHIEVEMENTS) if (Game.Achievements.has(id)) achBase[id] = 1; }
@@ -620,6 +631,7 @@ Game.UI = (function () {
       }
       h += '</div>';
     }
+    h += '</div><div class="stp" data-pane="bestiary">'; // 図鑑タブ(魔物図鑑)
     // 魔物図鑑
     if (Game.MOBS) {
       const best = Game.state.bestiary || {};
@@ -648,7 +660,12 @@ Game.UI = (function () {
       if (lockedCount > 0) h += '<div class="ach-row"><span class="ach-mk">❔</span><div><b>未発見 ' + lockedCount + ' 種</b><br><span class="ach-d" style="opacity:.7">世界のどこかに潜んでいる…</span></div></div>';
       h += '</div>';
     }
+    h += '</div></div>'; // stp(bestiary) + stats-tabbed を閉じる
     body.innerHTML = h;
+    // タブ切替(クリック/×決定): statsTab を変えて再描画。padTab(L1/R1)は .on を辿って click する
+    body.querySelectorAll('.stats-tabs .craft-tab').forEach(function (tb) {
+      tb.addEventListener('click', function () { const pane = tb.dataset.pane; if (pane && pane !== statsTab) { statsTab = pane; Game.Audio.play('cursor'); renderStats(); } });
+    });
     // 保留方式: +/- で未確定に積み、確定でまとめて反映(確定前は調整自由)
     body.querySelectorAll('.stat-plus').forEach(function (b) { b.addEventListener('click', function () {
       const st = b.getAttribute('data-stat');

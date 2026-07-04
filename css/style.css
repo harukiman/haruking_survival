@@ -58,6 +58,13 @@ button { font-family: inherit; touch-action: manipulation; }
 .title-box h1 { font-size: 2.2rem; line-height: 1.05; letter-spacing: 2px; color: #6fc46b; text-shadow: 0 2px 0 #1d3a1b; }
 .title-box h1 span { color: #e8c54a; }
 /* リファインしたタイトル */
+/* ステータス画面のタブ分割(スキル/図鑑/実績を別タブに。縦積みの長スクロール解消) */
+.stats-tabs { position: sticky; top: 0; z-index: 3; }
+.stats-tabbed .stp { display: none; }
+.stats-tabbed[data-active="status"] .stp[data-pane="status"],
+.stats-tabbed[data-active="skill"] .stp[data-pane="skill"],
+.stats-tabbed[data-active="bestiary"] .stp[data-pane="bestiary"],
+.stats-tabbed[data-active="ach"] .stp[data-pane="ach"] { display: block; }
 .game-title { display: flex; flex-direction: column; align-items: center; gap: 0; margin-bottom: 4px; line-height: 1; animation: titleFloat 6.5s ease-in-out infinite; }
 @keyframes titleFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
 @keyframes titleGlowPulse { 0%,100% { filter: drop-shadow(0 1px 0 #14331c) drop-shadow(0 0 10px rgba(90,220,130,0.22)); } 50% { filter: drop-shadow(0 1px 0 #14331c) drop-shadow(0 0 22px rgba(110,240,150,0.5)); } }
