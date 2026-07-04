@@ -797,7 +797,7 @@ Game.Player = (function () {
       } else {
         p.vehicle = def.vehicle; p.vThr = 0;
         if (VEH_MAXDUR[def.vehicle] != null) { if (!p.vehDur) p.vehDur = {}; if (p.vehDur[def.vehicle] == null) p.vehDur[def.vehicle] = VEH_MAXDUR[def.vehicle]; }
-        if (FUEL_VEHICLES[def.vehicle] && Game.UI.tipOnce) Game.UI.tipOnce('fuel', '現代の乗り物は燃料(⛽)で走ります。ガソリンで給油、耐久0で大破。発着場で自動回復');
+        if (FUEL_VEHICLES[def.vehicle] && Game.UI.tipOnce) Game.UI.tipOnce('fuel', '⛽給油: ガソリンをホットバーで選び「使う」(PC=右クリック / スマホ=設置ボタン / パッド=□)。修理キットで耐久回復。発着場でも自動回復');
         Game.Audio.play('mount');
         if (Game.Audio.vehicleLoop) Game.Audio.vehicleLoop(def.vehicle, 0);
         Game.Render.spawnParticles(p.x, p.y + 6, '#cfd6e0', 5);
@@ -975,7 +975,7 @@ Game.Player = (function () {
       if (Game.Inventory.count(sel.ammo) > 0) { startReload(sel, gid); return; }
       p.mags[gid] = 0; loaded = 0;
     }
-    if (loaded <= 0) { startReload(sel, gid); return; } // 空 → リロード
+    if (loaded <= 0) { if (Game.UI.tipOnce) Game.UI.tipOnce('reload', '弾を撃ち切ると自動でリロード(予備弾が必要)。予備弾は素材(鉄+火薬)クラフトやショップで補充。手動リロードはRキー'); startReload(sel, gid); return; } // 空 → リロード
     // パッシブ「節約」: 12%で弾薬を消費しない(表示は1秒スロットルでスパム防止)
     if (skillFlag('conserve') && Math.random() < 0.12) {
       if (Game.state.tick - (p.conserveFx || 0) > 30) {

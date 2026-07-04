@@ -651,8 +651,12 @@ Game.Render = (function () {
     ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(bx - 1, by - 1, w + 2, h + 2);
     ctx.fillStyle = f <= 0 ? '#ff5a5a' : frac < 0.25 ? '#ffb24a' : '#d8c24a';
     ctx.fillRect(bx, by, w * frac, h);
+    // 残量数値＋予備ガソリン本数(補給できるか一目で分かる)
+    const gasReserve = Game.Inventory ? Game.Inventory.count('gasoline') : 0;
     ctx.fillStyle = '#e8dca0'; ctx.font = 'bold ' + Math.round(8 * z) + 'px sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText(f <= 0 ? '⛽空' : '⛽', sc.x, by - 3 * z); ctx.textAlign = 'left';
+    ctx.fillText('⛽ ' + Math.ceil(f) + (gasReserve > 0 ? '  (予備' + gasReserve + ')' : ''), sc.x, by - 3 * z);
+    if (f <= 0) { ctx.fillStyle = '#ffd86b'; ctx.font = 'bold ' + Math.round(7.5 * z) + 'px sans-serif'; ctx.fillText(gasReserve > 0 ? 'ガソリンを「使う」で給油' : 'ガソリンが必要', sc.x, by + h + 9 * z); }
+    ctx.textAlign = 'left';
     ctx.restore();
   }
   // 乗り物の耐久ゲージ(頭上・燃料の下)。損傷時のみ表示
