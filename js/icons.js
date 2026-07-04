@@ -265,10 +265,30 @@ Game.Icons = (function () {
       }
       case 'staff': {
         ctx.strokeStyle = 'rgba(0,0,0,0.85)';
-        ctx.fillStyle = shade('#6a4a2a', 1); ctx.fillRect(M - 1.5, 12, 3, 28); ctx.strokeRect(M - 1.5, 12, 3, 28); // 杖
-        const g = ctx.createRadialGradient(M, 12, 1, M, 12, 10); g.addColorStop(0, c.hi); g.addColorStop(1, c.base);
-        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(M, 11, 8, 0, 7); ctx.fill(); ctx.stroke(); // 宝玉
-        ctx.fillStyle = c.accent; ctx.beginPath(); ctx.arc(M - 2, 9, 2, 0, 7); ctx.fill(); break;
+        ctx.fillStyle = shade('#6a4a2a', 1); ctx.fillRect(M - 1.5, 12, 3, 28); ctx.strokeRect(M - 1.5, 12, 3, 28); // 杖の柄(共通)
+        if (def.tool === 'grapple') { // 鉤縄: 先端のフック
+          ctx.strokeStyle = metal || '#3a3a42'; ctx.lineWidth = 2.6;
+          ctx.beginPath(); ctx.moveTo(M, 12); ctx.lineTo(M, 6); ctx.arc(M - 3, 6, 3, 0, Math.PI * 1.4); ctx.stroke();
+          ctx.strokeStyle = '#8a6a3a'; ctx.lineWidth = 1; for (let y = 16; y < 38; y += 4) { ctx.beginPath(); ctx.moveTo(M + 2, y); ctx.lineTo(M + 5, y + 2); ctx.stroke(); } // 縄
+        } else if (def.tool === 'warp') { // ワープ: 渦巻く先端
+          ctx.strokeStyle = c.base; ctx.lineWidth = 2; ctx.beginPath();
+          for (let a = 0; a < 20; a++) { const t = a / 20 * Math.PI * 3.2, rr = 1 + t * 1.1; const px = M + Math.cos(t) * rr, py = 10 + Math.sin(t) * rr; if (a === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py); }
+          ctx.stroke(); ctx.fillStyle = c.hi; ctx.beginPath(); ctx.arc(M, 10, 2, 0, 7); ctx.fill();
+        } else if (def.strike || def.castMeteor) { // 隕石/流星: 尖った星型クリスタル
+          ctx.fillStyle = c.base; ctx.beginPath();
+          for (let a = 0; a < 8; a++) { const an = a / 8 * Math.PI * 2, rr = a % 2 ? 4 : 9; const px = M + Math.cos(an) * rr, py = 11 + Math.sin(an) * rr; if (a === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py); }
+          ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.fillStyle = c.hi; ctx.beginPath(); ctx.arc(M, 11, 2.5, 0, 7); ctx.fill();
+        } else if (def.vortex) { // 渦: 三日月/リング状の先端
+          ctx.strokeStyle = c.base; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(M, 11, 7, Math.PI * 0.3, Math.PI * 1.9); ctx.stroke();
+          ctx.fillStyle = c.hi; ctx.beginPath(); ctx.arc(M, 11, 2.5, 0, 7); ctx.fill();
+        } else { // 元素の杖: 宝玉(色で属性)
+          const g = ctx.createRadialGradient(M, 12, 1, M, 12, 10); g.addColorStop(0, c.hi); g.addColorStop(1, c.base);
+          ctx.fillStyle = g; ctx.beginPath(); ctx.arc(M, 11, 8, 0, 7); ctx.fill(); ctx.stroke();
+          ctx.fillStyle = c.accent; ctx.beginPath(); ctx.arc(M - 2, 9, 2, 0, 7); ctx.fill();
+          // 宝玉を抱く爪
+          ctx.strokeStyle = shade('#6a4a2a', 1); ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(M - 6, 16); ctx.quadraticCurveTo(M - 7, 10, M - 3, 7); ctx.moveTo(M + 6, 16); ctx.quadraticCurveTo(M + 7, 10, M + 3, 7); ctx.stroke();
+        }
+        break;
       }
       case 'pickaxe': case 'axe': case 'hoe': {
         ctx.strokeStyle = 'rgba(0,0,0,0.85)';
