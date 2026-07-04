@@ -157,6 +157,7 @@ Game.Render = (function () {
     drawPeerCompass(ctx);
     drawLowHpVignette(ctx);
     drawFlash(ctx);
+    drawShadowVision(ctx);
   }
 
   // 低HP時の赤い画面端ヴィネット(鼓動に合わせ脈動)。窮地の緊張感(音の低HP警告と対)
@@ -443,6 +444,31 @@ Game.Render = (function () {
     ctx.fillRect(0, 0, Game.view.w, Game.view.h);
     ctx.restore();
     flashT--;
+  }
+  // 核=光と影の二相を"見せる"予告演出: 初めての夜に、影の世界を一瞬垣間見せる。
+  let shadowVisionT = 0; const SV_MAX = 210;
+  function shadowVision() { shadowVisionT = SV_MAX; if (Game.Audio) { Game.Audio.play('shift'); if (Game.Audio.cue) Game.Audio.cue('riser'); } }
+  function drawShadowVision(ctx) {
+    if (shadowVisionT <= 0) return;
+    const v = Game.view, t = SV_MAX - shadowVisionT;
+    let a; if (t < 45) a = t / 45; else if (shadowVisionT < 60) a = shadowVisionT / 60; else a = 1;
+    const pulse = 0.5 + Math.sin(t * 0.08) * 0.5;
+    ctx.save();
+    const g = ctx.createRadialGradient(v.w / 2, v.h / 2, v.h * 0.08, v.w / 2, v.h / 2, v.h * 0.85);
+    g.addColorStop(0, 'rgba(64,26,96,' + (0.34 * a).toFixed(3) + ')');
+    g.addColorStop(1, 'rgba(18,8,38,' + (0.74 * a).toFixed(3) + ')');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, v.w, v.h);
+    // 流れる影の粒子
+    ctx.fillStyle = 'rgba(180,140,240,' + (0.45 * a * pulse).toFixed(3) + ')';
+    for (let i = 0; i < 14; i++) { const x = ((i * 137 + t * 1.6) % v.w), y = (v.h * 0.18 + (i * 57) % (v.h * 0.64)); ctx.fillRect(x, y, 2, 2); }
+    ctx.globalAlpha = a; ctx.textAlign = 'center';
+    ctx.fillStyle = '#d8b0ff'; ctx.font = 'bold ' + Math.round(Math.min(28, v.w * 0.058)) + 'px sans-serif';
+    ctx.fillText('― 影の世界 ―', v.w / 2, v.h * 0.42);
+    ctx.fillStyle = '#eadcff'; ctx.font = 'bold ' + Math.round(Math.min(15, v.w * 0.034)) + 'px sans-serif';
+    ctx.fillText('割れた世界の、もう半分。', v.w / 2, v.h * 0.5);
+    ctx.fillText('鏡の向こうで、それは君を待っている。', v.w / 2, v.h * 0.55);
+    ctx.textAlign = 'left'; ctx.restore();
+    shadowVisionT--;
   }
 
   // 宇宙の星空（カメラに緩やかに連動）
@@ -1291,5 +1317,5 @@ Game.Render = (function () {
     ctx.textAlign = 'left';
   }
 
-  return { draw, buildChunkCache, spawnParticles, spawnBlood, spawnSlash, spawnFloat, spawnLightning, spawnMuzzle, spawnImpact, spawnLevelRing, spawnHitDir, flash, hurtFlash, shake };
+  return { draw, buildChunkCache, spawnParticles, spawnBlood, spawnSlash, spawnFloat, spawnLightning, spawnMuzzle, spawnImpact, spawnLevelRing, spawnHitDir, flash, hurtFlash, shake, shadowVision };
 })();

@@ -7,6 +7,13 @@ Game.DayNight = (function () {
     s.timeOfDay = (s.tick % Game.DAY_LENGTH) / Game.DAY_LENGTH; // 0..1
     // 血の月: 数日ごとの夜
     const day = Math.floor(s.tick / Game.DAY_LENGTH);
+    // ★核の予告: 初めての夜、影の世界を一瞬"見せる"(語るだけでなく体験させる北極星)
+    if (!s.storySeen) s.storySeen = {};
+    if (isNight() && day === 0 && s.worldName === 'light' && !s.hasShifted && !s.storySeen.shadowVision) {
+      s.storySeen.shadowVision = true;
+      if (Game.Render.shadowVision) Game.Render.shadowVision();
+      if (Game.UI && Game.UI.toast) Game.UI.toast('🌓 夜——鏡の向こうに、もう一つの世界の気配。《影鏡》を作れば渡れる');
+    }
     const isBloodDay = ((day + 1) % Game.TUNE.BLOOD_MOON_EVERY) === 0;
     const nowBlood = isBloodDay && isNight();
     if (nowBlood && !s.bloodMoon) {
