@@ -881,6 +881,8 @@ Game.Mobs = (function () {
       if (!Game.state.bestiary) Game.state.bestiary = {};
       const firstSeen = !Game.state.bestiary[m.type];
       Game.state.bestiary[m.type] = (Game.state.bestiary[m.type] || 0) + 1;
+      // 深夜個体は別項として記録(魔物図鑑に「月狂の〇〇」を追加、ドロップも別表示)
+      if (m.nightAmped) Game.state.bestiary['night:' + m.type] = (Game.state.bestiary['night:' + m.type] || 0) + 1;
       // 記憶回廊トリガー: 金喰い初討伐 / 図鑑が20種に到達
       if (Game.Story) {
         if (m.type === 'gold_thief' && !Game.Story.seen('goldthief')) Game.Story.unlock('goldthief', true);

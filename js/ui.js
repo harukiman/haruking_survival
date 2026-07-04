@@ -657,6 +657,14 @@ Game.UI = (function () {
         if (m.boss || m.midboss) { const hasUnique = (m.drops || []).some(function (d) { const it = Game.ITEMS[d.item]; return d.n[0] === 0 && it && (it.tool || it.armor != null || it.relic); }); if (hasUnique) { const rem = 3 - (best[id] % 3); pity = '<br><span class="ach-d" style="color:#ffd86b">🎁 固有装備の確定まで あと ' + (rem === 3 ? 3 : rem) + ' 体</span>'; } }
         const info = '<br><span class="ach-d">撃破 ' + best[id] + ' 体' + (m.boss ? '・ボス' : (m.hostile ? '' : '・非敵対')) + ' ｜ HP ' + m.hp + (m.hostile ? '・攻 ' + (m.dmg || 0) : '') + '</span>' + pity + dropNames(m);
         h += '<div class="ach-row got"><span class="ach-mk">' + (m.boss ? '👑' : '☠') + '</span><div><b>' + m.name + '</b>' + info + '</div></div>';
+        // 深夜個体(月狂の〇〇): 別項で強化ステータス＋夜間限定ドロップ(月光の欠片)を表示
+        const nk = best['night:' + id];
+        if (nk > 0) {
+          const nHp = Math.round(m.hp * 1.55), nAtk = Math.round((m.dmg || 0) * 1.4);
+          const nDrops = dropNames(m).replace('ドロップ: ', 'ドロップ: 月光の欠片・');
+          const ninfo = '<br><span class="ach-d" style="color:#bcd0ff">撃破 ' + nk + ' 体 ｜ 目が光り強化 HP ' + nHp + (m.hostile ? '・攻 ' + nAtk : '') + '</span>' + (nDrops || '<br><span class="ach-d" style="color:#bcd0ff">ドロップ: 月光の欠片</span>');
+          h += '<div class="ach-row got" style="border-color:#3a4a6a"><span class="ach-mk">🌙</span><div><b style="color:#bcd0ff">月狂の' + m.name + '</b>' + ninfo + '</div></div>';
+        }
       });
       if (lockedCount > 0) h += '<div class="ach-row"><span class="ach-mk">❔</span><div><b>未発見 ' + lockedCount + ' 種</b><br><span class="ach-d" style="opacity:.7">世界のどこかに潜んでいる…</span></div></div>';
       h += '</div>';
