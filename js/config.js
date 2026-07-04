@@ -490,6 +490,18 @@ Game.ITEMS = {
   void_helm:   { name:'虚無の兜', stack:1, color:'#a060e0', armor:5, slot:'head', flavor:'影核を埋め込んだ兜。影の囁きを遮る。' },
   // 乗り物
   gasoline:      { name:'ガソリン', stack:16, color:'#d8b24a', fuel:60, flavor:'現代の乗り物を動かす燃料。乗車中に使うと燃料を補給できる。' },
+  // ===== 中間素材(㊱㊲: クラフトの深さ。銃や上位装備は部品を経て作る) =====
+  gunpowder:     { name:'火薬', stack:99, color:'#3a3a3e', flavor:'硫黄と炭を練った火薬。銃・弾薬・爆発物の要。' },
+  gun_parts:     { name:'銃部品', stack:99, color:'#9a9ea6', flavor:'精密加工した銃の機関部品。あらゆる銃器の心臓部。' },
+  steel_plate:   { name:'鋼板', stack:99, color:'#b0b6be', flavor:'鉄を鍛え直した頑丈な鋼板。上位の防具や車両の装甲に。' },
+  rope:          { name:'ロープ', stack:99, color:'#b89a5a', flavor:'繊維を綯った丈夫なロープ。建築や道具に幅広く使う。' },
+  glass:         { name:'ガラス', stack:99, color:'#bfe2f5', flavor:'砂を溶かして作る透明なガラス。窓や光学部品に。' },
+  circuit:       { name:'回路基板', stack:99, color:'#4aa06a', flavor:'光素を編み込んだ精密回路。エネルギー兵器や高度な機械の核。' },
+  // ===== 新規消費アイテム(㊲) =====
+  jerky:         { name:'干し肉', stack:16, color:'#8a4a30', food:30, flavor:'塩と天日で干した保存食。腐りにくく腹持ちがよい。' },
+  fruit_salad:   { name:'フルーツサラダ', stack:8, color:'#ff8ab0', food:34, buff:{type:'regen_buff', dur:600}, flavor:'色とりどりの果実を和えた一皿。爽やかで、じんわり癒される。' },
+  energy_bar:    { name:'携行食', stack:16, color:'#c8a84a', food:24, buff:{type:'swiftness', dur:400}, flavor:'木の実と蜜を固めた携行食。手早くエネルギー補給、足取りも軽くなる。' },
+  medkit:        { name:'救急キット', stack:8, color:'#e05a5a', cures:true, heal:40, buff:{type:'regen_buff', dur:500}, flavor:'包帯と薬をまとめた救急キット。状態異常を治し、大きく回復する。' },
   repair_kit:    { name:'修理キット', stack:8, color:'#8aa0b0', repair:50, flavor:'乗り物の耐久を回復する工具一式。乗車中に使うと機体を直せる。' },
   buggy:         { name:'バギー', stack:1, color:'#d8863c', vehicle:'buggy', fuelVeh:true, flavor:'四輪駆動の軽快なオフロード車。燃料で走る。荒地もぐいぐい進む。' },
   car:           { name:'車', stack:1, color:'#c0444a', vehicle:'car', fuelVeh:true, flavor:'大地を駆ける鉄の馬。燃料で走る。' },
@@ -724,10 +736,22 @@ Game.RECIPES = [
   { out:{id:'rift_anchor', n:1}, in:{shadow_crystal:2, iron:2}, station:'crafting_table' },
   { out:{id:'shadow_altar', n:1}, in:{shadow_steel:3, shadow_crystal:5}, station:'crafting_table' },
   { out:{id:'sanity_charm', n:1}, in:{shadow_core:1, lumen:5}, station:'crafting_table' },
-  // 銃・弾・乗り物
-  { out:{id:'bullet', n:8}, in:{iron:1, coal:1}, station:'crafting_table' },
-  { out:{id:'pistol', n:1}, in:{iron:5, wood:1}, station:'crafting_table' },
-  { out:{id:'shadow_rifle', n:1}, in:{shadow_steel:4, lumen:2}, station:'crafting_table' },
+  // 中間素材(㊱㊲: 銃/上位装備は部品を経て作る)
+  { out:{id:'gunpowder', n:2}, in:{sulfur:2, coal:1}, station:'furnace' },
+  { out:{id:'gun_parts', n:2}, in:{iron:3, gold_bar:1}, station:'crafting_table' },
+  { out:{id:'steel_plate', n:2}, in:{iron:3, coal:2}, station:'furnace' },
+  { out:{id:'rope', n:3}, in:{string:3}, station:'crafting_table' },
+  { out:{id:'glass', n:2}, in:{stone:2}, station:'furnace' },
+  { out:{id:'circuit', n:1}, in:{lumen:2, gold_bar:1, iron:1}, station:'crafting_table' },
+  // 新規消費アイテム(㊲)
+  { out:{id:'jerky', n:1}, in:{cooked_meat:1}, station:'campfire' },
+  { out:{id:'fruit_salad', n:1}, in:{apple:1, berry:1, strawberry:1}, station:'crafting_table' },
+  { out:{id:'energy_bar', n:2}, in:{berry:2, wheat:1}, station:'crafting_table' },
+  { out:{id:'medkit', n:1}, in:{string:2, flower:2, lumen:1}, station:'crafting_table' },
+  // 銃・弾・乗り物(㊱: 火薬・銃部品を要し簡単には作れない)
+  { out:{id:'bullet', n:8}, in:{iron:1, gunpowder:1}, station:'crafting_table' },
+  { out:{id:'pistol', n:1}, in:{iron:4, gun_parts:1, gunpowder:1, wood:1}, station:'crafting_table' },
+  { out:{id:'shadow_rifle', n:1}, in:{shadow_steel:4, gun_parts:2, lumen:2}, station:'crafting_table' },
   { out:{id:'boat', n:1}, in:{wood:8}, station:'crafting_table' },
   // 現代の乗り物(ユーザー指示: 相当多い素材コスト。鉱石希少化と併せ「作る価値のある大目標」に)
   { out:{id:'car', n:1}, in:{iron:24, coal:12, gold_bar:2}, station:'crafting_table' },
@@ -818,11 +842,11 @@ Game.RECIPES = [
   { out:{id:'ammo_50', n:4}, in:{iron:3, coal:2}, station:'crafting_table' },
   { out:{id:'rocket_ammo', n:1}, in:{iron:5, coal:3, gold_bar:1}, station:'crafting_table' },
   // 銃(遠距離で強力)は制作コストを引き上げ(ユーザー指示)
-  { out:{id:'glock17', n:1}, in:{iron:7, gold_bar:1, wood:2}, station:'crafting_table' },
-  { out:{id:'mp5', n:1}, in:{iron:11, gold_bar:2}, station:'crafting_table' },
-  { out:{id:'m4', n:1}, in:{iron:14, gold_bar:3, coal:4}, station:'crafting_table' },
-  { out:{id:'ak47', n:1}, in:{iron:16, gold_bar:3, coal:4}, station:'crafting_table' },
-  { out:{id:'m870', n:1}, in:{iron:12, gold_bar:1, wood:3}, station:'crafting_table' },
+  { out:{id:'glock17', n:1}, in:{iron:5, gun_parts:2, gunpowder:2, wood:1}, station:'crafting_table' },
+  { out:{id:'mp5', n:1}, in:{iron:8, gun_parts:3, gunpowder:3, steel_plate:1}, station:'crafting_table' },
+  { out:{id:'m4', n:1}, in:{iron:10, gun_parts:4, gunpowder:3, steel_plate:2, coal:2}, station:'crafting_table' },
+  { out:{id:'ak47', n:1}, in:{iron:12, gun_parts:4, gunpowder:4, steel_plate:2}, station:'crafting_table' },
+  { out:{id:'m870', n:1}, in:{iron:8, gun_parts:2, gunpowder:3, wood:3}, station:'crafting_table' },
   { out:{id:'barrett', n:1}, in:{iron:20, gold_bar:5, shadow_steel:2}, station:'crafting_table' },
   { out:{id:'rpg7', n:1}, in:{iron:24, gold_bar:6, shadow_steel:3}, station:'crafting_table' },
   // ===== P33 ワクワク武器 =====
@@ -831,8 +855,8 @@ Game.RECIPES = [
   { out:{id:'thunder_sword', n:1}, in:{iron:6, lumen:2, gold_bar:1}, station:'crafting_table' },
   { out:{id:'boomerang_axe', n:1}, in:{iron:5, wood:3}, station:'crafting_table' },
   { out:{id:'crescent_twinblade', n:1}, in:{iron:6, lumen:2, shadow_shard:3}, station:'crafting_table' },
-  { out:{id:'laser_rifle', n:1}, in:{iron:8, lumen:3, gold_bar:2}, station:'crafting_table' },
-  { out:{id:'railgun', n:1}, in:{iron:12, star_metal:2, lumen:4}, station:'crafting_table' },
+  { out:{id:'laser_rifle', n:1}, in:{iron:6, lumen:4, circuit:2, gun_parts:2}, station:'crafting_table' },
+  { out:{id:'railgun', n:1}, in:{iron:10, star_metal:2, lumen:4, circuit:3, gun_parts:4}, station:'crafting_table' },
   // ===== 空島(スカイエンクレーブ) =====
   // 風の羽根: ハーピー/雲鷹の羽根と光素で編む(空島への鍵)。光素は氷窟/水晶洞や影世界で採れる
   { out:{id:'wind_feather', n:1}, in:{feather:5, lumen:2}, station:'crafting_table' },
@@ -1181,7 +1205,7 @@ Game.ITEM_GLYPH = {
   sand_greatsword:'⚔️', magma_hammer:'🔨', pharaoh_crown:'👑', mind_tome:'📖', wisdom_tome:'📗', xp_orb:'🔮', expand_pouch:'🎒',
   feather:'🪶', wind_crystal:'💠', wind_steel:'🌀', wind_feather:'🪶', wind_sword:'🗡️', sky_cloak:'🧥', cloud_boots:'👢',
   ring_crit:'💍', amulet_swift:'📿', fang_vamp:'🦷', heart_regen:'❤️‍🔥', eye_xp:'👁️', band_power:'💪', crest_guard:'🛡️',
-  energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️', prism_blade:'⚔️', dragon_fang:'⚔️', colossus_blade:'⚔️', mire_scythe:'⚔️', magma_maul:'🔨', starcore_greatsword:'⚔️', voidcore_blade:'⚔️', spore_scythe:'⚔️', star_aegis:'🛡️', void_helm:'⛑️', thorn_plate:'🥷', tempest_spear:'🔱', sovereign_scepter:'👑', rift_crown:'👑', frostfang_blade:'🗡️', emberfang_axe:'🪓', echoedge:'🗡️', quakehammer:'🔨', flashstep_edge:'⚡', combat_vest:'🎽', reflect_aegis:'🛡️', iai_mumyo:'🗡️', heavenfall_staff:'☄️', gasoline:'⛽', repair_kit:'🔧', buggy:'🚙', tank:'🛡️', cannon_shell:'💣', battle_mech:'🤖', aqualung:'🤿', moonshard:'🌙', moon_charm:'🔮', fighter_jet:'✈️', bomber:'🛩️', aerial_bomb:'💣', heavy_bomb:'🧨',
+  energy_cell:'🔋', wind_blade:'🗡️', thunder_sword:'⚡', boomerang_axe:'🪃', laser_rifle:'🔫', railgun:'🔫', excalibur:'⚔️', gae_bolg:'🔱', gate_babylon:'⚔️', prism_blade:'⚔️', dragon_fang:'⚔️', colossus_blade:'⚔️', mire_scythe:'⚔️', magma_maul:'🔨', starcore_greatsword:'⚔️', voidcore_blade:'⚔️', spore_scythe:'⚔️', star_aegis:'🛡️', void_helm:'⛑️', thorn_plate:'🥷', tempest_spear:'🔱', sovereign_scepter:'👑', rift_crown:'👑', frostfang_blade:'🗡️', emberfang_axe:'🪓', echoedge:'🗡️', quakehammer:'🔨', flashstep_edge:'⚡', combat_vest:'🎽', reflect_aegis:'🛡️', iai_mumyo:'🗡️', heavenfall_staff:'☄️', gasoline:'⛽', repair_kit:'🔧', buggy:'🚙', tank:'🛡️', cannon_shell:'💣', battle_mech:'🤖', aqualung:'🤿', moonshard:'🌙', moon_charm:'🔮', fighter_jet:'✈️', bomber:'🛩️', aerial_bomb:'💣', heavy_bomb:'🧨', gunpowder:'⚫', gun_parts:'⚙️', steel_plate:'🔩', rope:'🪢', glass:'🔷', circuit:'🖥️', jerky:'🥓', fruit_salad:'🥗', energy_bar:'🍫', medkit:'🩹',
 };
 
 Game.INV_SIZE = 36;       // 先頭9 = ホットバー
