@@ -186,6 +186,7 @@ Game.Player = (function () {
     if (Game.state.fallout && Game.state.fallout.length) updateFallout(); // 死の灰
     if (p.cannonCd > 0) p.cannonCd--; // 戦車主砲のクールダウン
     if (p.missileCd > 0) p.missileCd--; // 戦闘機ミサイルのクールダウン
+    if (p.missileSalvo && p.missileSalvo.left > 0) updateMissileSalvo(p); // 短い間隔でミサイルを1発ずつ射出
     if (p.jetBurst > 0 && p.vehicle === 'jet') updateJetBurst(p); // 戦闘機の10連射バーストを流し撃つ
     else if (p.jetBurst > 0) p.jetBurst = 0; // 降機したら中断
     if (p.vehicle === 'tank') updateTurret(p, intent); // 戦車の砲塔を旋回(移動と独立)
@@ -1064,12 +1065,11 @@ Game.Player = (function () {
     if (isCrit) { dmg = Math.round(dmg * (Game.TUNE.CRIT_MULT || 1.8)); Game.Audio.play('crit'); if (Game.Render.shake) Game.Render.shake(5); }
     const cfx = CALIBER_FX[sel.ammo] || null; // 口径別の着弾/薬莢演出(性能不変)
     const ang = Game.Projectiles.aimAngle ? Game.Projectiles.aimAngle() : 0;
-    // ミサイル系の銃(ロックオンランチャー等)は自動追尾＋一定距離で自爆
+    // ミサイル系の銃(ロックオンランチャー等)は低速射出→加速＋自動追尾＋一定距離で自爆
     const isMissile = kind === 'missile';
-    const mLife = isMissile ? Math.round((sel.range || 22) * TS / (sel.bspeed || 14)) : 0;
     for (let i = 0; i < pellets; i++) {
       const spr = pellets > 1 ? (Math.random() - 0.5) * (sel.spread || 0.5) : (sel.spread || 0);
-      Game.Projectiles.fire(dmg, kind, { spread: spr, explosive: sel.explosive || 0, speed: sel.bspeed, crit: isCrit, impact: cfx ? cfx.imp : null, homing: sel.homing, detonateAtEnd: isMissile, life: isMissile ? mLife : undefined });
+      Game.Projectiles.fire(dmg, kind, { spread: spr, explosive: sel.explosive || 0, speed: sel.bspeed, crit: isCrit, impact: cfx ? cfx.imp : null, homing: sel.homing, detonateAtEnd: isMissile, life: isMissile ? (sel.dur || 50) : undefined, speedStart: isMissile ? sel.speedStart : undefined, speedMax: isMissile ? sel.speedMax : undefined, accel: isMissile ? sel.accel : undefined });
     }
     p.attackCd = sel.cd || 12;
     if (Game.UI.tipOnce) Game.UI.tipOnce('gun_strafe', '銃は撃ちながら移動できます（ストレイフ）。射撃中は射撃方向が固定されます');
@@ -1502,6 +1502,23 @@ Game.Player = (function () {
     Game.UI.toast('🌀 帰還の渦に飛び込み、ダンジョンの入口へ戻った');
   }
   // 戦術核: 発射→10秒警報→着弾大爆発→死の灰(7ゲーム内日間の継続ダメージ、味方も敵も)
+  // ミサイルのサルボ射出: 短い間隔(every)で1発ずつ発射。各弾は低速で出て加速し、homingなら最寄りの敵へ追尾。
+  // 実機の連続発射のように "ばしゅっ ばしゅっ" と機体から次々に射出される。
+  function updateMissileSalvo(p) {
+    const s = p.missileSalvo; if (!s || s.left <= 0) return;
+    if (s.t > 0) { s.t--; return; }
+    const k = s.i, n = s.count;
+    const spr = n > 1 ? (k / (n - 1) - 0.5) * s.spread : 0; // 扇状に散らしてから各自ロックオン
+    Game.Projectiles.fire(s.dmg, 'missile', { angle: s.base + spr, speedStart: s.speedStart, speedMax: s.speedMax, accel: s.accel, explosive: s.explosive, detonateAtEnd: true, life: s.dur, homing: s.homing, small: s.small });
+    Game.Audio.play('missile_launch');
+    const mx = p.x + Math.cos(s.base + spr) * 14, my = p.y + Math.sin(s.base + spr) * 14;
+    if (Game.Render.spawnMuzzle) Game.Render.spawnMuzzle(mx, my, s.base + spr, '#ffce80', 1.0);
+    if (Game.Render.spawnParticles) Game.Render.spawnParticles(mx, my, '#e8e2d4', 3); // 射出の白煙
+    if (Game.Mobs.alertNoise) Game.Mobs.alertNoise(p.x, p.y, 11, 90);
+    s.i++; s.left--; s.t = s.every;
+    if (s.left <= 0) p.missileSalvo = null;
+  }
+
   // 戦車の砲塔旋回: 移動とは独立に、狙う方向(カーソル/タッチ/右スティック照準)へ砲塔を滑らかに回す。
   // 照準入力が無い間は現在の向きを保持(=旋回して固定できる)。TWS(最大旋回速度)でゆっくり回るのが戦車らしい。
   function updateTurret(p, intent) {

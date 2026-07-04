@@ -503,24 +503,19 @@ Game.Combat = (function () {
     const md = p.vehicle === 'jet' ? (Game.ITEMS.fighter_jet && Game.ITEMS.fighter_jet.jetMissile)
       : p.vehicle === 'bomber' ? (Game.ITEMS.bomber && Game.ITEMS.bomber.bomberMissile) : null;
     if (!md) return false;
-    if ((p.missileCd || 0) > 0) return false;
+    if ((p.missileCd || 0) > 0 || (p.missileSalvo && p.missileSalvo.left > 0)) return false; // 発射中は次を受け付けない
     const ammoId = md.ammo || 'missile';
     if (Game.Inventory.count(ammoId) <= 0) { if (Game.state.tick % 40 === 0) Game.UI.toast((Game.ITEMS[ammoId] ? Game.ITEMS[ammoId].name : 'ミサイル') + 'がない — クラフトして搭載を'); p.missileCd = 15; return false; }
-    Game.Inventory.remove(ammoId, 1); // 1発ぶんの弾薬で count 発を一斉発射
+    Game.Inventory.remove(ammoId, 1); // 1発ぶんの弾薬で count 発を短い間隔で連続発射(ばしゅっばしゅっ)
     const ang = Game.Projectiles.aimAngle ? Game.Projectiles.aimAngle() : 0;
-    const sp = md.speed || 18; // 通常の爆弾/ロケット(~6)の約3倍速
-    const life = Math.max(6, Math.round((md.range || 16) * TS / sp)); // 一定距離で自爆
-    const dmg = Game.Player.effAttack(md.dmg || 60);
     const count = md.count || 1;
-    for (let k = 0; k < count; k++) {
-      const spr = count > 1 ? (k / (count - 1) - 0.5) * 0.34 : 0; // 扇状に散らしてから各自追尾
-      Game.Projectiles.fire(dmg, 'missile', { angle: ang + spr, speed: sp, explosive: md.explosive || 2.6, detonateAtEnd: true, life: life, homing: !!md.homing, small: md.small });
-    }
-    Game.Audio.play('missile_launch');
-    if (Game.Render.spawnMuzzle) Game.Render.spawnMuzzle(p.x + Math.cos(ang) * 18, p.y + Math.sin(ang) * 18, ang, '#ffb060', 1.3);
-    if (Game.Render.shake) Game.Render.shake(3);
-    if (Game.Mobs.alertNoise) Game.Mobs.alertNoise(p.x, p.y, 12, 130);
-    if (md.homing && Game.UI.toast && Game.state.tick % 2 === 0) Game.UI.tipOnce && Game.UI.tipOnce('homing', '🚀 ロックオン発射！ ミサイルが最寄りの敵へ自動で追尾する');
+    // 一斉ではなく short interval で1発ずつ射出するサルボ。実機のように低速で出て狙いを定め加速する
+    p.missileSalvo = {
+      left: count, i: 0, count: count, every: md.every || 4, t: 0, base: ang, spread: (md.spread != null ? md.spread : 0.34),
+      dmg: Game.Player.effAttack(md.dmg || 60), explosive: md.explosive || 2.6, dur: md.dur || 50,
+      speedStart: md.speedStart || 6, speedMax: md.speedMax || 20, accel: md.accel || 1.0, homing: !!md.homing, small: !!md.small,
+    };
+    if (md.homing && Game.UI.tipOnce) Game.UI.tipOnce('homing', '🚀 ロックオン発射！ ミサイルは低速で出て最寄りの敵へ狙いを定め、加速して突入する');
     p.missileCd = md.cd || 26;
     return true;
   }
