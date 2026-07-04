@@ -547,7 +547,7 @@ Game.ITEMS = {
   cannon_shell:  { name:'戦車砲弾', stack:32, color:'#6a6a4a', flavor:'戦車の主砲弾。着弾で炸裂し範囲に大ダメージ。乗車中に主砲として撃つ。' },
   tank:          { name:'戦車', stack:1, color:'#4a5a3c', vehicle:'tank', fuelVeh:true, tankCannon:{ dmg:70, radius:2.6, cd:26, range:11 }, flavor:'一人乗りの装甲戦車。鈍いが頑強で、主砲(戦車砲弾)は着弾点を吹き飛ばす。攻撃ボタンで砲撃。' },
   battle_mech:   { name:'戦闘ロボ', stack:1, color:'#7a8496', vehicle:'mech', fuelVeh:true, mechStomp:{ dmg:44, r:2.6, cd:20 }, flavor:'一人乗りの二足歩行兵器。機敏で頑強。攻撃ボタンで大地を踏み鳴らし、周囲の敵を衝撃波で薙ぐ。' },
-  fighter_jet:   { name:'戦闘機', stack:1, color:'#8a96c0', vehicle:'jet', fuelVeh:true, jetGun:{ dmg:11, cd:5, spread:0.12 }, flavor:'一人乗りの戦闘機。空を高速で駆け、あらゆる地形を越える。攻撃ボタンで機首の二連機関銃を掃射(弾丸を消費)。' },
+  fighter_jet:   { name:'戦闘機', stack:1, color:'#8a96c0', vehicle:'jet', fuelVeh:true, jetGun:{ dmg:6, burst:10, spread:0.05, speed:13 }, flavor:'一人乗りの戦闘機。空を高速で駆け、あらゆる地形を越える。攻撃1タップで機首砲が真っ直ぐ10連射(弾丸1消費)。ミニガンの2倍レート・低威力の弾幕で薙ぎ払う。' },
   aerial_bomb:   { name:'T-0S21 航空爆弾', stack:16, color:'#4a5240', bomb:{ dmg:90, radius:3.4 }, flavor:'爆撃機に搭載する制式航空爆弾。投下すると着弾点を広範囲に吹き飛ばす。' },
   heavy_bomb:    { name:'GBU-45 大型爆弾', stack:8, color:'#3a4030', bomb:{ dmg:180, radius:5.2 }, flavor:'重量級の誘導爆弾。一発で拠点を更地に変える破壊力。爆撃機専用。' },
   bomber:        { name:'爆撃機', stack:1, color:'#6a7060', vehicle:'bomber', fuelVeh:true, bomberBay:true, flavor:'一人乗りの爆撃機。空を進みながら攻撃ボタンで搭載した爆弾(T-0S21等)を投下する。積んだ分だけ落とせる。' },

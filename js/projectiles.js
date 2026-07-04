@@ -66,7 +66,7 @@ Game.Projectiles = (function () {
   function fire(dmg, kind, opts) {
     opts = opts || {};
     const p = Game.state.player;
-    const baseAng = aimDir();
+    const baseAng = (opts.angle != null) ? opts.angle : aimDir(); // angle指定で照準方向を固定(戦闘機の掃射など)
     const count = opts.count || 1;
     const defSp = kind === 'bullet' || kind === 'tracer' || !kind ? 9 : kind === 'rocket' ? 6 : kind === 'pierce' || kind === 'laser' ? 13 : kind === 'slash' ? 8.5 : kind === 'boomerang' ? 7 : 7;
     const sp = opts.speed || defSp;

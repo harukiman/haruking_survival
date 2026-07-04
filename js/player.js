@@ -185,6 +185,8 @@ Game.Player = (function () {
     if (Game.state.nuke) updateNuke();      // 戦術核の警報→着弾
     if (Game.state.fallout && Game.state.fallout.length) updateFallout(); // 死の灰
     if (p.cannonCd > 0) p.cannonCd--; // 戦車主砲のクールダウン
+    if (p.jetBurst > 0 && p.vehicle === 'jet') updateJetBurst(p); // 戦闘機の10連射バーストを流し撃つ
+    else if (p.jetBurst > 0) p.jetBurst = 0; // 降機したら中断
     p.prevX = p.x; p.prevY = p.y;
 
     let dx = intent.dx, dy = intent.dy;
@@ -338,7 +340,9 @@ Game.Player = (function () {
       dx /= len; dy /= len;
       // 弾幕撃ち(ストレイフ): 銃を撃っている間は移動しても射撃方向を固定する(横移動＝ストレイフ)
       const _sel = Game.Inventory.selectedSlot(), _sd = _sel && Game.ITEMS[_sel.id];
-      const firingGun = (intent.mine || intent.fire) && _sd && _sd.tool === 'gun';
+      // 銃のストレイフに加え、戦闘機も射撃中(バースト中/攻撃入力中)は射撃方向を固定して横移動できる
+      const firingJet = p.vehicle === 'jet' && ((p.jetBurst || 0) > 0 || intent.mine || intent.fire);
+      const firingGun = ((intent.mine || intent.fire) && _sd && _sd.tool === 'gun') || firingJet;
       if (!firingGun) p.dir = intent.dir || p.dir; // 射撃中は向きを更新しない=照準ロック
       const ox = p.x, oy = p.y;
       const mvSpd = p.vehicle ? spd * (0.3 + 0.7 * p.vThr) : spd; // 乗り物は出だし30%→滑らかに最高速へ
@@ -1464,6 +1468,22 @@ Game.Player = (function () {
     Game.UI.toast('🌀 帰還の渦に飛び込み、ダンジョンの入口へ戻った');
   }
   // 戦術核: 発射→10秒警報→着弾大爆発→死の灰(7ゲーム内日間の継続ダメージ、味方も敵も)
+  // 戦闘機の掃射: バースト中、毎tick2発ずつ照準固定方向へ真っ直ぐ撃つ(=ミニガンの2倍レート)。
+  // 扇状に拡散させず、微小なばらつきのみ。弾薬は発射時に1消費済みで、ここでは消費しない。
+  function updateJetBurst(p) {
+    const ang = p.jetBurstDir || 0, dmg = p.jetBurstDmg || 6, sp = 13;
+    const shots = Math.min(2, p.jetBurst);
+    for (let i = 0; i < shots; i++) {
+      const jit = (Math.random() - 0.5) * 0.05; // 真っ直ぐ寄りの微小ばらつき
+      Game.Projectiles.fire(dmg, 'tracer', { angle: ang + jit, speed: sp });
+    }
+    p.jetBurst -= shots;
+    // マズルフラッシュと発砲音・振動(流し撃ちの手触り)
+    if (Game.Render.spawnMuzzle) Game.Render.spawnMuzzle(p.x + Math.cos(ang) * 16, p.y + Math.sin(ang) * 16, ang, '#ffe06a', 1.1);
+    if (Game.state.tick % 2 === 0) { Game.Audio.play('gun_mini'); if (Game.Render.shake) Game.Render.shake(1); }
+    if (Game.Mobs.alertNoise) Game.Mobs.alertNoise(p.x, p.y, 10, 60);
+  }
+
   function updateNuke() {
     const nk = Game.state.nuke; if (!nk) return;
     nk.t--;

@@ -53,21 +53,21 @@ Game.Combat = (function () {
       p.cannonCd = md.cd;
       return true;
     }
-    // 戦闘機の二連機関銃: 攻撃ボタンで前方へ弾丸を掃射(弾丸を消費)。高速連射・低CD
+    // 戦闘機の機首砲: 攻撃1タップで真っ直ぐ10連射のバーストを開始(弾丸1消費)。
+    // ミニガンの2倍レート(2発/tick)・低威力(6)の弾幕。扇状に拡散せず照準方向へ一直線。以降のtickで流し撃つ。
     if (p.vehicle === 'jet') {
       const jd = Game.ITEMS.fighter_jet && Game.ITEMS.fighter_jet.jetGun;
       if (!jd) return true;
       if ((p.cannonCd || 0) > 0) return true;
-      // 増設した機関銃の基数だけ弾数が増える(基本2門+増設0-4=最大6門)。設置した数だけ掃射
+      if ((p.jetBurst || 0) > 0) return true; // バースト中は次のタップを受け付けない
+      if (Game.Inventory.count('bullet') < 1) { if (Game.state.tick % 40 === 0) Game.UI.toast('弾丸がない — 機関銃の弾を補充を'); return true; }
+      Game.Inventory.remove('bullet', 1); // 1タップ=弾薬1消費
       const mounted = (p.vehGuns && p.vehGuns.jet) || 0;
-      const barrels = 2 + mounted;
-      if (Game.Inventory.count('bullet') < barrels) { if (Game.state.tick % 40 === 0) Game.UI.toast('弾丸がない — 機関銃の弾を補充を'); return true; }
-      Game.Inventory.remove('bullet', barrels);
-      Game.Projectiles.fire(Game.Player.effAttack(jd.dmg), 'tracer', { count: barrels, spread: jd.spread + mounted * 0.03, speed: 12 });
-      Game.Audio.play('gun_smg'); if (Game.Render.shake) Game.Render.shake(2);
-      if (Game.Render.spawnMuzzle) { let fx = 0, fy = 0; if (p.dir === 'up') fy = -1; else if (p.dir === 'down') fy = 1; else if (p.dir === 'left') fx = -1; else fx = 1; Game.Render.spawnMuzzle(p.x + fx * 14, p.y + fy * 14, Math.atan2(fy, fx), '#ffe06a', 1.1); }
-      if (Game.Mobs.alertNoise) Game.Mobs.alertNoise(p.x, p.y, 10, 120);
-      p.cannonCd = jd.cd;
+      const burst = (jd.burst || 10) + mounted * 4; // 増設機関銃で弾幕が濃くなる(基本10発)
+      p.jetBurst = burst;
+      p.jetBurstDir = Game.Projectiles.aimAngle ? Game.Projectiles.aimAngle() : 0; // 照準方向を固定
+      p.jetBurstDmg = Game.Player.effAttack(jd.dmg);
+      p.cannonCd = Math.ceil(burst / 2) + 2; // バースト射出中は再タップ不可
       return true;
     }
     // 爆撃機: 攻撃ボタンで搭載爆弾を投下(所持している爆弾を消費)。重い爆弾を優先
