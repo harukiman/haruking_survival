@@ -128,6 +128,7 @@ Game.Render = (function () {
     drawBreath(ctx);
     drawFuel(ctx);
     drawVehDur(ctx);
+    drawVehAmmo(ctx);
     drawWreck(ctx);
     drawFires(ctx);
     drawDowned(ctx);
@@ -643,39 +644,63 @@ Game.Render = (function () {
     ctx.fillText('💨', sc.x, by - 3 * z); ctx.textAlign = 'left';
     ctx.restore();
   }
-  // 燃料ゲージ: 現代の乗り物に乗車中のみ、頭上に⛽メーター
+  // 乗り物HUD共通の1行メーター: [アイコン][バー][数値] を横並びで描画(縦積みの重なりを排除)。
+  // ラベルはバーの左右にインラインで置き、バーの上に文字を描かない=上方向への衝突を根絶する。
+  function vehMeterRow(ctx, sc, z, yOffPx, frac, fillCol, icon, valueText) {
+    const bw = 40 * z, bh = 5 * z, bx = sc.x - bw / 2, by = sc.y + yOffPx * z;
+    frac = Math.max(0, Math.min(1, frac));
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(bx - 1, by - 1, bw + 2, bh + 2);
+    ctx.fillStyle = fillCol; ctx.fillRect(bx, by, bw * frac, bh);
+    ctx.font = 'bold ' + Math.round(8 * z) + 'px sans-serif';
+    ctx.textAlign = 'right'; ctx.fillStyle = '#eef2f2'; ctx.fillText(icon, bx - 3 * z, by + bh / 2);
+    if (valueText) { ctx.textAlign = 'left'; ctx.fillStyle = '#dfe6e6'; ctx.fillText(valueText, bx + bw + 3 * z, by + bh / 2); }
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  }
+  // 燃料ゲージ: 現代の乗り物に乗車中のみ。耐久ゲージの下段に横並びで表示(重なりなし)
   function drawFuel(ctx) {
     const p = Game.state.player; if (!p || !p.vehicle || !p.fuel) return;
     const FUEL_MAX = 120; // 表示上の満タン目安(ガソリン2本相当)
     const f = p.fuel[p.vehicle]; if (f == null) return;
     const sc = Game.Camera.worldToScreen(p.x, p.y), z = Game.Camera.zoom ? Game.Camera.zoom() : 1;
-    const w = 46 * z, h = 5 * z, bx = sc.x - w / 2, by = sc.y - 40 * z;
-    const frac = Math.max(0, Math.min(1, f / FUEL_MAX));
-    ctx.save();
-    ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(bx - 1, by - 1, w + 2, h + 2);
-    ctx.fillStyle = f <= 0 ? '#ff5a5a' : frac < 0.25 ? '#ffb24a' : '#d8c24a';
-    ctx.fillRect(bx, by, w * frac, h);
-    // 残量数値＋予備ガソリン本数(補給できるか一目で分かる)
     const gasReserve = Game.Inventory ? Game.Inventory.count('gasoline') : 0;
-    ctx.fillStyle = '#e8dca0'; ctx.font = 'bold ' + Math.round(8 * z) + 'px sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText('⛽ ' + Math.ceil(f) + (gasReserve > 0 ? '  (予備' + gasReserve + ')' : ''), sc.x, by - 3 * z);
-    if (f <= 0) { ctx.fillStyle = '#ffd86b'; ctx.font = 'bold ' + Math.round(7.5 * z) + 'px sans-serif'; ctx.fillText(gasReserve > 0 ? 'ガソリンを「使う」で給油' : 'ガソリンが必要', sc.x, by + h + 9 * z); }
-    ctx.textAlign = 'left';
+    const col = f <= 0 ? '#ff5a5a' : (f / FUEL_MAX) < 0.25 ? '#ffb24a' : '#d8c24a';
+    ctx.save();
+    // 下段(-36px): 燃料。上段の耐久(-46px)と10px間隔で確実に離す
+    vehMeterRow(ctx, sc, z, -36, f / FUEL_MAX, col, '⛽', Math.ceil(f) + (gasReserve > 0 ? ' 予備' + gasReserve : ''));
+    if (f <= 0) { ctx.fillStyle = '#ffd86b'; ctx.font = 'bold ' + Math.round(7.5 * z) + 'px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(gasReserve > 0 ? 'ガソリンを「使う」で給油' : 'ガソリンが必要', sc.x, sc.y - 58 * z); ctx.textAlign = 'left'; }
     ctx.restore();
   }
-  // 乗り物の耐久ゲージ(頭上・燃料の下)。損傷時のみ表示
+  // 戦闘車両の残弾表示: 耐久(-46)/燃料(-36)の下段(-26)に横並び。重なりを避けた3段目
+  function drawVehAmmo(ctx) {
+    const p = Game.state.player; if (!p || !p.vehicle) return;
+    let icon = null, count = 0;
+    if (p.vehicle === 'tank') { icon = '💥'; count = Game.Inventory.count('cannon_shell'); }
+    else if (p.vehicle === 'jet') { icon = '🔫'; count = Game.Inventory.count('bullet'); }
+    else if (p.vehicle === 'bomber') { icon = '💣'; count = Game.Inventory.count('aerial_bomb') + Game.Inventory.count('heavy_bomb'); }
+    else return;
+    const sc = Game.Camera.worldToScreen(p.x, p.y), z = Game.Camera.zoom ? Game.Camera.zoom() : 1;
+    const by = sc.y - 26 * z;
+    ctx.save();
+    ctx.textBaseline = 'middle'; ctx.font = 'bold ' + Math.round(8.5 * z) + 'px sans-serif';
+    const txt = icon + ' 残弾 ' + count;
+    ctx.textAlign = 'center';
+    const wpx = ctx.measureText(txt).width;
+    ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(sc.x - wpx / 2 - 4 * z, by - 6 * z, wpx + 8 * z, 12 * z);
+    ctx.fillStyle = count <= 0 ? '#e0664a' : '#e8edf2'; ctx.fillText(txt, sc.x, by);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    ctx.restore();
+  }
+  // 乗り物の耐久ゲージ: 上段(-46px)に横並び表示(常時)
   function drawVehDur(ctx) {
     const p = Game.state.player; if (!p || !p.vehicle) return;
     const MAX = { car: 120, buggy: 90, plane: 140, boat: 70, tank: 240, mech: 180, jet: 130, bomber: 160 }[p.vehicle]; if (MAX == null) return;
     if (!p.vehDur) p.vehDur = {};
     let d = p.vehDur[p.vehicle]; if (d == null) d = MAX; // 常に表示(ユーザー: 耐久も常時表示)
     const sc = Game.Camera.worldToScreen(p.x, p.y), z = Game.Camera.zoom ? Game.Camera.zoom() : 1;
-    const w = 46 * z, h = 4 * z, bx = sc.x - w / 2, by = sc.y - 47 * z, frac = Math.max(0, d / MAX);
+    const frac = Math.max(0, d / MAX);
     ctx.save();
-    ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(bx - 1, by - 1, w + 2, h + 2);
-    ctx.fillStyle = frac < 0.3 ? '#ff5a5a' : '#9fd8a0'; ctx.fillRect(bx, by, w * frac, h);
-    ctx.fillStyle = '#cfe0d0'; ctx.font = 'bold ' + Math.round(7 * z) + 'px sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText('🔧', sc.x, by - 2 * z); ctx.textAlign = 'left';
+    vehMeterRow(ctx, sc, z, -46, frac, frac < 0.3 ? '#ff5a5a' : '#9fd8a0', '🔧', Math.ceil(d) + '/' + MAX);
     ctx.restore();
   }
   // 大破カウントダウン中の残骸(煙＋点滅＋残り秒)
