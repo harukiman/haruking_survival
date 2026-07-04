@@ -993,7 +993,7 @@ Game.Player = (function () {
       if (it && it.usePointer && it.mouseTile) { tx = it.mouseTile.tx * TS + TS / 2; ty = it.mouseTile.ty * TS + TS / 2; }
       else { let dx = 0, dy = 0; if (p.dir === 'up') dy = -1; else if (p.dir === 'down') dy = 1; else if (p.dir === 'left') dx = -1; else dx = 1; tx = p.x + dx * 7 * TS; ty = p.y + dy * 7 * TS; }
       Game.Inventory.remove('nuke_warhead', 1);
-      Game.state.nuke = { tx: tx, ty: ty, t: 300, dmg: 1000, radius: 8 }; // 10秒(30fps)
+      Game.state.nuke = { tx: tx, ty: ty, t: 300, dmg: 1000, radius: 11.2 }; // 10秒(30fps)。爆心半径は約1.4倍に拡大
       Game.UI.toast('☢ 戦術核を発射！ 10秒後に着弾——今すぐ退避せよ！');
       Game.Audio.play('event_horde'); if (Game.Render.shake) Game.Render.shake(8);
       p.attackCd = 40; Game.UI.refreshAll();

@@ -47,9 +47,10 @@ Game.UI = (function () {
     document.getElementById('opt-name').addEventListener('click', function () { const n = window.prompt('名前を入力:'); if (n) { Game.Net.setName(n); toast('名前を ' + n + ' に変更'); } });
     document.getElementById('opt-sound').addEventListener('click', function () { const on = Game.Audio.toggle(); this.textContent = 'サウンド: ' + (on ? 'ON' : 'OFF'); });
     document.getElementById('opt-zoom').addEventListener('click', function () {
-      Game.state.zoom = Game.state.zoom > 0.85 ? 0.7 : 1;
-      this.textContent = 'マップ表示: ' + (Game.state.zoom < 1 ? '広い' : '標準');
+      const lv = cycleZoom();
+      this.textContent = 'マップ表示: ' + lv;
     });
+    { const zb = document.getElementById('btn-zoom'); if (zb) zb.addEventListener('click', function () { const lv = cycleZoom(); toast('俯瞰: ' + lv); }); }
     // エンチャント
     el.enchantScreen = document.getElementById('enchant-screen');
     el.enchantGrid = document.getElementById('enchant-grid');
@@ -162,6 +163,8 @@ Game.UI = (function () {
     el.hotbar.classList.remove('hidden');
     if (el.sound) el.sound.classList.remove('hidden');
     const ob = document.getElementById('btn-options'); if (ob) ob.classList.remove('hidden');
+    const zb = document.getElementById('btn-zoom'); if (zb) zb.classList.remove('hidden');
+    syncZoomIdx(); updateZoomBadge();
     if (el.btnMap) el.btnMap.classList.remove('hidden');
     startHints(); // 初回セーブのみのマイクロガイド(案内済みフラグで再表示しない)
   }
@@ -1400,6 +1403,44 @@ Game.UI = (function () {
     el.world.className = wn === 'space' ? 'world-space' : shadow ? 'world-shadow' : 'world-light';
     document.body.classList.toggle('shadow-mode', shadow);
     refreshStats();
+  }
+
+  // ===== 俯瞰(カメラ)の広さ調節 =====
+  // ズーム値が大きい=拡大(視野が狭い)、小さい=縮小(視野が広い)。
+  // 最接近=主人公中心に短辺で半径約3マス、最大=標準の約1.5倍広い。
+  function zoomLevels() {
+    const v = Game.view || { w: 400, h: 700 }, TS = Game.CFG.TILE_SIZE;
+    const zNarrow = (Math.min(v.w, v.h) / 2) / (3 * TS); // 短辺で半径3マス(最も近い)
+    const zWide = 1 / 1.5;                                // 標準の1.5倍広い(最も広い)
+    const zNear = Math.sqrt(1 * zNarrow);                // 標準と最接近の中間(幾何平均)
+    return [
+      { z: zWide, label: '最大に広い' },
+      { z: (zWide + 1) / 2, label: '広い' },
+      { z: 1, label: '標準' },
+      { z: zNear, label: '近い' },
+      { z: zNarrow, label: '最接近' },
+    ];
+  }
+  let zoomIdx = 2; // 標準
+  function cycleZoom() {
+    const lv = zoomLevels();
+    zoomIdx = (zoomIdx + 1) % lv.length;
+    Game.state.zoom = lv[zoomIdx].z;
+    updateZoomBadge();
+    Game.Audio.play('cursor');
+    return lv[zoomIdx].label;
+  }
+  function syncZoomIdx() {
+    const lv = zoomLevels(), z = Game.state.zoom || 1;
+    let bi = 2, bd = Infinity;
+    for (let i = 0; i < lv.length; i++) { const d = Math.abs(lv[i].z - z); if (d < bd) { bd = d; bi = i; } }
+    zoomIdx = bi;
+  }
+  function updateZoomBadge() {
+    const b = document.getElementById('btn-zoom-lv'); if (!b) return;
+    // 標準を基準に、拡大側=＋、縮小側=− の簡易インジケータ
+    const map = ['▽▽', '▽', '', '△', '△△'];
+    b.textContent = map[zoomIdx] || '';
   }
 
   // 1ページの列数(狭い画面=6, 通常=9)。4行を1ページとし、5行目以降は横スクロールで切替
