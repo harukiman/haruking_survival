@@ -1259,6 +1259,14 @@ Game.Player = (function () {
     for (const k in a) if (a[k]) s += Game.Loot.stats(a[k]).armor;
     return s + (Game.state.player.gearOffhandArmor || 0) + setBonus().armor + levelArmorBonus() + skillBonus().armor + (Game.Status ? Game.Status.buffSum().armor : 0);
   }
+  // 元素耐性(装備の耐火/耐氷affix): 炎上/凍えの持続を軽減(上限70%)。防具に付く元素防御
+  function statusResist(type) {
+    const field = type === 'burn' ? 'burnResist' : type === 'cold' ? 'coldResist' : null;
+    if (!field) return 0;
+    const a = Game.state.player.armor; let r = 0;
+    for (const k in a) if (a[k]) r += (Game.Loot.stats(a[k])[field] || 0);
+    return Math.min(0.7, r);
+  }
 
   // 装備セット効果（head+chestが同セット）
   function setBonus() {
@@ -1636,7 +1644,7 @@ Game.Player = (function () {
 
   return {
     makeDefault, spawnAt, update, targetTile, mining, playerTile, breakBlock, repairEquip,
-    interact, useNearby, gainXP, totalArmor, setBonus, sleep, checkGroupSleep, vehicleTakeDamage, updateWreck, equipSelectedArmor, equipFromInventory, equipRelic, equipOffhand, unequipSlot, applyEquipStats, bossesDefeated, bossTitle, travelToWaypoint,
+    interact, useNearby, gainXP, totalArmor, statusResist, setBonus, sleep, checkGroupSleep, vehicleTakeDamage, updateWreck, equipSelectedArmor, equipFromInventory, equipRelic, equipOffhand, unequipSlot, applyEquipStats, bossesDefeated, bossTitle, travelToWaypoint,
     effAttack, spendMana, manaCost, magicPower, attackCooldown, levelDmgBonus, levelArmorBonus, spendStat, unlockSkill, respec,
     skillBonus, skillFlag, canUnlock, currentWeaponAtk, equippedArmorAt, xpForLevel,
     reloadCurrent, magLoaded, magCap, selGunId, contextAction,

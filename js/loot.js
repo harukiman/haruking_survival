@@ -65,6 +65,9 @@ Game.Loot = (function () {
     { key: 'thorned', name: '棘の', thorns: [0.10, 0.25] },
     { key: 'reinforced', name: '補強の', arm: [1, 2], durMul: [1.35, 1.7] },
     { key: 'immortal', name: '不滅の', durMul: [1.5, 2.0] },
+    // 元素耐性(炎の敵/氷の敵・環境の炎上/凍えを軽減=元素システムの防御側)
+    { key: 'fireward', name: '耐火の', burnResist: [0.35, 0.6] },
+    { key: 'frostward', name: '耐氷の', coldResist: [0.35, 0.6] },
   ];
 
   function rr(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
@@ -121,6 +124,8 @@ Game.Loot = (function () {
       if (pick.sanity) af.sanity = true;
       if (pick.dot) af.dot = pick.dot; // 元素付与(業火/氷結/猛毒)を戦利品ロールに反映
       if (pick.durMul) af.durMul = Math.round((pick.durMul[0] + Math.random() * (pick.durMul[1] - pick.durMul[0])) * 100) / 100; // 耐久上限倍率
+      if (pick.burnResist) af.burnResist = Math.round((pick.burnResist[0] + Math.random() * (pick.burnResist[1] - pick.burnResist[0])) * 100) / 100;
+      if (pick.coldResist) af.coldResist = Math.round((pick.coldResist[0] + Math.random() * (pick.coldResist[1] - pick.coldResist[0])) * 100) / 100;
       affixes.push(af);
     }
     return { rarity: rarity, affixes: affixes };
@@ -128,7 +133,7 @@ Game.Loot = (function () {
 
   // 実効ステータス
   function stats(slot) {
-    const out = { atk: 0, armor: 0, hp: 0, lifesteal: 0, crit: 0, sanityResist: false, moveSpd: 0, staminaMax: 0, regen: 0, xpBoost: 0, thorns: 0 };
+    const out = { atk: 0, armor: 0, hp: 0, lifesteal: 0, crit: 0, sanityResist: false, moveSpd: 0, staminaMax: 0, regen: 0, xpBoost: 0, thorns: 0, burnResist: 0, coldResist: 0 };
     if (!slot) return out;
     const def = Game.ITEMS[slot.id];
     if (!def) return out;
@@ -150,6 +155,8 @@ Game.Loot = (function () {
         if (a.xpBoost) out.xpBoost += a.xpBoost;
         if (a.thorns) out.thorns += a.thorns;
         if (a.sanity) out.sanityResist = true;
+        if (a.burnResist) out.burnResist += a.burnResist;
+        if (a.coldResist) out.coldResist += a.coldResist;
       });
     }
     // 破損: 耐久0の装備は性能が大幅低下(攻撃/防御 40%)。破壊はせず、修理で復活できる
@@ -218,6 +225,8 @@ Game.Loot = (function () {
     if (s.regen) parts.push('HP回復 +' + s.regen);
     if (s.xpBoost) parts.push('経験 +' + Math.round(s.xpBoost * 100) + '%');
     if (s.thorns) parts.push('棘 ' + Math.round(s.thorns * 100) + '%反射');
+    if (s.burnResist) parts.push('🔥耐火 ' + Math.round(s.burnResist * 100) + '%');
+    if (s.coldResist) parts.push('❄耐氷 ' + Math.round(s.coldResist * 100) + '%');
     if (s.sanityResist) parts.push('正気耐性');
     const ds = dotKinds(slot);
     if (ds) { const L = { fire: '🔥命中で炎上', frost: '❄命中で凍え', venom: '☠命中で毒' }; ds.forEach(function (d) { if (L[d]) parts.push(L[d]); }); }

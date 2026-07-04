@@ -26,8 +26,10 @@ Game.Status = (function () {
   // パッシブ「快癒」: 受ける状態異常(デバフのみ)の持続時間 -25%
   function mendTicks(type, ticks) {
     const t = TYPES[type];
-    if (t && !t.buff && Game.Player && Game.Player.skillFlag && Game.Player.skillFlag('mend')) return Math.max(1, Math.round(ticks * 0.75));
-    return ticks;
+    if (t && !t.buff && Game.Player && Game.Player.skillFlag && Game.Player.skillFlag('mend')) ticks = Math.round(ticks * 0.75);
+    // 装備の元素耐性(耐火=burn/耐氷=cold)で炎上/凍えの持続をさらに軽減
+    if ((type === 'burn' || type === 'cold') && Game.Player && Game.Player.statusResist) { const r = Game.Player.statusResist(type); if (r > 0) ticks = Math.round(ticks * (1 - r)); }
+    return Math.max(1, ticks);
   }
   function apply(type, ticks) { const s = st(); const fresh = !(s[type] > 0); ticks = mendTicks(type, ticks); s[type] = Math.max(s[type] || 0, ticks); if (fresh) flash(type); }
   function add(type, ticks) { const s = st(); const fresh = !(s[type] > 0); ticks = mendTicks(type, ticks); s[type] = (s[type] || 0) + ticks; if (fresh) flash(type); }
