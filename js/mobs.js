@@ -41,7 +41,8 @@ Game.Mobs = (function () {
     // 協力プレイ: ボス/中ボスは参加人数でHPが増える(共闘が歯応えを保つ)。+55%/人(自分以外)
     const peers = (Game.Net && Game.Net.isConnected && Game.Net.isConnected() && Game.Net.peerCount) ? Game.Net.peerCount() : 0;
     const coopHp = (def.boss || def.midboss) ? (1 + 0.55 * Math.min(3, peers)) : 1;
-    const hp = Math.round(def.hp * mult * bandMult * bossMult * lvHp * nightHp * coopHp * spaceHp);
+    const flatBossHp = def.boss ? 2 : def.midboss ? 1.5 : 1; // ユーザー指示: ボスHP一律×2/中ボス×1.5
+    const hp = Math.round(def.hp * mult * bandMult * bossMult * lvHp * nightHp * coopHp * spaceHp * flatBossHp);
     const dmgMult = mult * bandMult * lvDmg * nightDmg * bossDmg * spaceDmg * (diff.dmgMult != null ? diff.dmgMult : 1);
     Game.state._mobId = (Game.state._mobId || 0) + 1;
     const m = {
