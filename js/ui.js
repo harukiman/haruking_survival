@@ -1026,7 +1026,13 @@ Game.UI = (function () {
     if (overlayOpen) { ammoEl.style.display = 'none'; return; }
     // 乗り物の武器(戦車/戦闘機/爆撃機)も残弾を表示。搭載弾薬はインベントリ在庫がそのまま残弾
     if (p.vehicle) {
-      const VA = { tank: 'cannon_shell', jet: 'bullet' };
+      const VA = { tank: 'cannon_shell' };
+      if (p.vehicle === 'jet') { // 機銃(R2)=弾丸 と ミサイル(L2) の両方を表示
+        const b = Game.Inventory.count('bullet'), m = Game.Inventory.count('missile');
+        ammoEl.style.display = 'block';
+        ammoEl.innerHTML = '🎯 <span style="color:#9fb6d0">機銃</span> <b style="color:' + (b === 0 ? '#e0664a' : '#7fe0a0') + '">' + b + '</b>　🚀 <span style="color:#9fb6d0">ミサイル</span> <b style="color:' + (m === 0 ? '#e0664a' : '#ffb060') + '">' + m + '</b>';
+        return;
+      }
       if (p.vehicle === 'bomber') {
         const n = Game.Inventory.count('heavy_bomb') + Game.Inventory.count('aerial_bomb');
         ammoEl.style.display = 'block';

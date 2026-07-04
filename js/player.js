@@ -185,6 +185,7 @@ Game.Player = (function () {
     if (Game.state.nuke) updateNuke();      // 戦術核の警報→着弾
     if (Game.state.fallout && Game.state.fallout.length) updateFallout(); // 死の灰
     if (p.cannonCd > 0) p.cannonCd--; // 戦車主砲のクールダウン
+    if (p.missileCd > 0) p.missileCd--; // 戦闘機ミサイルのクールダウン
     if (p.jetBurst > 0 && p.vehicle === 'jet') updateJetBurst(p); // 戦闘機の10連射バーストを流し撃つ
     else if (p.jetBurst > 0) p.jetBurst = 0; // 降機したら中断
     if (p.vehicle === 'tank') updateTurret(p, intent); // 戦車の砲塔を旋回(移動と独立)
@@ -265,7 +266,7 @@ Game.Player = (function () {
     else if (p.vehicle === 'tank') spd = p.speed * 1.6;
     else if (p.vehicle === 'mech') spd = p.speed * 2.0;
     else if (p.vehicle === 'jet') spd = p.speed * 3.1;
-    else if (p.vehicle === 'bomber') spd = p.speed * 2.5;
+    else if (p.vehicle === 'bomber') spd = p.speed * 4.375; // 2.5 × 1.75(ユーザー指示で高速化)
     if (outOfFuel) spd *= 0.12; // 燃料切れは失速(徒歩以下)
     // 浅瀬は減速＋水音（乗り物なし・徒歩のみ）
     const gUnder = Game.World.groundAt(Math.floor(p.x / TS), Math.floor(p.y / TS));
@@ -426,6 +427,8 @@ Game.Player = (function () {
       else mineTick();
     } else { mining.active = false; if (mining.progress > 0) mining.progress -= 0.5; }
 
+    // 戦闘機のミサイル: L2(altFire) または PC右クリック(place)で発射。R2/攻撃は機銃。
+    if (p.vehicle === 'jet' && (intent.altFire || intent.place)) { Game.Combat.tryJetMissile(); intent.place = false; }
     // 右クリック/設置ボタン: 対話/設置/使用
     if (intent.place) interact();
     // 開く/使うボタン: 近隣のチェスト等を開く（無ければ通常操作）

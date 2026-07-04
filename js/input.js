@@ -13,6 +13,7 @@ Game.Input = (function () {
   let useQueued = false;     // 開く/使うエッジ
   let shiftBtnShown = null;  // 影渡りボタンの表示状態キャッシュ(影鏡所持時のみ表示)
   let rollQueued = false;    // 回避ロールエッジ
+  let altFireQueued = false; // 副射撃エッジ(戦闘機のミサイル等 = L2)
   let lastDir = 'down';
   const cursor = { x: 200, y: 200, active: false }; // ゲームパッド右スティックの選択カーソル
   function clamp(v, lo, hi) { return v < lo ? lo : (v > hi ? hi : v); }
@@ -321,6 +322,7 @@ Game.Input = (function () {
     if (edge(PB('hotbarNext'))) { let n = Game.state.player.hotbarIndex + 1; if (n >= Game.HOTBAR_SIZE) n = 0; Game.Inventory.setHotbar(n); }
     // ダッシュ
     if (btn(PB('dash'))) out.dash = true;
+    if (edge(PB('dash'))) altFireQueued = true; // L2エッジ: 乗り物の副射撃(戦闘機のミサイル)。徒歩ではダッシュと兼用(無害)
     // インベントリ(エッジ)
     if (edge(PB('inv'))) Game.UI.toggleInventory();
     // 大マップ開閉(エッジ)
@@ -395,6 +397,7 @@ Game.Input = (function () {
     intent.place = placeQueued; placeQueued = false;
     intent.use = useQueued; useQueued = false;
     intent.roll = rollQueued; rollQueued = false;
+    intent.altFire = altFireQueued; altFireQueued = false;
     intent.dash = !!keys[B('dash')] || touch.dash || tmp.dash || joyPush || (dashLatch && movingNow);
     intent.usePointer = usePointer;
     intent.mouseTile = usePointer ? Game.Camera.screenToTile(mouse.x, mouse.y) : null;

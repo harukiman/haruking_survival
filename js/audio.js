@@ -254,6 +254,14 @@ Game.Audio = (function () {
       case 'boom_sfx':   { const t0 = ctx ? ctx.currentTime : 0; beep(96, 0.32, 'sawtooth', 0.18); beep(52, 0.46, 'sine', 0.16); if (ctx) { noiseShape(t0, 0.05, 0.34, 'highpass', 1900, 0.7, 3); noiseBurst(t0, 0.46, 0.24, 560); subThump(120, 28, 0.44, 0.17); } } break;
       // 戦車主砲: 巨砲の轟音。金属的な初撃＋極低サブ二段で腹に響く重量感
       case 'cannon_tank': if (throttled('ctk', 0.05)) { gunShot({ crackHz: 1400, crackVol: 0.72, crackDur: 0.05, bodyHz: 125, bodyLow: 28, bodyVol: 0.82, bodyDur: 0.28, midHz: 400, tailDur: 0.52, tailVol: 0.26, tailHz: 720, vol: 1.32 }); if (ctx) { subThump(108, 24, 0.44, 0.2); subThump(66, 22, 0.54, 0.14); } } break;
+      // ミサイル発射: 点火チャフ→ロケットモーターのシューッという噴射→加速する低音のうなり(本物のミサイルらしく)
+      case 'missile_launch': if (throttled('msl', 0.1)) { const t0 = ctx ? ctx.currentTime : 0; if (ctx) {
+        noiseShape(t0, 0.06, 0.44, 'highpass', 1200, 0.6, 3);       // 点火バースト(鋭い立ち上がり)
+        noiseBurst(t0 + 0.01, 0.6, 0.3, 820);                       // モーター噴射(持続するシューッ)
+        noiseShape(t0 + 0.03, 0.52, 0.17, 'bandpass', 520, 1.1, 1); // 芯のある噴射音
+        subThump(58, 210, 0.55, 0.14);                              // 加速する低音(58→210Hzへ上昇)
+        sbeep(230, 0.5, 'sawtooth', 0.06, 0.02);                    // モーターのうなり
+      } } break;
       case 'slash_air':  if (throttled('sla', 0.06)) { beep(680, 0.06, 'sine', 0.06); beep(1200, 0.05, 'triangle', 0.05); } break;
       case 'beam':       if (throttled('bm', 0.05)) { beep(1400, 0.06, 'sine', 0.07); beep(700, 0.1, 'sawtooth', 0.05); } break;
       case 'thunder':    if (throttled('th', 0.08)) { beep(300, 0.05, 'square', 0.09); if (ctx) noiseBurst(ctx.currentTime, 0.12, 0.12, 3000, true); beep(120, 0.14, 'sawtooth', 0.08); } break;

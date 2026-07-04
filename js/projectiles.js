@@ -8,7 +8,7 @@ Game.Projectiles = (function () {
   const KIND_COLOR = {
     fire: '#ff7a3c', frost: '#9fd8ff', hex: '#c060ff', venom: '#9fe04a', tracer: '#ffd24a',
     rocket: '#ff7a3c', slash: '#cfefff', pierce: '#7fe0ff', laser: '#7fe0ff', chain: '#fff07a',
-    boomerang: '#caa86a', bullet: '#ffe9a0', shell: '#ffd86b',
+    boomerang: '#caa86a', bullet: '#ffe9a0', shell: '#ffd86b', missile: '#ff8a3c',
   };
 
   function spawn(x, y, vx, vy, dmg, kind, hostile, status, explosive) {
@@ -78,6 +78,8 @@ Game.Projectiles = (function () {
       const pr = spawn(p.x + ux * 14, p.y + uy * 14, ux * sp, uy * sp, dmg, kind, false, null, opts.explosive || 0);
       pr.ang = ang;
       if (opts.crit) pr.crit = true;
+      if (opts.life) pr.life = opts.life; // 到達距離で自爆させる用の寿命上書き
+      if (opts.detonateAtEnd) pr.detonateAtEnd = true; // 命中しなくても寿命(=一定距離)で炸裂(ミサイル)
       if (opts.jetRound) pr.jetRound = true; // 戦闘機の機首砲弾: 特殊物以外の地形を破壊できる
       if (opts.impact) pr.icol = opts.impact; // 口径別の着弾スパーク色(演出のみ)
       if (opts.pierce || kind === 'slash' || kind === 'pierce' || kind === 'laser') { pr.pierce = true; pr.hits = {}; }
@@ -346,6 +348,7 @@ Game.Projectiles = (function () {
       }
       if (hit && pr.explosive) explode(pr.x, pr.y, pr.explosive, pr.dmg, pr.kind);
       else if (pr.shell && (hit || pr.life <= 0)) explodeShell(pr.x, pr.y, pr.blastDmg, pr.blastRadius, pr.knock, hit ? pr._dt : null);
+      else if (pr.detonateAtEnd && pr.explosive && pr.life <= 0) explode(pr.x, pr.y, pr.explosive, pr.dmg, pr.kind); // ミサイル: 一定距離で自爆
       if (hit || pr.life <= 0) arr.splice(i, 1);
     }
   }
@@ -386,6 +389,19 @@ Game.Projectiles = (function () {
         ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(pr.ang || 0);
         ctx.fillStyle = '#4a4438'; ctx.beginPath(); ctx.ellipse(0, 0, 7 * z, 4 * z, 0, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = '#ffd86b'; ctx.beginPath(); ctx.ellipse(5 * z, 0, 2.4 * z, 2.4 * z, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.restore(); continue;
+      }
+      if (pr.kind === 'missile') {
+        // ミサイル: 長い煙＋炎の尾＋弾体(進行方向へ向く)。高速なので尾を長めに
+        const t1 = Game.Camera.worldToScreen(pr.x - (pr.vx || 0) * 2.2, pr.y - (pr.vy || 0) * 2.2);
+        ctx.strokeStyle = 'rgba(190,185,175,0.5)'; ctx.lineWidth = 6 * z; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(t1.x, t1.y); ctx.lineTo(s.x, s.y); ctx.stroke();
+        ctx.strokeStyle = 'rgba(255,150,60,0.75)'; ctx.lineWidth = 3.5 * z;
+        ctx.beginPath(); ctx.moveTo(ps.x, ps.y); ctx.lineTo(s.x, s.y); ctx.stroke();
+        ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(pr.ang || Math.atan2(pr.vy || 0, pr.vx || 1));
+        ctx.fillStyle = '#c8ccd2'; ctx.beginPath(); ctx.ellipse(0, 0, 8 * z, 3 * z, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#e0664a'; ctx.beginPath(); ctx.moveTo(8 * z, 0); ctx.lineTo(3 * z, -3 * z); ctx.lineTo(3 * z, 3 * z); ctx.closePath(); ctx.fill(); // 弾頭
+        ctx.fillStyle = '#ffd86b'; ctx.beginPath(); ctx.arc(-8 * z, 0, 2.6 * z, 0, Math.PI * 2); ctx.fill(); // 噴射炎
         ctx.restore(); continue;
       }
       if (pr.kind === 'rocket') {
