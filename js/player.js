@@ -12,6 +12,7 @@ Game.Player = (function () {
   const VEH_DRAG = { car: 0.85, buggy: 0.83, boat: 0.93, plane: 0.9, carpet: 0.88 };
   const VEH_TRAIL = { car: '#c9b189', buggy: '#d8a060', boat: '#bfe2f5', plane: '#e6ecf5', carpet: '#e0bcf0' };
   const FUEL_VEHICLES = { car: 1, buggy: 1, plane: 1 }; // 燃料で走る現代の乗り物(ボート/絨毯は燃料不要)
+  const VEH_MAXDUR = { car: 120, buggy: 90, plane: 140, boat: 70 }; // 耐久値(絨毯=魔法は不壊)。0で大破爆発
   // 口径ごとの着弾スパーク色/薬莢色(演出のみ・性能不変)
   const CALIBER_FX = {
     ammo_9mm: { imp: '#ffd86a', casing: '#d8b25a' },
@@ -173,6 +174,7 @@ Game.Player = (function () {
     const p = Game.state.player;
     ensurePassiveHooks();
     updatePassives(p);
+    if (Game.state.vehWreck) updateWreck(); // 大破カウントダウン→爆発
     p.prevX = p.x; p.prevY = p.y;
 
     let dx = intent.dx, dy = intent.dy;
@@ -766,6 +768,7 @@ Game.Player = (function () {
         Game.UI.toast(def.name + ' から降りた');
       } else {
         p.vehicle = def.vehicle; p.vThr = 0;
+        if (VEH_MAXDUR[def.vehicle] != null) { if (!p.vehDur) p.vehDur = {}; if (p.vehDur[def.vehicle] == null) p.vehDur[def.vehicle] = VEH_MAXDUR[def.vehicle]; }
         Game.Audio.play('mount');
         if (Game.Audio.vehicleLoop) Game.Audio.vehicleLoop(def.vehicle, 0);
         Game.Render.spawnParticles(p.x, p.y + 6, '#cfd6e0', 5);
@@ -783,6 +786,15 @@ Game.Player = (function () {
       pp.fuel[pp.vehicle] = (pp.fuel[pp.vehicle] || 0) + def.fuel;
       Game.Inventory.remove(sel.id, 1); Game.Audio.play('craft');
       Game.UI.toast('⛽ 給油した（燃料 +' + def.fuel + '）'); Game.UI.refreshAll(); return;
+    }
+    if (def.repair) {
+      const pp = Game.state.player;
+      if (!pp.vehicle || VEH_MAXDUR[pp.vehicle] == null) { Game.UI.toast('修理キットは現代の乗り物に乗車中のみ使える'); return; }
+      if (!pp.vehDur) pp.vehDur = {};
+      const max = VEH_MAXDUR[pp.vehicle];
+      pp.vehDur[pp.vehicle] = Math.min(max, (pp.vehDur[pp.vehicle] == null ? max : pp.vehDur[pp.vehicle]) + def.repair);
+      Game.Inventory.remove(sel.id, 1); Game.Audio.play('craft');
+      Game.UI.toast('🔧 機体を修理した（耐久 ' + Math.round(pp.vehDur[pp.vehicle]) + '/' + max + '）'); Game.UI.refreshAll(); return;
     }
     if (def.food || def.cures || def.buff || def.skillTome || def.xpGain || def.invExpand || def.summonBoss || def.opensShop || def.recall || def.stasis) { Game.Inventory.useSelected(); return; }
     if (def.armor) { equipSelectedArmor(); return; }
@@ -1272,6 +1284,57 @@ Game.Player = (function () {
     return refunded;
   }
 
+  // 乗り物の耐久: 乗車中の被ダメは機体が肩代わり。0で大破シーケンス開始(搭乗者は放出)
+  function vehicleTakeDamage(amount) {
+    const p = Game.state.player;
+    if (!p.vehicle || VEH_MAXDUR[p.vehicle] == null) return false; // 生身で受ける
+    if (!p.vehDur) p.vehDur = {};
+    if (p.vehDur[p.vehicle] == null) p.vehDur[p.vehicle] = VEH_MAXDUR[p.vehicle];
+    p.vehDur[p.vehicle] = Math.max(0, p.vehDur[p.vehicle] - amount);
+    if (Game.Render.shake) Game.Render.shake(Math.min(7, 2 + amount * 0.3));
+    if (Game.Render.spawnParticles) Game.Render.spawnParticles(p.x, p.y, '#ffb24a', 4);
+    const dur = p.vehDur[p.vehicle], max = VEH_MAXDUR[p.vehicle];
+    if (dur <= 0) startWreck(p.vehicle);
+    else if (dur <= max * 0.3 && Game.state.tick % 45 === 0) { if (Game.Audio) Game.Audio.play('select'); Game.UI.toast('⚠ 機体が損傷している… 修理キットを'); }
+    return true; // 機体が肩代わり=搭乗者は無傷
+  }
+  // 大破: 搭乗者を放出→5秒間の異音警告→一定範囲に大爆発(範囲内プレイヤーは即死)
+  function startWreck(type) {
+    const p = Game.state.player;
+    p.vehicle = null; p.vThr = 0;
+    if (Game.Audio && Game.Audio.vehicleLoop) Game.Audio.vehicleLoop(null);
+    // 手持ちの当該乗り物アイテムを1つ破壊
+    Game.Inventory.remove(type, 1);
+    if (p.vehDur) delete p.vehDur[type];
+    Game.state.vehWreck = { x: p.x, y: p.y, t: 150, type: type }; // 5秒(30fps)
+    Game.UI.toast('💥 機体が大破する！ 5秒後に爆発——今すぐ離れろ！');
+    if (Game.Audio) Game.Audio.play('event_horde');
+    if (Game.Render.spawnParticles) Game.Render.spawnParticles(p.x, p.y, '#ff5a2a', 24);
+  }
+  // 毎フレーム: 大破カウントダウン(異音)→爆発
+  function updateWreck() {
+    const w = Game.state.vehWreck; if (!w) return;
+    w.t--;
+    // 異音(周期を詰めて緊迫)＋煙
+    const beatEvery = w.t < 40 ? 6 : w.t < 90 ? 12 : 20;
+    if (w.t % beatEvery === 0 && Game.Audio) Game.Audio.play('select');
+    if (Game.state.tick % 5 === 0 && Game.Render.spawnParticles) Game.Render.spawnParticles(w.x + (Math.random() - 0.5) * 20, w.y - 4, '#555', 2);
+    if (w.t <= 0) {
+      const TS = Game.CFG.TILE_SIZE, p = Game.state.player;
+      const lethalR = 3 * TS, dmgR = 5.5 * TS;
+      if (Game.Render.flash) Game.Render.flash('rgba(255,140,60,0.5)');
+      if (Game.Render.shake) Game.Render.shake(14);
+      if (Game.Render.spawnParticles) Game.Render.spawnParticles(w.x, w.y, '#ff8a3c', 40);
+      if (Game.Audio) Game.Audio.play('boom_sfx');
+      const d = Math.hypot(p.x - w.x, p.y - w.y);
+      if (d <= lethalR) Game.Survival.damage(9999, 'wreck');          // 至近=即死
+      else if (d <= dmgR) Game.Survival.damage(Math.round(40 * (1 - (d - lethalR) / (dmgR - lethalR))), 'wreck');
+      // 周囲のモブも巻き込む
+      const mobs = Game.state.mobs;
+      for (let i = 0; i < mobs.length; i++) { const m = mobs[i]; if (Math.hypot(m.x - w.x, m.y - w.y) <= dmgR) Game.Mobs.damageMob(m, 120, w.x, w.y, false); }
+      Game.state.vehWreck = null;
+    }
+  }
   function morningSkip() {
     const p = Game.state.player;
     const cur = Game.state.tick % Game.DAY_LENGTH;
@@ -1396,7 +1459,7 @@ Game.Player = (function () {
 
   return {
     makeDefault, spawnAt, update, targetTile, mining, playerTile, breakBlock,
-    interact, useNearby, gainXP, totalArmor, setBonus, sleep, checkGroupSleep, equipSelectedArmor, equipFromInventory, equipRelic, unequipSlot, applyEquipStats, bossesDefeated, bossTitle, travelToWaypoint,
+    interact, useNearby, gainXP, totalArmor, setBonus, sleep, checkGroupSleep, vehicleTakeDamage, updateWreck, equipSelectedArmor, equipFromInventory, equipRelic, unequipSlot, applyEquipStats, bossesDefeated, bossTitle, travelToWaypoint,
     effAttack, attackCooldown, levelDmgBonus, levelArmorBonus, spendStat, unlockSkill, respec,
     skillBonus, skillFlag, canUnlock, currentWeaponAtk, equippedArmorAt, xpForLevel,
     reloadCurrent, magLoaded, magCap, selGunId, contextAction,

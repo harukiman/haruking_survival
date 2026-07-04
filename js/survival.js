@@ -173,6 +173,10 @@ Game.Survival = (function () {
   function damage(amount, source) {
     const p = Game.state.player;
     const physical = source !== 'starve' && source !== 'sanity' && source !== 'status';
+    // 乗り物搭乗中の被ダメは機体の耐久が肩代わり(爆発ダメージ自体は素通り)
+    if (physical && source !== 'wreck' && p.vehicle && Game.Player.vehicleTakeDamage) {
+      if (Game.Player.vehicleTakeDamage(amount)) return true;
+    }
     if (p.invuln > 0 && physical) {
       // ジャスト回避: ロール無敵中に攻撃を受け流したら報酬(1ロール1回)
       if ((p.rolling || 0) > 0 && !p.rollRewarded) {
@@ -199,7 +203,7 @@ Game.Survival = (function () {
     return true; // ダメージ成立
   }
 
-  const CAUSE_LABEL = { starve: '餓死', sanity: '正気の崩壊', status: '状態異常', thorns: '棘の反射', mob: '魔物の襲撃', cold: '凍死', sand: '砂嵐', storm: '落雷', drown: '溺死' };
+  const CAUSE_LABEL = { starve: '餓死', sanity: '正気の崩壊', status: '状態異常', thorns: '棘の反射', mob: '魔物の襲撃', cold: '凍死', sand: '砂嵐', storm: '落雷', drown: '溺死', wreck: '乗り物の爆発' };
   // 死亡時にバーツを守る手段(守銭の護符)を所持/装備しているか
   function hasBtsGuard() {
     const p = Game.state.player;

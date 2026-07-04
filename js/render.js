@@ -125,6 +125,8 @@ Game.Render = (function () {
     drawMeteorCast(ctx);
     drawBreath(ctx);
     drawFuel(ctx);
+    drawVehDur(ctx);
+    drawWreck(ctx);
     drawDrops(ctx);
     Game.Mobs.draw(ctx, alpha);
     drawPeers(ctx);
@@ -651,6 +653,35 @@ Game.Render = (function () {
     ctx.fillRect(bx, by, w * frac, h);
     ctx.fillStyle = '#e8dca0'; ctx.font = 'bold ' + Math.round(8 * z) + 'px sans-serif'; ctx.textAlign = 'center';
     ctx.fillText(f <= 0 ? '⛽空' : '⛽', sc.x, by - 3 * z); ctx.textAlign = 'left';
+    ctx.restore();
+  }
+  // 乗り物の耐久ゲージ(頭上・燃料の下)。損傷時のみ表示
+  function drawVehDur(ctx) {
+    const p = Game.state.player; if (!p || !p.vehicle || !p.vehDur) return;
+    const MAX = { car: 120, buggy: 90, plane: 140, boat: 70 }[p.vehicle]; if (MAX == null) return;
+    const d = p.vehDur[p.vehicle]; if (d == null || d >= MAX) return;
+    const sc = Game.Camera.worldToScreen(p.x, p.y), z = Game.Camera.zoom ? Game.Camera.zoom() : 1;
+    const w = 46 * z, h = 4 * z, bx = sc.x - w / 2, by = sc.y - 47 * z, frac = Math.max(0, d / MAX);
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(bx - 1, by - 1, w + 2, h + 2);
+    ctx.fillStyle = frac < 0.3 ? '#ff5a5a' : '#9fd8a0'; ctx.fillRect(bx, by, w * frac, h);
+    ctx.fillStyle = '#cfe0d0'; ctx.font = 'bold ' + Math.round(7 * z) + 'px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('🔧', sc.x, by - 2 * z); ctx.textAlign = 'left';
+    ctx.restore();
+  }
+  // 大破カウントダウン中の残骸(煙＋点滅＋残り秒)
+  function drawWreck(ctx) {
+    const w = Game.state.vehWreck; if (!w) return;
+    const sc = Game.Camera.worldToScreen(w.x, w.y), z = Game.Camera.zoom ? Game.Camera.zoom() : 1;
+    const blink = (Game.state.tick % (w.t < 40 ? 6 : 12)) < 3;
+    ctx.save();
+    ctx.fillStyle = '#3a3a3e'; roundRectC(ctx, sc.x - 15 * z, sc.y - 3 * z, 30 * z, 15 * z, 4 * z); ctx.fill();
+    if (blink) { ctx.fillStyle = 'rgba(255,90,40,0.9)'; ctx.beginPath(); ctx.arc(sc.x, sc.y + 3 * z, 4 * z, 0, 7); ctx.fill(); }
+    // 警告リング(縮む=残り時間)
+    ctx.strokeStyle = 'rgba(255,80,40,0.8)'; ctx.lineWidth = 2 * z;
+    ctx.beginPath(); ctx.arc(sc.x, sc.y + 3 * z, (5.5 * 16) * z * (w.t / 150), 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = '#ff5a2a'; ctx.font = 'bold ' + Math.round(13 * z) + 'px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('💥 ' + Math.ceil(w.t / 30), sc.x, sc.y - 10 * z); ctx.textAlign = 'left';
     ctx.restore();
   }
   function drawMeteorCast(ctx) {
