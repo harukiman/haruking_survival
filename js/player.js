@@ -213,7 +213,7 @@ Game.Player = (function () {
     // 砂嵐/吹雪は足が重い（飛行中は影響なし）
     const wt = Game.state.weather && Game.state.weather.type;
     if ((wt === 'sandstorm' || wt === 'blizzard') && p.vehicle !== 'plane' && p.vehicle !== 'carpet') spd *= 0.7;
-    if (!p.vehicle) spd *= (1 + skillBonus().moveSpd + setBonus().moveSpd + (Game.Status ? Game.Status.buffSum().spd : 0)); // スキル健脚＋俊足の薬＋セット効果
+    if (!p.vehicle) spd *= (1 + skillBonus().moveSpd + setBonus().moveSpd + (p.gearMoveSpd || 0) + (Game.Status ? Game.Status.buffSum().spd : 0)); // スキル健脚＋俊足の薬＋装備affix＋セット効果
     if (!p.vehicle && (p.tailwindT || 0) > 0) spd *= 1.08; // パッシブ「追い風」: 撃破後3秒 移動+8%
     // 乗り物: スロットル(0..1)を積分して加速/減速カーブを作る。最高速そのものは不変
     if (p.vehicle) {
@@ -1125,12 +1125,14 @@ Game.Player = (function () {
   // 装備由来の最大HP等を反映（VIT＋レベル＋ボス討伐の恒久報酬も加味）
   function applyEquipStats() {
     const p = Game.state.player;
-    let hpBonus = 0;
-    for (const k in p.armor) if (p.armor[k]) hpBonus += Game.Loot.stats(p.armor[k]).hp;
+    let hpBonus = 0, gm = 0, gs = 0, gr = 0, gx = 0;
+    for (const k in p.armor) if (p.armor[k]) { const st = Game.Loot.stats(p.armor[k]); hpBonus += st.hp; gm += st.moveSpd || 0; gs += st.staminaMax || 0; gr += st.regen || 0; gx += st.xpBoost || 0; }
+    // 防具affixの実用チャンネルを集約(移動/スタミナ/HP回復/経験)。stats/skill/setと重畳
+    p.gearMoveSpd = gm; p.gearRegen = gr; p.gearXpBoost = gx;
     const base = p.baseMaxHealth || 100;
     const sb = skillBonus();
     p.maxHealth = base + hpBonus + (p.vit || 0) * 5 + sb.hp + bossesDefeated() * 5; // ボス討伐ごとに最大HP+5
-    p.maxStamina = 100 + sb.staminaMax;
+    p.maxStamina = 100 + sb.staminaMax + gs;
     if (p.health > p.maxHealth) p.health = p.maxHealth;
     if (p.stamina > p.maxStamina) p.stamina = p.maxStamina;
   }
@@ -1225,7 +1227,7 @@ Game.Player = (function () {
   function gainXP(n) {
     const p = Game.state.player;
     if (p.level >= (Game.MAX_LEVEL || 9999)) { p.xp = 0; return; }
-    p.xp += Math.max(1, Math.round(n * (1 + skillBonus().xpBoost)));
+    p.xp += Math.max(1, Math.round(n * (1 + skillBonus().xpBoost + (p.gearXpBoost || 0))));
     while (p.xp >= p.xpNext && p.level < (Game.MAX_LEVEL || 9999)) {
       p.xp -= p.xpNext; p.level++; p.xpNext = xpForLevel(p.level);
       p.baseMaxHealth = (p.baseMaxHealth || 100) + 2;

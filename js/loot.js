@@ -2,27 +2,59 @@
 window.Game = window.Game || {};
 
 Game.Loot = (function () {
+  // レアリティ5段階(エピックとレジェンダリーの間に「神話」を追加)
   const RARITY = [
     { name: 'コモン', color: '#cfd6e0' },        // 0
     { name: 'レア', color: '#5a9fe0' },          // 1
     { name: 'エピック', color: '#b060e8' },      // 2
-    { name: 'レジェンダリー', color: '#ff9a3c' },// 3
+    { name: '神話', color: '#ff4d6d' },          // 3 (新設・エピック紫とレジェ橙の間の紅)
+    { name: 'レジェンダリー', color: '#ff9a3c' },// 4
   ];
+  // 武器の付与効果(約20種)。エピック以上でランダムに付与。値は控えめ(インフレ防止)
   const WEAPON_AFFIXES = [
     { key: 'sharp', name: '鋭利な', atk: [1, 2] },
-    { key: 'brutal', name: '残虐な', atk: [2, 4] },
     { key: 'keen', name: '鋭敏な', atk: [1, 3] },
+    { key: 'brutal', name: '残虐な', atk: [2, 4] },
+    { key: 'cruel', name: '酷薄な', atk: [2, 3] },
+    { key: 'heavy', name: '重厚な', atk: [2, 5] },
     { key: 'savage', name: '殺戮の', atk: [3, 5] },
-    { key: 'vampiric', name: '吸血の', life: [0.08, 0.2] },
-    { key: 'critical', name: '会心の', crit: [0.04, 0.10] },
+    { key: 'warlord', name: '戦鬼の', atk: [3, 6] },
+    { key: 'tyrant', name: '暴君の', atk: [4, 7] },
+    { key: 'piercing', name: '貫きの', atk: [1, 4] },
+    { key: 'ruthless', name: '無慈悲な', atk: [3, 5] },
+    { key: 'vampiric', name: '吸血の', life: [0.05, 0.12] },
+    { key: 'leech', name: '蛭の', life: [0.08, 0.16] },
+    { key: 'bloodthirsty', name: '渇血の', life: [0.10, 0.20] },
+    { key: 'critical', name: '会心の', crit: [0.03, 0.07] },
+    { key: 'deadly', name: '致命の', crit: [0.05, 0.10] },
+    { key: 'precise', name: '精密な', crit: [0.03, 0.06] },
+    { key: 'executioner', name: '処刑人の', crit: [0.06, 0.12] },
+    { key: 'frenzied', name: '狂乱の', crit: [0.04, 0.08] },
+    { key: 'gory', name: '血濡れの', life: [0.06, 0.14] },
+    { key: 'wicked', name: '邪悪な', atk: [2, 4] },
   ];
+  // 防具の付与効果(約20種)
   const ARMOR_AFFIXES = [
     { key: 'sturdy', name: '頑強な', arm: [1, 2] },
     { key: 'guardian', name: '守護の', arm: [2, 3] },
     { key: 'fortified', name: '鉄壁の', arm: [2, 4] },
+    { key: 'bulwark', name: '城塞の', arm: [3, 5] },
+    { key: 'resolute', name: '剛毅の', arm: [2, 3] },
     { key: 'vital', name: '生命の', hp: [6, 16] },
+    { key: 'hardy', name: '屈強な', hp: [8, 18] },
     { key: 'titan', name: '剛健の', hp: [12, 24] },
+    { key: 'stalwart', name: '堅忍の', hp: [10, 20] },
+    { key: 'blessed', name: '祝福の', hp: [8, 16] },
     { key: 'warded', name: '護られし', sanity: true },
+    { key: 'swift', name: '俊足の', moveSpd: [0.03, 0.06] },
+    { key: 'fleet', name: '疾風の', moveSpd: [0.05, 0.08] },
+    { key: 'lightfoot', name: '軽身の', moveSpd: [0.04, 0.07] },
+    { key: 'enduring', name: '不屈の', staminaMax: [10, 20] },
+    { key: 'tireless', name: '無尽の', staminaMax: [16, 30] },
+    { key: 'bracing', name: '気力の', staminaMax: [12, 22] },
+    { key: 'mending', name: '快癒の', regen: [1, 2] },
+    { key: 'regenerating', name: '再生の', regen: [2, 3] },
+    { key: 'scholar', name: '賢者の', xpBoost: [0.06, 0.14] },
   ];
 
   function rr(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
@@ -32,11 +64,20 @@ Game.Loot = (function () {
 
   function rollRarity(bonus) {
     const r = Math.random() - (bonus || 0);
-    // バランス調整: コモン多め・高レアは稀に（インフレ防止）
-    if (r > 0.42) return 0;   // コモン 約58%（affixなし）
-    if (r > 0.13) return 1;   // レア 約29%
-    if (r > 0.03) return 2;   // エピック 約10%
-    return 3;                 // レジェンダリー 約3%
+    // バランス調整: コモン多め・高レアは稀に(インフレ防止)。5段階
+    if (r > 0.46) return 0;   // コモン 約54%(affixなし)
+    if (r > 0.18) return 1;   // レア 約28%(affix 1)
+    if (r > 0.07) return 2;   // エピック 約11%(affix 1-2)
+    if (r > 0.02) return 3;   // 神話 約5%(affix 2)
+    return 4;                 // レジェンダリー 約2%(affix 2-3)
+  }
+  // レアリティ別の付与効果数(ユーザー指示: エピック以上最低1、レジェ以上最低2・最大3)
+  function affixCount(rarity) {
+    if (rarity <= 0) return 0;
+    if (rarity === 1) return 1;      // レア
+    if (rarity === 2) return rr(1, 2); // エピック: 最低1
+    if (rarity === 3) return 2;      // 神話: 2
+    return rr(2, 3);                 // レジェンダリー: 最低2・最大3
   }
 
   function roll(id, bonus) {
@@ -50,9 +91,10 @@ Game.Loot = (function () {
     if (!rollable(id)) return null;
     const pool = isWeapon(def) ? WEAPON_AFFIXES : ARMOR_AFFIXES;
     const affixes = [], keys = [];
-    for (let i = 0; i < rarity; i++) {
+    const count = affixCount(rarity);
+    for (let i = 0; i < count; i++) {
       let pick = null, tries = 0;
-      while (tries++ < 8) { const a = pool[Math.floor(Math.random() * pool.length)]; if (keys.indexOf(a.key) < 0) { pick = a; break; } }
+      while (tries++ < 12) { const a = pool[Math.floor(Math.random() * pool.length)]; if (keys.indexOf(a.key) < 0) { pick = a; break; } }
       if (!pick) break;
       keys.push(pick.key);
       const af = { key: pick.key, name: pick.name };
@@ -61,6 +103,10 @@ Game.Loot = (function () {
       if (pick.hp) af.hp = rr(pick.hp[0], pick.hp[1]);
       if (pick.life) af.life = Math.round((pick.life[0] + Math.random() * (pick.life[1] - pick.life[0])) * 100) / 100;
       if (pick.crit) af.crit = Math.round((pick.crit[0] + Math.random() * (pick.crit[1] - pick.crit[0])) * 100) / 100;
+      if (pick.moveSpd) af.moveSpd = Math.round((pick.moveSpd[0] + Math.random() * (pick.moveSpd[1] - pick.moveSpd[0])) * 100) / 100;
+      if (pick.staminaMax) af.staminaMax = rr(pick.staminaMax[0], pick.staminaMax[1]);
+      if (pick.regen) af.regen = rr(pick.regen[0], pick.regen[1]);
+      if (pick.xpBoost) af.xpBoost = Math.round((pick.xpBoost[0] + Math.random() * (pick.xpBoost[1] - pick.xpBoost[0])) * 100) / 100;
       if (pick.sanity) af.sanity = true;
       affixes.push(af);
     }
@@ -69,7 +115,7 @@ Game.Loot = (function () {
 
   // 実効ステータス
   function stats(slot) {
-    const out = { atk: 0, armor: 0, hp: 0, lifesteal: 0, crit: 0, sanityResist: false };
+    const out = { atk: 0, armor: 0, hp: 0, lifesteal: 0, crit: 0, sanityResist: false, moveSpd: 0, staminaMax: 0, regen: 0, xpBoost: 0 };
     if (!slot) return out;
     const def = Game.ITEMS[slot.id];
     if (!def) return out;
@@ -77,14 +123,18 @@ Game.Loot = (function () {
     out.armor = def.armor || 0;
     const rl = slot.roll;
     if (rl) {
-      if (def.attack) out.atk += rl.rarity;             // レアリティ毎に攻撃+1
-      if (def.armor && rl.rarity >= 2) out.armor += 1;  // エピック以上で防御+1
+      if (def.attack) out.atk += Math.min(3, rl.rarity);           // レアリティ基礎攻撃(上限+3でインフレ防止)
+      if (def.armor && rl.rarity >= 2) out.armor += (rl.rarity >= 4 ? 2 : 1); // エピック+1 / レジェ+2
       rl.affixes.forEach(function (a) {
         if (a.atk) out.atk += a.atk;
         if (a.arm) out.armor += a.arm;
         if (a.hp) out.hp += a.hp;
         if (a.life) out.lifesteal += a.life;
         if (a.crit) out.crit += a.crit;
+        if (a.moveSpd) out.moveSpd += a.moveSpd;
+        if (a.staminaMax) out.staminaMax += a.staminaMax;
+        if (a.regen) out.regen += a.regen;
+        if (a.xpBoost) out.xpBoost += a.xpBoost;
         if (a.sanity) out.sanityResist = true;
       });
     }
@@ -107,14 +157,18 @@ Game.Loot = (function () {
     if (s.hp) parts.push('最大HP +' + s.hp);
     if (s.lifesteal) parts.push('吸血 ' + Math.round(s.lifesteal * 100) + '%');
     if (s.crit) parts.push('会心 +' + Math.round(s.crit * 100) + '%');
+    if (s.moveSpd) parts.push('移動 +' + Math.round(s.moveSpd * 100) + '%');
+    if (s.staminaMax) parts.push('スタミナ +' + s.staminaMax);
+    if (s.regen) parts.push('HP回復 +' + s.regen);
+    if (s.xpBoost) parts.push('経験 +' + Math.round(s.xpBoost * 100) + '%');
     if (s.sanityResist) parts.push('正気耐性');
     return parts.join(' / ');
   }
 
   // ===== エンチャント =====
   function reroll(slot) { if (slot && slot.roll) slot.roll = rollAt(slot.id, slot.roll.rarity); }
-  function upgrade(slot) { if (slot) { const r = slot.roll ? slot.roll.rarity : 0; slot.roll = rollAt(slot.id, Math.min(3, r + 1)); } }
-  function maxRarity(slot) { return slot && slot.roll ? slot.roll.rarity >= 3 : false; }
+  function upgrade(slot) { if (slot) { const r = slot.roll ? slot.roll.rarity : 0; slot.roll = rollAt(slot.id, Math.min(4, r + 1)); } }
+  function maxRarity(slot) { return slot && slot.roll ? slot.roll.rarity >= 4 : false; }
   function enchantCost(slot, kind) {
     const r = slot && slot.roll ? slot.roll.rarity : 0;
     if (kind === 'reroll') return { lumen: 2 + r, shadow_crystal: 1 + r };
