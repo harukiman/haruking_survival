@@ -9,6 +9,17 @@ Game.Survival = (function () {
   let hungerCritCued = false;
 
   function update() {
+    // 焚き火の癒し: 焚き火/火鉢のそばで戦闘外(被弾後5秒以上)なら2秒毎にHP+1(上限は最大HPの80%)。
+    // 「夜は火のそばで休む」というサバイバルの原風景に小さな実利を(世界反応性)
+    if (Game.state.tick % 60 === 0) {
+      const pp = Game.state.player;
+      const outOfCombat = (Game.state.tick - (pp.lastHurtTick || 0)) > 150;
+      if (outOfCombat && pp.health < pp.maxHealth * 0.8 && nearCampfire()) {
+        pp.health = Math.min(pp.maxHealth * 0.8, pp.health + 1);
+        if (Game.Render.spawnFloat && Game.state.tick % 120 === 0) Game.Render.spawnFloat(pp.x, pp.y - 22, '+1', '#9fd0a0');
+        if (Game.UI && Game.UI.tipOnce) Game.UI.tipOnce('campfire_heal', '🔥 焚き火のそばで休むとHPがゆっくり回復する(最大HPの80%まで・戦闘中は不可)');
+      }
+    }
     const p = Game.state.player;
 
     // 協力: ダウン&蘇生。致死ダメージで即死せず、仲間の救助を待つ状態(MP+仲間在席時のみ・die()から遷移)
@@ -184,6 +195,17 @@ Game.Survival = (function () {
     for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) {
       const o = Game.World.objAt(ptx + dx, pty + dy);
       if (o === Game.OBJ.HEALING_TOTEM || o === Game.OBJ.FOUNTAIN) return true; // 噴水も癒しの水辺
+    }
+    return false;
+  }
+
+  // 焚き火/火鉢の近く(3マス)か: 焚き火の癒し(HP緩回復)判定
+  function nearCampfire() {
+    const TS = Game.CFG.TILE_SIZE, p = Game.state.player;
+    const ptx = Math.floor(p.x / TS), pty = Math.floor(p.y / TS);
+    for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) {
+      const o = Game.World.objAt(ptx + dx, pty + dy);
+      if (o === Game.OBJ.CAMPFIRE || o === Game.OBJ.BRAZIER) return true;
     }
     return false;
   }
