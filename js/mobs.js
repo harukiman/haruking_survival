@@ -1297,6 +1297,14 @@ Game.Mobs = (function () {
     // 撃破ヒットストップ＋軽いシェイク(格の高い敵ほど長く/強く)
     Game.state.hitstop = Math.max(Game.state.hitstop || 0, (m.def.boss || m.champion) ? 4 : m.elite ? 3 : 2);
     if (Game.Render.shake) Game.Render.shake(m.def.boss ? 8 : m.def.big ? 5 : 3);
+    // ボス撃破の決定的瞬間: 長い静止+白閃光+金の衝撃波リング+勝利の聖歌(コーラス)。一撃の重みを最大化
+    if (m.def.boss) {
+      Game.state.hitstop = Math.max(Game.state.hitstop || 0, 12);
+      if (Game.Render.flash) Game.Render.flash('rgba(255,240,200,0.55)');
+      if (Game.Render.shake) Game.Render.shake(14);
+      if (Game.Render.spawnLevelRing) Game.Render.spawnLevelRing(m.x, m.y);
+      if (Game.Audio && Game.Audio.cue) { Game.Audio.cue('boom'); Game.Audio.cue('choir'); }
+    }
     const diffX = (Game.DIFFICULTIES[Game.state.difficulty] || {}).xpMult || 1; // hardの報酬: 経験値+20%
     Game.Player.gainXP(Math.round((m.def.xp || 1) * (m.xpMult || 1) * diffX * (1 + (Game.state.ngLevel || 0) * 0.2)) * (m.elite ? 3 : 1)); // 強い敵(NG)・精鋭・危険帯ほど経験値増
     // バーツ(通貨)獲得: 敵の格に応じて。精鋭/チャンピオン/ボス/危険帯ほど多い
