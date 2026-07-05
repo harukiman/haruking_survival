@@ -95,11 +95,16 @@ window.Game = window.Game || {};
     let seed = parseInt(seedStr, 10);
     if (!seedStr || isNaN(seed)) seed = (Math.floor(Math.random() * 1e9)) >>> 0;
     const keepAch = opts.keepAchievements && Game.state ? Game.state.achievements : null;
+    // NG+: 記憶回廊の既読(物語)と刻片所持数も引き継ぐ(周回で読んだ物語が消えるのは不合理)
+    const keepStory = opts.keepAchievements && Game.state ? Game.state.storySeen : null;
+    const keepKokuhen = opts.keepAchievements && Game.state && Game.Inventory ? Game.Inventory.count('kokuhen') : 0;
     const ngLevel = opts.ngLevel || 0;
     Game.state = freshState(seed);
     Game.state.ngLevel = ngLevel;
     Game.state.difficulty = opts.difficulty || 'normal';
     if (keepAch) Game.state.achievements = keepAch;
+    if (keepStory) Game.state.storySeen = keepStory;
+    if (keepKokuhen > 0 && Game.Inventory) Game.Inventory.add('kokuhen', keepKokuhen);
     const sp = Game.WorldGen.findSpawn(Game.state.seed);
     Game.state.spawn = sp;
     Game.Player.spawnAt(sp.tx, sp.ty);
