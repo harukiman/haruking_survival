@@ -232,6 +232,7 @@ window.Game = window.Game || {};
     Game.state.deathSpot = data.deathSpot || null; // 死亡地点マーカーを復元
     Game.state.rainbowT = data.rainbowT || 0; // 虹の残り時間
     Game.state.grazeCount = data.grazeCount || 0; Game.state.deliverDone = data.deliverDone || 0; // 実績カウンタ
+    Game.state.shopBuyback = data.shopBuyback || []; // 商館の買い戻し棚
     Game.state.achMilestones = data.achMilestones || {}; // 実績マイルストーン受領フラグ
     Game.state.bulletCut = data.bulletCut || 0; // 弾斬りカウンタ
     // インベントリ（拡張済みなら容量も復元）

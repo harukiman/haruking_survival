@@ -475,6 +475,9 @@ Game.UI = (function () {
         const st2 = Game.Inventory.slots()[si2]; if (!st2 || !st2.roll) return;
         Game.Inventory.slots()[si2] = null;
         Game.state.player.bts = (Game.state.player.bts || 0) + pr;
+        // 売った装備は商館の棚に並ぶ(最大5点)。売値の2倍で買い戻せる
+        const bb = Game.state.shopBuyback = Game.state.shopBuyback || [];
+        bb.push({ item: st2, price: pr * 2 }); while (bb.length > 5) bb.shift();
         Game.Audio.play('craft'); toast('売却: +' + pr + 'bts');
         refreshTrade(); refreshHotbar(); if (Game.UI.refreshStats) refreshStats();
       }); });
@@ -518,6 +521,13 @@ Game.UI = (function () {
         groups[c].forEach(function (p) { h += rowHTML(p[0], p[1]); });
         h += '</div>';
       }
+      const bb = Game.state.shopBuyback || [];
+      if (bb.length) {
+        h += '<div class="trade-cat">🛍 買い戻し棚</div>';
+        bb.forEach(function (ent, bi) {
+          h += '<button class="trade-row" data-buyback="' + bi + '"><span class="tr-ic"></span><span class="tr-mid"><span class="tr-name" style="color:' + Game.Loot.rarityColor(ent.item) + '">' + Game.Loot.displayName(ent.item) + '</span><span class="tr-eff">あなたが売った品</span></span><span class="tr-price">🪙' + ent.price + '</span></button>';
+        });
+      }
     } else {
       h += '<div class="trade-list">';
       tradeStock.forEach(function (t, i) { h += rowHTML(t, i); });
@@ -526,6 +536,16 @@ Game.UI = (function () {
     body.innerHTML = h;
     { const tgl = document.getElementById('trade-sell-toggle'); if (tgl) tgl.addEventListener('click', function () { sellMode = !sellMode; refreshTrade(); }); }
     body.querySelectorAll('.trade-row[data-i]').forEach(function (btn) { btn.addEventListener('click', function () { buyTrade(parseInt(btn.getAttribute('data-i'), 10)); }); });
+    body.querySelectorAll('.trade-row[data-buyback]').forEach(function (btn) { btn.addEventListener('click', function () {
+      const bi = parseInt(btn.getAttribute('data-buyback'), 10);
+      const bb = Game.state.shopBuyback || []; const ent = bb[bi]; if (!ent) return;
+      const cur2 = Game.state.player.bts || 0;
+      if (cur2 < ent.price) { toast('バーツが足りない'); Game.Audio.play('deny'); return; }
+      if (!Game.Inventory.addInstance(ent.item)) { toast('持ち物がいっぱい'); Game.Audio.play('deny'); return; }
+      Game.state.player.bts = cur2 - ent.price; bb.splice(bi, 1);
+      Game.Audio.play('craft'); toast('買い戻し: ' + Game.Loot.displayName(ent.item));
+      refreshTrade(); refreshHotbar();
+    }); });
     // 通貨が変動していればカウントアップ＋パルス（購入の満足感）
     if (lastCurShown != null && lastCurShown !== cur) animateCurNum(lastCurShown, cur);
     lastCurShown = cur;
