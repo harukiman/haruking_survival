@@ -15,7 +15,7 @@ Game.DayNight = (function () {
       if (Game.UI && Game.UI.toast) Game.UI.toast('🌓 夜——鏡の向こうに、もう一つの世界の気配。《影鏡》を作れば渡れる');
     }
     const isBloodDay = ((day + 1) % Game.TUNE.BLOOD_MOON_EVERY) === 0;
-    const nowBlood = isBloodDay && isNight();
+    const nowBlood = isBloodDay && isNight() && s._quellDay !== day; // 黄昏の巨像を討てば血の月は鎮まる
     // 血の月の前兆: 当日の夕方(タイム0.55付近)に一度だけ警告 — 備え(松明/回復/弾)の時間を与える
     if (isBloodDay && !isNight() && s.timeOfDay > 0.55 && s._bloodWarnDay !== day) {
       s._bloodWarnDay = day;

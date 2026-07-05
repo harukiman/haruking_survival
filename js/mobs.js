@@ -1343,6 +1343,14 @@ Game.Mobs = (function () {
       if (Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - (m.def.size || 12) * 0.5, '+' + bts + ' bts', '#ffd24a');
     }
     if (Game.Achievements && m.def.hostile) Game.Achievements.unlock('first_night');
+    // 黄昏の巨像を血の月に討つ: 月が鎮まり、その夜は普通の夜に戻る(クライマックスの選択肢)
+    if (m.type === 'twilight_colossus' && Game.state.bloodMoon) {
+      Game.state._quellDay = Math.floor(Game.state.tick / Game.DAY_LENGTH);
+      Game.UI.toast('🌕 巨像が倒れ、血の月が鎮まった——夜が静けさを取り戻す');
+      if (Game.Render.flash) Game.Render.flash('rgba(200,220,255,0.4)');
+      if (Game.Audio && Game.Audio.cue) Game.Audio.cue('choir');
+      if (Game.Achievements) Game.Achievements.unlock('moon_queller');
+    }
     if (Game.Achievements && m.elite) { // 新精鋭の討伐実績
       if (hasAffix(m, 'warded')) Game.Achievements.unlock('ward_breaker');
       if (hasAffix(m, 'blink')) Game.Achievements.unlock('blink_hunter');

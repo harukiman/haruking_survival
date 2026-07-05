@@ -71,6 +71,7 @@ Game.Achievements = (function () {
     bullet_saber: { name:'弾を斬る者', desc:'敵弾を50発斬り消した' },
     soul_render:  { name:'魂喰らい断ち', desc:'吸魂の精鋭を討伐した' },
     moon_chef:    { name:'月光の料理人', desc:'月光きのこのシチューを作った' },
+    moon_queller: { name:'月鎮めの勇士', desc:'血の月の夜に黄昏の巨像を討ち、月を鎮めた' },
     endgame_smith: { name:'星と虚無の鍛冶', desc:'エンドゲーム装備を作製した' },
     relic_hoarder: { name:'遺物収集家', desc:'遺物を手に入れた' },
   };
