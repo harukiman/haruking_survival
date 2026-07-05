@@ -89,7 +89,11 @@ Game.Save = (function () {
 
   function save() {
     try {
-      localStorage.setItem(slotKey(curSlot), JSON.stringify(serialize()));
+      const key = slotKey(curSlot);
+      const payload = JSON.stringify(serialize());
+      // 1世代バックアップ: 書き込み前の現行セーブを _bak に退避(破損・不正データ時のフォールバック)
+      try { const prev = localStorage.getItem(key); if (prev) localStorage.setItem(key + '_bak', prev); } catch (eb) {}
+      localStorage.setItem(key, payload);
       return true;
     } catch (e) {
       const quota = e && (e.name === 'QuotaExceededError' || e.code === 22);
@@ -136,11 +140,19 @@ Game.Save = (function () {
   }
 
   function load() {
+    const key = slotKey(curSlot);
     try {
-      const raw = localStorage.getItem(slotKey(curSlot));
-      if (!raw) return null;
-      return JSON.parse(raw);
-    } catch (e) { return null; }
+      const raw = localStorage.getItem(key);
+      if (raw) return JSON.parse(raw);
+    } catch (e) {
+      // 破損セーブ: バックアップ世代へフォールバック(直前の正常な状態で復帰)
+      try {
+        const bak = localStorage.getItem(key + '_bak');
+        if (bak) { const d = JSON.parse(bak); if (Game.UI && Game.UI.toast) setTimeout(function () { try { Game.UI.toast('⚠ セーブが破損していたため、直前のバックアップから復元しました'); } catch (e2) {} }, 1500); return d; }
+      } catch (e3) {}
+      return null;
+    }
+    return null;
   }
 
   function clear() {
