@@ -58,6 +58,21 @@ Game.DayNight = (function () {
         const lx = s.player.x + (Math.random() - 0.5) * 320;
         const ly = s.player.y + (Math.random() - 0.5) * 220;
         Game.Render.spawnLightning(lx, ly - 340, lx, ly);
+        // 落雷の世界反応: 着弾点の近くの敵に大ダメージ+着弾地点が発火(雨で早鎮火)。
+        // 嵐は脅威であり武器にもなる — 敵の群れへ雷が落ちる幸運も
+        {
+          const TS2 = Game.CFG.TILE_SIZE;
+          const mobs2 = s.mobs || [];
+          for (let mi = 0; mi < mobs2.length; mi++) {
+            const mm = mobs2[mi]; if (!mm.def || mm.def.friendly) continue;
+            if (Math.hypot(mm.x - lx, mm.y - ly) < 1.6 * TS2) {
+              if (Game.Net.isConnected() && !Game.Net.host) Game.Net.sendHit(mm.id, 30, lx, ly);
+              else Game.Mobs.damageMob(mm, 30, lx, ly, false);
+            }
+          }
+          if (Game.World.ignite && Math.random() < 0.5) Game.World.ignite(lx, ly, 1, 0.4); // 稀に着弾点が燃える
+          if (Game.Render.spawnParticles) Game.Render.spawnParticles(lx, ly, '#fff07a', 10);
+        }
         // 屋外(住宅の外)で無防備なら落雷が直撃しうる。屋内(セーフエリア)なら安全
         if (!sheltered() && !peaceful() && Math.random() < 0.22) {
           Game.Survival.damage(4, 'storm');
