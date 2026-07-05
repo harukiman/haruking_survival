@@ -885,6 +885,16 @@ Game.Audio = (function () {
     if (!ctx) return; const t = ctx.currentTime;
     for (let i = 0; i < 3; i++) { if (!voiceOk()) break; const tt = t + i * 0.06; const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'square'; o.frequency.value = 4600; g.gain.setValueAtTime(0.0001, tt); g.gain.exponentialRampToValueAtTime(0.022, tt + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, tt + 0.03); o.connect(g); g.connect(sfxGain); reg(o); o.start(tt); o.stop(tt + 0.04); }
   }
+  // 波音: 岸辺で寄せては返す柔らかなノイズスウェル
+  function waveSound() {
+    if (!ctx || !noiseBuf || !voiceOk()) return;
+    const t = ctx.currentTime, dur = 1.8 + Math.random() * 0.8;
+    const src = ctx.createBufferSource(); src.buffer = noiseBuf; src.loop = true;
+    const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.setValueAtTime(400, t); f.frequency.linearRampToValueAtTime(900, t + dur * 0.35); f.frequency.linearRampToValueAtTime(300, t + dur);
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.035, t + dur * 0.3); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(f); f.connect(g); g.connect(sfxGain); reg(src); src.start(t, Math.random()); src.stop(t + dur);
+  }
+
   function windGust() {
     if (!ctx || !noiseBuf || !voiceOk()) return;
     const t = ctx.currentTime, dur = 1.4 + Math.random();
@@ -921,6 +931,14 @@ Game.Audio = (function () {
       const pt2 = Game.Player.playerTile();
       const g2 = Game.World.groundAt(pt2.tx, pt2.ty);
       if (g2 === Game.TILE.CLOUD || g2 === Game.TILE.SKYVOID) { if (r < 0.6) { windGust(); if (r < 0.2) play('wind_gust'); } return; }
+    }
+    // 岸辺: 周囲4点のいずれかが水なら波音(昼夜問わず)
+    if (Game.World && Game.World.groundAt && Game.Player && Game.Player.playerTile) {
+      const pt3 = Game.Player.playerTile();
+      let coastal = false;
+      const OFF = [[3, 0], [-3, 0], [0, 3], [0, -3]];
+      for (let ci = 0; ci < OFF.length; ci++) { const g4 = Game.World.groundAt(pt3.tx + OFF[ci][0], pt3.ty + OFF[ci][1]); if (g4 === Game.TILE.WATER || g4 === Game.TILE.DEEP_WATER) { coastal = true; break; } }
+      if (coastal && r < 0.55) { waveSound(); return; }
     }
     if (night) { if (r < 0.5) cricket(); else if (r < 0.62) windGust(); }
     else { if (r < 0.32) birdChirp(); else if (r < 0.5) windGust(); }
