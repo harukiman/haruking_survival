@@ -187,7 +187,10 @@ Game.Player = (function () {
     if (Game.state.fallout && Game.state.fallout.length) updateFallout(); // 死の灰
     if (p.cannonCd > 0) p.cannonCd--; // 戦車主砲のクールダウン
     if (p.missileCd > 0) p.missileCd--; // 戦闘機ミサイルのクールダウン
-    if (p.missileSalvo && p.missileSalvo.left > 0) updateMissileSalvo(p); // 短い間隔でミサイルを1発ずつ射出
+    if (p.missileSalvo && p.missileSalvo.left > 0) { // 短い間隔でミサイルを1発ずつ射出。降機したら残りは中止
+      if (p.vehicle === 'jet' || p.vehicle === 'bomber') updateMissileSalvo(p);
+      else p.missileSalvo = null;
+    }
     if (p.jetBurst > 0 && p.vehicle === 'jet') updateJetBurst(p); // 戦闘機の10連射バーストを流し撃つ
     else if (p.jetBurst > 0) p.jetBurst = 0; // 降機したら中断
     if (p.vehicle === 'tank') updateTurret(p, intent); // 戦車の砲塔を旋回(移動と独立)

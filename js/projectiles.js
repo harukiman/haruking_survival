@@ -430,17 +430,29 @@ Game.Projectiles = (function () {
         ctx.restore(); continue;
       }
       if (pr.kind === 'missile') {
-        // ミサイル: 長い煙＋炎の尾＋弾体(進行方向へ向く)。高速なので尾を長めに。小型(sm)は一回り小さく
-        const sm = pr.small ? 0.6 : 1;
-        const t1 = Game.Camera.worldToScreen(pr.x - (pr.vx || 0) * 2.2, pr.y - (pr.vy || 0) * 2.2);
-        ctx.strokeStyle = 'rgba(190,185,175,0.5)'; ctx.lineWidth = 6 * z * sm; ctx.lineCap = 'round';
+        // ミサイル: 長い煙＋炎の尾＋大きめの弾体(進行方向へ向く)。視認性重視で一回り大きく、輪郭線で背景から浮かせる。
+        // 小型(sm=4連の誘導弾)も従来比で大きめに保つ
+        const sm = pr.small ? 0.75 : 1.45;
+        const t1 = Game.Camera.worldToScreen(pr.x - (pr.vx || 0) * 2.6, pr.y - (pr.vy || 0) * 2.6);
+        ctx.strokeStyle = 'rgba(190,185,175,0.55)'; ctx.lineWidth = 8 * z * sm; ctx.lineCap = 'round';
         ctx.beginPath(); ctx.moveTo(t1.x, t1.y); ctx.lineTo(s.x, s.y); ctx.stroke();
-        ctx.strokeStyle = 'rgba(255,150,60,0.75)'; ctx.lineWidth = 3.5 * z * sm;
+        ctx.strokeStyle = 'rgba(255,150,60,0.8)'; ctx.lineWidth = 4.5 * z * sm;
         ctx.beginPath(); ctx.moveTo(ps.x, ps.y); ctx.lineTo(s.x, s.y); ctx.stroke();
         ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(pr.ang || Math.atan2(pr.vy || 0, pr.vx || 1));
-        ctx.fillStyle = '#c8ccd2'; ctx.beginPath(); ctx.ellipse(0, 0, 8 * z * sm, 3 * z * sm, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#e0664a'; ctx.beginPath(); ctx.moveTo(8 * z * sm, 0); ctx.lineTo(3 * z * sm, -3 * z * sm); ctx.lineTo(3 * z * sm, 3 * z * sm); ctx.closePath(); ctx.fill(); // 弾頭
-        if (!(pr.launchT > 0)) { ctx.fillStyle = '#ffd86b'; ctx.beginPath(); ctx.arc(-8 * z * sm, 0, 2.6 * z * sm, 0, Math.PI * 2); ctx.fill(); } // 噴射炎(点火後のみ)
+        // 黒い輪郭で背景から浮かせる
+        ctx.strokeStyle = 'rgba(0,0,0,0.85)'; ctx.lineWidth = 2;
+        ctx.fillStyle = '#d4d8de'; ctx.beginPath(); ctx.ellipse(0, 0, 10 * z * sm, 3.8 * z * sm, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        // テールフィン
+        ctx.fillStyle = '#8a929e';
+        ctx.beginPath(); ctx.moveTo(-9 * z * sm, 0); ctx.lineTo(-13 * z * sm, -4.5 * z * sm); ctx.lineTo(-7 * z * sm, -2 * z * sm); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(-9 * z * sm, 0); ctx.lineTo(-13 * z * sm, 4.5 * z * sm); ctx.lineTo(-7 * z * sm, 2 * z * sm); ctx.closePath(); ctx.fill();
+        // 弾頭(赤)
+        ctx.fillStyle = '#e0503a'; ctx.beginPath(); ctx.moveTo(10 * z * sm, 0); ctx.lineTo(4 * z * sm, -3.6 * z * sm); ctx.lineTo(4 * z * sm, 3.6 * z * sm); ctx.closePath(); ctx.fill(); ctx.stroke();
+        // 噴射炎(点火後のみ): 大きめの二重炎
+        if (!(pr.launchT > 0)) {
+          ctx.fillStyle = '#ff9a3c'; ctx.beginPath(); ctx.arc(-11 * z * sm, 0, 4 * z * sm, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#ffe27a'; ctx.beginPath(); ctx.arc(-10 * z * sm, 0, 2.2 * z * sm, 0, Math.PI * 2); ctx.fill();
+        }
         ctx.restore(); continue;
       }
       if (pr.kind === 'rocket') {
