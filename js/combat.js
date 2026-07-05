@@ -230,6 +230,25 @@ Game.Combat = (function () {
     if (p.dir === 'up') fy = -1; else if (p.dir === 'down') fy = 1;
     else if (p.dir === 'left') fx = -1; else fx = 1;
 
+    // 弾斬り: 近接の一振りで前方の敵弾を斬り消せる(タイミングと向きのスキル表現)。
+    // 消した弾1発ごとに小さな火花+音。弾幕への近接の回答
+    {
+      const prs = Game.state.projectiles || [];
+      let cut = 0;
+      for (let i = prs.length - 1; i >= 0; i--) {
+        const pr = prs[i]; if (!pr.hostile) continue;
+        const dxb = pr.x - p.x, dyb = pr.y - p.y; const db = Math.hypot(dxb, dyb);
+        if (db > rangePx * 0.9) continue;
+        if (db > 12 && (dxb * fx + dyb * fy) < 0) continue; // 前方のみ
+        prs.splice(i, 1); cut++;
+        if (Game.Render.spawnParticles) Game.Render.spawnParticles(pr.x, pr.y, '#cfefff', 3);
+      }
+      if (cut > 0) {
+        if (Game.Audio) Game.Audio.play('slash_air');
+        if (Game.UI && Game.UI.tipOnce) Game.UI.tipOnce('bullet_cut', '⚔ 弾斬り！ 近接の一振りで前方の敵弾を斬り消せる。弾幕には剣で斬り込め');
+      }
+    }
+
     let best = null, bestD = Infinity;
     for (let i = 0; i < mobs.length; i++) {
       const m = mobs[i];
