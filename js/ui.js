@@ -1145,25 +1145,30 @@ Game.UI = (function () {
     const toggle = function (key, label) {
       return '<div class="opt-row tg"><label>' + label + '</label><button class="opt-toggle ' + (S.get(key) ? 'on' : '') + '" data-k="' + key + '">' + (S.get(key) ? 'ON' : 'OFF') + '</button></div>';
     };
+    const sect = function (label) { return '<div class="opt-sect">' + label + '</div>'; };
     c.innerHTML =
+      sect('🔉 サウンド') +
       slider('bgmVol', '🎵 BGM音量', 0, 100) +
       slider('sfxVol', '🔊 効果音量', 0, 100) +
+      sect('🖥 画面') +
       slider('brightness', '🔆 明るさ', 40, 100) +
+      toggle('screenShake', '📳 画面のゆれ') +
+      toggle('reduceFlash', '⚡ 画面フラッシュ軽減') +
+      toggle('lookAhead', '🎥 先読みカメラ') +
+      toggle('showFps', '📈 FPS表示') +
+      sect('🎮 操作') +
       slider('btnSize', '📐 ボタンサイズ', 70, 140) +
       slider('btnOpacity', '👁 ボタン透明度', 30, 100) +
       slider('joySens', '🕹 スティック感度', 60, 160) +
       slider('padCursor', '🎯 カーソル感度(パッド)', 40, 250) +
       toggle('joyFollow', '🕹 スティック追従(指を追う)') +
       toggle('leftHanded', '✋ 左利き(操作左右反転)') +
+      sect('📊 表示・補助') +
       toggle('dmgNumbers', '🔢 ダメージ数値表示') +
-      toggle('screenShake', '📳 画面のゆれ') +
-      toggle('reduceFlash', '⚡ 画面フラッシュ軽減') +
       toggle('lowHpWarn', '🩸 低HP警告') +
       toggle('ambient', '🌿 環境演出') +
       toggle('homeCompass', '🧭 帰路コンパス') +
       toggle('peerCompass', '👥 仲間コンパス(MP)') +
-      toggle('lookAhead', '🎥 先読みカメラ') +
-      toggle('showFps', '📈 FPS表示') +
       '<div class="opt-row"><button id="opt-story" class="map-btn" style="width:100%">📖 記憶回廊（物語）を開く</button></div>' +
       // ===== マルチプレイ(ゲーム中に招待・参加できるシームレス導線) =====
       (Game.Net && Game.Net.available && Game.Net.available() ?
