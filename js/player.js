@@ -979,6 +979,19 @@ Game.Player = (function () {
     return arr;
   }
 
+  // 装備セットの発見性: セット完成時は名前つきで通知、片方だけならヒント(隠れた強力ボーナスの周知)
+  function notifySetStatus(itemId) {
+    const p = Game.state.player;
+    const sb = setBonus();
+    if (sb.name) {
+      if (p._setNotified !== sb.name) { p._setNotified = sb.name; Game.UI.toast('✨ セット効果発動: ' + sb.name); Game.Audio.play('enchant'); }
+    } else {
+      p._setNotified = null;
+      let inSet = false; for (const k in Game.SETS) { if (Game.SETS[k].items.indexOf(itemId) >= 0) { inSet = true; break; } }
+      if (inSet && Game.UI.tipOnce) Game.UI.tipOnce('set_intro', '🧩 この防具はセットの一部。頭+胴を同シリーズで揃えると強力なセット効果が発動する');
+    }
+  }
+
   // 選択中(ホットバー)の防具を装備。前装備はインベントリへ戻す
   function equipSelectedArmor() {
     const p = Game.state.player;
@@ -993,6 +1006,7 @@ Game.Player = (function () {
     applyEquipStats();
     Game.Audio.play('equip');
     Game.UI.toast(Game.Loot.displayName(p.armor[def.slot]) + ' を装備');
+    notifySetStatus(slot.id);
     Game.UI.refreshAll();
   }
 
@@ -1196,6 +1210,7 @@ Game.Player = (function () {
     applyEquipStats();
     Game.Audio.play('equip');
     Game.UI.toast(Game.Loot.displayName(p.armor[def.slot]) + ' を装備');
+    notifySetStatus(slot.id);
     Game.UI.refreshAll();
   }
 
@@ -1732,8 +1747,14 @@ Game.Player = (function () {
     const p = Game.state.player;
     const drops = Game.state.drops;
     const PR = Game.CFG.PICKUP_RADIUS;
+    // ドロップの寿命/上限(無限増加でセーブ肥大・描画負荷が単調増加していた):
+    // 自然ドロップは約2ゲーム日で消滅。手で捨てた品(manual)は消えない。上限800で古い自然ドロップから間引く
+    const TTL = (Game.DAY_LENGTH || 3600) * 2, now = Game.state.tick;
+    if (drops.length > 800) { for (let i = 0; i < drops.length && drops.length > 800; i++) { if (!drops[i].manual) drops.splice(i, 1); i--; } }
     for (let i = drops.length - 1; i >= 0; i--) {
       const d = drops[i];
+      if (d.bornT == null) d.bornT = now; // 既存/新規を遅延スタンプ
+      if (!d.manual && now - d.bornT > TTL) { drops.splice(i, 1); continue; }
       const dx = p.x - d.x, dy = p.y - d.y;
       const dist = Math.hypot(dx, dy);
       // 手で捨てた品(manual): 吸い寄せ無し。明確に踏まない(至近距離まで乗らない)と拾わない+捨てた直後の猶予

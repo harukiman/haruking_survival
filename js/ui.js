@@ -251,6 +251,11 @@ Game.UI = (function () {
     { id: 'bomb', n: 3, price: 16 }, { id: 'frost_grenade', n: 3, price: 18 },
     { id: 'carrot_seeds', n: 5, price: 6 }, { id: 'xp_orb', n: 1, price: 45 },
     { id: 'expand_pouch', n: 1, price: 120 }, { id: 'wisdom_tome', n: 1, price: 150 },
+    // 中盤のbtsの使い道(シンク): 消耗品まとめ買い・乗り物弾薬/整備・影/星の素材
+    { id: 'repair_kit', n: 3, price: 45 }, { id: 'medkit', n: 2, price: 30 },
+    { id: 'bullet', n: 40, price: 14 }, { id: 'cannon_shell', n: 6, price: 60 },
+    { id: 'missile', n: 4, price: 70 }, { id: 'homing_missile', n: 4, price: 95 },
+    { id: 'shadow_crystal', n: 6, price: 60 }, { id: 'lumen', n: 4, price: 85 }, { id: 'star_metal', n: 2, price: 140 },
     { id: 'ring_crit', n: 1, price: 260 }, { id: 'amulet_swift', n: 1, price: 260 }, { id: 'heart_regen', n: 1, price: 260 },
     { id: 'coin_charm', n: 1, price: 400 },
     { rand: true, price: 90, label: '掘り出し物（ランダム装備）' },

@@ -300,8 +300,14 @@ Game.Projectiles = (function () {
         pr.spd = pr.accel ? Math.min(pr.spdMax || 20, (pr.spd || 0) + pr.accel) : Math.hypot(pr.vx, pr.vy);
         if (pr.ang == null) pr.ang = Math.atan2(pr.vy, pr.vx);
         if (pr.homing) {
-          let bm = null, bd = Infinity;
-          for (let m = 0; m < mobs.length; m++) { const mo = mobs[m]; if (mo.def.friendly) continue; const d = Math.hypot(mo.x - pr.x, mo.y - pr.y); if (d < bd) { bd = d; bm = mo; } }
+          // 性能: 全モブ走査は5tickに1回だけ。間はキャッシュした標的を追う(死亡/消滅で再取得)
+          let bm = pr._tgt && pr._tgt.hp > 0 ? pr._tgt : null;
+          if (!bm || (Game.state.tick + (pr._scanOff || (pr._scanOff = (Math.random() * 5) | 0))) % 5 === 0) {
+            let bd0 = Infinity; bm = null;
+            for (let m = 0; m < mobs.length; m++) { const mo = mobs[m]; if (mo.def.friendly) continue; const d = Math.hypot(mo.x - pr.x, mo.y - pr.y); if (d < bd0) { bd0 = d; bm = mo; } }
+            pr._tgt = bm;
+          }
+          const bd = bm ? Math.hypot(bm.x - pr.x, bm.y - pr.y) : Infinity;
           if (bm && bd < 26 * TS) {
             const desired = Math.atan2(bm.y - pr.y, bm.x - pr.x);
             let diff = desired - pr.ang; while (diff > Math.PI) diff -= Math.PI * 2; while (diff < -Math.PI) diff += Math.PI * 2;

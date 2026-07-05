@@ -63,7 +63,8 @@ Game.Mobs = (function () {
     const coopHp = (def.boss || def.midboss) ? (1 + 0.55 * Math.min(3, peers)) : 1;
     const flatBossHp = def.boss ? 2 : def.midboss ? 1.5 : 1; // ユーザー指示: ボスHP一律×2/中ボス×1.5
     const flatBossDmg = def.boss ? 2 : def.midboss ? 1.5 : 1; // 攻撃力も同様に(ユーザー指示: HPだけでなく強さも)
-    const hp = Math.round(def.hp * mult * bandMult * bossMult * lvHp * nightHp * coopHp * spaceHp * flatBossHp);
+    const diffHp = (def.hostile && diff.hpMult != null) ? diff.hpMult : 1; // 難易度(hard=1.35)で敵HP増
+    const hp = Math.round(def.hp * mult * bandMult * bossMult * lvHp * nightHp * coopHp * spaceHp * flatBossHp * diffHp);
     const dmgMult = mult * bandMult * lvDmg * nightDmg * bossDmg * spaceDmg * flatBossDmg * (diff.dmgMult != null ? diff.dmgMult : 1);
     Game.state._mobId = (Game.state._mobId || 0) + 1;
     const m = {
@@ -87,7 +88,7 @@ Game.Mobs = (function () {
     };
     // 精鋭(elite)抽選: 非ボスの敵対モブが低確率で精鋭化（HP/攻撃UP・発光オーラ・確定レアドロップ）
     // 帯別倍率: 安全圏0=精鋭なし / 辺境2倍 / 深域3倍 / 深域+4倍 → 奥地ほど戦利品厳選が捗る
-    const eliteMult = (DZ && DZ.ELITE_MULT[band] != null) ? DZ.ELITE_MULT[band] : 1;
+    const eliteMult = ((DZ && DZ.ELITE_MULT[band] != null) ? DZ.ELITE_MULT[band] : 1) * (diff.eliteMult || 1); // hardは精鋭が出やすい
     if (!def.boss && def.hostile && Math.random() < (TUNE.ELITE_CHANCE || 0.04) * eliteMult) {
       m.elite = true;
       m.maxHp = m.hp = Math.round(m.maxHp * (TUNE.ELITE_HP_MULT || 2.2));
@@ -380,6 +381,7 @@ Game.Mobs = (function () {
       if (Game.UI && Game.UI.tipOnce) Game.UI.tipOnce('elem_affinity', '属性相性！ 炎の敵に炎/氷の敵に氷は効かない。逆属性(炎の敵には氷、氷の敵には炎)が弱点だ');
       return;
     }
+    if (Game.UI && Game.UI.tipOnce) Game.UI.tipOnce('elem_intro', '元素武器: 🔥炎上(継続ダメ)/❄凍え(鈍足)/☠毒。凍った敵に会心で「粉砕」、逆属性は弱点。組み合わせを試そう');
     const weak = (kind === 'fire' && elem === 'ice') || (kind === 'frost' && elem === 'fire');
     if (weak && Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - m.def.size * 0.5, '弱点!', '#ffe27a', true);
     if ((kind === 'fire' && (m.dot.slow || 0) > 0) || (kind === 'frost' && (m.dot.burn || 0) > 0)) { thermalShock(m); m.chill = 0; return; }
@@ -1245,7 +1247,8 @@ Game.Mobs = (function () {
     // 撃破ヒットストップ＋軽いシェイク(格の高い敵ほど長く/強く)
     Game.state.hitstop = Math.max(Game.state.hitstop || 0, (m.def.boss || m.champion) ? 4 : m.elite ? 3 : 2);
     if (Game.Render.shake) Game.Render.shake(m.def.boss ? 8 : m.def.big ? 5 : 3);
-    Game.Player.gainXP(Math.round((m.def.xp || 1) * (m.xpMult || 1) * (1 + (Game.state.ngLevel || 0) * 0.2)) * (m.elite ? 3 : 1)); // 強い敵(NG)・精鋭・危険帯ほど経験値増
+    const diffX = (Game.DIFFICULTIES[Game.state.difficulty] || {}).xpMult || 1; // hardの報酬: 経験値+20%
+    Game.Player.gainXP(Math.round((m.def.xp || 1) * (m.xpMult || 1) * diffX * (1 + (Game.state.ngLevel || 0) * 0.2)) * (m.elite ? 3 : 1)); // 強い敵(NG)・精鋭・危険帯ほど経験値増
     // バーツ(通貨)獲得: 敵の格に応じて。精鋭/チャンピオン/ボス/危険帯ほど多い
     if (m.def.hostile) {
       const pl = Game.state.player;

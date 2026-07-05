@@ -209,9 +209,15 @@ Game.Survival = (function () {
     const physical = source !== 'starve' && source !== 'sanity' && source !== 'status';
     // 環境DoT(死の灰/寒さ/砂嵐/落雷/溺れ)は無敵時間を貫通し、毎秒確実に蝕む
     const envDot = source === 'fallout' || source === 'cold' || source === 'sand' || source === 'storm' || source === 'drown';
-    // 乗り物搭乗中の被ダメは機体の耐久が肩代わり(爆発ダメージ自体は素通り)
+    // 乗り物搭乗中の被ダメは機体の耐久が大半を肩代わりするが、25%は搭乗者へ貫通する
+    // (完全無敵だと地上戦が無意味化するため。装甲の中でも衝撃は伝わる)
     if (physical && source !== 'wreck' && p.vehicle && Game.Player.vehicleTakeDamage) {
-      if (Game.Player.vehicleTakeDamage(amount)) return true;
+      if (Game.Player.vehicleTakeDamage(amount)) {
+        const bleed = Math.floor(amount * 0.25);
+        if (bleed <= 0) return true;
+        if (Game.UI && Game.UI.tipOnce) Game.UI.tipOnce('veh_bleed', '搭乗中も被ダメージの一部(25%)は搭乗者に貫通します。機体の装甲を過信しないこと');
+        amount = bleed; // 残り25%を通常の被ダメ処理(無敵/防御)へ流す
+      }
     }
     if (p.invuln > 0 && physical && !envDot) {
       // ジャスト回避: ロール無敵中に攻撃を受け流したら報酬(1ロール1回)

@@ -457,6 +457,7 @@ Game.ITEMS = {
   shell_12g:   { name:'12ゲージ散弾', stack:99, color:'#b04a3a', flavor:'拡散する散弾。近距離で凶悪。' },
   ammo_50:     { name:'.50口径弾', stack:99, color:'#9a7a40', flavor:'対物ライフル弾。一撃が重い。' },
   rocket_ammo: { name:'ロケット弾', stack:16, color:'#3a3a40', flavor:'着弾で爆発する。巻き込みに注意。' },
+  star_shell:  { name:'星核弾', stack:64, color:'#aee0ff', flavor:'星鉄を芯に鍛えた炸裂弾。スターキャノン専用。安価な弾丸では星の力は放てない。' },
   he_slug:     { name:'鉄鋼榴弾', stack:32, color:'#6a6e5a', flavor:'鉄鋼の弾芯に炸薬を仕込んだ榴弾。直撃の運動エネルギーと炸裂を兼ね備える。' },
   missile:     { name:'ミサイル', stack:16, color:'#c0503a', flavor:'戦闘機の翼下に搭載する対地/対空ミサイル。高速で直進し、着弾または一定距離で炸裂する。' },
   homing_missile:{ name:'誘導ミサイル', stack:16, color:'#d0603a', flavor:'誘導装置を組み込んだ追尾ミサイル。爆撃機に搭載し、放てば自ら最寄りの敵へ曲がって飛ぶ。' },
@@ -564,7 +565,7 @@ Game.ITEMS = {
   star_metal:    { name:'星鋼', stack:99, color:'#aee0ff', flavor:'星の核から採れる金属。地上のどんな鋼より硬く、軽い。' },
   star_core:     { name:'星核', stack:16, color:'#ffe9ff', flavor:'小さな星そのもの。無限の力が秘められている。' },
   cosmic_blade:  { name:'コズミックブレード', stack:1, color:'#aee0ff', tool:'sword', tier:5, attack:28, special:{type:'thunder', name:'星の裁き', count:3, pct:0.7, cd:80, color:'#aee0ff'}, flavor:'星鋼で鍛えし剣。一閃が闇を裂き、星の光が敵を撃つ。' },
-  star_cannon:   { name:'スターキャノン', stack:1, color:'#aee0ff', tool:'gun', mag:8, ammo:'bullet', fireDmg:38, cd:9, explosive:2.6, bkind:'rocket', gunsfx:'gun_rocket', flavor:'星の力を撃ち放つ砲。着弾で炸裂する。' },
+  star_cannon:   { name:'スターキャノン', stack:1, color:'#aee0ff', tool:'gun', mag:8, ammo:'star_shell', fireDmg:38, cd:9, explosive:2.6, bkind:'rocket', gunsfx:'gun_rocket', flavor:'星の力を撃ち放つ砲。着弾で炸裂する。' },
   gravity_boots: { name:'重力ブーツ', stack:1, color:'#88a', armor:4, slot:'chest', flavor:'星の重力を御す靴。' },
   // 家具・家作り
   healing_totem: { name:'癒しの祭壇', stack:16, color:'#7fd0a0', place:Game.OBJ.HEALING_TOTEM, flavor:'傍にいる者の傷を癒す祭壇。' },
@@ -836,7 +837,7 @@ Game.RECIPES = [
   { out:{id:'heavy_bomb', n:1}, in:{iron:8, sulfur:6, coal:5, gold_bar:1}, station:'furnace' },
   { out:{id:'cannon_shell', n:4}, in:{iron:2, coal:2, sulfur:2}, station:'furnace' },
   { out:{id:'gasoline', n:3}, in:{coal:3, sulfur:1}, station:'furnace' },
-  { out:{id:'repair_kit', n:1}, in:{iron:3, coal:1}, station:'crafting_table' },
+  { out:{id:'repair_kit', n:1}, in:{iron:6, steel_plate:1, coal:2}, station:'crafting_table' }, // 修理を安直にしない(乗り物バランス)
   { out:{id:'plane', n:1}, in:{shadow_steel:18, iron:24, lumen:12, gold_bar:4}, station:'crafting_table' },
   // ロケット(最高コスト)・宇宙装備
   { out:{id:'rocket', n:1}, in:{iron:90, shadow_steel:45, lumen:45, shadow_core:12, gold_bar:18, circuit:10, steel_plate:12}, station:'crafting_table' },
@@ -925,10 +926,11 @@ Game.RECIPES = [
   { out:{id:'p90', n:1}, in:{iron:9, gun_parts:4, gunpowder:3, steel_plate:2}, station:'crafting_table' },
   { out:{id:'scar_h', n:1}, in:{iron:12, gun_parts:5, gunpowder:4, steel_plate:2}, station:'crafting_table' },
   { out:{id:'spas12', n:1}, in:{iron:10, gun_parts:3, gunpowder:4, wood:2}, station:'crafting_table' },
-  { out:{id:'minigun', n:1}, in:{iron:20, gun_parts:8, gunpowder:6, steel_plate:4, gold_bar:3}, station:'crafting_table' },
+  { out:{id:'minigun', n:1}, in:{iron:20, gun_parts:8, gunpowder:6, steel_plate:4, gold_bar:3, shadow_steel:4}, station:'crafting_table' }, // 影世界ゲート(高DPS武器の素通り防止)
   { out:{id:'m79', n:1}, in:{iron:10, gun_parts:4, gunpowder:6, steel_plate:1}, station:'crafting_table' },
   { out:{id:'he_launcher', n:1}, in:{iron:14, gun_parts:5, steel_plate:3, gunpowder:4}, station:'crafting_table' },
   { out:{id:'he_slug', n:4}, in:{steel_plate:1, iron:2, gunpowder:2}, station:'crafting_table' },
+  { out:{id:'star_shell', n:6}, in:{star_metal:1, gunpowder:2}, station:'crafting_table' },
   { out:{id:'missile', n:2}, in:{iron:6, steel_plate:1, gunpowder:4, gun_parts:1}, station:'crafting_table' },
   { out:{id:'homing_missile', n:2}, in:{missile:2, circuit:3, gun_parts:1}, station:'crafting_table' },
   { out:{id:'lockon_launcher', n:1}, in:{iron:18, steel_plate:4, gun_parts:6, circuit:3, gold_bar:2}, station:'crafting_table' },
@@ -1088,7 +1090,7 @@ Game.MAX_LEVEL = 9999;
 Game.DIFFICULTIES = {
   peaceful: { name:'のんびり', desc:'敵が出ず、正気では死なない。建築と探索を満喫', spawnHostiles:false, sanityKill:false, dmgMult:0 },
   normal:   { name:'ふつう', desc:'標準のサバイバル', spawnHostiles:true, sanityKill:true, dmgMult:1 },
-  hard:     { name:'ハード', desc:'敵は手強く正気も削れやすい', spawnHostiles:true, sanityKill:true, dmgMult:1.4 },
+  hard:     { name:'ハード', desc:'敵は硬く精鋭も出やすい。報酬は経験値+20%', spawnHostiles:true, sanityKill:true, dmgMult:1.4, hpMult:1.35, eliteMult:1.6, xpMult:1.2 },
 };
 
 // モブ定義
@@ -1320,7 +1322,7 @@ Game.ITEM_GLYPH = {
   torch:'🔥', campfire:'🔥', lantern:'🏮', lumen_lantern:'💡', crafting_table:'🛠️', furnace:'🔥', chest:'📦', bed:'🛏️', fence:'🚧', door:'🚪', wall:'🧱', window:'🪟', bridge:'🌉', sign:'🪧', bounty_board:'📜', wood_floor:'🟫', stone_floor:'⬜',
   shadow_shard:'🌑', shadow_mirror:'🪞', shadow_crystal:'🔮', lumen:'✨', shadow_steel:'⬛', shadow_core:'💜', unity_core:'⭐', void_heart:'💗', rift_anchor:'🕳️', enchant_table:'✦',
   bullet:'🔸', pistol:'🔫', shadow_rifle:'🔫', car:'🚗', boat:'🛶', plane:'✈️',
-  ammo_9mm:'🔸', ammo_556:'🔹', ammo_762:'🟤', shell_12g:'🔴', ammo_50:'🟠', rocket_ammo:'🧨', he_slug:'🔩', missile:'🚀', homing_missile:'🛰️',
+  ammo_9mm:'🔸', ammo_556:'🔹', ammo_762:'🟤', shell_12g:'🔴', ammo_50:'🟠', rocket_ammo:'🧨', he_slug:'🔩', missile:'🚀', homing_missile:'🛰️', star_shell:'🌠',
   glock17:'🔫', mp5:'🔫', m4:'🔫', ak47:'🔫', m870:'🔫', barrett:'🎯', rpg7:'🚀',
   rocket:'🚀', star_metal:'🌟', star_core:'💫', cosmic_blade:'🌠', star_cannon:'🔫', gravity_boots:'👢',
   warp_staff:'🪄', flame_staff:'🔥', frost_staff:'❄️', meteor_staff:'☄️', vortex_staff:'🌀', flying_carpet:'🧞', grapple_hook:'🪝', stasis_glass:'⏳',
