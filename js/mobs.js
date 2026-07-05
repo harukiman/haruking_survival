@@ -398,7 +398,12 @@ Game.Mobs = (function () {
         return;
       }
     }
-    m.dot[e[0]] = Math.max(m.dot[e[0]] || 0, weak ? Math.round(e[1] * 1.6) : e[1]); // 弱点は状態異常が長い
+    // 天候の影響: 雨/雪は炎上が消えやすく(半減)、吹雪は凍えが長引く(1.5倍)。天候で武器を持ち替える理由になる
+    let wMul = 1;
+    const wt2 = Game.state.weather && Game.state.weather.type;
+    if (kind === 'fire' && (wt2 === 'rain' || wt2 === 'snow' || wt2 === 'blizzard')) { wMul = 0.5; if (Game.UI && Game.UI.tipOnce) Game.UI.tipOnce('weather_fire', '🌧 雨や雪の中では炎が消えやすい(炎上半減)。天候に合わせて武器を選ぼう'); }
+    if (kind === 'frost' && wt2 === 'blizzard') { wMul = 1.5; if (Game.UI && Game.UI.tipOnce) Game.UI.tipOnce('weather_frost', '🌨 吹雪の中では凍えが長引く(1.5倍)。氷武器の好機だ'); }
+    m.dot[e[0]] = Math.max(m.dot[e[0]] || 0, Math.round(e[1] * (weak ? 1.6 : 1) * wMul)); // 弱点は状態異常が長い
   }
   // 武器由来の出血DoT: dmg/秒相当を dur フレーム継続(既存より深手を優先)
   function applyBleed(m, dmg, dur, every, col) {

@@ -118,6 +118,9 @@ Game.Projectiles = (function () {
 
   // 連鎖（雷）: 命中点から近傍の敵へ飛び移ってダメージ
   function chainTo(x, y, dmg, jumps, hitSet) {
+    // 雨天は雷がよく通る(+30%)。天候が武器選択に影響する世界反応性
+    const wt = Game.state.weather && Game.state.weather.type;
+    if (wt === 'rain') dmg = Math.round(dmg * 1.3);
     const mobs = Game.state.mobs; let fx = x, fy = y, left = jumps;
     while (left-- > 0) {
       let best = null, bd = 6 * TS;
