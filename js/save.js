@@ -90,13 +90,25 @@ Game.Save = (function () {
       localStorage.setItem(slotKey(curSlot), JSON.stringify(serialize()));
       return true;
     } catch (e) {
-      // 容量超過などの失敗を黙殺しない(無言で進捗が保存されない事故の防止)。30秒に1回まで警告
+      const quota = e && (e.name === 'QuotaExceededError' || e.code === 22);
+      // 容量超過は自動回復を試みる: 全世界の自然ドロップ(手で捨てた品以外)を破棄して1回だけ再保存
+      if (quota && !save._retrying) {
+        try {
+          save._retrying = true;
+          let pruned = 0;
+          const ws = Game.state.worlds || {};
+          for (const k in ws) { const arr = ws[k] && ws[k].drops; if (!arr) continue; for (let i = arr.length - 1; i >= 0; i--) { if (!arr[i].manual) { arr.splice(i, 1); pruned++; } } }
+          const ok = save();
+          save._retrying = false;
+          if (ok) { if (Game.UI && Game.UI.toast) Game.UI.toast('⚠ セーブ容量が上限のため、地面の自然ドロップ' + pruned + '個を整理して保存しました'); return true; }
+        } catch (e3) { save._retrying = false; }
+      }
+      // 失敗を黙殺しない(無言で進捗が保存されない事故の防止)。30秒に1回まで警告
       try {
         const now = Date.now();
         if (!save._warnT || now - save._warnT > 30000) {
           save._warnT = now;
-          const quota = e && (e.name === 'QuotaExceededError' || e.code === 22);
-          if (Game.UI && Game.UI.toast) Game.UI.toast(quota ? '⚠ セーブ容量が上限に達しています！ 地面のアイテムを整理してください' : '⚠ セーブに失敗しました');
+          if (Game.UI && Game.UI.toast) Game.UI.toast(quota ? '⚠ セーブ容量が上限に達しています！' : '⚠ セーブに失敗しました');
         }
       } catch (e2) {}
       return false;

@@ -674,7 +674,9 @@ body.desktop .abtn:hover, body.desktop .dbtn:hover { filter: brightness(1.18); }
   .game-title .t-surv { font-size: 1.3rem; letter-spacing: 9px; margin-left: 9px; }
   .inv-box { padding: 14px 12px; max-height: 92vh; }
   .x-btn { width: 38px; height: 38px; }
-  #toast { bottom: 96px; font-size: .82rem; max-width: 88vw; }
+  /* 扇状ボタン(右下226px)と重ならないよう、トーストは左寄せ+幅制限 */
+  #toast { bottom: 96px; font-size: .8rem; max-width: 52vw; left: calc(8px + max(var(--ex,10px), env(safe-area-inset-left))); transform: none; }
+  #toast.show { transform: none; }
 }
 /* 縦が短い端末(小型スマホ縦): 右下ボタン群をややコンパクトに */
 @media (max-height: 740px) and (orientation: portrait) {
