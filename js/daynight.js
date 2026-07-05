@@ -16,6 +16,13 @@ Game.DayNight = (function () {
     }
     const isBloodDay = ((day + 1) % Game.TUNE.BLOOD_MOON_EVERY) === 0;
     const nowBlood = isBloodDay && isNight();
+    // 血の月の前兆: 当日の夕方(タイム0.55付近)に一度だけ警告 — 備え(松明/回復/弾)の時間を与える
+    if (isBloodDay && !isNight() && s.timeOfDay > 0.55 && s._bloodWarnDay !== day) {
+      s._bloodWarnDay = day;
+      Game.UI.toast('🌆 空が不気味に赤らんでいる… 今夜は血の月だ。日暮れまでに備えよ(光は効かない)');
+      if (Game.Audio && Game.Audio.cue) Game.Audio.cue('riser');
+      if (Game.Render.flash) Game.Render.flash('rgba(120,20,20,0.18)');
+    }
     if (nowBlood && !s.bloodMoon) {
       Game.UI.toast('🌑 血の月だ… 今宵は魔物が荒れ狂う。光を絶やすな');
       if (Game.Render.flash) Game.Render.flash('rgba(160,20,20,0.4)'); // 血色のフラッシュ
