@@ -132,6 +132,7 @@ Game.Render = (function () {
     drawWreck(ctx);
     drawFires(ctx);
     drawDowned(ctx);
+    drawFootprints(ctx);
     drawDrops(ctx);
     Game.Mobs.draw(ctx, alpha);
     drawPeers(ctx);
@@ -1159,6 +1160,29 @@ Game.Render = (function () {
   }
   function roundRectC(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
 
+  // ===== 足跡(雪/砂): 歩いた跡が残り、ゆっくり消える。世界が反応する小さな手触り =====
+  const footprints = []; // {x,y,ang,life,max,col}
+  function spawnFootprint(wx, wy, ang, ground) {
+    if (footprints.length > 90) footprints.shift();
+    const col = ground === Game.TILE.SNOW ? 'rgba(120,140,170,' : 'rgba(120,95,55,';
+    footprints.push({ x: wx, y: wy, ang: ang, life: 240, max: 240, col: col });
+  }
+  function drawFootprints(ctx) {
+    if (!footprints.length) return;
+    const z = Game.Camera.zoom ? Game.Camera.zoom() : 1;
+    for (let i = footprints.length - 1; i >= 0; i--) {
+      const f = footprints[i]; f.life--;
+      if (f.life <= 0) { footprints.splice(i, 1); continue; }
+      const s = Game.Camera.worldToScreen(f.x, f.y);
+      if (s.x < -20 || s.y < -20 || s.x > Game.view.w + 20 || s.y > Game.view.h + 20) continue;
+      const a = 0.4 * (f.life / f.max);
+      ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(f.ang);
+      ctx.fillStyle = f.col + a + ')';
+      ctx.beginPath(); ctx.ellipse(0, 0, 2.6 * z, 4 * z, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+  }
+
   // パーティクル（採掘デブリ等）
   const particles = [];
   // ===== パフォーマンス: パーティクルの上限＋画面外/モバイル間引き =====
@@ -1335,5 +1359,5 @@ Game.Render = (function () {
     ctx.textAlign = 'left';
   }
 
-  return { draw, buildChunkCache, spawnParticles, spawnPickupBurst, spawnBlood, spawnSlash, spawnFloat, spawnLightning, spawnMuzzle, spawnImpact, spawnLevelRing, spawnHitDir, flash, hurtFlash, shake, shadowVision };
+  return { draw, buildChunkCache, spawnParticles, spawnPickupBurst, spawnFootprint, spawnBlood, spawnSlash, spawnFloat, spawnLightning, spawnMuzzle, spawnImpact, spawnLevelRing, spawnHitDir, flash, hurtFlash, shake, shadowVision };
 })();

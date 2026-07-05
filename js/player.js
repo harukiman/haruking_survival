@@ -464,6 +464,16 @@ Game.Player = (function () {
     // 開く/使うボタン: 近隣のチェスト等を開く（無ければ通常操作）
     if (intent.use) useNearby();
 
+    // 足跡: 雪/砂の上を徒歩移動中、交互の足で跡を残す(世界反応性の手触り)
+    if (!p.vehicle && (Math.abs(p.x - p.prevX) > 0.5 || Math.abs(p.y - p.prevY) > 0.5) && Game.state.tick % 7 === 0) {
+      const g3 = Game.World.groundAt(Math.floor(p.x / TS), Math.floor(p.y / TS));
+      if ((g3 === Game.TILE.SNOW || g3 === Game.TILE.SAND) && Game.Render.spawnFootprint) {
+        const mvAng = Math.atan2(p.y - p.prevY, p.x - p.prevX);
+        p._footSide = !p._footSide;
+        const off = p._footSide ? 4 : -4;
+        Game.Render.spawnFootprint(p.x + Math.cos(mvAng + Math.PI / 2) * off, p.y + 8 + Math.sin(mvAng + Math.PI / 2) * off * 0.4, mvAng + Math.PI / 2, g3);
+      }
+    }
     // とげダメージ（サボテン等）
     checkHazard();
 
