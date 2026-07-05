@@ -464,6 +464,14 @@ Game.Player = (function () {
     updateDrops();
   }
 
+  // カーソル照準のワールド座標(px)。ポインタ未使用なら null。
+  // 各所にインライン展開されていた mouseTile→ワールド変換の共通ヘルパー(重複7箇所を集約)
+  function pointerWorld() {
+    const it = Game.Input.intent;
+    if (it && it.usePointer && it.mouseTile) return { x: it.mouseTile.tx * TS + TS / 2, y: it.mouseTile.ty * TS + TS / 2 };
+    return null;
+  }
+
   function playerTile() {
     const p = Game.state.player;
     return { tx: Math.floor(p.x / TS), ty: Math.floor(p.y / TS) };
@@ -1045,8 +1053,8 @@ Game.Player = (function () {
       if (p.attackCd > 0) return;
       if (Game.state.nuke) { Game.UI.toast('すでに核が飛行中だ'); p.attackCd = 20; return; }
       if (Game.Inventory.count('nuke_warhead') <= 0) { if (Game.state.tick % 30 === 0) Game.UI.toast('戦術核弾頭が装填されていない'); p.attackCd = 20; return; }
-      const it = Game.Input.intent; let tx, ty;
-      if (it && it.usePointer && it.mouseTile) { tx = it.mouseTile.tx * TS + TS / 2; ty = it.mouseTile.ty * TS + TS / 2; }
+      const pw = pointerWorld(); let tx, ty;
+      if (pw) { tx = pw.x; ty = pw.y; }
       else { let dx = 0, dy = 0; if (p.dir === 'up') dy = -1; else if (p.dir === 'down') dy = 1; else if (p.dir === 'left') dx = -1; else dx = 1; tx = p.x + dx * 7 * TS; ty = p.y + dy * 7 * TS; }
       Game.Inventory.remove('nuke_warhead', 1);
       Game.state.nuke = { tx: tx, ty: ty, t: 300, dmg: 1000, radius: 11.2 }; // 10秒(30fps)。爆心半径は約1.4倍に拡大
@@ -1150,8 +1158,8 @@ Game.Player = (function () {
   function tryWarp() {
     const p = Game.state.player;
     if (p.attackCd > 0) return;
-    let dx = 0, dy = 0; const it = Game.Input.intent;
-    if (it.usePointer && it.mouseTile) { dx = (it.mouseTile.tx * TS + TS / 2) - p.x; dy = (it.mouseTile.ty * TS + TS / 2) - p.y; }
+    let dx = 0, dy = 0; const pw = pointerWorld();
+    if (pw) { dx = pw.x - p.x; dy = pw.y - p.y; }
     if (Math.abs(dx) < 1 && Math.abs(dy) < 1) { if (p.dir === 'up') dy = -1; else if (p.dir === 'down') dy = 1; else if (p.dir === 'left') dx = -1; else dx = 1; }
     const len = Math.hypot(dx, dy) || 1; const dist = 6 * TS;
     let tx = p.x + dx / len * dist, ty = p.y + dy / len * dist;
@@ -1171,8 +1179,8 @@ Game.Player = (function () {
   function tryGrapple() {
     const p = Game.state.player;
     if (p.attackCd > 0) return;
-    let dx = 0, dy = 0; const it = Game.Input.intent;
-    if (it.usePointer && it.mouseTile) { dx = (it.mouseTile.tx * TS + TS / 2) - p.x; dy = (it.mouseTile.ty * TS + TS / 2) - p.y; }
+    let dx = 0, dy = 0; const pw = pointerWorld();
+    if (pw) { dx = pw.x - p.x; dy = pw.y - p.y; }
     if (Math.abs(dx) < 1 && Math.abs(dy) < 1) { if (p.dir === 'up') dy = -1; else if (p.dir === 'down') dy = 1; else if (p.dir === 'left') dx = -1; else dx = 1; }
     const len = Math.hypot(dx, dy) || 1; const ux = dx / len, uy = dy / len;
     const MAX = 12;
@@ -1823,7 +1831,7 @@ Game.Player = (function () {
     interact, useNearby, gainXP, totalArmor, statusResist, setBonus, sleep, checkGroupSleep, vehicleTakeDamage, updateWreck, equipSelectedArmor, equipFromInventory, equipRelic, equipOffhand, unequipSlot, applyEquipStats, bossesDefeated, bossTitle, travelToWaypoint,
     effAttack, spendMana, manaCost, magicPower, attackCooldown, levelDmgBonus, levelArmorBonus, spendStat, unlockSkill, respec,
     skillBonus, skillFlag, canUnlock, currentWeaponAtk, equippedArmorAt, xpForLevel,
-    reloadCurrent, magLoaded, magCap, selGunId, contextAction, toggleMissileMode, dropItemToGround, effAttackScaled,
+    reloadCurrent, magLoaded, magCap, selGunId, contextAction, toggleMissileMode, dropItemToGround, effAttackScaled, pointerWorld,
     saveLoadout, applyLoadout,
     focusArmed, consumeFocus,
   };

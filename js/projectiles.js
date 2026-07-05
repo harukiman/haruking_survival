@@ -56,8 +56,9 @@ Game.Projectiles = (function () {
 
   // 発射方向（カーソル/向き）の単位ベクトル
   function aimDir() {
-    const p = Game.state.player; let dx = 0, dy = 0; const it = Game.Input.intent;
-    if (it.usePointer && it.mouseTile) { dx = (it.mouseTile.tx * TS + TS / 2) - p.x; dy = (it.mouseTile.ty * TS + TS / 2) - p.y; }
+    const p = Game.state.player; let dx = 0, dy = 0;
+    const pw = Game.Player && Game.Player.pointerWorld && Game.Player.pointerWorld();
+    if (pw) { dx = pw.x - p.x; dy = pw.y - p.y; }
     if (Math.abs(dx) < 1 && Math.abs(dy) < 1) { const d = p.dir; if (d === 'up') dy = -1; else if (d === 'down') dy = 1; else if (d === 'left') dx = -1; else dx = 1; }
     return Math.atan2(dy, dx);
   }

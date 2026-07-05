@@ -12,7 +12,7 @@ Game.Audio = (function () {
   // ---- モバイル向けリソース管理 ----
   let noiseBuf = null;             // 共有ホワイトノイズ(2秒) — 毎回のバッファ生成を排除
   let voices = 0;                  // 同時発音数
-  const MAX_VOICES = 36;           // キャップ(超過時は装飾音をスキップ)
+  const MAX_VOICES = 48;           // キャップ(超過時は装飾音をスキップ)。ボス戦BGM+激しいSFX同時でも欠落しにくい値へ
   function voiceOk() { return voices < MAX_VOICES; }
   function unreg() { voices = Math.max(0, voices - 1); }
   function reg(node) { voices++; node.onended = unreg; }

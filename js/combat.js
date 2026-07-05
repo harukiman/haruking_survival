@@ -107,8 +107,8 @@ Game.Combat = (function () {
       if (!Game.Player.spendMana(_def.mpCost || 18)) { if (Game.state.tick % 30 === 0) Game.UI.toast('マナが足りない'); return true; }
       const stk = _def.strike;
       let tx2, ty2;
-      const it = Game.Input.intent;
-      if (it && it.usePointer && it.mouseTile) { tx2 = it.mouseTile.tx * TS + TS / 2; ty2 = it.mouseTile.ty * TS + TS / 2; }
+      const pw = Game.Player.pointerWorld && Game.Player.pointerWorld();
+      if (pw) { tx2 = pw.x; ty2 = pw.y; }
       else {
         const reach = (stk.range || 9) * TS;
         let bm = null, bd = Infinity;
@@ -127,8 +127,8 @@ Game.Combat = (function () {
       if (!Game.Player.spendMana(_def.mpCost || 22)) { if (Game.state.tick % 30 === 0) Game.UI.toast('マナが足りない'); return true; }
       const vx = _def.vortex;
       let tx2, ty2;
-      const it = Game.Input.intent;
-      if (it && it.usePointer && it.mouseTile) { tx2 = it.mouseTile.tx * TS + TS / 2; ty2 = it.mouseTile.ty * TS + TS / 2; }
+      const pw = Game.Player.pointerWorld && Game.Player.pointerWorld();
+      if (pw) { tx2 = pw.x; ty2 = pw.y; }
       else {
         const reach = (vx.range || 8) * TS;
         let bm = null, bd = Infinity;
@@ -202,9 +202,9 @@ Game.Combat = (function () {
     if (_def && _def.castMeteor && !p.casting) {
       if (!Game.Player.spendMana(_def.mpCost || 45)) { if (Game.state.tick % 30 === 0) Game.UI.toast('マナが足りない — 詠唱には大きな魔力が要る'); return true; }
       const cm = _def.castMeteor;
-      const it = Game.Input.intent;
       let tx2, ty2;
-      if (it && it.usePointer && it.mouseTile) { tx2 = it.mouseTile.tx * TS + TS / 2; ty2 = it.mouseTile.ty * TS + TS / 2; }
+      const pw = Game.Player.pointerWorld && Game.Player.pointerWorld();
+      if (pw) { tx2 = pw.x; ty2 = pw.y; }
       else {
         let bm = null, bd = Infinity, reach = (cm.range || 10) * TS;
         for (let i = 0; i < mobs.length; i++) { const m = mobs[i]; if (m.def.friendly) continue; const d = Math.hypot(m.x - p.x, m.y - p.y); if (d <= reach && d < bd) { bd = d; bm = m; } }
