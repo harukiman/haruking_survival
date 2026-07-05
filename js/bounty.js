@@ -23,6 +23,21 @@ Game.Bounty = (function () {
         rewardItem: { id: 'wisdom_tome', count: 1 }, done: false, spawned: false,
       };
     }
+    // 納品依頼(~25%): 討伐以外のループ。採集素材を集めて掲示板へ納める
+    if (Math.random() < 0.25) {
+      const DELIVER = [
+        { id: 'wood', n: [12, 20] }, { id: 'stone', n: [12, 20] }, { id: 'coal', n: [8, 14] },
+        { id: 'iron_ore', n: [6, 10] }, { id: 'hide', n: [5, 9] }, { id: 'raw_meat', n: [5, 9] },
+        { id: 'berry', n: [8, 14] }, { id: 'slime_ball', n: [6, 10] }, { id: 'shadow_shard', n: [4, 8] },
+      ].filter(function (d) { return Game.ITEMS[d.id]; });
+      const d = DELIVER[Math.floor(Math.random() * DELIVER.length)];
+      const need2 = d.n[0] + Math.floor(Math.random() * (d.n[1] - d.n[0] + 1));
+      const rewardGold2 = Math.max(2, Math.round(need2 / 4) + 1 + Math.floor(Math.random() * 2));
+      let rewardItem2 = null; const r2 = Math.random();
+      if (r2 < 0.15) rewardItem2 = { id: 'wisdom_tome', count: 1 };
+      else if (r2 < 0.45) rewardItem2 = { id: 'xp_orb', count: 1 };
+      return { deliver: d.id, targetName: Game.ITEMS[d.id].name, need: need2, count: 0, rewardGold: rewardGold2, rewardItem: rewardItem2, done: false };
+    }
     const pool = eligible();
     const target = pool[Math.floor(Math.random() * pool.length)];
     const def = Game.MOBS[target];
@@ -46,6 +61,7 @@ Game.Bounty = (function () {
 
   function announce(b) {
     if (b.big) { Game.UI.toast('★ 大物の手配書！「' + b.bossName + '」を討て——掲示板で受けよ'); Game.Audio.play('select'); return; }
+    if (b.deliver) { Game.UI.toast('納品依頼: 「' + b.targetName + '」を ' + b.need + ' 個集めて掲示板へ！ 報酬 ' + rewardText(b)); Game.Audio.play('select'); return; }
     Game.UI.toast('賞金首: 「' + b.targetName + '」を ' + b.need + ' 体討伐せよ！ 報酬 ' + rewardText(b));
     Game.Audio.play('select');
   }
@@ -113,6 +129,17 @@ Game.Bounty = (function () {
       if (!alive) spawnBoss(b);
       else Game.UI.toast('賞金首の大物「' + b.bossName + '」を討て！');
       return;
+    }
+    // 納品依頼: 掲示板で所持数を確認し、足りていれば納品して報酬
+    if (b && b.deliver && !b.done) {
+      const have = Game.Inventory.count(b.deliver);
+      if (have >= b.need) {
+        Game.Inventory.remove(b.deliver, b.need);
+        b.done = true; // done経路と同じ報酬フローへ落とす
+      } else {
+        Game.UI.toast('納品依頼: ' + b.targetName + ' ' + have + '/' + b.need + '　集めて掲示板へ(報酬 ' + rewardText(b) + ')');
+        return;
+      }
     }
     if (b && b.done) {
       Game.Inventory.add('gold_bar', b.rewardGold);

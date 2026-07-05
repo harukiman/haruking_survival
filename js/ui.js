@@ -2253,7 +2253,8 @@ Game.UI = (function () {
     if (!b) { tr.classList.add('hidden'); return; }
     const txt = document.getElementById('bounty-text');
     if (b.big) txt.textContent = b.done ? '大物 討伐済' : ('大物 ' + (b.bossName || '賞金首') + ' を討て');
-    else if (b.done) txt.textContent = '賞金首 達成! 掲示板で報酬を受け取れ';
+    else if (b.done) txt.textContent = '依頼 達成! 掲示板で報酬を受け取れ';
+    else if (b.deliver) txt.textContent = '納品 ' + b.targetName + '  ' + Math.min(Game.Inventory ? Game.Inventory.count(b.deliver) : 0, b.need) + '/' + b.need;
     else txt.textContent = '賞金首 ' + b.targetName + '  ' + b.count + '/' + b.need;
     tr.classList.remove('hidden');
   }
