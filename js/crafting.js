@@ -47,6 +47,7 @@ Game.Crafting = (function () {
       Game.Achievements.unlock('first_craft');
       if (recipe.out.id === 'shadow_mirror') Game.Achievements.unlock('first_mirror');
       if (recipe.out.id === 'shadow_chest' || recipe.out.id === 'shadow_helmet') Game.Achievements.unlock('shadow_gear');
+      if (recipe.out.id === 'moon_stew') Game.Achievements.unlock('moon_chef'); // 月光の料理人
     }
     Game.Audio.play('craft');
     Game.UI.toast(Game.ITEMS[recipe.out.id].name + ' を作成');

@@ -68,6 +68,9 @@ Game.Achievements = (function () {
     deliverer:    { name:'頼れる納品人', desc:'納品依頼を5回達成した' },
     ward_breaker: { name:'結界破り', desc:'結界の精鋭を討伐した' },
     blink_hunter: { name:'瞬影狩り', desc:'瞬影の精鋭を討伐した' },
+    bullet_saber: { name:'弾を斬る者', desc:'敵弾を50発斬り消した' },
+    soul_render:  { name:'魂喰らい断ち', desc:'吸魂の精鋭を討伐した' },
+    moon_chef:    { name:'月光の料理人', desc:'月光きのこのシチューを作った' },
     endgame_smith: { name:'星と虚無の鍛冶', desc:'エンドゲーム装備を作製した' },
     relic_hoarder: { name:'遺物収集家', desc:'遺物を手に入れた' },
   };

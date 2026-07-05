@@ -246,6 +246,8 @@ Game.Combat = (function () {
       if (cut > 0) {
         if (Game.Audio) Game.Audio.play('slash_air');
         if (Game.UI && Game.UI.tipOnce) Game.UI.tipOnce('bullet_cut', '⚔ 弾斬り！ 近接の一振りで前方の敵弾を斬り消せる。弾幕には剣で斬り込め');
+        Game.state.bulletCut = (Game.state.bulletCut || 0) + cut;
+        if (Game.state.bulletCut >= 50 && Game.Achievements) Game.Achievements.unlock('bullet_saber');
       }
     }
 

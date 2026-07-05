@@ -1342,6 +1342,7 @@ Game.Mobs = (function () {
     if (Game.Achievements && m.elite) { // 新精鋭の討伐実績
       if (hasAffix(m, 'warded')) Game.Achievements.unlock('ward_breaker');
       if (hasAffix(m, 'blink')) Game.Achievements.unlock('blink_hunter');
+      if (hasAffix(m, 'soulfeed')) Game.Achievements.unlock('soul_render');
     }
     // 精鋭撃破演出＆実績
     if (m.elite) {

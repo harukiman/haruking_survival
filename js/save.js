@@ -81,7 +81,7 @@ Game.Save = (function () {
       fallout: s.fallout || [],
       difficulty: s.difficulty || 'normal',
       deathSpot: s.deathSpot || null,
-      grazeCount: s.grazeCount || 0, deliverDone: s.deliverDone || 0, achMilestones: s.achMilestones || {},
+      grazeCount: s.grazeCount || 0, deliverDone: s.deliverDone || 0, achMilestones: s.achMilestones || {}, bulletCut: s.bulletCut || 0,
       zoom: s.zoom || 1,
       inventory: s.inventory.map(function (sl) { return sl ? { id: sl.id, count: sl.count, roll: sl.roll || null, dur: sl.dur, durMax: sl.durMax } : null; }),
     };
