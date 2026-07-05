@@ -1551,6 +1551,14 @@ Game.Mobs = (function () {
         ctx.font = 'bold 15px sans-serif'; ctx.textAlign = 'center';
         ctx.fillText('!', s.x, s.y - r - hop - 14);
         ctx.textAlign = 'left';
+        // 射撃照準中: プレイヤーへ細い点線を一瞬走らせる(乱戦でも「どこから撃たれるか」が分かる)
+        if (m.aim != null) {
+          const pl4 = Game.state.player, sp4 = Game.Camera.worldToScreen(pl4.x, pl4.y);
+          ctx.save();
+          ctx.strokeStyle = 'rgba(255,150,80,0.4)'; ctx.lineWidth = 1.4; ctx.setLineDash([4, 5]);
+          ctx.beginPath(); ctx.moveTo(s.x, s.y - hop); ctx.lineTo(sp4.x, sp4.y); ctx.stroke();
+          ctx.setLineDash([]); ctx.restore();
+        }
       }
       ctx.save();
       // 決死ノヴァのテレグラフ: 爆発範囲を赤リングで予告し、内側が満ちるほど爆発が近い(離れれば回避)
