@@ -133,6 +133,7 @@ Game.Render = (function () {
     drawFires(ctx);
     drawDowned(ctx);
     drawFootprints(ctx);
+    updateDrawFireflies(ctx);
     drawDrops(ctx);
     Game.Mobs.draw(ctx, alpha);
     drawPeers(ctx);
@@ -1163,6 +1164,42 @@ Game.Render = (function () {
     ctx.restore();
   }
   function roundRectC(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+
+  // ===== 蛍(夜の草地/森): ふわり漂い明滅する光点。夏夜の空気感 =====
+  const fireflies = [];
+  function updateDrawFireflies(ctx) {
+    const st = Game.state; if (!st) return;
+    const night = Game.DayNight && Game.DayNight.isNight && Game.DayNight.isNight();
+    const ok = night && st.worldName === 'light' && !(st.weather && st.weather.type !== 'clear' && st.weather.type !== 'fog');
+    const p = st.player, TS = Game.CFG.TILE_SIZE;
+    // 補充: 近傍の草/森タイルにだけ湧く(最大14)。悪天候/昼は自然消滅
+    if (ok && fireflies.length < 14 && st.tick % 9 === 0) {
+      const ang = Math.random() * Math.PI * 2, d = (3 + Math.random() * 8) * TS;
+      const wx = p.x + Math.cos(ang) * d, wy = p.y + Math.sin(ang) * d;
+      const g = Game.World.groundAt(Math.floor(wx / TS), Math.floor(wy / TS));
+      if (g === Game.TILE.GRASS || g === Game.TILE.FOREST || g === Game.TILE.BLOOM) {
+        fireflies.push({ x: wx, y: wy, ph: Math.random() * 6, vx: 0, vy: 0, life: 600 + Math.random() * 600 });
+      }
+    }
+    for (let i = fireflies.length - 1; i >= 0; i--) {
+      const f = fireflies[i];
+      f.life -= ok ? 1 : 6; // 昼/悪天候は早めに消える
+      if (f.life <= 0 || Math.hypot(f.x - p.x, f.y - p.y) > 14 * TS) { fireflies.splice(i, 1); continue; }
+      f.ph += 0.045;
+      f.vx += (Math.random() - 0.5) * 0.02; f.vy += (Math.random() - 0.5) * 0.02;
+      f.vx *= 0.98; f.vy *= 0.98; f.x += f.vx; f.y += f.vy;
+      const s = Game.Camera.worldToScreen(f.x, f.y);
+      if (s.x < -10 || s.y < -10 || s.x > Game.view.w + 10 || s.y > Game.view.h + 10) continue;
+      const glow = Math.max(0, Math.sin(f.ph)); // 明滅
+      if (glow < 0.1) continue;
+      ctx.save();
+      ctx.fillStyle = 'rgba(210,255,140,' + (0.25 * glow).toFixed(3) + ')';
+      ctx.beginPath(); ctx.arc(s.x, s.y, 4.2, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(240,255,190,' + (0.85 * glow).toFixed(3) + ')';
+      ctx.beginPath(); ctx.arc(s.x, s.y, 1.4, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+  }
 
   // ===== 足跡(雪/砂): 歩いた跡が残り、ゆっくり消える。世界が反応する小さな手触り =====
   const footprints = []; // {x,y,ang,life,max,col}
