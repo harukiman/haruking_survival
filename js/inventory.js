@@ -222,6 +222,10 @@ Game.Inventory = (function () {
       if (p.hunger >= p.maxHunger && !def.sick && !def.cures && !def.buff) { Game.UI.toast('お腹いっぱい'); return false; }
       Game.Survival.eat(def.food);
       if (def.cures) def.cures.forEach(function (c) { Game.Status.cure(c); }); // 料理が状態異常も治す（沼の煮込み等）
+      if (def.sanityGain && Game.state.sanity != null) { // 正気を回復する料理(影世界攻略の生命線)
+        Game.state.sanity = Math.min(Game.TUNE.SANITY_MAX || 100, Game.state.sanity + def.sanityGain);
+        if (Game.Render.spawnFloat) Game.Render.spawnFloat(p.x, p.y - 22, '🧠+' + def.sanityGain, '#c9a8ff', true);
+      }
       if (def.buff) { Game.Status.apply(def.buff.type, def.buff.dur); Game.Player.applyEquipStats(); } // 料理のバフ（キノコのスープ等）
       if (def.sick) { // 腐肉
         if (Math.random() < 0.75) Game.Status.add('poison', 300);
