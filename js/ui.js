@@ -1819,7 +1819,7 @@ Game.UI = (function () {
     if (def.special) h += specialBlock(def.special); // 上位武器: 効果名+発動条件を平易に
     if (def.armor != null) { const av = Game.Loot.stats(st).armor; h += '<div class="ench-stat">🛡 防御 <b style="color:#9fd8ff">' + av + '</b> ' + cmpDelta(av - Game.Player.equippedArmorAt(def.slot)) + '<span style="color:#7a8494;font-size:.78rem">（装備中比）</span></div>'; }
     if (def.relic) {
-      const RL = { atk: '攻撃', armor: '防御', hp: '最大HP', crit: '会心率', moveSpd: '移動速度', lifesteal: '吸血', regen: 'HP回復', xpBoost: '経験', staminaMax: 'スタミナ' };
+      const RL = { atk: '攻撃', armor: '防御', hp: '最大HP', crit: '会心率', moveSpd: '移動速度', lifesteal: '吸血', regen: 'HP回復', xpBoost: '経験', staminaMax: 'スタミナ', grazeBoost: 'グレイズ強化(回復+2/直後に加速)' };
       const parts = [];
       for (const k in def.relic) { const v = def.relic[k]; const pct = (k === 'crit' || k === 'moveSpd' || k === 'lifesteal' || k === 'xpBoost'); parts.push((RL[k] || k) + ' +' + (pct ? Math.round(v * 100) + '%' : v)); }
       h += '<div class="ench-stat">💠 遺物効果 <b style="color:#ffd86b">' + parts.join('・') + '</b></div>';

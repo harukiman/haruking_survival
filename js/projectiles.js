@@ -369,7 +369,11 @@ Game.Projectiles = (function () {
         // 弾幕を「あえて近くで避ける」読み合い — スタミナ小回復+集中ゲージ的な爽快感
         if (!pr._grazed && pdist >= 13 && pdist < 26 && (pl.invuln || 0) <= 0 && (pl.downed || 0) <= 0) {
           pr._grazed = true;
-          pl.stamina = Math.min(pl.maxStamina, (pl.stamina || 0) + 3);
+          // かすみ羽の護符: グレイズ回復+2、直後に追い風(移動+8%)が吹く
+          let gAmt = 3, veiled = false;
+          [pl.accessory, pl.accessory2].forEach(function (acc) { if (acc && (acc.id || acc) === 'feather_veil') veiled = true; });
+          if (veiled) { gAmt = 5; pl.tailwindT = Math.max(pl.tailwindT || 0, 60); }
+          pl.stamina = Math.min(pl.maxStamina, (pl.stamina || 0) + gAmt);
           Game.state.grazeCount = (Game.state.grazeCount || 0) + 1;
           if (Game.state.grazeCount >= 100 && Game.Achievements) Game.Achievements.unlock('grazer');
           if (Game.Render.spawnFloat && Game.state.tick % 2 === 0) Game.Render.spawnFloat(pl.x + (Math.random() - 0.5) * 14, pl.y - 18, 'グレイズ', '#9fe0ff', false);

@@ -8,7 +8,7 @@ Game.CHAMPION_NAMES = {
 };
 
 // 遺物(relic)アクセサリーのドロップ抽選用ID一覧
-Game.RELIC_IDS = ['ring_crit', 'amulet_swift', 'fang_vamp', 'heart_regen', 'eye_xp', 'band_power', 'crest_guard', 'crest_aegis', 'core_titan', 'gauntlet_grit', 'fang_war'];
+Game.RELIC_IDS = ['ring_crit', 'amulet_swift', 'fang_vamp', 'heart_regen', 'eye_xp', 'band_power', 'crest_guard', 'crest_aegis', 'core_titan', 'gauntlet_grit', 'fang_war', 'feather_veil'];
 
 // 精鋭(elite)個体の特殊変異アフィックス。spawn時に1つ抽選 → 名前接頭辞/オーラ色/固有効果。
 Game.ELITE_AFFIXES = {
@@ -398,6 +398,7 @@ Game.ITEMS = {
   // 治療・薬
   bandage:     { name:'包帯', stack:16, color:'#eee', heal:8, cures:['bleed'] },
   antidote:    { name:'解毒薬', stack:16, color:'#7fd0a0', cures:['poison','infection'] },
+  feather_veil:{ name:'かすみ羽の護符', stack:1, color:'#9fe0ff', relic:{ staminaMax:10, grazeBoost:1 }, flavor:'風切り羽で編んだ護符。弾幕をかすめるたび羽が舞い、体が軽くなる——グレイズの回復が増し、直後に足が速まる。' },
   recall_scroll:{ name:'帰還の巻物', stack:8, color:'#c0a0e0', recall:true, flavor:'破ると光に包まれ、拠点(初期地点)へ還る。探索からの帰り道に。' },
   // 投擲武器（使用で前方へ投げて爆発/炎上, 1個消費）
   bomb:        { name:'爆弾', stack:16, color:'#2a2a30', throw:{kind:'rocket', dmg:30, explosive:2.4, speed:6}, flavor:'導火線に火を。投げて吹き飛ばせ。' },
@@ -882,6 +883,7 @@ Game.RECIPES = [
   { out:{id:'bandage', n:2}, in:{string:2}, station:null },
   { out:{id:'antidote', n:1}, in:{moonleaf:2, flower:1}, station:null },
   { out:{id:'recall_scroll', n:1}, in:{string:1, lumen:1, shadow_shard:1}, station:'crafting_table' },
+  { out:{id:'feather_veil', n:1}, in:{feather:8, wind_crystal:1, lumen:2}, station:'enchant_table' },
   { out:{id:'antidote', n:2}, in:{glow_spore:3, bone:1}, station:null },
   { out:{id:'strength_potion', n:1}, in:{flower:2, bone:1}, station:'crafting_table' },
   { out:{id:'swift_potion', n:1}, in:{flower:1, moonleaf:1}, station:'crafting_table' },
