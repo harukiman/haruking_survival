@@ -129,6 +129,7 @@ Game.UI = (function () {
     { const gb = document.getElementById('btn-give-bts'); if (gb) gb.addEventListener('click', function () { if (Game.Net && Game.Net.giveBts) Game.Net.giveBts(Math.min(100, Game.state.player.bts || 0)); }); }
     { const sbtn = document.getElementById('btn-inv-story'); if (sbtn) sbtn.addEventListener('click', function () { el.invScreen.classList.add('hidden'); Game.Audio.play('select'); openStory(); }); } // インベントリから記憶回廊を開く
     document.getElementById('btn-close-chest').addEventListener('click', closeChest);
+    { const rb = document.getElementById('btn-chest-rename'); if (rb) rb.addEventListener('click', renameChest); }
     var ct = document.getElementById('btn-close-trade'); if (ct) ct.addEventListener('click', closeTrade);
     var cw = document.getElementById('btn-close-waypoint'); if (cw) cw.addEventListener('click', closeWaypoints);
     var cst = document.getElementById('btn-close-story'); if (cst) cst.addEventListener('click', closeStory);
@@ -2106,9 +2107,24 @@ Game.UI = (function () {
     Game.state.openChest = { tx: tx, ty: ty };
     Game.state.paused = true;
     el.chestScreen.classList.remove('hidden');
+    // チェストの名前(ラベル): 倉庫が増えても迷子にならない
+    const tl = document.getElementById('chest-title');
+    if (tl) tl.textContent = d.label ? '📦 ' + d.label : 'チェスト';
     Game.Audio.play('select');
     showChestInfo(null);
     refreshChest();
+  }
+  // チェストに名前をつける(tileDataに保存=セーブ永続)
+  function renameChest() {
+    const oc = Game.state.openChest; if (!oc) return;
+    const d = Game.World.getTileData(oc.tx, oc.ty); if (!d) return;
+    const nm = window.prompt('チェストの名前(空欄で削除):', d.label || '');
+    if (nm === null) return;
+    d.label = nm.trim().slice(0, 12) || undefined;
+    Game.World.setTileData(oc.tx, oc.ty, d);
+    const tl = document.getElementById('chest-title');
+    if (tl) tl.textContent = d.label ? '📦 ' + d.label : 'チェスト';
+    Game.Audio.play('select');
   }
   // 裂け目の楔: 両世界共通の保管庫（どの楔からでも同じ中身）
   function openSharedChest(tx, ty) {
