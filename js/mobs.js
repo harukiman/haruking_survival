@@ -187,6 +187,8 @@ Game.Mobs = (function () {
       }
       if (shadowWorld) {
         if (!diff.spawnHostiles) continue; // のんびり: 影世界でも敵なし
+        // 影世界でも光の安全圏は有効(半径3タイル=光世界より狭い)。常闇の世界では明かりが文字通り命綱
+        if (isLitArea(tx, ty, 3)) continue;
         // 影世界は固有の敵が常時出現。深層では徘徊者も
         const deep = Game.World.inDepths();
         if (deep && Math.random() < 0.02 && countType('abyss_dragon') === 0) { type = 'abyss_dragon'; } // 深淵の竜(エンドゲーム)
