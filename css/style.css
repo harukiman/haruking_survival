@@ -334,6 +334,12 @@ body.left-handed #action-btns { right: auto; left: calc(12px + max(var(--ex,10px
 /* ボスHPバー（中央上・ボス戦中のみ） */
 #boss-bar { position: absolute; top: calc(max(var(--et,8px), env(safe-area-inset-top)) + 40px); left: 50%; transform: translateX(-50%);
   width: min(82vw, 520px); z-index: 19; pointer-events: none; text-align: center; }
+/* スマホ縦: 上部HUD(ステータス/時計/レベル/ミニマップ)と重ならないよう、HUDブロックの直下へ */
+@media (max-width: 560px) {
+  #boss-bar { top: calc(max(var(--et,8px), env(safe-area-inset-top)) + 184px); width: 86vw; }
+  #boss-bar-name { font-size: .78rem; margin-bottom: 2px; }
+  #boss-bar-track { height: 10px; }
+}
 #boss-bar-name { color: #ffe0e0; font-size: .9rem; font-weight: 800; letter-spacing: 1px; text-shadow: 0 2px 4px #000, 0 0 8px rgba(200,60,90,0.6); margin-bottom: 3px; }
 #boss-bar-track { height: 13px; background: rgba(8,10,16,0.7); border: 1px solid #6a2030; border-radius: 7px; overflow: hidden; box-shadow: 0 0 10px rgba(200,40,70,0.4); }
 #boss-bar-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #7a1024, #e0304a 60%, #ff6a7a); transition: width .18s; }
@@ -584,24 +590,33 @@ body.shadow-mode #app::after {
 .dbtn.up { left: 48px; top: 0; } .dbtn.down { left: 48px; top: 96px; }
 .dbtn.left { left: 0; top: 48px; } .dbtn.right { left: 96px; top: 48px; }
 .dbtn:active { transform: scale(0.9); background: rgba(70,90,120,0.9); }
-/* アクションは右下2列。頻度の高い操作ほど下段=親指の可動域。採掘は最下段の横長大ボタン */
-#action-btns { position: absolute; right: calc(12px + max(var(--ex,10px), env(safe-area-inset-right))); bottom: calc(84px + max(var(--ey,16px), env(safe-area-inset-bottom))); display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
-  align-items: end; justify-items: stretch; pointer-events: auto; opacity: .92; }
-.abtn { width: 64px; min-height: 48px; border-radius: 14px; font-size: .82rem; font-weight: 700;
-  background: rgba(74,143,60,0.85); border: 1px solid #6fc46b; color: #fff; padding: 0;
-  transition: transform .06s ease, filter .12s ease;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.14); }
-.abtn:active { transform: scale(0.9); filter: brightness(1.25); }
-.abtn.main { grid-column: 1 / -1; width: 100%; min-height: 58px; font-size: .98rem; letter-spacing: 2px;
-  background: rgba(74,143,60,0.9); box-shadow: 0 3px 10px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.18); }
-#btn-place { background: rgba(47,90,143,0.85); border-color: #5a8fd6; }
-.abtn.small { width: 64px; min-height: 46px; font-size: .76rem; background: rgba(60,70,90,0.85); border-color: #6a7894; }
+/* アクションボタン: 右下コーナーを扇状(アーク)に囲む円形レイアウト。親指の可動域に沿い、
+   大きい採掘ボタンを角に、頻度順に外周へ。スタイリッシュ&誤タップ低減(円形+間隔) */
+#action-btns { position: absolute; right: calc(10px + max(var(--ex,10px), env(safe-area-inset-right))); bottom: calc(84px + max(var(--ey,16px), env(safe-area-inset-bottom)));
+  width: 216px; height: 210px; pointer-events: none; opacity: .94; }
+.abtn { position: absolute; border-radius: 50%; font-weight: 700; pointer-events: auto;
+  background: rgba(74,143,60,0.85); border: 1.5px solid #6fc46b; color: #fff; padding: 0;
+  display: flex; align-items: center; justify-content: center; text-align: center; line-height: 1.1;
+  transition: transform .06s ease, filter .12s ease; backdrop-filter: blur(2px);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.16), inset 0 -6px 12px rgba(0,0,0,0.18); }
+.abtn:active { transform: scale(0.88); filter: brightness(1.3); }
+/* 採掘=最大・角。そこから扇状: 使う/設置(左)→回避(斜め)→袋(上)。条件表示(影渡り/ミサイル)は外周 */
+.abtn.main { width: 84px; height: 84px; right: 0; bottom: 0; font-size: .95rem; letter-spacing: 2px;
+  background: radial-gradient(circle at 35% 30%, rgba(96,170,80,0.95), rgba(58,118,48,0.92)); }
+#btn-place { width: 62px; height: 62px; right: 96px; bottom: 4px; font-size: .72rem;
+  background: radial-gradient(circle at 35% 30%, rgba(66,116,176,0.92), rgba(38,74,120,0.9)); border-color: #5a8fd6; }
+.abtn.roll { width: 62px; height: 62px; right: 76px; bottom: 76px; font-size: .78rem; }
+#btn-inv { width: 54px; height: 54px; right: 6px; bottom: 100px; font-size: .78rem; }
+.abtn.shift { width: 54px; height: 54px; right: 160px; bottom: 56px; font-size: .72rem; }
+.abtn.missile { width: 62px; height: 62px; right: 74px; bottom: 146px; }
+.abtn.small { font-size: .74rem; background: rgba(56,66,88,0.88); border-color: #6a7894; }
 .abtn.dash { background: rgba(200,160,60,0.82); border-color: #ffe27a; }
 /* 走り続けるモード中は点灯 */
 .abtn.dash.latched { background: rgba(232,190,74,0.95); border-color: #fff0b0; color: #241a05;
   box-shadow: 0 0 12px rgba(255,226,122,0.75), inset 0 1px 0 rgba(255,255,255,0.3); }
-.abtn.roll { background: rgba(90,150,200,0.82); border-color: #8fd0ff; }
-.abtn.missile { background: rgba(200,80,50,0.88); border-color: #ff9a6a; font-size: .68rem; }
+.abtn.roll { background: radial-gradient(circle at 35% 30%, rgba(110,170,220,0.92), rgba(56,104,150,0.9)); border-color: #8fd0ff; }
+.abtn.missile { background: radial-gradient(circle at 35% 30%, rgba(220,100,60,0.94), rgba(150,54,32,0.92)); border-color: #ff9a6a; font-size: .64rem; }
+/* 影渡りとミサイルは同じ外周スロットを共用(影渡りは徒歩時のみ・ミサイルは搭乗時のみで排他) */
 /* コントローラ接続中はタッチUIを隠す */
 body.has-pad #touch-controls { display: none !important; }
 
@@ -831,3 +846,12 @@ body.cinematic #hint-pill, body.cinematic #toast, body.cinematic .toast, body.ci
 body.dead #context-action, body.dead #hb-iteminfo, body.dead #ammo-hud, body.dead #combo-hud,
 body.dead #status-pop, body.dead #event-banner, body.dead #hint-pill, body.dead #toast,
 body.dead #quest-tracker, body.dead #bounty-tracker, body.dead #boss-bar { display: none !important; }
+
+/* 航空機の残数HUD: コンパクト縦積み */
+#ammo-hud.ammo-compact { font-size: .68rem; padding: 4px 8px; line-height: 1.45; min-width: 86px; text-align: left; }
+
+/* スマホ縦: 扇状ボタン(幅216px)と重ならないようヒント/説明の幅をさらに制限 */
+@media (max-width: 560px) {
+  #hint-pill { max-width: 38vw; }
+  #hb-iteminfo { max-width: 40vw !important; }
+}
