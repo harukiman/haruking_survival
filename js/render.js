@@ -469,11 +469,15 @@ Game.Render = (function () {
     if (Game.Settings && Game.Settings.get('screenShake') === false) return;
     shakeAmt = Math.min(16, Math.max(shakeAmt, amt));
   }
-  function flash(color) { flashColor = color; flashT = 22; }
+  function flash(color) {
+    // フラッシュ軽減(光過敏対応): 点滅の強度を下げ時間も短縮
+    if (Game.Settings && Game.Settings.get('reduceFlash')) { flashColor = color; flashT = 8; return; }
+    flashColor = color; flashT = 22;
+  }
   function drawFlash(ctx) {
     if (flashT <= 0) return;
     ctx.save();
-    ctx.globalAlpha = (flashT / 22) * 0.85;
+    ctx.globalAlpha = (flashT / 22) * ((Game.Settings && Game.Settings.get('reduceFlash')) ? 0.3 : 0.85);
     ctx.fillStyle = flashColor;
     ctx.fillRect(0, 0, Game.view.w, Game.view.h);
     ctx.restore();

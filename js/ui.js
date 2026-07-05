@@ -1155,6 +1155,7 @@ Game.UI = (function () {
       toggle('leftHanded', '✋ 左利き(操作左右反転)') +
       toggle('dmgNumbers', '🔢 ダメージ数値表示') +
       toggle('screenShake', '📳 画面のゆれ') +
+      toggle('reduceFlash', '⚡ 画面フラッシュ軽減') +
       toggle('lowHpWarn', '🩸 低HP警告') +
       toggle('ambient', '🌿 環境演出') +
       toggle('homeCompass', '🧭 帰路コンパス') +
