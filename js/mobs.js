@@ -27,6 +27,18 @@ Game.Mobs = (function () {
 
   function list() { return Game.state.mobs; }
 
+  // 指定タイル周辺(radius)に発光オブジェクトがあるか(夜の湧き抑制=光の安全圏)。
+  // 呼び出しは湧き試行時のみ(スロットル済み)なので9x9走査で十分軽い
+  function isLitArea(tx, ty, radius) {
+    for (let dy = -radius; dy <= radius; dy++) {
+      for (let dx = -radius; dx <= radius; dx++) {
+        const o = Game.World.objAt(tx + dx, ty + dy);
+        if (o && Game.LIGHT_LEVEL[o] >= 6) return true; // たいまつ(8)/焚き火(9)/ランタン(10)等
+      }
+    }
+    return false;
+  }
+
   function spawnMob(type, wx, wy) {
     const def = Game.MOBS[type];
     if (!def) return;
@@ -186,6 +198,9 @@ Game.Mobs = (function () {
         if (!type)
         type = pool[Math.floor(Math.random() * pool.length)];
       } else if (night && diff.spawnHostiles) {
+        // 光の安全圏: 松明/焚き火など発光オブジェクトの近く(半径4タイル)には夜の敵が湧かない。
+        // 「明かりで陣地を作る」動機(世界反応性)。血の月だけは光を恐れない
+        if (!Game.state.bloodMoon && isLitArea(tx, ty, 4)) continue;
         // 夜は敵対モブ（のんびりは出ない）。血の月は強敵寄りで帯制限も無視する唯一の例外
         // 血の月の夜は地上ボス「黄昏の巨像」が稀出現(1体まで)
         if (Game.state.bloodMoon && Game.state.worldName === 'light' && Math.random() < 0.02 && countType('twilight_colossus') === 0) {

@@ -937,6 +937,10 @@ Game.Player = (function () {
     // 両世界リンク設置物（裂け目の楔）
     if (targetMeta && targetMeta.dualPlaced) Game.World.setObjBothWorlds(t.tx, t.ty, def.place);
     else Game.World.setObj(t.tx, t.ty, def.place);
+    // 光の安全圏の案内: 夜に光源を置いたら仕組みを一度だけ教える
+    if (Game.LIGHT_LEVEL[def.place] >= 6 && Game.DayNight && Game.DayNight.isNight() && Game.UI.tipOnce) {
+      Game.UI.tipOnce('light_safety', '🔥 明かりの周り(約4マス)には夜の敵が湧かない。拠点や通り道を照らして安全圏を作ろう(血の月は例外)');
+    }
     if (def.place === Game.OBJ.CHEST) Game.World.setTileData(t.tx, t.ty, { chest: new Array(27).fill(null) });
     if (def.place === Game.OBJ.SAPLING) Game.World.setTileData(t.tx, t.ty, { sapling: { timer: 0 } });
     if (def.place === Game.OBJ.WAYPOINT_STONE) registerWaypoint(t.tx, t.ty);
