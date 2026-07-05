@@ -1098,7 +1098,11 @@ Game.Player = (function () {
       if (Game.Inventory.count(sel.ammo) > 0) { startReload(sel, gid); return; }
       p.mags[gid] = 0; loaded = 0;
     }
-    if (loaded <= 0) { if (Game.UI.tipOnce) Game.UI.tipOnce('reload', '弾を撃ち切ると自動でリロード(予備弾が必要)。予備弾は素材(鉄+火薬)クラフトやショップで補充。手動リロードはVキー'); startReload(sel, gid); return; } // 空 → リロード
+    if (loaded <= 0) {
+      if (Game.UI.tipOnce) Game.UI.tipOnce('reload', '弾を撃ち切ると自動でリロード(予備弾が必要)。予備弾は素材(鉄+火薬)クラフトやショップで補充。手動リロードはVキー');
+      if (Game.Inventory.count(sel.ammo) <= 0) Game.Audio.play('gun_dry'); // 完全弾切れは撃鉄のカチッ
+      startReload(sel, gid); return;
+    } // 空 → リロード
     // パッシブ「節約」: 12%で弾薬を消費しない(表示は1秒スロットルでスパム防止)
     if (skillFlag('conserve') && Math.random() < 0.12) {
       if (Game.state.tick - (p.conserveFx || 0) > 30) {
@@ -1804,7 +1808,7 @@ Game.Player = (function () {
       if (d.manual) {
         if ((d.noPickupT || 0) > Game.state.tick) continue;
         if (dist < 11 && Game.Inventory.hasRoomFor(d.id, !!d.roll)) {
-          if (d.roll) { if (Game.Inventory.addInstance(d)) { drops.splice(i, 1); Game.Audio.play('pickup'); if (Game.Render.spawnPickupBurst) Game.Render.spawnPickupBurst(d); Game.UI.refreshHotbar(); } }
+          if (d.roll) { if (Game.Inventory.addInstance(d)) { drops.splice(i, 1); Game.Audio.play(d.roll.rarity >= 2 ? 'rare_pickup' : 'pickup'); if (Game.Render.spawnPickupBurst) Game.Render.spawnPickupBurst(d); Game.UI.refreshHotbar(); } }
           else { const ov = Game.Inventory.add(d.id, d.count); if (ov === 0) { drops.splice(i, 1); Game.Audio.play('pickup'); if (Game.Render.spawnPickupBurst) Game.Render.spawnPickupBurst(d); Game.UI.refreshHotbar(); } else d.count = ov; }
         }
         continue;
@@ -1824,7 +1828,7 @@ Game.Player = (function () {
       if (dist < 16) {
         if (d.roll) {
           if (Game.Inventory.addInstance(d)) {
-            drops.splice(i, 1); Game.Audio.play('pickup'); if (Game.Render.spawnPickupBurst) Game.Render.spawnPickupBurst(d); Game.UI.refreshHotbar();
+            drops.splice(i, 1); Game.Audio.play(d.roll.rarity >= 2 ? 'rare_pickup' : 'pickup'); if (Game.Render.spawnPickupBurst) Game.Render.spawnPickupBurst(d); Game.UI.refreshHotbar();
             Game.UI.toast('入手: ' + Game.Loot.displayName(d) + '（' + Game.Loot.rarityName(d) + '）');
           }
         } else {
