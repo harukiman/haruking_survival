@@ -894,7 +894,11 @@ Game.Audio = (function () {
     const r = Math.random();
     if (Game.state.worldName === 'shadow') { if (r < 0.25) windGust(); return; } // 影=不穏な風のみ
     // 空島: 高所の風が常に鳴る(専用SFX wind_gust をここで活用)
-    { const g2 = Game.World.groundAt(pt.tx, pt.ty); if (g2 === Game.TILE.CLOUD || g2 === Game.TILE.SKYVOID) { if (r < 0.6) { windGust(); if (r < 0.2) play('wind_gust'); } return; } }
+    if (Game.World && Game.World.groundAt && Game.Player && Game.Player.playerTile) {
+      const pt2 = Game.Player.playerTile();
+      const g2 = Game.World.groundAt(pt2.tx, pt2.ty);
+      if (g2 === Game.TILE.CLOUD || g2 === Game.TILE.SKYVOID) { if (r < 0.6) { windGust(); if (r < 0.2) play('wind_gust'); } return; }
+    }
     if (night) { if (r < 0.5) cricket(); else if (r < 0.62) windGust(); }
     else { if (r < 0.32) birdChirp(); else if (r < 0.5) windGust(); }
     if (wet && Math.random() < 0.4) windGust();
