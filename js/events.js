@@ -91,6 +91,17 @@ Game.Events = (function () {
     active = { type: 'star', t: STAR_DUR, wished: false };
     if (Game.UI) Game.UI.toast('🌠 流れ星だ…！ 消える前に願いを込めよう');
     if (Game.Audio && Game.Audio.cue) Game.Audio.cue('shimmer');
+    // 星の欠片の落下(40%): 少し離れた場所に star_metal が落ち、拾いに行く小さな冒険になる
+    if (Math.random() < 0.4) {
+      const p = Game.state.player, TS = Game.CFG.TILE_SIZE;
+      const ang = Math.random() * Math.PI * 2, dist = (12 + Math.random() * 8) * TS;
+      const fx = p.x + Math.cos(ang) * dist, fy = p.y + Math.sin(ang) * dist;
+      Game.state.drops.push({ id: 'star_metal', count: 1 + (Math.random() < 0.3 ? 1 : 0), x: fx, y: fy, bornT: Game.state.tick + (Game.DAY_LENGTH || 3600) * 2 }); // 寿命長め
+      if (Game.Render && Game.Render.spawnParticles) Game.Render.spawnParticles(fx, fy, '#cfe0ff', 12);
+      const dirs = ['東', '南東', '南', '南西', '西', '北西', '北', '北東'];
+      const d8 = dirs[Math.round((((ang + Math.PI * 2) % (Math.PI * 2)) / (Math.PI / 4))) % 8];
+      setTimeout(function () { try { Game.UI.toast('✨ 何かが' + d8 + 'の空に落ちた——星の欠片かもしれない'); } catch (e) {} }, 2500);
+    }
   }
 
   function tickStar(s) {
