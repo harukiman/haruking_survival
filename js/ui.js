@@ -809,6 +809,15 @@ Game.UI = (function () {
         }
       }
     }
+    // 死亡地点マーカー(現在世界のみ): 落とした装備の回収先
+    const dsp = Game.state.deathSpot;
+    if (dsp && dsp.world === Game.state.worldName) {
+      const dx = (Math.floor(dsp.x / TS) - (ptx - half)) * scale, dy = (Math.floor(dsp.y / TS) - (pty - half)) * scale;
+      if (dx >= 0 && dy >= 0 && dx <= size && dy <= size) {
+        bmCtx.font = 'bold 13px sans-serif'; bmCtx.textAlign = 'center';
+        bmCtx.fillStyle = '#fff'; bmCtx.fillText('💀', dx, dy + 4); bmCtx.textAlign = 'left';
+      }
+    }
     // 発見済みランドマーク（現在世界・視野内）
     const disc = Game.state.discovered || {};
     for (const key in disc) {

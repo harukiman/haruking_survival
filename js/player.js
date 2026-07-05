@@ -468,6 +468,12 @@ Game.Player = (function () {
     checkHazard();
 
     updateDrops();
+    // 死亡地点マーカー: 現地(3マス以内)まで戻ったら回収済みとして消す
+    const dsp = Game.state.deathSpot;
+    if (dsp && dsp.world === Game.state.worldName && Math.hypot(p.x - dsp.x, p.y - dsp.y) < 3 * TS) {
+      Game.state.deathSpot = null;
+      if (Game.UI && Game.UI.toast) Game.UI.toast('💀 死亡地点に到達 — 落とした物を回収しよう');
+    }
   }
 
   // カーソル照準のワールド座標(px)。ポインタ未使用なら null。

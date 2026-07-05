@@ -224,6 +224,7 @@ window.Game = window.Game || {};
     Game.state.ngLevel = data.ngLevel || 0;
     Game.state._tips = data.tips || {}; // 表示済みヒントを復元(再表示防止)
     Game.state.fallout = data.fallout || []; // 死の灰ゾーンを復元
+    Game.state.deathSpot = data.deathSpot || null; // 死亡地点マーカーを復元
     // インベントリ（拡張済みなら容量も復元）
     if (data.inventory) {
       while (Game.state.inventory.length < data.inventory.length) Game.state.inventory.push(null);

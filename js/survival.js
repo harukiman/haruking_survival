@@ -330,6 +330,8 @@ Game.Survival = (function () {
         s[i] = null;
       }
     }
+    // 死亡地点を記録: 落としたアイテムの回収導線(大マップに💀表示、接近で消える)
+    Game.state.deathSpot = { x: p.x, y: p.y, world: Game.state.worldName, t: Game.state.tick };
     if (Game.Status) Game.Status.clearAll();
     // レベルは完全リセットせず 1/3 を失う（経験値ペナルティ）
     const lost = Math.floor(p.level / 3);

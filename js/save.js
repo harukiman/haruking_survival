@@ -80,6 +80,7 @@ Game.Save = (function () {
       tips: s._tips || {},
       fallout: s.fallout || [],
       difficulty: s.difficulty || 'normal',
+      deathSpot: s.deathSpot || null,
       zoom: s.zoom || 1,
       inventory: s.inventory.map(function (sl) { return sl ? { id: sl.id, count: sl.count, roll: sl.roll || null, dur: sl.dur, durMax: sl.durMax } : null; }),
     };
