@@ -230,6 +230,7 @@ window.Game = window.Game || {};
     Game.state._tips = data.tips || {}; // 表示済みヒントを復元(再表示防止)
     Game.state.fallout = data.fallout || []; // 死の灰ゾーンを復元
     Game.state.deathSpot = data.deathSpot || null; // 死亡地点マーカーを復元
+    Game.state.rainbowT = data.rainbowT || 0; // 虹の残り時間
     Game.state.grazeCount = data.grazeCount || 0; Game.state.deliverDone = data.deliverDone || 0; // 実績カウンタ
     Game.state.achMilestones = data.achMilestones || {}; // 実績マイルストーン受領フラグ
     Game.state.bulletCut = data.bulletCut || 0; // 弾斬りカウンタ

@@ -134,6 +134,7 @@ Game.Render = (function () {
     drawDowned(ctx);
     drawFootprints(ctx);
     updateDrawFireflies(ctx);
+    drawRainbow(ctx);
     drawDrops(ctx);
     Game.Mobs.draw(ctx, alpha);
     drawPeers(ctx);
@@ -1164,6 +1165,22 @@ Game.Render = (function () {
     ctx.restore();
   }
   function roundRectC(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+
+  // ===== 雨上がりの虹: 画面上部に淡い七色のアーチ。出ている間は戦利品運UP =====
+  function drawRainbow(ctx) {
+    const st = Game.state; if (!st || !(st.rainbowT > 0)) return;
+    if (!st.paused) st.rainbowT--;
+    const v = Game.view;
+    const a = Math.min(1, st.rainbowT / 300) * 0.30; // 出現/消滅をフェード
+    const cx = v.w * 0.5, cy = v.h * 0.95, R = v.w * 0.72;
+    const cols = ['#ff6a6a', '#ffb54a', '#ffe27a', '#7fd08a', '#7fb8ff', '#b08aff'];
+    ctx.save(); ctx.globalAlpha = a; ctx.lineWidth = Math.max(3, v.w * 0.012); ctx.lineCap = 'round';
+    for (let i = 0; i < cols.length; i++) {
+      ctx.strokeStyle = cols[i];
+      ctx.beginPath(); ctx.arc(cx, cy, R - i * ctx.lineWidth * 0.9, Math.PI * 1.08, Math.PI * 1.92); ctx.stroke();
+    }
+    ctx.restore();
+  }
 
   // ===== 蛍(夜の草地/森): ふわり漂い明滅する光点。夏夜の空気感 =====
   const fireflies = [];

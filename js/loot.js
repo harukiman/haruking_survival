@@ -252,6 +252,7 @@ Game.Loot = (function () {
     b += (Game.state.ngLevel || 0) * 0.08;
     const pl = Game.state.player;
     if (Game.Player.skillFlag && Game.Player.skillFlag('forager')) b += 0.12; // スキル: 採取の達人
+    if ((Game.state.rainbowT || 0) > 0) b += 0.12; // 雨上がりの虹: 幸運の空
     return b;
   }
 

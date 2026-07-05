@@ -43,6 +43,12 @@ Game.DayNight = (function () {
       } else s.weather.type = 'clear';
       s.weather.timer = 1800 + Math.floor(Math.random() * 3600);
       if (s.weather.type !== prev) {
+        // 雨上がりの虹: 昼、雨/雷雨が晴れに変わると虹が架かり、しばらく戦利品運が良くなる
+        if ((prev === 'rain' || prev === 'storm') && s.weather.type === 'clear' && s.worldName === 'light' && Game.DayNight && !Game.DayNight.isNight()) {
+          s.rainbowT = 1800; // 約60秒
+          Game.UI.toast('🌈 雨上がりの空に虹が架かった——なんだか良いことがありそうだ(戦利品運UP)');
+          if (Game.Audio && Game.Audio.cue) Game.Audio.cue('shimmer');
+        }
         if (s.weather.type === 'sandstorm') Game.UI.toast('🏜 砂嵐が来た… 視界が悪く、足が重い');
         else if (s.weather.type === 'blizzard') Game.UI.toast('❄ 吹雪だ… 凍えに気をつけろ。火か毛皮を');
         else if (s.weather.type === 'fog') Game.UI.toast('🌫 霧が立ち込めてきた… 視界に気をつけろ');
