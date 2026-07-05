@@ -150,6 +150,7 @@ Game.Render = (function () {
     drawWeather(ctx);
     drawAmbient(ctx);
     drawBossVignette(ctx);
+    drawChargeGauge(ctx); // 溜め武器の溜めゲージ(プレイヤー足元の弧)
     drawCursor(ctx);
     drawDanger(ctx);
     drawHitDir(ctx);
@@ -417,6 +418,38 @@ Game.Render = (function () {
   }
 
   // ゲームパッド選択カーソル
+  // 居合/チャージ武器の溜め可視化: 選択中、前回の一振りからの経過でプレイヤー足元に弧ゲージ。
+  // min未満=灰(不発帯) → min-max=武器色で伸長 → 満タン=金色+きらめき。「いつ振るか」の読みを支える
+  function drawChargeGauge(ctx) {
+    const st = Game.state; if (!st || st.paused) return;
+    const p = st.player;
+    const sl = Game.Inventory.slots()[p.hotbarIndex];
+    const def = sl && Game.ITEMS[sl.id];
+    if (!def || !def.chg) return;
+    const chg = def.chg, TPS = 30;
+    const last = p.chargeLastTick == null ? (st.tick - 999 * TPS) : p.chargeLastTick;
+    const sec = (st.tick - last) / TPS;
+    const minS = chg.min || 5, maxS = chg.max || 12;
+    const frac = Math.max(0, Math.min(1, sec / maxS));
+    const ready = sec >= minS, full = sec >= maxS;
+    const s = Game.Camera.worldToScreen(p.x, p.y);
+    const r = 17 * (Game.Camera.zoom ? Game.Camera.zoom() : 1);
+    ctx.save();
+    ctx.lineWidth = 3.2; ctx.lineCap = 'round';
+    // 下地の薄い全周
+    ctx.strokeStyle = 'rgba(30,40,58,0.55)';
+    ctx.beginPath(); ctx.arc(s.x, s.y + 6, r, -Math.PI / 2, Math.PI * 1.5); ctx.stroke();
+    // 溜めの弧
+    ctx.strokeStyle = full ? '#ffe27a' : ready ? (chg.color || '#ff9a4a') : 'rgba(140,150,165,0.8)';
+    ctx.beginPath(); ctx.arc(s.x, s.y + 6, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * frac); ctx.stroke();
+    // min地点の目盛り(ここを超えたら振れる)
+    const ma = -Math.PI / 2 + Math.PI * 2 * (minS / maxS);
+    ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(s.x + Math.cos(ma) * (r - 4), s.y + 6 + Math.sin(ma) * (r - 4)); ctx.lineTo(s.x + Math.cos(ma) * (r + 4), s.y + 6 + Math.sin(ma) * (r + 4)); ctx.stroke();
+    // 満タンのきらめき
+    if (full && st.tick % 10 < 5) { ctx.fillStyle = 'rgba(255,226,122,0.9)'; ctx.beginPath(); ctx.arc(s.x, s.y + 6 - r, 2.4, 0, Math.PI * 2); ctx.fill(); }
+    ctx.restore();
+  }
   function drawCursor(ctx) {
     const c = Game.Input && Game.Input.cursor;
     if (!c || !c.active) return;
