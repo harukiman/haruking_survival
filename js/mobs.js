@@ -1411,6 +1411,15 @@ Game.Mobs = (function () {
     if (m.def.hostile && !m.def.npc) {
       const s = Game.state;
       s.combo = (s.combo || 0) + 1; s.comboT = 90; // 3秒以内に次を倒せば継続
+      // コンボマイルストーン報酬: 10連=スタミナ全回復 / 20連=短い攻撃バフ。乱戦を「続ける」動機
+      if (s.combo === 10) {
+        const pl3 = Game.state.player; pl3.stamina = pl3.maxStamina;
+        if (Game.Render.spawnFloat) Game.Render.spawnFloat(pl3.x, pl3.y - 26, '10連! スタミナ全回復', '#7fe0a0', true);
+      } else if (s.combo === 20 && Game.Status) {
+        Game.Status.apply('strength', 300); // 10秒の攻撃バフ
+        if (Game.Render.spawnFloat) Game.Render.spawnFloat(Game.state.player.x, Game.state.player.y - 26, '20連!! 攻撃強化', '#ffd24a', true);
+        if (Game.Audio) Game.Audio.play('levelup');
+      }
       if (s.combo >= 3) {
         if (Game.UI.flashCombo) Game.UI.flashCombo(s.combo);
         if (Game.Audio.comboSound) Game.Audio.comboSound(s.combo);
