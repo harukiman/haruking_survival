@@ -1770,8 +1770,8 @@ Game.Player = (function () {
       if (d.manual) {
         if ((d.noPickupT || 0) > Game.state.tick) continue;
         if (dist < 11 && Game.Inventory.hasRoomFor(d.id, !!d.roll)) {
-          if (d.roll) { if (Game.Inventory.addInstance(d)) { drops.splice(i, 1); Game.Audio.play('pickup'); Game.UI.refreshHotbar(); } }
-          else { const ov = Game.Inventory.add(d.id, d.count); if (ov === 0) { drops.splice(i, 1); Game.Audio.play('pickup'); Game.UI.refreshHotbar(); } else d.count = ov; }
+          if (d.roll) { if (Game.Inventory.addInstance(d)) { drops.splice(i, 1); Game.Audio.play('pickup'); if (Game.Render.spawnPickupBurst) Game.Render.spawnPickupBurst(d); Game.UI.refreshHotbar(); } }
+          else { const ov = Game.Inventory.add(d.id, d.count); if (ov === 0) { drops.splice(i, 1); Game.Audio.play('pickup'); if (Game.Render.spawnPickupBurst) Game.Render.spawnPickupBurst(d); Game.UI.refreshHotbar(); } else d.count = ov; }
         }
         continue;
       }
@@ -1790,12 +1790,12 @@ Game.Player = (function () {
       if (dist < 16) {
         if (d.roll) {
           if (Game.Inventory.addInstance(d)) {
-            drops.splice(i, 1); Game.Audio.play('pickup'); Game.UI.refreshHotbar();
+            drops.splice(i, 1); Game.Audio.play('pickup'); if (Game.Render.spawnPickupBurst) Game.Render.spawnPickupBurst(d); Game.UI.refreshHotbar();
             Game.UI.toast('入手: ' + Game.Loot.displayName(d) + '（' + Game.Loot.rarityName(d) + '）');
           }
         } else {
           const overflow = Game.Inventory.add(d.id, d.count);
-          if (overflow === 0) { drops.splice(i, 1); Game.Audio.play('pickup'); Game.UI.refreshHotbar(); }
+          if (overflow === 0) { drops.splice(i, 1); Game.Audio.play('pickup'); if (Game.Render.spawnPickupBurst) Game.Render.spawnPickupBurst(d); Game.UI.refreshHotbar(); }
           else d.count = overflow;
         }
       }

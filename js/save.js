@@ -89,7 +89,18 @@ Game.Save = (function () {
     try {
       localStorage.setItem(slotKey(curSlot), JSON.stringify(serialize()));
       return true;
-    } catch (e) { return false; }
+    } catch (e) {
+      // 容量超過などの失敗を黙殺しない(無言で進捗が保存されない事故の防止)。30秒に1回まで警告
+      try {
+        const now = Date.now();
+        if (!save._warnT || now - save._warnT > 30000) {
+          save._warnT = now;
+          const quota = e && (e.name === 'QuotaExceededError' || e.code === 22);
+          if (Game.UI && Game.UI.toast) Game.UI.toast(quota ? '⚠ セーブ容量が上限に達しています！ 地面のアイテムを整理してください' : '⚠ セーブに失敗しました');
+        }
+      } catch (e2) {}
+      return false;
+    }
   }
 
   // イベント駆動オートセーブ: 短時間の連発をスロットルし、控えめなインジケータを表示。

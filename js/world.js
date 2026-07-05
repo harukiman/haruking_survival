@@ -56,7 +56,9 @@ Game.World = (function () {
     return ch.object[localIndex(tx, ty)];
   }
 
+  let editRev = 0; // 世界編集のリビジョン(照明などのキャッシュ無効化に使う)
   function setObj(tx, ty, val) {
+    editRev++;
     const ch = getChunk(toChunkCoord(tx), toChunkCoord(ty));
     const prev = ch.object[localIndex(tx, ty)];
     ch.object[localIndex(tx, ty)] = val;
@@ -70,6 +72,7 @@ Game.World = (function () {
   function setTileData(tx, ty, data) { Game.state.tileData.set(U.tileKey(tx, ty), data); }
   function clearTileData(tx, ty) { Game.state.tileData.delete(U.tileKey(tx, ty)); }
   function setGround(tx, ty, val) {
+    editRev++;
     const ch = getChunk(toChunkCoord(tx), toChunkCoord(ty));
     ch.ground[localIndex(tx, ty)] = val;
     ch.dirty = true;
@@ -199,6 +202,7 @@ Game.World = (function () {
 
   // 両世界に同時設置（裂け目の楔）
   function setObjBothWorlds(tx, ty, val) {
+    editRev++;
     const cur = Game.state.worldName;
     ['light', 'shadow'].forEach(function (name) {
       const w = Game.state.worlds[name];
@@ -495,7 +499,7 @@ Game.World = (function () {
   }
 
   return {
-    Chunk, getChunk, groundAt, objAt, setObj, setGround,
+    Chunk, getChunk, groundAt, objAt, setObj, setGround, editRev: function () { return editRev; },
     ignite, igniteTile, updateFire, extinguish,
     getTileData, setTileData, clearTileData,
     isWalkable, updateChunks, toChunkCoord, rescueStuck: nudgeToWalkable,

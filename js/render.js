@@ -872,7 +872,6 @@ Game.Render = (function () {
     return c;
   }
   // 拾得バースト: 前フレームに存在した drop が消えた=拾得。レアリティに応じ、初回のみ盛大に
-  let prevDrops = new Set();
   const pickupSeen = { 0: 0, 1: 0, 2: 0, 3: 0 };
   function spawnPickupBurst(d) {
     const r = d.roll ? d.roll.rarity : 0;
@@ -892,10 +891,8 @@ Game.Render = (function () {
   function drawDrops(ctx) {
     const drops = Game.state.drops; const z = Game.Camera.zoom(); const t = Game.state.tick;
     const v = Game.view;
-    const cur = new Set();
     for (let i = 0; i < drops.length; i++) {
       const d = drops[i];
-      cur.add(d);
       const s = Game.Camera.worldToScreen(d.x, d.y);
       if (s.x < -40 || s.y < -50 || s.x > v.w + 40 || s.y > v.h + 40) continue; // 画面外はスキップ
       const item = Game.ITEMS[d.id];
@@ -942,17 +939,8 @@ Game.Render = (function () {
         ctx.restore();
       }
     }
-    // 拾得検知: 前フレームにあって今無い drop（プレイヤー近傍のみ=ワールド切替の誤検知除外）
-    if (prevDrops.size) {
-      const p = Game.state.player;
-      prevDrops.forEach(function (d) {
-        if (cur.has(d)) return;
-        const dx = d.x - p.x, dy = d.y - p.y;
-        if (dx * dx + dy * dy > 3600) return; // 60px以内で消えたもののみ
-        spawnPickupBurst(d);
-      });
-    }
-    prevDrops = cur;
+    // 拾得バーストは拾った瞬間にプレイヤー側(updateDrops)から直接呼ぶイベント駆動に変更
+    // (旧: 毎フレーム Set を確保して全ドロップを差分比較 → 割当てと走査の無駄)
   }
 
   // 他プレイヤー（マルチプレイ）
@@ -1314,5 +1302,5 @@ Game.Render = (function () {
     ctx.textAlign = 'left';
   }
 
-  return { draw, buildChunkCache, spawnParticles, spawnBlood, spawnSlash, spawnFloat, spawnLightning, spawnMuzzle, spawnImpact, spawnLevelRing, spawnHitDir, flash, hurtFlash, shake, shadowVision };
+  return { draw, buildChunkCache, spawnParticles, spawnPickupBurst, spawnBlood, spawnSlash, spawnFloat, spawnLightning, spawnMuzzle, spawnImpact, spawnLevelRing, spawnHitDir, flash, hurtFlash, shake, shadowVision };
 })();

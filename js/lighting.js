@@ -94,7 +94,8 @@ Game.Lighting = (function () {
     [Game.OBJ.FURNACE]: 0.8, [Game.OBJ.LANTERN]: 0.6, [Game.OBJ.STREET_LAMP]: 0.45,
     [Game.OBJ.BANDIT_SPAWNER]: 0.9,
   };
-  const warmPts = []; // 使い回しの平坦配列 [sx, sy, r, factor, ...]（毎フレームのオブジェクト割当なし）
+  const warmPts = [];
+  let lightScanKey = '', lightScanPts = []; // 光源走査キャッシュ(範囲+編集revで無効化) // 使い回しの平坦配列 [sx, sy, r, factor, ...]（毎フレームのオブジェクト割当なし）
 
   function drawOverlay(ctx) {
     const d = ambientDarkness();
@@ -114,22 +115,31 @@ Game.Lighting = (function () {
     punch(ps.x, ps.y, 2.4 * TS, false);
     punch(ps.x, ps.y, 4.8 * TS, false, 0.30);
 
-    // 可視範囲の発光オブジェクト
+    // 可視範囲の発光オブジェクト。毎フレームの全タイルobjAt走査は重いので、
+    // 「可視タイル範囲+世界編集リビジョン」が変わった時だけ再走査し、光源リストをキャッシュする
     warmPts.length = 0;
     const range = Game.Camera.visibleTileRange();
     const tick = Game.state.tick;
-    for (let ty = range.ty0; ty <= range.ty1; ty++) {
-      for (let tx = range.tx0; tx <= range.tx1; tx++) {
-        const o = Game.World.objAt(tx, ty);
-        const light = Game.LIGHT_LEVEL[o];
-        if (light) {
-          const s = Game.Camera.worldToScreen(tx * TS + TS / 2, ty * TS + TS / 2);
-          const flame = o === Game.OBJ.TORCH || o === Game.OBJ.CAMPFIRE || o === Game.OBJ.BRAZIER;
-          punch(s.x, s.y, light * TS * 0.55, flame);
-          const wf = warmSource[o];
-          if (wf) { warmPts.push(s.x, s.y, light * TS * 0.42, wf); }
+    const lkey = range.tx0 + ',' + range.ty0 + ',' + range.tx1 + ',' + range.ty1 + '|' + (Game.World.editRev ? Game.World.editRev() : 0) + '|' + Game.state.worldName;
+    if (lkey !== lightScanKey) {
+      lightScanKey = lkey; lightScanPts.length = 0;
+      for (let ty = range.ty0; ty <= range.ty1; ty++) {
+        for (let tx = range.tx0; tx <= range.tx1; tx++) {
+          const o = Game.World.objAt(tx, ty);
+          const light = Game.LIGHT_LEVEL[o];
+          if (light) {
+            const flame = o === Game.OBJ.TORCH || o === Game.OBJ.CAMPFIRE || o === Game.OBJ.BRAZIER;
+            lightScanPts.push(tx * TS + TS / 2, ty * TS + TS / 2, light, flame ? 1 : 0, warmSource[o] || 0);
+          }
         }
       }
+    }
+    for (let i = 0; i < lightScanPts.length; i += 5) {
+      const s = Game.Camera.worldToScreen(lightScanPts[i], lightScanPts[i + 1]);
+      const light = lightScanPts[i + 2];
+      punch(s.x, s.y, light * TS * 0.55, !!lightScanPts[i + 3]);
+      const wf = lightScanPts[i + 4];
+      if (wf) { warmPts.push(s.x, s.y, light * TS * 0.42, wf); }
     }
     // 燃え盛る炎も光源(夜の森林火災が一帯を赤々と照らす)
     const fires = Game.state.fires;
