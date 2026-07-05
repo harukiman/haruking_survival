@@ -91,6 +91,26 @@ Game.Achievements = (function () {
     const a = Game.ACHIEVEMENTS[id];
     Game.UI.toast('🏆 実績: ' + a.name + ' — ' + a.desc);
     Game.Audio.play('levelup');
+    checkMilestones();
+  }
+
+  // 実績マイルストーン報酬: 達成数の節目で記念品(刻片/バーツ/経験の宝珠)。集める動機に実利を一滴
+  const MILESTONES = { 10: { kokuhen: 1, bts: 20 }, 20: { kokuhen: 2, bts: 50, xp_orb: 1 }, 35: { kokuhen: 3, bts: 120, xp_orb: 2 }, 50: { kokuhen: 5, bts: 300, xp_orb: 3 } };
+  function checkMilestones() {
+    const c = count();
+    const st2 = Game.state; if (!st2) return;
+    st2.achMilestones = st2.achMilestones || {};
+    for (const n in MILESTONES) {
+      if (c >= +n && !st2.achMilestones[n]) {
+        st2.achMilestones[n] = 1;
+        const r = MILESTONES[n];
+        if (r.kokuhen && Game.Inventory) Game.Inventory.add('kokuhen', r.kokuhen);
+        if (r.xp_orb && Game.Inventory) Game.Inventory.add('xp_orb', r.xp_orb);
+        if (r.bts) { const pl = st2.player; pl.bts = (pl.bts || 0) + r.bts; }
+        Game.UI.toast('🎖 実績' + n + '個達成！ 記念品: 刻片×' + (r.kokuhen || 0) + (r.xp_orb ? '・宝珠×' + r.xp_orb : '') + (r.bts ? '・' + r.bts + 'bts' : ''));
+        if (Game.Audio) Game.Audio.play('rare_pickup');
+      }
+    }
   }
 
   // バイオーム到達の記録＋実績
