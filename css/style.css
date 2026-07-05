@@ -857,3 +857,6 @@ body.dead #quest-tracker, body.dead #bounty-tracker, body.dead #boss-bar { displ
   #hint-pill { max-width: 38vw; }
   #hb-iteminfo { max-width: 40vw !important; }
 }
+
+/* タイトルのバージョン表記(キャッシュ版数から自動導出)。不具合報告時の特定用 */
+#ver-label { margin-top: 8px; font-size: .64rem; color: #55627a; letter-spacing: 1px; }

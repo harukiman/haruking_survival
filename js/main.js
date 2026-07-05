@@ -316,6 +316,8 @@ window.Game = window.Game || {};
   let frameErrCount = 0;
 
   function initTitle() {
+    // タイトルにビルド版数を表示(キャッシュ版数?v=NNNから自動導出。不具合報告時の特定用)
+    try { const l = document.querySelector('link[href*="style.css"]'); const m = l && l.href.match(/v=(\d+)/); const el = document.getElementById('ver-label'); if (el && m) el.textContent = 'build v' + m[1]; } catch (e) {}
     const btnContinue = document.getElementById('btn-continue');
     function updateContinueBtn() {
       const has = Game.Save.hasSave();
