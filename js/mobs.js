@@ -632,6 +632,10 @@ Game.Mobs = (function () {
       const dxp = p.x - m.x, dyp = p.y - m.y;
       const distP = Math.hypot(dxp, dyp);
 
+      // 遠方AI間引き: 20タイル超の非ネームドは1tickおきにAIをスキップ(タイマー/DoTは上で処理済み)。
+      // 画面外モブの思考コストを半減。プレイヤー体験には知覚不能な距離のみ
+      if (distP > 20 * TS && !(m.def.boss || m.def.midboss || m.champion) && ((Game.state.tick + i) % 2 === 0)) continue;
+
       // 遠すぎたら消滅。ただしボス/中ボス/チャンピオンは消さず、アリーナへ帰還させて再戦を可能にする
       // (従来は28タイルで無条件消滅→画面外に出た瞬間ボスが永久消滅し、再エンカウント不能だった)
       const named = (m.def.boss || m.def.midboss || m.champion);
