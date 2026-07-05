@@ -24,7 +24,7 @@ Game.DayNight = (function () {
       if (Game.Render.flash) Game.Render.flash('rgba(120,20,20,0.18)');
     }
     if (nowBlood && !s.bloodMoon) {
-      Game.UI.toast('🌑 血の月だ… 今宵は魔物が荒れ狂う。光を絶やすな');
+      Game.UI.toast('🌑 血の月だ… 今宵は魔物が荒れ狂う——だが「黄昏の巨像」を討てば月は鎮まるという');
       if (Game.Render.flash) Game.Render.flash('rgba(160,20,20,0.4)'); // 血色のフラッシュ
       if (Game.Render.shake) Game.Render.shake(8);
       Game.Audio.play('thunder'); Game.Audio.play('event_horde');

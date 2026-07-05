@@ -93,7 +93,7 @@ Game.Achievements = (function () {
     if (!Game.ACHIEVEMENTS[id] || has(id)) return;
     set()[id] = 1;
     const a = Game.ACHIEVEMENTS[id];
-    Game.UI.toast('🏆 実績: ' + a.name + ' — ' + a.desc);
+    Game.UI.toast('🏆 実績(' + count() + '/' + total() + '): ' + a.name + ' — ' + a.desc);
     Game.Audio.play('levelup');
     checkMilestones();
   }
