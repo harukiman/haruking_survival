@@ -64,6 +64,10 @@ Game.Achievements = (function () {
     elite_veteran: { name:'精鋭狩りの達人', desc:'精鋭個体を25体討伐した' },
     champion_master:{ name:'チャンピオンの覇者', desc:'チャンピオンを10体討伐した' },
     bounty_veteran:{ name:'凄腕の賞金稼ぎ', desc:'賞金を10回受け取った' },
+    grazer:       { name:'弾幕の舞い手', desc:'敵弾を100回グレイズ(かすり回避)した' },
+    deliverer:    { name:'頼れる納品人', desc:'納品依頼を5回達成した' },
+    ward_breaker: { name:'結界破り', desc:'結界の精鋭を討伐した' },
+    blink_hunter: { name:'瞬影狩り', desc:'瞬影の精鋭を討伐した' },
     endgame_smith: { name:'星と虚無の鍛冶', desc:'エンドゲーム装備を作製した' },
     relic_hoarder: { name:'遺物収集家', desc:'遺物を手に入れた' },
   };

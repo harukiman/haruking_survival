@@ -136,6 +136,8 @@ Game.Bounty = (function () {
       if (have >= b.need) {
         Game.Inventory.remove(b.deliver, b.need);
         b.done = true; // done経路と同じ報酬フローへ落とす
+        Game.state.deliverDone = (Game.state.deliverDone || 0) + 1;
+        if (Game.state.deliverDone >= 5 && Game.Achievements) Game.Achievements.unlock('deliverer');
       } else {
         Game.UI.toast('納品依頼: ' + b.targetName + ' ' + have + '/' + b.need + '　集めて掲示板へ(報酬 ' + rewardText(b) + ')');
         return;

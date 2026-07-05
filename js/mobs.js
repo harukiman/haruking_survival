@@ -1316,6 +1316,10 @@ Game.Mobs = (function () {
       if (Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - (m.def.size || 12) * 0.5, '+' + bts + ' bts', '#ffd24a');
     }
     if (Game.Achievements && m.def.hostile) Game.Achievements.unlock('first_night');
+    if (Game.Achievements && m.elite) { // 新精鋭の討伐実績
+      if (hasAffix(m, 'warded')) Game.Achievements.unlock('ward_breaker');
+      if (hasAffix(m, 'blink')) Game.Achievements.unlock('blink_hunter');
+    }
     // 精鋭撃破演出＆実績
     if (m.elite) {
       const af = m.eliteAffix && Game.ELITE_AFFIXES[m.eliteAffix];

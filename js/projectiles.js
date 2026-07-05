@@ -370,6 +370,8 @@ Game.Projectiles = (function () {
         if (!pr._grazed && pdist >= 13 && pdist < 26 && (pl.invuln || 0) <= 0 && (pl.downed || 0) <= 0) {
           pr._grazed = true;
           pl.stamina = Math.min(pl.maxStamina, (pl.stamina || 0) + 3);
+          Game.state.grazeCount = (Game.state.grazeCount || 0) + 1;
+          if (Game.state.grazeCount >= 100 && Game.Achievements) Game.Achievements.unlock('grazer');
           if (Game.Render.spawnFloat && Game.state.tick % 2 === 0) Game.Render.spawnFloat(pl.x + (Math.random() - 0.5) * 14, pl.y - 18, 'グレイズ', '#9fe0ff', false);
           if (Game.Render.spawnParticles) Game.Render.spawnParticles(pl.x, pl.y, '#9fe0ff', 2);
           if (Game.Audio && Game.state.tick % 3 === 0) Game.Audio.play('cursor');
