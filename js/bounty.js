@@ -2,6 +2,7 @@
 window.Game = window.Game || {};
 
 Game.Bounty = (function () {
+  let openAgainT = 0; // 依頼差し替えの二度開き判定
   // 賞金首の対象候補（非ボスの一般的な敵対モブ）
   const POOL = ['zombie', 'skeleton', 'spider', 'slime', 'bandit', 'boar', 'scorpion', 'bat',
     'leech', 'troll', 'harpy', 'frost_wolf', 'dune_serpent', 'mud_crawler', 'ember_imp',
@@ -164,8 +165,26 @@ Game.Bounty = (function () {
       if (Game.UI.refreshBounty) Game.UI.refreshBounty();
       return;
     }
-    // 進行中
-    Game.UI.toast('賞金首: ' + b.targetName + ' を討伐 (' + b.count + '/' + b.need + ')　報酬 ' + rewardText(b));
+    // 進行中: 素早くもう一度開くと 1bts で依頼を差し替え(合わない依頼を流せる)
+    const nowT = Game.state.tick;
+    if (openAgainT && nowT - openAgainT < 90) {
+      const pl = Game.state.player;
+      if ((pl.bts || 0) >= 1) {
+        pl.bts -= 1;
+        Game.state.bounty = generate();
+        announce(Game.state.bounty);
+        Game.UI.toast('📜 依頼を差し替えた(-1bts)');
+        if (Game.UI.refreshBounty) Game.UI.refreshBounty();
+        if (Game.UI.refreshStats) Game.UI.refreshStats();
+        openAgainT = 0;
+        return;
+      }
+      Game.UI.toast('差し替えには 1bts が必要');
+      openAgainT = 0;
+      return;
+    }
+    openAgainT = nowT;
+    Game.UI.toast('賞金首: ' + b.targetName + ' を討伐 (' + b.count + '/' + b.need + ')　報酬 ' + rewardText(b) + '　(すぐもう一度開くと1btsで差し替え)');
   }
 
   return { generate, notifyKill, open, rewardText };
