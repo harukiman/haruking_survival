@@ -17,6 +17,8 @@ Game.ELITE_AFFIXES = {
   regened:   { name:'不死の',   aura:'#7fff8a', regenPct:0.035 },              // 毎秒 最大HPの3.5%回復
   thorns:    { name:'棘鎧の',   aura:'#c8c8e0', thorns:0.30 },                 // 被ダメの30%を反射
   splitting: { name:'分裂の',   aura:'#ff7fd0', split:2 },                     // 死亡時に弱体な分身を2体生成
+  blink:     { name:'瞬影の',   aura:'#b07fff', blink:1 },                     // 被弾すると短距離テレポートで回り込む(CD付き) — 範囲攻撃や予測で対処
+  warded:    { name:'結界の',   aura:'#7fb8ff', ward:1 },                      // 周期バリア(2秒展開/3秒休み)で被ダメ70%カット — 割れ目を狙う読み合い
 };
 
 Game.CFG = {

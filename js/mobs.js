@@ -653,6 +653,8 @@ Game.Mobs = (function () {
       }
 
       // 精鋭アフィックス: 再生(不死) — 毎秒 最大HPの一定割合を回復
+      if ((m.blinkCd || 0) > 0) m.blinkCd--; // 瞬影のクールダウン
+      if (hasAffix(m, 'warded')) m.wardT = (m.wardT || 0) + 1; // 結界の周期(150tick中 先頭60tickが展開)
       if (hasAffix(m, 'regened') && m.hp < m.maxHp && Game.state.tick % 30 === 0) {
         const af = Game.ELITE_AFFIXES.regened;
         m.hp = Math.min(m.maxHp, m.hp + Math.max(1, Math.round(m.maxHp * af.regenPct)));
@@ -1072,6 +1074,13 @@ Game.Mobs = (function () {
       dmg = Math.round(dmg * 1.6);
       if (Game.Render.spawnFloat && Game.state.tick % 3 === 0) Game.Render.spawnFloat(m.x + (Math.random() - 0.5) * 10, m.y - m.def.size * 0.7, 'WEAK!', '#ffd23a', true);
     }
+    // 結界の精鋭: バリア展開中(周期150tickの先頭60tick)は被ダメ70%カット。展開の切れ目を狙え
+    if (hasAffix(m, 'warded') && ((m.wardT || 0) % 150) < 60) {
+      dmg = Math.max(1, Math.round(dmg * 0.3));
+      if (Game.Render.spawnFloat && Game.state.tick % 4 === 0) Game.Render.spawnFloat(m.x, m.y - m.def.size * 0.6, '結界', '#7fb8ff', false);
+      if (Game.Render.spawnParticles) Game.Render.spawnParticles(m.x, m.y, '#7fb8ff', 3);
+      if (Game.UI && Game.UI.tipOnce) Game.UI.tipOnce('elite_warded', '結界の精鋭: バリア展開中はダメージが通らない。青い輪が消える切れ目を狙え');
+    }
     m.hp -= dmg;
     m.hurt = crit ? 13 : 8; // クリは白フラッシュを長めに
     // ボスの激昂: HP30%以下で第二段階。攻撃が激化し赤く染まる(劇的な決着フェーズ)
@@ -1107,6 +1116,18 @@ Game.Mobs = (function () {
     // ノックバックの一貫性: 重量級ほど仰け反りにくい(ボス0.35x/大型0.6x)。クリは強調
     const kb = (crit ? 11 : 7) * (m.def.boss ? 0.35 : m.def.big ? 0.6 : 1);
     m.knockX = (dx / l) * kb; m.knockY = (dy / l) * kb;
+    // 瞬影の精鋭: 被弾すると短距離テレポートで回り込む(3秒CD)。連打が通らず、範囲攻撃や置き撃ちで読む
+    if (hasAffix(m, 'blink') && m.hp > 0 && (m.blinkCd || 0) <= 0) {
+      const pl2 = Game.state.player;
+      const ang0 = Math.atan2(m.y - pl2.y, m.x - pl2.x) + (Math.random() < 0.5 ? 1 : -1) * (Math.PI * 0.55 + Math.random() * 0.5);
+      const bx = pl2.x + Math.cos(ang0) * 2.4 * TS, by = pl2.y + Math.sin(ang0) * 2.4 * TS;
+      if (walkAt(bx, by, m)) {
+        if (Game.Render.spawnParticles) { Game.Render.spawnParticles(m.x, m.y, '#b07fff', 8); Game.Render.spawnParticles(bx, by, '#d8b0ff', 8); }
+        m.x = bx; m.y = by; m.knockX = 0; m.knockY = 0; m.blinkCd = 90;
+        if (Game.Audio) Game.Audio.play('shift');
+        if (Game.UI && Game.UI.tipOnce) Game.UI.tipOnce('elite_blink', '瞬影の精鋭: 被弾すると背後へ瞬間移動する。振り向きざまの範囲攻撃や罠が有効');
+      }
+    }
     if (!m.def.hostile) m.fleeTimer = 180; // 動物は逃げる
     // 群れ連携(lite): 狼/蜘蛛/山賊などは仲間の被弾に呼応し、周囲の同族が索敵範囲を広げて駆けつける
     if (PACK_TYPES[m.type]) {
@@ -1482,6 +1503,13 @@ Game.Mobs = (function () {
         grd.addColorStop(1, 'rgba(' + cs + ',0)');
         ctx.fillStyle = grd;
         ctx.beginPath(); ctx.arc(s.x, s.y - hop, ar, 0, Math.PI * 2); ctx.fill();
+        // 結界の精鋭: バリア展開中は青白い六角的な輪を明示(読み合いの視認性)
+        if (hasAffix(m, 'warded') && ((m.wardT || 0) % 150) < 60) {
+          ctx.strokeStyle = 'rgba(127,184,255,' + (0.55 + pulse * 0.3) + ')'; ctx.lineWidth = 2.5;
+          ctx.beginPath(); ctx.arc(s.x, s.y - hop, r * 1.5, 0, Math.PI * 2); ctx.stroke();
+          ctx.strokeStyle = 'rgba(200,228,255,0.35)'; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.arc(s.x, s.y - hop, r * 1.5 + 3, 0, Math.PI * 2); ctx.stroke();
+        }
         // ボスは足元に重厚な影＋地面の魔法陣リング
         if (m.def.boss) {
           ctx.strokeStyle = 'rgba(' + cs + ',' + (0.3 + pulse * 0.3) + ')'; ctx.lineWidth = 2;
