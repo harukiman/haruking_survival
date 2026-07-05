@@ -428,6 +428,19 @@ Game.Input = (function () {
   }
 
   function resetBinds() { Game.Settings.set('keybinds', Object.assign({}, DEF_BINDS)); }
+  // コントローラ振動(dual-rumble)。設定OFF/非対応/未接続なら黙って無視
+  function rumble(strong, weak, ms) {
+    try {
+      if (Game.Settings && Game.Settings.get('padRumble') === false) return;
+      const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+      for (let i = 0; i < pads.length; i++) {
+        const gp = pads[i]; if (!gp || !gp.connected) continue;
+        const act = gp.vibrationActuator; if (!act || !act.playEffect) continue;
+        act.playEffect('dual-rumble', { duration: ms, strongMagnitude: Math.min(1, strong), weakMagnitude: Math.min(1, weak) });
+        break;
+      }
+    } catch (e) {}
+  }
   return { init, poll, intent, cursor, beginRebind, keyLabel, bindAt: B, BIND_ACTIONS, resetBinds,
-    beginPadRebind, padLabel, padBtnLabel, PAD_ACTIONS, resetPadBinds, refreshMissileBtn };
+    beginPadRebind, padLabel, padBtnLabel, PAD_ACTIONS, resetPadBinds, refreshMissileBtn, rumble };
 })();

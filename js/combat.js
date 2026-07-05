@@ -299,7 +299,7 @@ Game.Combat = (function () {
     if (focusCrit) Game.Player.consumeFocus();
     // カウンター: ジャスト回避直後(counterT)の近接は確定強打。会心とは乗算しない(強い方採用)
     let counterHit = false;
-    if ((p.counterT || 0) > 0) { counterHit = true; p.counterT = 0; if (!isCrit) dmg = Math.round(dmg * 1.75); Game.Render.shake(8); Game.Audio.play('crit'); }
+    if ((p.counterT || 0) > 0) { counterHit = true; p.counterT = 0; if (!isCrit) dmg = Math.round(dmg * 1.75); Game.Render.shake(8); Game.Audio.play('counter_hit'); if (Game.Input.rumble) Game.Input.rumble(0.85, 0.5, 160); }
     // 範囲攻撃: スキル「旋風斬り」 or 範囲武器(大剣/戦鎚)は範囲内の敵すべてに当てる
     const wdef = slot && Game.ITEMS[slot.id];
     const aoe = Game.Player.skillFlag('aoe') || (wdef && wdef.aoe);

@@ -186,6 +186,7 @@ Game.Projectiles = (function () {
     // プレイヤーも爆風に巻き込まれる(自爆注意): 中心付近なら blastDmg
     const pl = Game.state.player;
     if (Math.hypot(pl.x - x, pl.y - y) <= r * 0.7 && pl.vehicle !== 'tank') Game.Survival.damage(Math.round(blastDmg * 0.5), 'blast');
+    if (Game.Input.rumble && Math.hypot(pl.x - x, pl.y - y) <= r * 2.5) Game.Input.rumble(1, 0.8, 240); // 近くの爆発は強い振動
     // 演出・地形破壊・発火(explodeと同等)
     if (Game.Mobs.alertNoise) Game.Mobs.alertNoise(x, y, 14 + radiusTiles, 190);
     if (Game.World.blastTerrain) Game.World.blastTerrain(x, y, radiusTiles);

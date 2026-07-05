@@ -1225,6 +1225,7 @@ Game.UI = (function () {
       slider('joySens', '🕹 スティック感度', 60, 160) +
       slider('padCursor', '🎯 カーソル感度(パッド)', 40, 250) +
       toggle('joyFollow', '🕹 スティック追従(指を追う)') +
+      toggle('padRumble', '📳 コントローラ振動') +
       toggle('leftHanded', '✋ 左利き(操作左右反転)') +
       sect('📊 表示・補助') +
       toggle('dmgNumbers', '🔢 ダメージ数値表示') +

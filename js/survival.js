@@ -259,6 +259,7 @@ Game.Survival = (function () {
         if (Game.Render.spawnFloat) Game.Render.spawnFloat(p.x, p.y - 24, 'JUST!', '#7fe0ff', true);
         if (Game.Render.spawnParticles) Game.Render.spawnParticles(p.x, p.y, '#bfe8ff', 12);
         Game.Audio.play('dodge_just');
+        if (Game.Input.rumble) Game.Input.rumble(0.2, 0.6, 70); // 受け流しの軽い手応え
         // 反撃の好機: 1.5秒以内の近接攻撃が確定強打(×1.75+ふきとばし)。回避→反撃の読み合いを完成させる
         p.counterT = 90;
         if (Game.Render.spawnFloat) Game.Render.spawnFloat(p.x, p.y - 40, '反撃の好機!', '#ffd76a', true);
@@ -278,6 +279,7 @@ Game.Survival = (function () {
     p.deathCause = source; // 死因追跡（直近のダメージ源）
     if (Game.Render.spawnFloat) Game.Render.spawnFloat(p.x, p.y - 16, '-' + amount, '#ff6a6a');
     if (physical && !envDot) { p.invuln = 30; }
+    if (physical && Game.Input.rumble) Game.Input.rumble(Math.min(1, 0.3 + amount * 0.05), 0.3, 110); // 被弾の重さを手に伝える
     if (physical) { Game.Audio.play('hurt'); if (Game.Render.hurtFlash) Game.Render.hurtFlash(); if (Game.Render.shake && amount >= 6) Game.Render.shake(Math.min(9, 3 + amount * 0.4)); }
     if (Game.UI.shakeHealthBar) Game.UI.shakeHealthBar(); // HPバーを揺らして被弾を明確に
     if (p.health <= 0) { p.health = 0; die(); }

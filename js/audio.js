@@ -299,6 +299,7 @@ Game.Audio = (function () {
       case 'reload_done': beep(640, 0.03, 'square', 0.06); sbeep(880, 0.04, 'square', 0.05, 0.05); if (ctx) { noisePiece(ctx.currentTime, 0.04, 0.08, 'highpass', 2800, 0.8, true); noisePiece(ctx.currentTime + 0.06, 0.05, 0.09, 'bandpass', 1500, 1.2, true); } break;
       case 'splash': if (throttled('splash', 0.12)) { beep(420 + Math.random() * 80, 0.08, 'sine', 0.04); beep(240, 0.1, 'sine', 0.03); } break;
       // 会心ヒット: 鋭い高音(影世界は僅かに低め)
+      case 'counter_hit': if (throttled('cnt', 0.08) && ctx) { noiseBurst(ctx.currentTime, 0.1, 0.12, 3200, true); beep(1980, 0.05, 'square', 0.1); beep(1320, 0.07, 'sawtooth', 0.09); beep(660, 0.14, 'triangle', 0.08); } break; // カウンター: 金属の一閃+重い追撃
       case 'crit': if (throttled('crit', 0.05)) { const sh = (Game.state && Game.state.worldName === 'shadow') ? 0.92 : 1; beep(1500 * sh, 0.05, 'square', 0.09); beep(2100 * sh, 0.045, 'triangle', 0.06); } break;
       // 精鋭撃破: 重厚な破砕
       case 'elite_die': beep(190, 0.16, 'sawtooth', 0.12); beep(110, 0.22, 'triangle', 0.1); if (ctx) noiseBurst(ctx.currentTime, 0.18, 0.12, 1400); break;
