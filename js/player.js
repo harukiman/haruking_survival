@@ -1716,6 +1716,18 @@ Game.Player = (function () {
     if (meta && meta.touchDamage) Game.Survival.damage(meta.touchDamage, 'hazard');
   }
 
+  // 手で捨てる: 向いている方向の約2.5マス先の地面に落とす(捨てた側から即拾いしない)。
+  // manual=true で吸い寄せ無効・踏まないと拾えない。落下先が塞がっていれば手前へ詰める
+  function dropItemToGround(id, count, roll) {
+    const p = Game.state.player;
+    let fx = 0, fy = 0; if (p.dir === 'up') fy = -1; else if (p.dir === 'down') fy = 1; else if (p.dir === 'left') fx = -1; else fx = 1;
+    let tx = p.x, ty = p.y;
+    for (let s = 2.5; s >= 1; s -= 0.5) { const cx = p.x + fx * s * TS, cy = p.y + fy * s * TS; if (!blocked(cx, cy)) { tx = cx; ty = cy; break; } }
+    Game.state.drops.push({ id: id, count: count, roll: roll || null, x: tx + (Math.random() - 0.5) * 6, y: ty + (Math.random() - 0.5) * 6, manual: true, noPickupT: Game.state.tick + 60 });
+    if (Game.Render.spawnParticles) Game.Render.spawnParticles(tx, ty, '#caa86a', 3);
+    Game.Audio.play('cursor');
+  }
+
   function updateDrops() {
     const p = Game.state.player;
     const drops = Game.state.drops;
@@ -1724,6 +1736,15 @@ Game.Player = (function () {
       const d = drops[i];
       const dx = p.x - d.x, dy = p.y - d.y;
       const dist = Math.hypot(dx, dy);
+      // 手で捨てた品(manual): 吸い寄せ無し。明確に踏まない(至近距離まで乗らない)と拾わない+捨てた直後の猶予
+      if (d.manual) {
+        if ((d.noPickupT || 0) > Game.state.tick) continue;
+        if (dist < 11 && Game.Inventory.hasRoomFor(d.id, !!d.roll)) {
+          if (d.roll) { if (Game.Inventory.addInstance(d)) { drops.splice(i, 1); Game.Audio.play('pickup'); Game.UI.refreshHotbar(); } }
+          else { const ov = Game.Inventory.add(d.id, d.count); if (ov === 0) { drops.splice(i, 1); Game.Audio.play('pickup'); Game.UI.refreshHotbar(); } else d.count = ov; }
+        }
+        continue;
+      }
       // インベントリに空きが無い品は引き寄せず拾わない（地面に残す）
       if (!Game.Inventory.hasRoomFor(d.id, !!d.roll)) {
         if (dist < 22 && Game.state.tick % 60 === 0) Game.UI.toast('インベントリがいっぱい！');
@@ -1772,7 +1793,7 @@ Game.Player = (function () {
     interact, useNearby, gainXP, totalArmor, statusResist, setBonus, sleep, checkGroupSleep, vehicleTakeDamage, updateWreck, equipSelectedArmor, equipFromInventory, equipRelic, equipOffhand, unequipSlot, applyEquipStats, bossesDefeated, bossTitle, travelToWaypoint,
     effAttack, spendMana, manaCost, magicPower, attackCooldown, levelDmgBonus, levelArmorBonus, spendStat, unlockSkill, respec,
     skillBonus, skillFlag, canUnlock, currentWeaponAtk, equippedArmorAt, xpForLevel,
-    reloadCurrent, magLoaded, magCap, selGunId, contextAction, toggleMissileMode,
+    reloadCurrent, magLoaded, magCap, selGunId, contextAction, toggleMissileMode, dropItemToGround,
     saveLoadout, applyLoadout,
     focusArmed, consumeFocus,
   };

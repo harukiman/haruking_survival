@@ -188,7 +188,7 @@ window.Game = window.Game || {};
       const w = Game.state.worlds[name];
       if (wd.deltas) for (const k in wd.deltas) w.modifiedTiles.set(k, wd.deltas[k]);
       if (wd.tileData) for (const k in wd.tileData) w.tileData.set(k, wd.tileData[k]);
-      if (wd.drops) wd.drops.forEach(function (d) { w.drops.push({ id: d.id, count: d.count, x: d.x, y: d.y, roll: d.roll || null }); });
+      if (wd.drops) wd.drops.forEach(function (d) { w.drops.push({ id: d.id, count: d.count, x: d.x, y: d.y, roll: d.roll || null, manual: !!d.m }); });
     };
     if (data.worlds) { restoreWorld('light', data.worlds.light); restoreWorld('shadow', data.worlds.shadow); restoreWorld('space', data.worlds.space); }
     else if (data.deltas) { restoreWorld('light', { deltas: data.deltas, tileData: data.tileData, drops: data.drops }); } // v2互換

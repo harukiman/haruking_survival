@@ -26,7 +26,7 @@ Game.Save = (function () {
     return {
       deltas: deltas,
       tileData: tileData,
-      drops: w.drops.map(function (d) { return { id: d.id, count: d.count, x: d.x, y: d.y, roll: d.roll || null }; }),
+      drops: w.drops.map(function (d) { return { id: d.id, count: d.count, x: d.x, y: d.y, roll: d.roll || null, m: d.manual ? 1 : 0 }; }),
     };
   }
 

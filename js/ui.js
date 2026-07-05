@@ -1463,6 +1463,7 @@ Game.UI = (function () {
     Game.Audio.play('cursor');
     return lv[zoomIdx].label;
   }
+  function cycleZoomPad() { const lv = cycleZoom(); toast('俯瞰: ' + lv); }
   function syncZoomIdx() {
     const lv = zoomLevels(), z = Game.state.zoom || 1;
     let bi = 2, bd = Infinity;
@@ -1702,15 +1703,17 @@ Game.UI = (function () {
     let cur, nm;
     if (invHeld) {
       cur = invHeld; nm = (cur.roll && Game.Loot.displayName) ? Game.Loot.displayName(cur) : (Game.ITEMS[cur.id] ? Game.ITEMS[cur.id].name : cur.id);
+      Game.Player.dropItemToGround(cur.id, 1, cur.roll || null); // 地面へ(踏まないと拾えない)
       cur.count--; if (cur.count <= 0) invHeld = null;
       renderHeldBadge();
     } else {
       const idx = invSelected; if (idx == null || idx < 0) return false;
       cur = Game.Inventory.slots()[idx]; if (!cur) return false;
       nm = (cur.roll && Game.Loot.displayName) ? Game.Loot.displayName(cur) : (Game.ITEMS[cur.id] ? Game.ITEMS[cur.id].name : cur.id);
+      Game.Player.dropItemToGround(cur.id, 1, cur.roll || null);
       cur.count--; if (cur.count <= 0) { Game.Inventory.slots()[idx] = null; invSelected = -1; }
     }
-    Game.Audio.play('select'); toast('捨てた: ' + nm);
+    Game.Audio.play('select'); toast('地面に捨てた: ' + nm);
     refreshInventory(); refreshHotbar();
     return true;
   }
@@ -1825,7 +1828,12 @@ Game.UI = (function () {
       btns.push('<button id="inv-repair" class="big-btn alt"' + (can ? '' : ' disabled style="opacity:.5"') + '>🔧 修理（修理キット1＋鉄' + ironCost + '）</button>');
     }
     if (Game.Net && Game.Net.isConnected()) btns.push('<button id="inv-give" class="big-btn alt">仲間に渡す</button>');
-    btns.push('<button id="inv-drop" class="big-btn inv-discard">捨てる' + (st.count > 1 ? '（1個）' : '') + '</button>');
+    // 捨てる: 地面(向いている先2.5マス)に落ちる。まとめて半分/全部も選べる
+    if (st.count > 1) {
+      btns.push('<div style="display:flex;gap:6px"><button id="inv-drop" class="big-btn inv-discard" style="flex:1">捨てる(1個)</button><button id="inv-drop-half" class="big-btn inv-discard" style="flex:1">半分捨てる</button><button id="inv-drop-all" class="big-btn inv-discard" style="flex:1">全部捨てる</button></div>');
+    } else {
+      btns.push('<button id="inv-drop" class="big-btn inv-discard">捨てる</button>');
+    }
     el.invDetail.innerHTML = h + btns.join('');
     const give = document.getElementById('inv-give');
     if (give) give.addEventListener('click', function () {
@@ -1833,14 +1841,22 @@ Game.UI = (function () {
       const one = { id: cur.id, count: 1, roll: cur.roll || null };
       if (Game.Net.giveItem(one)) { cur.count--; if (cur.count <= 0) { Game.Inventory.slots()[invSelected] = null; invSelected = -1; } refreshInventory(); }
     });
-    const drop = document.getElementById('inv-drop');
-    if (drop) drop.addEventListener('click', function () {
+    // 捨てる系: n個を地面へ落とす共通処理(踏まないと拾えない manual ドロップ)
+    const doDrop = function (n) {
       const cur = Game.Inventory.slots()[invSelected]; if (!cur) return;
-      cur.count--; if (cur.count <= 0) Game.Inventory.slots()[invSelected] = null;
-      Game.Audio.play('select'); toast('捨てた: ' + (Game.ITEMS[cur.id] ? Game.ITEMS[cur.id].name : cur.id));
+      n = Math.max(1, Math.min(n, cur.count));
+      Game.Player.dropItemToGround(cur.id, n, cur.roll || null);
+      cur.count -= n; if (cur.count <= 0) Game.Inventory.slots()[invSelected] = null;
+      Game.Audio.play('select'); toast('地面に捨てた: ' + (Game.ITEMS[cur.id] ? Game.ITEMS[cur.id].name : cur.id) + (n > 1 ? ' ×' + n : ''));
       if (!Game.Inventory.slots()[invSelected]) invSelected = -1;
-      refreshInventory();
-    });
+      refreshInventory(); refreshHotbar();
+    };
+    const drop = document.getElementById('inv-drop');
+    if (drop) drop.addEventListener('click', function () { doDrop(1); });
+    const dropHalf = document.getElementById('inv-drop-half');
+    if (dropHalf) dropHalf.addEventListener('click', function () { const c = Game.Inventory.slots()[invSelected]; if (c) doDrop(Math.floor(c.count / 2)); });
+    const dropAll = document.getElementById('inv-drop-all');
+    if (dropAll) dropAll.addEventListener('click', function () { const c = Game.Inventory.slots()[invSelected]; if (c) doDrop(c.count); });
     const act = document.getElementById('inv-act');
     if (act) act.addEventListener('click', function () {
       const cur = Game.Inventory.slots()[invSelected]; if (!cur) return;
@@ -2711,6 +2727,6 @@ Game.UI = (function () {
     showLore, closeLore, refreshQuest, openQuest, closeQuest, refreshBounty, showEnding, showDeath, showIntro, refreshNet, refreshStatus,
     toggleOptions, openEnchant, closeEnchant, flashSave, flashHotbarItem, flashCombo, refreshContext, refreshAmmo,
     toggleBigMap, isBigMapOpen, updateBigMap, openStats, closeStats, toggleStats, renderStats, refreshBossBar, openTrade, closeTrade, openShop, openStory, closeStory, openWaypoints, closeWaypoints, shakeHealthBar,
-    padNav, padMenuRoot, padActivateEl, padGrab, padGrabReturn, padDrop, isHoldingItem,
+    padNav, padMenuRoot, padActivateEl, padGrab, padGrabReturn, padDrop, isHoldingItem, cycleZoomPad,
   };
 })();

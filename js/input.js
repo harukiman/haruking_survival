@@ -210,11 +210,11 @@ Game.Input = (function () {
   let padIdle = 0; // 右スティックを離してからの経過フレーム(自動照準切替用)
   let padGone = 0; // パッド未検出が続いたフレーム数(切断→タッチボタン再表示の判定)
   // ===== ゲームパッドのボタン割当(再割当可能・Settings保存) =====
-  const PAD_DEF = { mine: 0, fire: 7, place: 2, shift: 3, roll: 1, hotbarPrev: 4, hotbarNext: 5, dash: 6, inv: 9, map: 11, stats: 10, opts: 8 };
+  const PAD_DEF = { mine: 0, fire: 7, place: 2, shift: 3, roll: 1, hotbarPrev: 4, hotbarNext: 5, dash: 6, inv: 9, map: 11, stats: 10, opts: 8, zoom: 17 };
   const PAD_ACTIONS = [
     ['mine', '採掘/攻撃'], ['fire', '照準で攻撃'], ['place', '設置/対話'], ['shift', '影渡り'], ['roll', '回避ロール'],
     ['hotbarPrev', 'ホットバー←'], ['hotbarNext', 'ホットバー→'], ['dash', '走る'], ['inv', 'インベントリ'], ['map', '大マップ'],
-    ['stats', 'ステータス&スキル'], ['opts', '設定メニュー'],
+    ['stats', 'ステータス&スキル'], ['opts', '設定メニュー'], ['zoom', '俯瞰ズーム'],
   ];
   function PB(a) { const m = Game.Settings && Game.Settings.get && Game.Settings.get('padbinds'); return (m && m[a] != null) ? m[a] : PAD_DEF[a]; }
   // PS4/PS5標準配列の見やすいボタン名(Xbox/Switch Proもほぼ同一インデックス)
@@ -335,6 +335,8 @@ Game.Input = (function () {
     if (edge(PB('stats'))) Game.UI.toggleStats();
     // 設定メニュー(エッジ)
     if (edge(PB('opts'))) Game.UI.toggleOptions();
+    // 俯瞰ズーム切替(エッジ・タッチパッドボタン): コントローラだけで視野調節できる
+    if (edge(PB('zoom')) && Game.UI.cycleZoomPad) Game.UI.cycleZoomPad();
     // 他ボタンのprev更新（エッジ漏れ防止）
     [16].forEach(function (i) { padPrev[i] = btn(i); });
   }
