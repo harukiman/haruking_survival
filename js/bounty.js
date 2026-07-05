@@ -131,6 +131,25 @@ Game.Bounty = (function () {
       else Game.UI.toast('賞金首の大物「' + b.bossName + '」を討て！');
       return;
     }
+    // 進行中依頼の差し替え(共通): 素早くもう一度開くと1btsでリロール(討伐/納品どちらでも)
+    function tryReroll() {
+      const nowT = Game.state.tick;
+      if (openAgainT && nowT - openAgainT < 90) {
+        const pl = Game.state.player;
+        if ((pl.bts || 0) >= 1) {
+          pl.bts -= 1;
+          Game.state.bounty = generate();
+          announce(Game.state.bounty);
+          Game.UI.toast('📜 依頼を差し替えた(-1bts)');
+          if (Game.UI.refreshBounty) Game.UI.refreshBounty();
+          if (Game.UI.refreshStats) Game.UI.refreshStats();
+        } else Game.UI.toast('差し替えには 1bts が必要');
+        openAgainT = 0;
+        return true;
+      }
+      openAgainT = nowT;
+      return false;
+    }
     // 納品依頼: 掲示板で所持数を確認し、足りていれば納品して報酬
     if (b && b.deliver && !b.done) {
       const have = Game.Inventory.count(b.deliver);
@@ -140,7 +159,8 @@ Game.Bounty = (function () {
         Game.state.deliverDone = (Game.state.deliverDone || 0) + 1;
         if (Game.state.deliverDone >= 5 && Game.Achievements) Game.Achievements.unlock('deliverer');
       } else {
-        Game.UI.toast('納品依頼: ' + b.targetName + ' ' + have + '/' + b.need + '　集めて掲示板へ(報酬 ' + rewardText(b) + ')');
+        if (tryReroll()) return;
+        Game.UI.toast('納品依頼: ' + b.targetName + ' ' + have + '/' + b.need + '　集めて掲示板へ(報酬 ' + rewardText(b) + ')　(すぐもう一度で1bts差し替え)');
         return;
       }
     }
@@ -165,25 +185,8 @@ Game.Bounty = (function () {
       if (Game.UI.refreshBounty) Game.UI.refreshBounty();
       return;
     }
-    // 進行中: 素早くもう一度開くと 1bts で依頼を差し替え(合わない依頼を流せる)
-    const nowT = Game.state.tick;
-    if (openAgainT && nowT - openAgainT < 90) {
-      const pl = Game.state.player;
-      if ((pl.bts || 0) >= 1) {
-        pl.bts -= 1;
-        Game.state.bounty = generate();
-        announce(Game.state.bounty);
-        Game.UI.toast('📜 依頼を差し替えた(-1bts)');
-        if (Game.UI.refreshBounty) Game.UI.refreshBounty();
-        if (Game.UI.refreshStats) Game.UI.refreshStats();
-        openAgainT = 0;
-        return;
-      }
-      Game.UI.toast('差し替えには 1bts が必要');
-      openAgainT = 0;
-      return;
-    }
-    openAgainT = nowT;
+    // 進行中(討伐): 差し替え共通ヘルパー
+    if (tryReroll()) return;
     Game.UI.toast('賞金首: ' + b.targetName + ' を討伐 (' + b.count + '/' + b.need + ')　報酬 ' + rewardText(b) + '　(すぐもう一度開くと1btsで差し替え)');
   }
 
