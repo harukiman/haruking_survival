@@ -750,6 +750,7 @@ Game.UI = (function () {
     const el2 = document.getElementById('bigmap-legend'); if (!el2 || legendBuilt) return;
     let h = '';
     for (const k in LANDMARKS) h += '<span class="lg-item"><i style="background:' + LANDMARKS[k].col + '"></i>' + LANDMARKS[k].label + '</span>';
+    h += '<span class="lg-item"><i style="background:rgba(255,150,50,0.55)"></i>辺境(危険帯)</span><span class="lg-item"><i style="background:rgba(255,60,60,0.6)"></i>深域(高危険)</span>';
     el2.innerHTML = h; legendBuilt = true;
   }
 
@@ -798,6 +799,14 @@ Game.UI = (function () {
         const t = Game.WorldGen.genTile(wtx, wty, Game.state.seed);
         bmCtx.fillStyle = palette[t.ground] || '#333';
         bmCtx.fillRect(x * scale, y * scale, scale * stepT + 0.6, scale * stepT + 0.6);
+        // 危険度帯の可視化(光世界のみ): 辺境=薄橙 / 深域=薄赤 のティントを重ねる。どこが危険か地図で一目
+        if (Game.state.worldName === 'light' && Game.World.dangerBandAt) {
+          const band = Game.World.dangerBandAt(wtx, wty);
+          if (band >= 2) {
+            bmCtx.fillStyle = band >= 3 ? 'rgba(255,60,60,0.16)' : 'rgba(255,150,50,0.11)';
+            bmCtx.fillRect(x * scale, y * scale, scale * stepT + 0.6, scale * stepT + 0.6);
+          }
+        }
       }
     }
     // 発見済みランドマーク（現在世界・視野内）
