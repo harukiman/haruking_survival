@@ -105,6 +105,7 @@ Game.Bounty = (function () {
 
   // 掲示板との対話
   function open() {
+    if (Game.state) { Game.state._tips = Game.state._tips || {}; Game.state._tips.bounty_seen = 1; } // 導線ヒントの達成フラグ
     let b = Game.state.bounty;
     // 大物依頼: ボスが居なければ出現させる(初回/リロード後)
     if (b && b.big && !b.done) {

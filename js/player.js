@@ -659,7 +659,7 @@ Game.Player = (function () {
       if (o === O.RETURN_GATE) { ruinReturn(); return; }
       if (o === O.RIFT_TEAR) { riftTravel(tx, ty); return; }
       if (o === O.RIFT_RETURN) { riftReturn(); return; }
-      if (o === O.WAYPOINT_STONE) { if (Game.UI.openWaypoints) Game.UI.openWaypoints(); return; }
+      if (o === O.WAYPOINT_STONE) { if (Game.UI.tipOnce) Game.UI.tipOnce('waypoint_intro', '🧭 道標: 一度触れた道標同士はファストトラベルで行き来できる。探索先で見つけたら必ず起動しておこう'); if (Game.UI.openWaypoints) Game.UI.openWaypoints(); return; }
       if (o === O.SHADOW_ALTAR) { Game.Mobs.summonBoss(tx, ty); return; }
       if (o === O.ENCHANT_TABLE) { Game.UI.openEnchant(); return; }
       if (o === O.EXIT_PORTAL) { dungeonExitWarp(); return; }

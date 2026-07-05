@@ -1328,6 +1328,7 @@ Game.Mobs = (function () {
       }
       // 刻片(記念の通貨的素材)をボス撃破で入手
       if (Game.Inventory) Game.Inventory.add('kokuhen', 1);
+      if (Game.UI && Game.UI.tipOnce) Game.UI.tipOnce('kokuhen_intro', '🔮 「刻片」を入手！ インベントリの「📖 記憶回廊」で刻片を使うと、世界の物語を読み解ける');
       // 節目イベント: ボス撃破で自動保存(進行保全)
       if (Game.Save) Game.Save.autosave('boss');
       // 物語ムービー: 節目のボスは初撃破で記憶回廊の章を解放＋シネマ再生(撃破outroの代わり)

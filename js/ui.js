@@ -1346,6 +1346,7 @@ Game.UI = (function () {
     { icon: '🌓', text: '★あなたは光と影を渡り歩く者。夜の敵から《影の欠片》を集めて《影鏡》を作り、影の世界へ渡れ——割れた二つを一つに還すのが、この旅の目的だ', life: 55, done: function () { return Game.Inventory.count('shadow_shard') > 0 || (Game.Achievements && Game.Achievements.has('first_shift')); } },
     { icon: '🌙', text: '夜は敵が強くなる。松明と武器を備えよう', life: 25, done: function () { return Game.Inventory.count('torch') > 0; } },
     { icon: '💾', text: '進行は自動保存される。⚙からも保存できる', life: 12, done: function () { return false; } },
+    { icon: '📜', text: '行商人から<b>賞金掲示板</b>を買って設置すると、討伐報酬(バーツ)の依頼を受けられる', life: 40, done: function () { return !!(Game.state && Game.state._tips && Game.state._tips.bounty_seen); } },
   ];
   let hintPill = null, hintIdx = -1, hintShownAt = 0, hintsActive = false, hintKey = null, hintStartTick = 0;
   function hintsDoneFlag() { try { return localStorage.getItem(hintKey) === '1'; } catch (e) { return false; } }
