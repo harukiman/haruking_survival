@@ -932,6 +932,14 @@ Game.Mobs = (function () {
               if (m.def.inflict) for (const k in m.def.inflict) Game.Status.add(k, m.def.inflict[k]);
               inflictMobElement(m); // 火/氷属性の敵は接触で炎上/凍え
               if (hasAffix(m, 'blazing')) Game.Status.add('burn', Game.ELITE_AFFIXES.blazing.burn); // 業火: 接触で炎上
+              // 吸魂: 与えたダメージの60%を自己回復(赤紫の吸引演出)。長期戦ほど不利=速攻を促す
+              if (hasAffix(m, 'soulfeed') && m.hp < m.maxHp) {
+                const heal = Math.max(1, Math.round((m.dmg || m.def.dmg || 2) * (Game.ELITE_AFFIXES.soulfeed.leech || 0.6)));
+                m.hp = Math.min(m.maxHp, m.hp + heal);
+                if (Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - m.def.size * 0.6, '+' + heal, '#d04a90');
+                if (Game.Render.spawnParticles) Game.Render.spawnParticles(m.x, m.y, '#d04a90', 4);
+                if (Game.UI && Game.UI.tipOnce) Game.UI.tipOnce('elite_soulfeed', '吸魂の精鋭: 攻撃を当てられるたび回復する。被弾を避けつつ速攻で仕留めろ');
+              }
               // 棘(thorns)防具: 被弾時に攻撃元へダメージ反射
               if (p.gearThorns > 0 && !m.def.boss) { const refl = Math.max(1, Math.round((m.dmg || m.def.dmg) * p.gearThorns)); Game.Render.spawnParticles(m.x, m.y, '#ff8a6a', 5); damageMob(m, refl, p.x, p.y, false); }
               reflectShield(m, (m.dmg || m.def.dmg), p);
