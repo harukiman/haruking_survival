@@ -419,7 +419,7 @@ Game.Mobs = (function () {
     // 天候の影響: 雨/雪は炎上が消えやすく(半減)、吹雪は凍えが長引く(1.5倍)。天候で武器を持ち替える理由になる
     let wMul = 1;
     const wt2 = Game.state.weather && Game.state.weather.type;
-    if (kind === 'fire' && (wt2 === 'rain' || wt2 === 'snow' || wt2 === 'blizzard')) { wMul = 0.5; if (Game.UI && Game.UI.tipOnce) Game.UI.tipOnce('weather_fire', '🌧 雨や雪の中では炎が消えやすい(炎上半減)。天候に合わせて武器を選ぼう'); }
+    if (kind === 'fire' && (wt2 === 'rain' || wt2 === 'storm' || wt2 === 'snow' || wt2 === 'blizzard')) { wMul = 0.5; if (Game.UI && Game.UI.tipOnce) Game.UI.tipOnce('weather_fire', '🌧 雨や雪の中では炎が消えやすい(炎上半減)。天候に合わせて武器を選ぼう'); }
     if (kind === 'frost' && wt2 === 'blizzard') { wMul = 1.5; if (Game.UI && Game.UI.tipOnce) Game.UI.tipOnce('weather_frost', '🌨 吹雪の中では凍えが長引く(1.5倍)。氷武器の好機だ'); }
     m.dot[e[0]] = Math.max(m.dot[e[0]] || 0, Math.round(e[1] * (weak ? 1.6 : 1) * wMul)); // 弱点は状態異常が長い
   }
@@ -1143,13 +1143,18 @@ Game.Mobs = (function () {
     // 瞬影の精鋭: 被弾すると短距離テレポートで回り込む(3秒CD)。連打が通らず、範囲攻撃や置き撃ちで読む
     if (hasAffix(m, 'blink') && m.hp > 0 && (m.blinkCd || 0) <= 0) {
       const pl2 = Game.state.player;
-      const ang0 = Math.atan2(m.y - pl2.y, m.x - pl2.x) + (Math.random() < 0.5 ? 1 : -1) * (Math.PI * 0.55 + Math.random() * 0.5);
-      const bx = pl2.x + Math.cos(ang0) * 2.4 * TS, by = pl2.y + Math.sin(ang0) * 2.4 * TS;
-      if (walkAt(bx, by, m)) {
+      const base = Math.atan2(m.y - pl2.y, m.x - pl2.x);
+      const sgn = Math.random() < 0.5 ? 1 : -1;
+      // 候補3方向(側面→背面→逆側面)を順に試し、通れる場所へ瞬く(地形で不発になりにくい)
+      const cands = [base + sgn * (Math.PI * 0.55 + Math.random() * 0.5), base + Math.PI, base - sgn * (Math.PI * 0.55 + Math.random() * 0.5)];
+      for (let ci = 0; ci < cands.length; ci++) {
+        const bx = pl2.x + Math.cos(cands[ci]) * 2.4 * TS, by = pl2.y + Math.sin(cands[ci]) * 2.4 * TS;
+        if (!walkAt(bx, by, m)) continue;
         if (Game.Render.spawnParticles) { Game.Render.spawnParticles(m.x, m.y, '#b07fff', 8); Game.Render.spawnParticles(bx, by, '#d8b0ff', 8); }
         m.x = bx; m.y = by; m.knockX = 0; m.knockY = 0; m.blinkCd = 90;
         if (Game.Audio) Game.Audio.play('shift');
         if (Game.UI && Game.UI.tipOnce) Game.UI.tipOnce('elite_blink', '瞬影の精鋭: 被弾すると背後へ瞬間移動する。振り向きざまの範囲攻撃や罠が有効');
+        break;
       }
     }
     if (!m.def.hostile) m.fleeTimer = 180; // 動物は逃げる
