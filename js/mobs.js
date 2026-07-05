@@ -1334,6 +1334,7 @@ Game.Mobs = (function () {
       const pl = Game.state.player;
       let bts = Math.max(1, Math.round((m.def.xp || 1) * (m.xpMult || 1) * 0.6 * (m.def.boss ? 1.6 : 1)));
       if (m.elite) bts *= 2; if (m.champion) bts *= 2;
+      if (Game.state.bloodMoon) bts = Math.round(bts * 1.5); // 血の月: 危険な夜はバーツも実入りが良い
       pl.bts = (pl.bts || 0) + bts;
       if (Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - (m.def.size || 12) * 0.5, '+' + bts + ' bts', '#ffd24a');
     }
