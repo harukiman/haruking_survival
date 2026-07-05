@@ -1773,7 +1773,7 @@ Game.Player = (function () {
     // ドロップの寿命/上限(無限増加でセーブ肥大・描画負荷が単調増加していた):
     // 自然ドロップは約2ゲーム日で消滅。手で捨てた品(manual)は消えない。上限800で古い自然ドロップから間引く
     const TTL = (Game.DAY_LENGTH || 3600) * 2, now = Game.state.tick;
-    if (drops.length > 800) { for (let i = 0; i < drops.length && drops.length > 800; i++) { if (!drops[i].manual) drops.splice(i, 1); i--; } }
+    if (drops.length > 800) { for (let i = 0; i < drops.length && drops.length > 800; i++) { if (!drops[i].manual) { drops.splice(i, 1); i--; } } } // manual以外を古い順に間引く(manual時のi--で無限ループしないよう括弧内のみ)
     for (let i = drops.length - 1; i >= 0; i--) {
       const d = drops[i];
       if (d.bornT == null) d.bornT = now; // 既存/新規を遅延スタンプ
