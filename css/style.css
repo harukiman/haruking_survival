@@ -864,3 +864,7 @@ body.dead #quest-tracker, body.dead #bounty-tracker, body.dead #boss-bar { displ
 /* スロットの耐久ミニバー(満タン未満のみ表示) */
 .slot .durbar { position: absolute; left: 5px; right: 5px; bottom: 3px; height: 3px; background: rgba(10,14,24,0.75); border-radius: 2px; overflow: hidden; pointer-events: none; }
 .slot .durbar i { display: block; height: 100%; border-radius: 2px; }
+
+/* オーバーレイ(地図/インベントリ/取引等)表示中はフィールド操作UIを隠す(視覚ノイズと誤タップ防止) */
+body.ui-overlay #action-btns, body.ui-overlay #hint-pill, body.ui-overlay #hb-iteminfo,
+body.ui-overlay #context-action, body.ui-overlay #quest-tracker, body.ui-overlay #bounty-tracker { display: none !important; }

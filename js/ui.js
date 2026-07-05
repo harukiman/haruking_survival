@@ -2522,8 +2522,13 @@ Game.UI = (function () {
 
   // 文脈アクションボタン: チェスト等に近づくと「📦 開ける」等を表示しタップで実行(マイクラ式の開封導線)
   let ctxBtn = null, ctxLabel = '';
+  let _overlayOpenCls = false; // オーバーレイ表示中クラスのキャッシュ
   function refreshContext() {
     if (!Game.state || !Game.Player.contextAction) return;
+    // オーバーレイ(地図/インベントリ等)表示中は下部のフィールドUI(アクションボタン/ヒント)をCSSで隠す
+    const bm2 = document.getElementById('bigmap-screen');
+    const anyOverlay = !!document.querySelector('.overlay:not(.hidden)') || (bm2 && !bm2.classList.contains('hidden'));
+    if (anyOverlay !== _overlayOpenCls) { _overlayOpenCls = anyOverlay; document.body.classList.toggle('ui-overlay', anyOverlay); }
     if (!ctxBtn) {
       ctxBtn = document.getElementById('context-action');
       if (!ctxBtn) {
