@@ -692,7 +692,18 @@ Game.Audio = (function () {
         if (lv > bossLvl) bossLvl = lv;
       } else if (m.def.midboss && bossLvl < 1) { bossLvl = 1; boss = true; } // 中ボス(D)は段階1
     }
-    bgm.intensity = boss ? Math.min(1, (bossLvl || 1) / 5) : 0;
+    // 戦闘強度: ボスはランクで最大、通常戦闘も近接敵対数(10マス以内)で0〜0.5まで上がる。
+    // BGMのキック/スネア/テンポがわずかに熱を帯び、乱戦の緊張が音に出る(ダイナミックBGM)
+    let inten2 = boss ? Math.min(1, (bossLvl || 1) / 5) : 0;
+    if (!boss && Game.state.mobs && Game.state.player) {
+      const pp = Game.state.player, R2 = (10 * (Game.CFG ? Game.CFG.TILE_SIZE : 32));
+      let near = 0;
+      for (let i = 0; i < Game.state.mobs.length; i++) { const mm = Game.state.mobs[i]; if (mm.def && mm.def.hostile && Math.hypot(mm.x - pp.x, mm.y - pp.y) < R2) { near++; if (near >= 5) break; } }
+      inten2 = Math.min(0.5, near * 0.1);
+    }
+    // 急変を避ける平滑化(1回の更新で最大±0.15)
+    const cur2 = bgm.intensity || 0;
+    bgm.intensity = cur2 + Math.max(-0.15, Math.min(0.15, inten2 - cur2));
     const TS = Game.CFG.TILE_SIZE, p = Game.state.player;
     // エリアムード(空島/古代都市/狭間): 優先度は boss > エリア > バイオーム/昼夜。
     // World 側が currentAreaMood() を公開していない間は従来と完全に同一挙動
