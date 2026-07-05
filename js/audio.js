@@ -58,7 +58,7 @@ Game.Audio = (function () {
     // 戦車/戦闘機/ロボ搭乗中=駆り立てる軍事エレクトロ。重い四つ打ち＋唸るサブベース＋機械的アルペジオ(フリジアンの緊張)
     warmachine: { root: 130.81, scale: [0, 1, 3, 5, 7, 8, 10], bpm: 132, wave: 'sawtooth', cut: 2000, kick: true, bassEvery: 1, arp: [0, 0, 7, 0, 3, 0, 8, 7], arpEvery: 1, noteVol: 0.036, bassVol: 0.062, kickVol: 0.14, prog: [0, 0, 5, 3], drone: 0.045, sub: 0.05 },
   };
-  const MOOD_GENRE = { title: 'title', day: 'animepop', night: 'city', shadow: 'shadowrealm', cave: 'classic', boss: 'edm', space: 'space', desert: 'desert', snow: 'snow', meadow: 'meadow', sky: 'sky', ruins: 'ruins', rift: 'rift',
+  const MOOD_GENRE = { title: 'title', day: 'animepop', night: 'city', shadow: 'shadowrealm', cave: 'classic', bloodmoon: 'edm', space: 'space', desert: 'desert', snow: 'snow', meadow: 'meadow', sky: 'sky', ruins: 'ruins', rift: 'rift',
     boss1: 'boss1', boss2: 'boss2', boss3: 'boss3', boss4: 'boss4', boss5: 'boss5', shadowrealm: 'shadowrealm', vehicle: 'warmachine' };
 
   function ensure() {
@@ -215,7 +215,7 @@ Game.Audio = (function () {
       case 'place':  beep(320, 0.08, 'square', 0.08); subThump(140, 60, 0.1, 0.1); break;
       case 'pickup': ensure(); sparkle(880, 0.075); break;
       case 'craft':  beep(520, 0.08, 'triangle', 0.1); beep(700, 0.1, 'triangle', 0.09); subThump(180, 70, 0.14, 0.09); break;
-      case 'eat':    beep(280, 0.1, 'sine', 0.09); break;
+      case 'eat':    eatSound(null); break; // 作り込み済みの咀嚼音へ一本化(旧: 単発beepの別系統)
       case 'hurt':   beep(150, 0.18, 'sawtooth', 0.12); if (ctx) noisePiece(ctx.currentTime, 0.1, 0.09, 'bandpass', 600, 1.2, true); break;
       case 'select': beep(440, 0.04, 'square', 0.05); break;
       case 'dodge_just': if (throttled('dj', 0.1) && ctx) { noiseBurst(ctx.currentTime, 0.14, 0.1, 2600, true); beep(1320, 0.05, 'sine', 0.08); beep(1760, 0.08, 'triangle', 0.07); } break; // ジャスト回避: 受け流しの一閃
@@ -247,7 +247,8 @@ Game.Audio = (function () {
       // 深い body + サブサンプの"ドスッ"を毎発重ね、低めのクラックで金属的すぎない重量感を出す。
       case 'gun_jet':    if (throttled('gjt', 0.016)) { gunShot({ crackHz: 1500, crackVol: 0.54, crackDur: 0.026, bodyHz: 150, bodyLow: 40, bodyVol: 0.64, bodyDur: 0.08, midHz: 460, tailDur: 0.07, tailVol: 0.13, tailHz: 820, vol: 1.14 }); if (ctx) subThump(88, 36, 0.07, 0.1); } break;
       case 'gun_antimat':if (throttled('gam', 0.16)) { gunShot({ crackHz: 2600, crackVol: 0.7, crackDur: 0.06, bodyHz: 120, bodyLow: 34, bodyVol: 0.72, bodyDur: 0.22, midHz: 480, tailDur: 0.42, tailVol: 0.22, tailHz: 900, vol: 1.25 }); if (ctx) subThump(150, 48, 0.2, 0.12); } break;
-      case 'gun_energy': if (throttled('gen', 0.04)) { beep(1600, 0.05, 'sine', 0.08); beep(900, 0.09, 'sawtooth', 0.06); sbeep(2200, 0.05, 'triangle', 0.05, 0.03); } break;
+      // エネルギー銃: チャージされたプラズマのビシュッ(急上昇→ザップ+芯の低音)
+      case 'gun_energy': if (throttled('gen', 0.04)) { ensure(); if (ctx) { const t0 = ctx.currentTime; const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sawtooth'; o.frequency.setValueAtTime(500, t0); o.frequency.exponentialRampToValueAtTime(2100, t0 + 0.05); g.gain.setValueAtTime(0.09, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.11); o.connect(g); g.connect(sfxGain); reg(o); o.start(t0); o.stop(t0 + 0.12); noiseShape(t0, 0.04, 0.14, 'highpass', 3000, 0.7, 3); subThump(180, 80, 0.07, 0.07); } } break;
       case 'gun_flame':  if (throttled('gfl', 0.05)) { if (ctx) noiseBurst(ctx.currentTime, 0.16, 0.1, 900); beep(180, 0.12, 'sawtooth', 0.05); } break;
       case 'gun_launch': if (throttled('gln', 0.14)) { beep(320, 0.06, 'square', 0.08); subThump(150, 55, 0.14, 0.1); } break;
       // 爆発: 鋭い初撃(高域ノイズ)＋深いサブ低音＋轟く尾で重くリアルに
@@ -268,10 +269,13 @@ Game.Audio = (function () {
         subThump(92, 270, 0.28, 0.13);                             // 加速する低音(92→270Hzへ上昇=モーター伸び)
         sbeep(350, 0.24, 'sawtooth', 0.05, 0.01);                  // モーターのうなり
       } } break;
-      case 'slash_air':  if (throttled('sla', 0.06)) { beep(680, 0.06, 'sine', 0.06); beep(1200, 0.05, 'triangle', 0.05); } break;
-      case 'beam':       if (throttled('bm', 0.05)) { beep(1400, 0.06, 'sine', 0.07); beep(700, 0.1, 'sawtooth', 0.05); } break;
+      // 飛ぶ斬撃: 空を切り裂くヒュンッ(高域ノイズの短いスイープ×2)
+      case 'slash_air':  if (throttled('sla', 0.06)) { ensure(); if (ctx) { noiseShape(ctx.currentTime, 0.09, 0.2, 'highpass', 2400, 0.8, 3); noiseShape(ctx.currentTime + 0.04, 0.07, 0.12, 'bandpass', 1500, 1.2, 2); } beep(900, 0.05, 'sine', 0.04); } break;
+      // 魔法弾: きらめく残響つきのザップ(落下ピッチ+シマー)
+      case 'beam':       if (throttled('bm', 0.05)) { ensure(); sbeep(1500, 0.12, 'sawtooth', 0.055, 0); sbeep(2200, 0.08, 'sine', 0.04, 0.01); if (ctx) { noiseShape(ctx.currentTime, 0.05, 0.08, 'highpass', 3600, 0.7, 3); sparkle(1800, 0.03); } } break;
       case 'thunder':    if (throttled('th', 0.08)) { beep(300, 0.05, 'square', 0.09); if (ctx) noiseBurst(ctx.currentTime, 0.12, 0.12, 3000, true); beep(120, 0.14, 'sawtooth', 0.08); } break;
-      case 'whirl':      if (throttled('wh', 0.1)) { beep(420, 0.16, 'triangle', 0.06); beep(620, 0.12, 'sine', 0.04); } break;
+      // 大振り/回転攻撃: 重いブォンッ(帯域ノイズの回転感+低音)
+      case 'whirl':      if (throttled('wh', 0.1)) { ensure(); if (ctx) { noiseShape(ctx.currentTime, 0.16, 0.2, 'bandpass', 700, 1.0, 2); noiseShape(ctx.currentTime + 0.05, 0.12, 0.1, 'bandpass', 420, 1.2, 1.5); } beep(300, 0.14, 'triangle', 0.06); subThump(140, 60, 0.14, 0.08); } break;
       case 'engine': if (throttled('engine', 0.3)) beep(110, 0.2, 'sawtooth', 0.05); break;
       // 乗車: ドスッという乗り込み＋起動の上がり音
       case 'mount': beep(300, 0.06, 'square', 0.06); sbeep(430, 0.07, 'triangle', 0.05, 0.06); subThump(170, 65, 0.12, 0.09); break;
@@ -697,6 +701,7 @@ Game.Audio = (function () {
     const cv = p.vehicle;
     const combatVeh = cv === 'tank' || cv === 'mech' || cv === 'jet' || cv === 'bomber';
     if (boss) mood = 'boss' + (bossLvl || 1); // 強さ別クラシックBGM(boss1..boss5)
+    else if (Game.state.bloodMoon && Game.state.worldName === 'light') mood = 'bloodmoon'; // 血の月は専用の激しい曲(edm)
     else if (combatVeh) mood = 'vehicle';
     else if (areaMood) mood = areaMood;
     else if (Game.state.worldName === 'space') mood = 'space';
@@ -888,6 +893,8 @@ Game.Audio = (function () {
     const wet = Game.state.weather && (Game.state.weather.type === 'rain' || Game.state.weather.type === 'snow');
     const r = Math.random();
     if (Game.state.worldName === 'shadow') { if (r < 0.25) windGust(); return; } // 影=不穏な風のみ
+    // 空島: 高所の風が常に鳴る(専用SFX wind_gust をここで活用)
+    { const g2 = Game.World.groundAt(pt.tx, pt.ty); if (g2 === Game.TILE.CLOUD || g2 === Game.TILE.SKYVOID) { if (r < 0.6) { windGust(); if (r < 0.2) play('wind_gust'); } return; } }
     if (night) { if (r < 0.5) cricket(); else if (r < 0.62) windGust(); }
     else { if (r < 0.32) birdChirp(); else if (r < 0.5) windGust(); }
     if (wet && Math.random() < 0.4) windGust();
