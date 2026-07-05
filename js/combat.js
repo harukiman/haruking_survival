@@ -297,10 +297,14 @@ Game.Combat = (function () {
     const isCrit = focusCrit || Math.random() < critCh;
     if (isCrit) { dmg = Math.round(dmg * (Game.TUNE.CRIT_MULT || 1.8)); Game.Render.shake(7); Game.Audio.play('crit'); }
     if (focusCrit) Game.Player.consumeFocus();
+    // カウンター: ジャスト回避直後(counterT)の近接は確定強打。会心とは乗算しない(強い方採用)
+    let counterHit = false;
+    if ((p.counterT || 0) > 0) { counterHit = true; p.counterT = 0; if (!isCrit) dmg = Math.round(dmg * 1.75); Game.Render.shake(8); Game.Audio.play('crit'); }
     // 範囲攻撃: スキル「旋風斬り」 or 範囲武器(大剣/戦鎚)は範囲内の敵すべてに当てる
     const wdef = slot && Game.ITEMS[slot.id];
     const aoe = Game.Player.skillFlag('aoe') || (wdef && wdef.aoe);
     if (isCrit && Game.Render.spawnFloat) Game.Render.spawnFloat(best.x, best.y - 22, '会心!', '#ff5a4a', true);
+    if (counterHit && Game.Render.spawnFloat) Game.Render.spawnFloat(best.x, best.y - 34, 'COUNTER!', '#ffd76a', true);
     const targets = [];
     if (aoe) {
       for (let i = 0; i < mobs.length; i++) { const m = mobs[i]; if (m.def.friendly) continue; if (Math.hypot(m.x - p.x, m.y - p.y) <= rangePx + m.def.size * 0.5) targets.push(m); }
@@ -317,7 +321,8 @@ Game.Combat = (function () {
       const tg = targets[i];
       if (!canDirect) { Game.Net.sendHit(tg.id, dmg, p.x, p.y); Game.Render.spawnBlood(tg.x, tg.y, 4); }
       else {
-        Game.Mobs.damageMob(tg, dmg, p.x, p.y, isCrit);
+        Game.Mobs.damageMob(tg, dmg, p.x, p.y, isCrit || counterHit);
+        if (counterHit && !tg.def.boss) { const kdx = tg.x - p.x, kdy = tg.y - p.y, kl = Math.hypot(kdx, kdy) || 1; tg.kbX = (tg.kbX || 0) + kdx / kl * 5; tg.kbY = (tg.kbY || 0) + kdy / kl * 5; tg.stunned = Math.max(tg.stunned || 0, 18); }
         if (wdots && Game.Mobs.applyDot) for (let k = 0; k < wdots.length; k++) Game.Mobs.applyDot(tg, wdots[k]); // 元素付与で状態異常→元素反応に接続
       }
       // 命中スパーク(打撃の手応え): 接触点に白い火花。会心は強め

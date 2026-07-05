@@ -1034,6 +1034,12 @@ Game.Render = (function () {
       ctx.strokeStyle = 'rgba(255,80,80,0.7)'; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.arc(s.x, by - 1, 13, 0, Math.PI * 2); ctx.stroke();
     }
+    // 反撃の好機: 金色の収縮リング(残り時間で縮む)。「今、殴れ」を視覚で伝える
+    if ((p.counterT || 0) > 0) {
+      const cf = p.counterT / 90;
+      ctx.strokeStyle = 'rgba(255,215,106,' + (0.35 + 0.35 * cf).toFixed(2) + ')'; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.arc(s.x, by - 1, 14 + 10 * cf, 0, Math.PI * 2); ctx.stroke();
+    }
   }
   // 手に持つアイテムの簡易描画(銃=黒い銃身/剣=刃/道具=柄)。照準方向へ向ける
   function drawHeldItem(ctx, sx, by, p) {

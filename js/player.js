@@ -408,6 +408,7 @@ Game.Player = (function () {
     } else p.stuckT = 0;
 
     if (p.invuln > 0) p.invuln--;
+    if ((p.counterT || 0) > 0) p.counterT--;
     if (p.attackCd > 0) p.attackCd--;
     // 発砲反動キックの復元(視覚のみ・数tickで元位置へ戻すためゲームプレイ影響なし)
     if ((p.recoilN || 0) > 0) {

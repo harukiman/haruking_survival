@@ -259,6 +259,9 @@ Game.Survival = (function () {
         if (Game.Render.spawnFloat) Game.Render.spawnFloat(p.x, p.y - 24, 'JUST!', '#7fe0ff', true);
         if (Game.Render.spawnParticles) Game.Render.spawnParticles(p.x, p.y, '#bfe8ff', 12);
         Game.Audio.play('dodge_just');
+        // 反撃の好機: 1.5秒以内の近接攻撃が確定強打(×1.75+ふきとばし)。回避→反撃の読み合いを完成させる
+        p.counterT = 90;
+        if (Game.Render.spawnFloat) Game.Render.spawnFloat(p.x, p.y - 40, '反撃の好機!', '#ffd76a', true);
       }
       return false; // ブロック: 呼び出し側は状態異常/被弾演出も抑止すること
     }
