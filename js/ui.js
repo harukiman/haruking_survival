@@ -1030,7 +1030,8 @@ Game.UI = (function () {
     const s = Game.Inventory.slots();
     const slots = el.hotbar.children;
     for (let i = 0; i < slots.length; i++) {
-      slots[i].innerHTML = slotHTML(s[i]);
+      // PC: 数字キーガイド(1-9)を毎回描画に含める(innerHTML上書きに耐える)
+      slots[i].innerHTML = slotHTML(s[i]) + '<span class="hb-num">' + (i + 1) + '</span>';
       slots[i].classList.toggle('selected', i === Game.state.player.hotbarIndex);
     }
     setupTooltip(el.hotbar);
