@@ -262,6 +262,7 @@ Game.UI = (function () {
     { rand: true, price: 90, label: '掘り出し物（ランダム装備）' },
   ];
   let shopMode = false; // true=バーツ商館 / false=金塊の旅商人
+  let sellMode = false; // 商館の売却モード
   // ショップ入替は「ゲーム内 00:00 と 12:00」ごと(=半日=DAY_LENGTH/2 tick周期)。値段も期間ごとにランダム変動
   function shopPeriod() { return Math.floor((Game.state.tick || 0) / (Game.DAY_LENGTH / 2)); }
   function periodRng(salt) { let s = (shopPeriod() * 2654435761 + (salt | 0) + (Game.state.seed || 0)) >>> 0; return function () { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; }
@@ -270,7 +271,7 @@ Game.UI = (function () {
   function priceStock(list) { return list.map(function (it, i) { if (it.price == null) return it; const c = Object.assign({}, it); c.price = variedPrice(it.price, i); return c; }); }
   function openShop() {
     const sc = document.getElementById('trade-screen'); if (!sc) return;
-    shopMode = true; sc.classList.remove('hidden'); Game.state.paused = true;
+    shopMode = true; sellMode = false; sc.classList.remove('hidden'); Game.state.paused = true;
     const title = sc.querySelector('h2'); if (title) title.textContent = 'バーツ商館 🏪';
     tradeStock = priceStock(SHOP_STOCK); lastBoughtIdx = -1; lastCurShown = null; refreshTrade();
   }
@@ -448,6 +449,47 @@ Game.UI = (function () {
     const curName = shopMode ? 'バーツ' : '金塊', curIcon = shopMode ? '🪙' : '🟨';
     let h = '<div class="trade-wallet"><span class="tw-lbl">所持' + curName + '</span><b id="trade-cur" class="tw-val' + (shopMode ? '' : ' gold') + '">' + curIcon + ' <span id="trade-cur-num">' + cur + '</span></b></div>';
     h += '<p class="trade-sub">' + (shopMode ? '常設の品揃え・固定価格。欲しい品をタップで購入。' : '品揃えは旅のたびに入れ替わる — 一期一会の市。') + '</p>';
+    if (shopMode) h += '<button id="trade-sell-toggle" class="map-btn" style="width:100%;margin-bottom:8px">' + (sellMode ? '🛍 購入にもどる' : '💰 いらない装備を売る') + '</button>';
+    if (shopMode && sellMode) {
+      // 売却: ロール装備(レアリティ査定)と余剰素材(固定価格)。装備の在庫圧迫に出口を作る
+      const SELLP = [2, 4, 9, 22, 60]; // レアリティ0-4の買取価格
+      const MATP = { wood: 1, stone: 1, coal: 1, iron: 2, hide: 1, raw_meat: 1, slime_ball: 1, feather: 1 }; // 8個単位で売る素材
+      let rows = '';
+      const sl = Game.Inventory.slots();
+      for (let si = 0; si < sl.length; si++) {
+        const st = sl[si]; if (!st) continue;
+        if (st.roll) {
+          const price = SELLP[st.roll.rarity || 0] || 2;
+          rows += '<button class="trade-row" data-sell="' + si + '" data-price="' + price + '"><span class="tr-ic"></span><span class="tr-mid"><span class="tr-name" style="color:' + Game.Loot.rarityColor(st) + '">' + Game.Loot.displayName(st) + '</span><span class="tr-eff">' + Game.Loot.rarityName(st) + '装備を売却</span></span><span class="tr-price">🪙+' + price + '</span></button>';
+        }
+      }
+      for (const mid in MATP) {
+        const have = Game.Inventory.count(mid);
+        if (have >= 8) rows += '<button class="trade-row" data-sellmat="' + mid + '" data-price="' + MATP[mid] + '"><span class="tr-ic"></span><span class="tr-mid"><span class="tr-name">' + Game.ITEMS[mid].name + ' ×8</span><span class="tr-eff">所持 ' + have + '</span></span><span class="tr-price">🪙+' + MATP[mid] + '</span></button>';
+      }
+      h += '<div class="trade-list">' + (rows || '<p class="hint">売れる物がない(ロール装備、または素材8個以上)</p>') + '</div>';
+      body.innerHTML = h;
+      const tgl = document.getElementById('trade-sell-toggle'); if (tgl) tgl.addEventListener('click', function () { sellMode = !sellMode; refreshTrade(); });
+      body.querySelectorAll('[data-sell]').forEach(function (btn) { btn.addEventListener('click', function () {
+        const si2 = parseInt(btn.getAttribute('data-sell'), 10), pr = parseInt(btn.getAttribute('data-price'), 10);
+        const st2 = Game.Inventory.slots()[si2]; if (!st2 || !st2.roll) return;
+        Game.Inventory.slots()[si2] = null;
+        Game.state.player.bts = (Game.state.player.bts || 0) + pr;
+        Game.Audio.play('craft'); toast('売却: +' + pr + 'bts');
+        refreshTrade(); refreshHotbar(); if (Game.UI.refreshStats) refreshStats();
+      }); });
+      body.querySelectorAll('[data-sellmat]').forEach(function (btn) { btn.addEventListener('click', function () {
+        const mid2 = btn.getAttribute('data-sellmat'), pr = parseInt(btn.getAttribute('data-price'), 10);
+        if (Game.Inventory.count(mid2) < 8) return;
+        Game.Inventory.remove(mid2, 8);
+        Game.state.player.bts = (Game.state.player.bts || 0) + pr;
+        Game.Audio.play('craft'); toast('売却: ' + Game.ITEMS[mid2].name + '×8 → +' + pr + 'bts');
+        refreshTrade(); refreshHotbar();
+      }); });
+      if (lastCurShown != null && lastCurShown !== cur) animateCurNum(lastCurShown, cur);
+      lastCurShown = cur;
+      return;
+    }
     const rowHTML = function (t, i) {
       const can = cur >= t.price;
       const def = t.rand ? null : Game.ITEMS[t.id];
@@ -482,6 +524,7 @@ Game.UI = (function () {
       h += '</div>';
     }
     body.innerHTML = h;
+    { const tgl = document.getElementById('trade-sell-toggle'); if (tgl) tgl.addEventListener('click', function () { sellMode = !sellMode; refreshTrade(); }); }
     body.querySelectorAll('.trade-row[data-i]').forEach(function (btn) { btn.addEventListener('click', function () { buyTrade(parseInt(btn.getAttribute('data-i'), 10)); }); });
     // 通貨が変動していればカウントアップ＋パルス（購入の満足感）
     if (lastCurShown != null && lastCurShown !== cur) animateCurNum(lastCurShown, cur);
