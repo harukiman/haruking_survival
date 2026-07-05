@@ -361,7 +361,18 @@ Game.Projectiles = (function () {
       }
       let hit = false;
       if (pr.hostile) {
-        if (Math.hypot(pl.x - pr.x, pl.y - pr.y) < 13) {
+        const pdist = Math.hypot(pl.x - pr.x, pl.y - pr.y);
+        // グレイズ(かすり): 敵弾が命中せず至近(13-26px)を通過したら1弾1回だけ報酬。
+        // 弾幕を「あえて近くで避ける」読み合い — スタミナ小回復+集中ゲージ的な爽快感
+        if (!pr._grazed && pdist >= 13 && pdist < 26 && (pl.invuln || 0) <= 0 && (pl.downed || 0) <= 0) {
+          pr._grazed = true;
+          pl.stamina = Math.min(pl.maxStamina, (pl.stamina || 0) + 3);
+          if (Game.Render.spawnFloat && Game.state.tick % 2 === 0) Game.Render.spawnFloat(pl.x + (Math.random() - 0.5) * 14, pl.y - 18, 'グレイズ', '#9fe0ff', false);
+          if (Game.Render.spawnParticles) Game.Render.spawnParticles(pl.x, pl.y, '#9fe0ff', 2);
+          if (Game.Audio && Game.state.tick % 3 === 0) Game.Audio.play('cursor');
+          if (Game.UI && Game.UI.tipOnce) Game.UI.tipOnce('graze', '✨ グレイズ！ 敵弾ぎりぎりで避けるとスタミナが回復する。弾幕はあえて際どく舞え');
+        }
+        if (pdist < 13) {
           if (Game.Survival.damage(pr.dmg, 'mob') !== false) {
             if (pr.status && Game.Status) for (const k in pr.status) Game.Status.add(k, pr.status[k]);
             if (Game.Render.spawnHitDir) Game.Render.spawnHitDir(pr.prevX, pr.prevY); // 飛来方向を表示
