@@ -9,6 +9,11 @@ Game.Survival = (function () {
   let hungerCritCued = false;
 
   function update() {
+    // 低HPの心拍音: HP25%未満で約1.6秒毎にドクン(設定 lowHpWarn がOFFなら鳴らさない)
+    if (Game.state.tick % 48 === 0) {
+      const php = Game.state.player;
+      if (php.health > 0 && php.health < php.maxHealth * 0.25 && (!Game.Settings || Game.Settings.get('lowHpWarn') !== false)) Game.Audio.play('heartbeat');
+    }
     // 焚き火の癒し: 焚き火/火鉢のそばで戦闘外(被弾後5秒以上)なら2秒毎にHP+1(上限は最大HPの80%)。
     // 「夜は火のそばで休む」というサバイバルの原風景に小さな実利を(世界反応性)
     if (Game.state.tick % 60 === 0) {

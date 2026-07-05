@@ -255,6 +255,8 @@ Game.Audio = (function () {
       case 'boom_sfx':   { if (!throttled('boom', 0.06)) break; ensure(); const t0 = ctx ? ctx.currentTime : 0; beep(96, 0.32, 'sawtooth', 0.18); beep(52, 0.46, 'sine', 0.16); if (ctx) { noiseShape(t0, 0.05, 0.34, 'highpass', 1900, 0.7, 3); noiseBurst(t0, 0.46, 0.24, 560); subThump(120, 28, 0.44, 0.17); } } break;
       // 戦車主砲: 巨砲の轟音。金属的な初撃＋極低サブ二段で腹に響く重量感
       case 'cannon_tank': if (throttled('ctk', 0.05)) { gunShot({ crackHz: 1400, crackVol: 0.72, crackDur: 0.05, bodyHz: 125, bodyLow: 28, bodyVol: 0.82, bodyDur: 0.28, midHz: 400, tailDur: 0.52, tailVol: 0.26, tailHz: 720, vol: 1.32 }); if (ctx) { subThump(108, 24, 0.44, 0.2); subThump(66, 22, 0.54, 0.14); } } break;
+      // 低HPの心拍(ドクン・ドクン): 危機を耳で知らせる。lowHpWarn(視覚)と対
+      case 'heartbeat': if (throttled('hbt', 0.4)) { ensure(); if (ctx) { subThump(85, 40, 0.12, 0.16); setTimeout(function () { try { subThump(70, 36, 0.1, 0.11); } catch (e) {} }, 130); } } break;
       // 空撃ち: 撃鉄のカチッ(弾切れの明確なフィードバック)
       case 'gun_dry': if (throttled('gdr', 0.09)) { ensure(); if (ctx) { noiseShape(ctx.currentTime, 0.018, 0.22, 'highpass', 3000, 1.2, 3); beep(1200, 0.02, 'square', 0.05); } } break;
       // レア拾得: 上昇アルペジオのジングル(レアリティが高いほど華やか)
