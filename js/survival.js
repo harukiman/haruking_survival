@@ -309,6 +309,9 @@ Game.Survival = (function () {
     Game.state.paused = false;
     const p = Game.state.player;
     p.downed = 0; p.reviveT = 0; p._bleedout = false; // ダウン状態をリセット
+    // 乗車/攻撃の一時状態もリセット(乗ったまま復活・復活直後に前の掃射/詠唱が継続するのを防ぐ)
+    p.vehicle = null; p.vThr = 0; p.missileSalvo = null; p.jetBurst = 0; p.casting = null; p.knockVX = 0; p.knockVY = 0;
+    if (Game.Audio && Game.Audio.vehicleLoop) Game.Audio.vehicleLoop(null);
     p.lifeStart = Game.state.tick;
     const btsGuarded = hasBtsGuard(); // ドロップ前に判定(護符が落ちても今回の死は守られる)
     Game.UI.toast('力尽きた…リスポーンします');

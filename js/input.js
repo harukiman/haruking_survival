@@ -22,7 +22,7 @@ Game.Input = (function () {
   const intent = { dx: 0, dy: 0, dir: 'down', mine: false, place: false, dash: false, usePointer: false, mouseTile: null };
 
   // ===== キーリバインド =====
-  const DEF_BINDS = { up: 'w', down: 's', left: 'a', right: 'd', mine: ' ', place: 'q', use: 'g', inv: 'e', stats: 'c', map: 'n', roll: 'r', dash: 'shift', shift: 'f' };
+  const DEF_BINDS = { up: 'w', down: 's', left: 'a', right: 'd', mine: ' ', place: 'q', use: 'g', inv: 'e', stats: 'c', map: 'n', roll: 'r', dash: 'shift', shift: 'f', reload: 'v' };
   function B(action) { const kb = Game.Settings && Game.Settings.get && Game.Settings.get('keybinds'); return (kb && kb[action]) || DEF_BINDS[action]; }
   let rebinding = null; // {action, cb}
   function beginRebind(action, cb) { rebinding = { action: action, cb: cb }; }
@@ -38,7 +38,7 @@ Game.Input = (function () {
   const BIND_ACTIONS = [
     ['up', '上移動'], ['down', '下移動'], ['left', '左移動'], ['right', '右移動'],
     ['mine', '採掘/攻撃'], ['place', '設置'], ['use', '開く/使う'], ['inv', 'インベントリ'],
-    ['stats', 'ステータス'], ['map', '大マップ'], ['roll', '回避ロール'], ['dash', '走る'], ['shift', '影渡り'],
+    ['stats', 'ステータス'], ['map', '大マップ'], ['roll', '回避ロール'], ['dash', '走る'], ['shift', '影渡り'], ['reload', 'リロード'],
   ];
 
   function init() {
@@ -63,6 +63,7 @@ Game.Input = (function () {
       if (k === B('place') || k === 'k') placeQueued = true; // facing設置
       if (k === B('use')) useQueued = true;   // 開く/使う(近隣のチェスト等)
       if (k === B('roll')) rollQueued = true;  // 回避ロール
+      if (k === B('reload') && Game.Player && Game.Player.reloadCurrent) Game.Player.reloadCurrent(); // 手動リロード
       if (k === ' ') e.preventDefault();
     });
     window.addEventListener('keyup', function (e) { keys[e.key.toLowerCase()] = false; });

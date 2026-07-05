@@ -31,6 +31,9 @@ Game.Save = (function () {
   }
 
   function serialize() {
+    // データ喪失防止: コントローラで「持ち上げ中」のアイテムはスロットがnull化されている。
+    // セーブ前にインベントリへ戻す(戻さないと保存に含まれず消滅する)
+    try { if (Game.UI && Game.UI.isHoldingItem && Game.UI.isHoldingItem()) Game.UI.padGrabReturn(); } catch (e) {}
     const s = Game.state;
     const p = s.player;
     return {
@@ -71,7 +74,7 @@ Game.Save = (function () {
         baseMaxHealth: p.baseMaxHealth, status: p.status || {}, mp: p.mp, maxMp: p.maxMp,
         str: p.str || 0, vit: p.vit || 0, dex: p.dex || 0, skillPoints: p.skillPoints || 0, skills: p.skills || {},
         mags: p.mags || {}, loadouts: p.loadouts || null,
-        fuel: p.fuel || {}, vehDur: p.vehDur || {}, vehGuns: p.vehGuns || {}, missileMode: p.missileMode || 'homing',
+        fuel: p.fuel || {}, vehDur: p.vehDur || {}, vehGuns: p.vehGuns || {}, missileMode: p.missileMode || 'homing', vehicle: p.vehicle || null,
       },
       ngLevel: s.ngLevel || 0,
       tips: s._tips || {},

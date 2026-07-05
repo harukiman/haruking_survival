@@ -222,7 +222,7 @@ Game.Audio = (function () {
       case 'cursor': if (throttled('cursor', 0.03)) { beep(660, 0.022, 'triangle', 0.035); } break;
       case 'tab':    if (throttled('tab', 0.04)) { beep(520, 0.03, 'sine', 0.045); beep(720, 0.03, 'sine', 0.03); } break;
       case 'swing':  if (throttled('swing', 0.1)) { beep(300, 0.05, 'triangle', 0.06); if (ctx) noisePiece(ctx.currentTime, 0.06, 0.035, 'bandpass', 1800, 1.5, true); } break;
-      case 'hit':    beep(220, 0.07, 'square', 0.09); beep(160, 0.09, 'sawtooth', 0.06); subThump(120, 55, 0.1, 0.1); if (ctx) noisePiece(ctx.currentTime, 0.05, 0.11, 'bandpass', 950, 1, true); break;
+      case 'hit':    if (!throttled('hit', 0.03)) break; beep(220, 0.07, 'square', 0.09); beep(160, 0.09, 'sawtooth', 0.06); subThump(120, 55, 0.1, 0.1); if (ctx) noisePiece(ctx.currentTime, 0.05, 0.11, 'bandpass', 950, 1, true); break;
       case 'mobdie': beep(200, 0.12, 'sawtooth', 0.1); beep(120, 0.16, 'triangle', 0.08); subThump(140, 45, 0.18, 0.12); break;
       case 'equip':  beep(400, 0.06, 'square', 0.07); beep(560, 0.06, 'square', 0.06); break;
       case 'levelup': beep(523, 0.1, 'triangle', 0.1); beep(659, 0.1, 'triangle', 0.1); beep(784, 0.14, 'triangle', 0.1); subThump(220, 80, 0.25, 0.1); if (ctx) sparkle(1046, 0.06); break;
@@ -251,17 +251,17 @@ Game.Audio = (function () {
       case 'gun_flame':  if (throttled('gfl', 0.05)) { if (ctx) noiseBurst(ctx.currentTime, 0.16, 0.1, 900); beep(180, 0.12, 'sawtooth', 0.05); } break;
       case 'gun_launch': if (throttled('gln', 0.14)) { beep(320, 0.06, 'square', 0.08); subThump(150, 55, 0.14, 0.1); } break;
       // 爆発: 鋭い初撃(高域ノイズ)＋深いサブ低音＋轟く尾で重くリアルに
-      case 'boom_sfx':   { const t0 = ctx ? ctx.currentTime : 0; beep(96, 0.32, 'sawtooth', 0.18); beep(52, 0.46, 'sine', 0.16); if (ctx) { noiseShape(t0, 0.05, 0.34, 'highpass', 1900, 0.7, 3); noiseBurst(t0, 0.46, 0.24, 560); subThump(120, 28, 0.44, 0.17); } } break;
+      case 'boom_sfx':   { if (!throttled('boom', 0.06)) break; ensure(); const t0 = ctx ? ctx.currentTime : 0; beep(96, 0.32, 'sawtooth', 0.18); beep(52, 0.46, 'sine', 0.16); if (ctx) { noiseShape(t0, 0.05, 0.34, 'highpass', 1900, 0.7, 3); noiseBurst(t0, 0.46, 0.24, 560); subThump(120, 28, 0.44, 0.17); } } break;
       // 戦車主砲: 巨砲の轟音。金属的な初撃＋極低サブ二段で腹に響く重量感
       case 'cannon_tank': if (throttled('ctk', 0.05)) { gunShot({ crackHz: 1400, crackVol: 0.72, crackDur: 0.05, bodyHz: 125, bodyLow: 28, bodyVol: 0.82, bodyDur: 0.28, midHz: 400, tailDur: 0.52, tailVol: 0.26, tailHz: 720, vol: 1.32 }); if (ctx) { subThump(108, 24, 0.44, 0.2); subThump(66, 22, 0.54, 0.14); } } break;
       // カタパルト射出(プシュー): 冷却ガスで押し出す柔らかいエア抜け音。低音の突きは無し(モーター未点火)
-      case 'missile_eject': if (throttled('mej', 0.035)) { const t0 = ctx ? ctx.currentTime : 0; if (ctx) {
-        noiseBurst(t0, 0.3, 0.22, 720);                             // プシュー(空気の抜け)
+      case 'missile_eject': if (throttled('mej', 0.035)) { ensure(); const t0 = ctx ? ctx.currentTime : 0; if (ctx) {
+        noiseBurst(t0, 0.95, 0.2, 720);                             // プシュー(空気の抜け・射出~1秒の停留をカバー)
         noiseShape(t0, 0.05, 0.16, 'highpass', 1400, 0.4, 1);       // 立ち上がりの息
-        noiseShape(t0 + 0.02, 0.24, 0.1, 'bandpass', 480, 0.8, 1);  // 芯のあるガス
+        noiseShape(t0 + 0.02, 0.8, 0.09, 'bandpass', 480, 0.8, 1);  // 芯のあるガス(長め)
       } } break;
       // ミサイル点火(その後の加速): 圧縮ガスの鋭いプシュッ→すぼまる噴射→加速する低音のうなり。
-      case 'missile_launch': if (throttled('msl', 0.045)) { const t0 = ctx ? ctx.currentTime : 0; if (ctx) {
+      case 'missile_launch': if (throttled('msl', 0.045)) { ensure(); const t0 = ctx ? ctx.currentTime : 0; if (ctx) {
         noiseShape(t0, 0.03, 0.6, 'highpass', 2100, 0.5, 3);        // プシュッ(点火/圧縮ガスの鋭い立ち上がり)
         noiseBurst(t0, 0.3, 0.32, 1100);                            // 噴射の白煙シューッ(短め)
         noiseShape(t0 + 0.012, 0.26, 0.17, 'bandpass', 640, 1.3, 1);// 芯のある噴射
@@ -706,8 +706,8 @@ Game.Audio = (function () {
       const g = Game.World.groundAt(Math.floor(p.x / TS), Math.floor(p.y / TS));
       if (g === Game.TILE.DUNGEON_FLOOR) mood = 'cave';
       else if (g === Game.TILE.SNOW) mood = 'snow';
-      else if (g === Game.TILE.SAND && !Game.DayNight.isNight()) mood = 'desert';
-      else if (g === Game.TILE.BLOOM && !Game.DayNight.isNight()) mood = 'meadow';
+      else if (g === Game.TILE.SAND) mood = 'desert'; // 夜も砂漠曲を維持(汎用夜曲への沈黙フォールバックを解消)
+      else if (g === Game.TILE.BLOOM) mood = 'meadow';
       else if (Game.DayNight.isNight()) mood = 'night';
       else mood = 'day';
     }
@@ -792,7 +792,8 @@ Game.Audio = (function () {
     cine.nodes = []; cine.master = null;
   }
   function noiseBurst(t, dur, vol, cutoff, highpass) {
-    noisePiece(t, dur, vol, highpass ? 'highpass' : 'lowpass', cutoff, 0, false, master);
+    // SFX音量スライダーに追従させる(master直結だと爆発/雷のノイズ層だけ音量設定を無視していた)
+    noisePiece(t, dur, vol, highpass ? 'highpass' : 'lowpass', cutoff, 0, false, sfxGain);
   }
   function cue(name) {
     if (!enabled) return; ensure(); if (!ctx) return;
@@ -850,11 +851,11 @@ Game.Audio = (function () {
   // ===== 環境音(昼=鳥/風, 夜=虫, 雨=ざわめき)。没入感を高める =====
   function birdChirp() {
     if (!ctx) return; const t = ctx.currentTime; const base = 2200 + Math.random() * 900;
-    for (let i = 0; i < 2 + (Math.random() * 2 | 0); i++) { if (!voiceOk()) break; const tt = t + i * 0.09; const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(base * (1 + i * 0.08), tt); o.frequency.exponentialRampToValueAtTime(base * 0.8, tt + 0.07); g.gain.setValueAtTime(0.0001, tt); g.gain.exponentialRampToValueAtTime(0.05, tt + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, tt + 0.09); o.connect(g); g.connect(master); reg(o); o.start(tt); o.stop(tt + 0.11); }
+    for (let i = 0; i < 2 + (Math.random() * 2 | 0); i++) { if (!voiceOk()) break; const tt = t + i * 0.09; const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(base * (1 + i * 0.08), tt); o.frequency.exponentialRampToValueAtTime(base * 0.8, tt + 0.07); g.gain.setValueAtTime(0.0001, tt); g.gain.exponentialRampToValueAtTime(0.05, tt + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, tt + 0.09); o.connect(g); g.connect(sfxGain); reg(o); o.start(tt); o.stop(tt + 0.11); }
   }
   function cricket() {
     if (!ctx) return; const t = ctx.currentTime;
-    for (let i = 0; i < 3; i++) { if (!voiceOk()) break; const tt = t + i * 0.06; const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'square'; o.frequency.value = 4600; g.gain.setValueAtTime(0.0001, tt); g.gain.exponentialRampToValueAtTime(0.022, tt + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, tt + 0.03); o.connect(g); g.connect(master); reg(o); o.start(tt); o.stop(tt + 0.04); }
+    for (let i = 0; i < 3; i++) { if (!voiceOk()) break; const tt = t + i * 0.06; const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'square'; o.frequency.value = 4600; g.gain.setValueAtTime(0.0001, tt); g.gain.exponentialRampToValueAtTime(0.022, tt + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, tt + 0.03); o.connect(g); g.connect(sfxGain); reg(o); o.start(tt); o.stop(tt + 0.04); }
   }
   function windGust() {
     if (!ctx || !noiseBuf || !voiceOk()) return;
@@ -862,7 +863,7 @@ Game.Audio = (function () {
     const src = ctx.createBufferSource(); src.buffer = noiseBuf; src.loop = true; // 共有バッファをループで切り出し
     const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 500; f.Q.value = 0.8;
     const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.03, t + dur * 0.4); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    src.connect(f); f.connect(g); g.connect(master); reg(src); src.start(t, Math.random()); src.stop(t + dur);
+    src.connect(f); f.connect(g); g.connect(sfxGain); reg(src); src.start(t, Math.random()); src.stop(t + dur);
   }
   // 洞窟/ダンジョンの水滴(残響付き)。閉所の不気味さを演出
   function caveDrip() {
@@ -871,7 +872,7 @@ Game.Audio = (function () {
     const o = ctx.createOscillator(), g = ctx.createGain();
     o.type = 'sine'; o.frequency.setValueAtTime(base, t); o.frequency.exponentialRampToValueAtTime(base * 0.5, t + 0.08);
     g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.045, t + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
-    o.connect(g); g.connect(master); if (sendIn) g.connect(sendIn); // センド残響で洞窟の反響を表現
+    o.connect(g); g.connect(sfxGain); if (sendIn) g.connect(sendIn); // センド残響で洞窟の反響を表現
     reg(o); o.start(t); o.stop(t + 0.2);
   }
   function ambientTick() {

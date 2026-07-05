@@ -135,6 +135,8 @@ Game.World = (function () {
     if (Game.state.fires) Game.state.fires.length = 0;
     if (Game.state.projectiles) Game.state.projectiles.length = 0;
     if (Game.state.fallout) Game.state.fallout.length = 0;
+    if (Game.Projectiles && Game.Projectiles.clearTransient) Game.Projectiles.clearTransient(); // 飛行中の隕石/渦も持ち越さない
+    if (Game.state.player) Game.state.player.casting = null; // 詠唱も中断(座標は元世界のもの)
   }
 
   // 影鏡で光⇄影をシフト

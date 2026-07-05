@@ -470,5 +470,7 @@ Game.Projectiles = (function () {
     }
   }
 
-  return { spawn, fire, fireTankShell, enemyShoot, enemyVolley, enemyRing, update, draw, explode, callMeteor, callVortex, aimAngle: aimDir };
+  // 世界シフト時などに飛行中の隕石/渦を破棄(座標が別世界のものになるため)
+  function clearTransient() { strikes.length = 0; vortices.length = 0; }
+  return { spawn, fire, fireTankShell, enemyShoot, enemyVolley, enemyRing, update, draw, explode, callMeteor, callVortex, clearTransient, aimAngle: aimDir };
 })();

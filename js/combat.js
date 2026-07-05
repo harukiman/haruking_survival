@@ -48,7 +48,7 @@ Game.Combat = (function () {
       if ((p.cannonCd || 0) > 0) return true;
       const rr = md.r * TS, d = Game.Player.effAttack(md.dmg);
       const mobs2 = Game.state.mobs;
-      for (let i = 0; i < mobs2.length; i++) { const m = mobs2[i]; if (m.def.friendly) continue; if (Math.hypot(m.x - p.x, m.y - p.y) <= rr + m.def.size * 0.5) Game.Mobs.damageMob(m, d, p.x, p.y, false); }
+      for (let i = 0; i < mobs2.length; i++) { const m = mobs2[i]; if (m.def.friendly) continue; if (Math.hypot(m.x - p.x, m.y - p.y) <= rr + m.def.size * 0.5) { if (Game.Net.isConnected() && !Game.Net.host) Game.Net.sendHit(m.id, d, p.x, p.y); else Game.Mobs.damageMob(m, d, p.x, p.y, false); } }
       if (Game.Render.spawnImpact) Game.Render.spawnImpact(p.x, p.y, '#cfd6e0');
       if (Game.Render.spawnParticles) Game.Render.spawnParticles(p.x, p.y, '#aab4c6', 14);
       if (Game.Render.shake) Game.Render.shake(7);

@@ -1050,7 +1050,7 @@ Game.Player = (function () {
       if (Game.Inventory.count(sel.ammo) > 0) { startReload(sel, gid); return; }
       p.mags[gid] = 0; loaded = 0;
     }
-    if (loaded <= 0) { if (Game.UI.tipOnce) Game.UI.tipOnce('reload', '弾を撃ち切ると自動でリロード(予備弾が必要)。予備弾は素材(鉄+火薬)クラフトやショップで補充。手動リロードはRキー'); startReload(sel, gid); return; } // 空 → リロード
+    if (loaded <= 0) { if (Game.UI.tipOnce) Game.UI.tipOnce('reload', '弾を撃ち切ると自動でリロード(予備弾が必要)。予備弾は素材(鉄+火薬)クラフトやショップで補充。手動リロードはVキー'); startReload(sel, gid); return; } // 空 → リロード
     // パッシブ「節約」: 12%で弾薬を消費しない(表示は1秒スロットルでスパム防止)
     if (skillFlag('conserve') && Math.random() < 0.12) {
       if (Game.state.tick - (p.conserveFx || 0) > 30) {
@@ -1606,7 +1606,7 @@ Game.Player = (function () {
       Game.Audio.play('boom_sfx'); Game.Audio.play('thunder');
       // 直撃1000: 圏内の全モブ即消滅、プレイヤーも圏内なら1000ダメージ(即死級)
       const mobs = Game.state.mobs;
-      for (let i = mobs.length - 1; i >= 0; i--) { const m = mobs[i]; if (Math.hypot(m.x - nk.tx, m.y - nk.ty) <= R) Game.Mobs.damageMob(m, nk.dmg, nk.tx, nk.ty, false); }
+      for (let i = mobs.length - 1; i >= 0; i--) { const m = mobs[i]; if (Math.hypot(m.x - nk.tx, m.y - nk.ty) <= R) { if (Game.Net.isConnected() && !Game.Net.host) Game.Net.sendHit(m.id, nk.dmg, nk.tx, nk.ty); else Game.Mobs.damageMob(m, nk.dmg, nk.tx, nk.ty, false); } }
       if (Math.hypot(p.x - nk.tx, p.y - nk.ty) <= R) Game.Survival.damage(nk.dmg, 'nuke');
       // 構造物を広範囲に破壊
       if (Game.World.blastTerrain) Game.World.blastTerrain(nk.tx, nk.ty, nk.radius);
@@ -1626,7 +1626,7 @@ Game.Player = (function () {
     for (let i = 0; i < fs.length; i++) {
       const z = fs[i];
       if (Math.hypot(p.x - z.x, p.y - z.y) <= z.r) { Game.Survival.damage(25, 'fallout'); }
-      for (let m = 0; m < mobs.length; m++) { const mo = mobs[m]; if (!mo.def.boss && Math.hypot(mo.x - z.x, mo.y - z.y) <= z.r) Game.Mobs.damageMob(mo, 25, z.x, z.y, false); }
+      for (let m = 0; m < mobs.length; m++) { const mo = mobs[m]; if (!mo.def.boss && Math.hypot(mo.x - z.x, mo.y - z.y) <= z.r) { if (Game.Net.isConnected() && !Game.Net.host) Game.Net.sendHit(mo.id, 25, z.x, z.y); else Game.Mobs.damageMob(mo, 25, z.x, z.y, false); } }
     }
   }
   function morningSkip() {

@@ -478,7 +478,6 @@ Game.ITEMS = {
   lockon_launcher:{ name:'ロックオンミサイルランチャー', stack:1, color:'#4a5240', tool:'gun', mag:2, ammo:'missile', fireDmg:52, cd:40, explosive:2.6, bkind:'missile', homing:true, speedStart:7, speedMax:21, accel:1.2, dur:52, gunsfx:'missile_launch', flavor:'肩掛け式のロックオン式ミサイル発射器。放たれたミサイルは低速で出て最寄りの敵へ狙いを定め、加速して曲がりながら追尾し、着弾または一定距離で炸裂する。' },
   flamethrower:{ name:'火炎放射器', stack:1, color:'#a83a2a', tool:'gun', mag:100, ammo:'gasoline', refillPer:25, fireDmg:5, cd:3, bkind:'fire', gunsfx:'gun_flame', flavor:'ガソリンを噴射し敵を焼き尽くす。近距離で群れを炎に包め。ガソリン1つで25回分を補充。' },
   plasma_rifle:{ name:'プラズマライフル', stack:1, color:'#8a4ad0', tool:'gun', mag:24, ammo:'energy_cell', fireDmg:22, cd:9, bkind:'laser', pierce:true, gunsfx:'gun_energy', flavor:'高エネルギープラズマを撃ち出す未来兵器。光の刃が敵列を貫く。' },
-  barrett:     { name:'バレットM82', stack:1, color:'#18181c', tool:'gun', mag:10, ammo:'ammo_50', fireDmg:34, cd:42, bspeed:14, bkind:'tracer', gunsfx:'gun_sniper', flavor:'対物狙撃銃。隔絶した一撃。' },
   rpg7:        { name:'RPG-7', stack:1, color:'#26261e', tool:'gun', mag:1, ammo:'rocket_ammo', fireDmg:46, cd:55, explosive:2.4, bspeed:6, bkind:'rocket', gunsfx:'gun_rocket', flavor:'携行式ロケット。着弾で爆発し範囲を吹き飛ばす。' },
   // ===== P33 ワクワク武器（飛ぶ斬撃/雷/ブーメラン/ビーム）＋Fate風レジェンダリ =====
   energy_cell: { name:'エネルギーセル', stack:99, color:'#2aa0d0', flavor:'エネルギー兵器の動力。青く脈動する。' },
@@ -539,7 +538,6 @@ Game.ITEMS = {
   gun_parts:     { name:'銃部品', stack:99, color:'#9a9ea6', flavor:'精密加工した銃の機関部品。あらゆる銃器の心臓部。' },
   steel_plate:   { name:'鋼板', stack:99, color:'#b0b6be', flavor:'鉄を鍛え直した頑丈な鋼板。上位の防具や車両の装甲に。' },
   rope:          { name:'ロープ', stack:99, color:'#b89a5a', flavor:'繊維を綯った丈夫なロープ。建築や道具に幅広く使う。' },
-  glass:         { name:'ガラス', stack:99, color:'#bfe2f5', flavor:'砂を溶かして作る透明なガラス。窓や光学部品に。' },
   circuit:       { name:'回路基板', stack:99, color:'#4aa06a', flavor:'光素を編み込んだ精密回路。エネルギー兵器や高度な機械の核。' },
   // ===== 新規消費アイテム(㊲) =====
   jerky:         { name:'干し肉', stack:16, color:'#8a4a30', food:30, flavor:'塩と天日で干した保存食。腐りにくく腹持ちがよい。' },
@@ -813,7 +811,6 @@ Game.RECIPES = [
   { out:{id:'gun_parts', n:2}, in:{iron:3, gold_bar:1}, station:'crafting_table' },
   { out:{id:'steel_plate', n:2}, in:{iron:3, coal:2}, station:'furnace' },
   { out:{id:'rope', n:3}, in:{string:3}, station:'crafting_table' },
-  { out:{id:'glass', n:2}, in:{stone:2}, station:'furnace' },
   { out:{id:'circuit', n:1}, in:{lumen:2, gold_bar:1, iron:1}, station:'crafting_table' },
   // 新規消費アイテム(㊲)
   { out:{id:'jerky', n:1}, in:{cooked_meat:1}, station:'campfire' },
@@ -927,7 +924,6 @@ Game.RECIPES = [
   { out:{id:'uzi', n:1}, in:{iron:7, gun_parts:3, gunpowder:3, steel_plate:1}, station:'crafting_table' },
   { out:{id:'p90', n:1}, in:{iron:9, gun_parts:4, gunpowder:3, steel_plate:2}, station:'crafting_table' },
   { out:{id:'scar_h', n:1}, in:{iron:12, gun_parts:5, gunpowder:4, steel_plate:2}, station:'crafting_table' },
-  { out:{id:'barrett', n:1}, in:{iron:14, gun_parts:6, gunpowder:5, steel_plate:3, gold_bar:2}, station:'crafting_table' },
   { out:{id:'spas12', n:1}, in:{iron:10, gun_parts:3, gunpowder:4, wood:2}, station:'crafting_table' },
   { out:{id:'minigun', n:1}, in:{iron:20, gun_parts:8, gunpowder:6, steel_plate:4, gold_bar:3}, station:'crafting_table' },
   { out:{id:'m79', n:1}, in:{iron:10, gun_parts:4, gunpowder:6, steel_plate:1}, station:'crafting_table' },
@@ -1343,9 +1339,10 @@ Game.HOTBAR_SIZE = 9;
 // 航空機のミサイルモード(戦闘機/爆撃機で切替可能)。カタパルト射出→その場停留→点火加速の共通プロファイル。
 //  normal: 通常ミサイル = 1発・高威力・直進(命中が難しい)  /  homing: 誘導ミサイル = 小型4発・中威力・自動追尾
 Game.MISSILE_MODES = {
-  normal: { label: '通常', ammo: 'missile',        count: 1, homing: false, dmg: 95, explosive: 2.9, speedStart: 9, speedMax: 26, accel: 1.6, dur: 46, cd: 26, launch: 9, ejectSpd: 1.6 },
-  // 誘導も通常と同じ発射モーション(射出→停留→点火加速)を取る。加速/最高速/射出プロファイルを通常に合わせる
-  homing: { label: '追尾', ammo: 'homing_missile', count: 4, homing: true,  dmg: 28, explosive: 1.8, speedStart: 9, speedMax: 26, accel: 1.6, dur: 60, cd: 46, launch: 9, ejectSpd: 1.6, every: 4, spread: 0.42, small: true },
+  // 射出後約1秒(30tick)は超低速で漂い(プシュー)、点火して高速で目標へ(ぱしゅっ)。durはlaunch分を含む
+  normal: { label: '通常', ammo: 'missile',        count: 1, homing: false, dmg: 95, explosive: 2.9, speedStart: 9, speedMax: 26, accel: 1.6, dur: 76, cd: 32, launch: 30, ejectSpd: 1.0 },
+  // 追尾は通常の2/3ほどの速度(ユーザー指示)。小型4発が各自ロックオンして曲がる
+  homing: { label: '追尾', ammo: 'homing_missile', count: 4, homing: true,  dmg: 28, explosive: 1.8, speedStart: 7, speedMax: 17, accel: 1.1, dur: 96, cd: 52, launch: 30, ejectSpd: 1.0, every: 5, spread: 0.42, small: true },
 };
 Game.DAY_LENGTH = 24000;  // 1日のtick数（昼夜は次波で本格化）
 
