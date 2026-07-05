@@ -42,6 +42,12 @@ Game.Player = (function () {
       fuel: {}, // 現代乗り物の燃料(type→残量)
       vehGuns: {}, // 航空機に増設した機関銃の基数(type→0..4)
       missileMode: 'homing', // 航空機ミサイルのモード: 'homing'(誘導4発) | 'normal'(通常1発高威力)
+      // ===== セッション一時状態(セーブ対象外)。ad-hoc追加で散らばっていたものを初期化リテラルに集約 =====
+      attackCd: 0, invuln: 0, rollCd: 0, rolling: 0, rollDX: 0, rollDY: 0, rollRewarded: false,
+      cannonCd: 0, missileCd: 0, missileSalvo: null, jetBurst: 0, jetEmitAcc: 0, jetBurstDir: 0, jetBurstDmg: 0,
+      jetBoost: 0, jetHX: null, jetHY: null, turretAng: null, knockVX: 0, knockVY: 0,
+      recoilN: 0, recoilX: 0, recoilY: 0, casting: null, chargeLastTick: null, attackBuf: false,
+      reloadCd: 0, reloadMax: 0, vThr: 0, vDirX: 0, vDirY: 0, _setNotified: null,
       armor: { head: null, chest: null }, // {id, roll} インスタンス
       accessory: null, accessory2: null, // 遺物(relic) {id} ×2枠
       offhand: null, // 左手スロット(盾/呼吸器などユーティリティ装備を保持して常時機能)

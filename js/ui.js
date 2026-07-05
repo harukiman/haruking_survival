@@ -2493,7 +2493,7 @@ Game.UI = (function () {
       if (!ctxBtn) {
         ctxBtn = document.createElement('button'); ctxBtn.id = 'context-action';
         // 右下のアクションボタン群の上に配置(中央だと左のヒント/説明・右のボタンと重なるため)
-        ctxBtn.style.cssText = 'position:fixed;right:calc(12px + max(var(--ex,10px), env(safe-area-inset-right)));bottom:calc(272px + max(var(--ey,16px), env(safe-area-inset-bottom)));z-index:57;background:rgba(28,40,64,.94);border:1px solid #5a78a8;border-radius:12px;padding:11px 18px;min-height:46px;font-size:.96rem;color:#eaf2ff;font-weight:700;box-shadow:0 3px 12px rgba(0,0,0,.4);display:none;cursor:pointer;white-space:nowrap';
+        ctxBtn.style.cssText = 'position:fixed;right:calc(12px + max(var(--ex,10px), env(safe-area-inset-right)));bottom:calc(304px + max(var(--ey,16px), env(safe-area-inset-bottom)));z-index:57;background:rgba(28,40,64,.94);border:1px solid #5a78a8;border-radius:12px;padding:11px 18px;min-height:46px;font-size:.96rem;color:#eaf2ff;font-weight:700;box-shadow:0 3px 12px rgba(0,0,0,.4);display:none;cursor:pointer;white-space:nowrap';
         (document.getElementById('app') || document.body).appendChild(ctxBtn);
         ctxBtn.addEventListener('click', function (e) { e.stopPropagation(); Game.Audio.play('select'); Game.Player.useNearby(); });
       }
@@ -2516,7 +2516,7 @@ Game.UI = (function () {
       if (!hbInfoEl) {
         hbInfoEl = document.createElement('div'); hbInfoEl.id = 'hb-iteminfo';
         // 左寄せ・幅制限で右のアクションボタンと重ならず、ヒントピルの上に積む
-        hbInfoEl.style.cssText = 'position:fixed;left:calc(8px + max(var(--ex,10px), env(safe-area-inset-left)));bottom:calc(186px + max(var(--ey,16px), env(safe-area-inset-bottom)));z-index:56;background:rgba(14,20,36,.92);border:1px solid #3a4c66;border-radius:10px;padding:6px 13px;max-width:56vw;text-align:left;pointer-events:none;opacity:0;transition:opacity .2s;backdrop-filter:blur(2px)';
+        hbInfoEl.style.cssText = 'position:fixed;left:calc(8px + max(var(--ex,10px), env(safe-area-inset-left)));bottom:calc(216px + max(var(--ey,16px), env(safe-area-inset-bottom)));z-index:56;background:rgba(14,20,36,.92);border:1px solid #3a4c66;border-radius:10px;padding:6px 13px;max-width:56vw;text-align:left;pointer-events:none;opacity:0;transition:opacity .2s;backdrop-filter:blur(2px)';
         (document.getElementById('app') || document.body).appendChild(hbInfoEl);
       }
     }

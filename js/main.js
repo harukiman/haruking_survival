@@ -220,6 +220,7 @@ window.Game = window.Game || {};
     p.vehGuns = sp.vehGuns || {}; // 航空機の増設機関銃基数を復元
     p.missileMode = sp.missileMode || 'homing'; // 航空機ミサイルのモード(通常/誘導)を復元
     p.vehicle = sp.vehicle || null; // 搭乗状態を復元(乗車中にリロードしても徒歩に戻らない)
+    p.chargeLastTick = Game.state.tick; // 溜め武器: リロード直後の初撃が常に最大溜めになる悪用を防止(ロード時に溜めゼロから)
     Game.state.ngLevel = data.ngLevel || 0;
     Game.state._tips = data.tips || {}; // 表示済みヒントを復元(再表示防止)
     Game.state.fallout = data.fallout || []; // 死の灰ゾーンを復元
