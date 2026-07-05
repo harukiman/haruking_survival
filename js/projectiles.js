@@ -20,11 +20,13 @@ Game.Projectiles = (function () {
 
   // 敵の遠距離攻撃: プレイヤー方向へ魔法弾を放つ
   // ボスの弾幕: プレイヤー方向へ扇状に count 発。回避を要する読み合い攻撃
+  // 弾種→付与する状態異常(敵弾で共通)
+  function kindStatus(k) { return k === 'fire' ? { burn: 120 } : k === 'venom' ? { poison: 150 } : k === 'frost' ? { slow: 120 } : null; }
   function enemyVolley(m, dmg, kind, count, spread) {
     const p = Game.state.player;
     const dx = p.x - m.x, dy = p.y - m.y, base = Math.atan2(dy, dx);
     const sp = 5.8, k = kind || 'hex', n = count || 5, half = spread || 0.6;
-    const st = k === 'fire' ? { burn: 120 } : k === 'venom' ? { poison: 150 } : null; // 属性で状態異常を付与
+    const st = kindStatus(k); // 属性で状態異常を付与
     for (let i = 0; i < n; i++) {
       const a = base + (n > 1 ? (i / (n - 1) - 0.5) * half * 2 : 0);
       spawn(m.x + Math.cos(a) * 14, m.y + Math.sin(a) * 14, Math.cos(a) * sp, Math.sin(a) * sp, dmg, k, true, st);
@@ -35,7 +37,7 @@ Game.Projectiles = (function () {
   // ボスの全方位弾: 360°に count 発。回転オフセットで模様に変化(2波目をずらすと隙間を突ける読み合い)
   function enemyRing(m, dmg, kind, count, rot, speed) {
     const k = kind || 'hex', n = count || 12, sp = speed || 5.2;
-    const st = k === 'fire' ? { burn: 120 } : k === 'venom' ? { poison: 150 } : k === 'frost' ? { slow: 120 } : null;
+    const st = kindStatus(k);
     for (let i = 0; i < n; i++) {
       const a = (i / n) * Math.PI * 2 + (rot || 0);
       spawn(m.x + Math.cos(a) * 14, m.y + Math.sin(a) * 14, Math.cos(a) * sp, Math.sin(a) * sp, dmg, k, true, st);
