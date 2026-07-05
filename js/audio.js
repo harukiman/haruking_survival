@@ -255,6 +255,12 @@ Game.Audio = (function () {
       case 'boom_sfx':   { if (!throttled('boom', 0.06)) break; ensure(); const t0 = ctx ? ctx.currentTime : 0; beep(96, 0.32, 'sawtooth', 0.18); beep(52, 0.46, 'sine', 0.16); if (ctx) { noiseShape(t0, 0.05, 0.34, 'highpass', 1900, 0.7, 3); noiseBurst(t0, 0.46, 0.24, 560); subThump(120, 28, 0.44, 0.17); } } break;
       // 戦車主砲: 巨砲の轟音。金属的な初撃＋極低サブ二段で腹に響く重量感
       case 'cannon_tank': if (throttled('ctk', 0.05)) { gunShot({ crackHz: 1400, crackVol: 0.72, crackDur: 0.05, bodyHz: 125, bodyLow: 28, bodyVol: 0.82, bodyDur: 0.28, midHz: 400, tailDur: 0.52, tailVol: 0.26, tailHz: 720, vol: 1.32 }); if (ctx) { subThump(108, 24, 0.44, 0.2); subThump(66, 22, 0.54, 0.14); } } break;
+      // 熱衝撃: 蒸気が爆ぜるジュバッ(高圧ノイズ+急降下音+低音の突き)
+      case 'thermal':  if (throttled('thm', 0.08)) { ensure(); if (ctx) { const t0 = ctx.currentTime; noiseShape(t0, 0.05, 0.4, 'highpass', 2000, 0.6, 3); noiseBurst(t0, 0.28, 0.22, 900); sbeep(900, 0.14, 'sawtooth', 0.07, 0); subThump(150, 40, 0.18, 0.14); } } break;
+      // 氷結: 結晶がピキィンと固まる(高域の澄んだ倍音+ガラス質ノイズ)
+      case 'freeze':   if (throttled('frz', 0.08)) { ensure(); if (ctx) { const t0 = ctx.currentTime; sbeep(2400, 0.18, 'sine', 0.06, 0); sbeep(3600, 0.14, 'sine', 0.04, 0.02); noiseShape(t0, 0.06, 0.14, 'highpass', 5200, 1.2, 3); sparkle(2800, 0.05); } } break;
+      // 粉砕: 氷が砕け散るバリィン(ガラス割れ+破片の散乱)
+      case 'shatter':  if (throttled('sht', 0.08)) { ensure(); if (ctx) { const t0 = ctx.currentTime; noiseShape(t0, 0.05, 0.35, 'highpass', 4200, 1.0, 3); noiseShape(t0 + 0.03, 0.12, 0.2, 'bandpass', 2600, 1.4, 2); sbeep(1800, 0.1, 'triangle', 0.05, 0); subThump(160, 50, 0.12, 0.1); sparkle(3200, 0.04); } } break;
       // カタパルト射出(プシュー): 冷却ガスで押し出す柔らかいエア抜け音。低音の突きは無し(モーター未点火)
       case 'missile_eject': if (throttled('mej', 0.035)) { ensure(); const t0 = ctx ? ctx.currentTime : 0; if (ctx) {
         noiseBurst(t0, 0.95, 0.2, 720);                             // プシュー(空気の抜け・射出~1秒の停留をカバー)

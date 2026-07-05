@@ -366,7 +366,8 @@ Game.Mobs = (function () {
     if (Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - m.def.size * 0.6, '熱衝撃!', '#ffd0e0', true);
     if (Game.UI && Game.UI.tipOnce) Game.UI.tipOnce('elem_thermal', '元素反応「熱衝撃」！ 炎と氷を重ねると急激な温度差で大ダメージ。属性を切り替えて攻めよう');
     if (Game.Render.spawnParticles) { Game.Render.spawnParticles(m.x, m.y, '#bfe4ff', 10); Game.Render.spawnParticles(m.x, m.y, '#ff9a4a', 10); }
-    if (Game.Audio) Game.Audio.play('crit');
+    if (Game.Audio) Game.Audio.play('thermal');
+    Game.state.hitstop = Math.max(Game.state.hitstop || 0, 3); // 反応の重みを一拍で伝える
     damageMob(m, dmg, m.x, m.y, false);
   }
   // 敵の属性(名前/種別から導出、キャッシュ)。火/氷/null(無属性)
@@ -407,6 +408,8 @@ Game.Mobs = (function () {
       m.chill = (m.chill || 0) + 1;
       if (m.chill >= 3) {
         m.chill = 0; m.iced = m.def.midboss ? 36 : 66; m.dot.slow = 0;
+        if (Game.Audio) Game.Audio.play('freeze');
+        Game.state.hitstop = Math.max(Game.state.hitstop || 0, 2);
         if (Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - m.def.size * 0.6, '氷結!', '#bfe4ff', true);
         if (Game.Render.spawnParticles) Game.Render.spawnParticles(m.x, m.y, '#dff0ff', 14);
         if (Game.UI && Game.UI.tipOnce) Game.UI.tipOnce('elem_freeze', '氷結！ 氷を重ねがけすると敵が凍りついて動けない。今のうちに会心で「粉砕」を狙え');
@@ -1087,7 +1090,8 @@ Game.Mobs = (function () {
       if (Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - m.def.size * 0.6, '粉砕!', '#bfe4ff', true);
       if (Game.UI && Game.UI.tipOnce) Game.UI.tipOnce('elem_shatter', '元素反応「粉砕」！ 凍った敵に会心が刺さると砕けて追加ダメージ。まず凍らせて会心を狙え');
       if (Game.Render.spawnParticles) Game.Render.spawnParticles(m.x, m.y, '#dff0ff', 12);
-      if (Game.Audio) Game.Audio.play('crit');
+      if (Game.Audio) Game.Audio.play('shatter');
+      Game.state.hitstop = Math.max(Game.state.hitstop || 0, 4); // 粉砕は最も重い一拍
     }
     // 弱点窓(大技回避後の隙): 被ダメ 1.6倍。回避→反撃の見返りを大きく
     if (m.vulnerable > 0) {
