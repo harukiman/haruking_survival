@@ -1075,7 +1075,9 @@ Game.Player = (function () {
     const kind = sel.bkind || 'bullet';
     const pellets = sel.pellets || 1;
     const _gslot = Game.Inventory.selectedSlot();
-    let dmg = effAttack((sel.fireDmg || 6) * 2); // 銃もLv/STR補正。銃器ダメージは全て2倍(ユーザー指示)
+    // 銃器ダメージは基礎2倍(ユーザー指示)。Lv/STR等のフラット加算は発射レートで正規化(連射・多弾ほど1発あたりの加算を薄く)
+    const rateScale = Math.max(0.06, Math.min(3, ((sel.cd || 12) / 12) / (sel.pellets || 1)));
+    let dmg = effAttackScaled((sel.fireDmg || 6) * 2, rateScale);
     if (_gslot && Game.Loot.isBroken && Game.Loot.isBroken(_gslot)) dmg = Math.max(1, Math.round(dmg * 0.4)); // 破損した銃は威力低下
     // 会心: 近接と同じ判定を遠距離にも適用(クリ時 1.8x ＋ 音/反動)。パッシブ「集中」は確定会心
     const critCh = (Game.TUNE.BASE_CRIT || 0.08) + skillBonus().crit + (setBonus().crit || 0);
@@ -1411,6 +1413,13 @@ Game.Player = (function () {
   function levelArmorBonus() { const p = Game.state.player; return Math.floor(p.level / 4); }
   function attackCooldown() { const p = Game.state.player; return Math.max(7, Math.round(Game.TUNE.ATTACK_COOLDOWN * (1 - (p.dex || 0) * 0.02))); }
   function effAttack(baseAtk) { return Math.max(1, baseAtk + levelDmgBonus() + skillBonus().atk + (Game.Status ? Game.Status.buffSum().atk : 0) + (Game.state.player.coopNear ? 2 : 0)); }
+  // 連射レート正規化版: フラット加算(Lv/STR/スキル/バフ)を発射レートで按分し、どの銃でも
+  // 「加算ぶんの秒間ダメージ」が同等になるようにする(高RoF武器のDPS青天井を是正)。
+  // scale=1 が基準(発射間隔12tick・単発)。ミニガン(cd1)=1/12、散弾(7発)=cd/12/7、スナイパー(cd44)=約3(上限)
+  function effAttackScaled(baseAtk, scale) {
+    const flat = levelDmgBonus() + skillBonus().atk + (Game.Status ? Game.Status.buffSum().atk : 0) + (Game.state.player.coopNear ? 2 : 0);
+    return Math.max(1, Math.round(baseAtk + flat * scale));
+  }
   // 魔法系: マナ消費(スキルでコスト減)。足りなければ false。magicPower は魔法ダメージ倍率
   function manaCost(base) { const p = Game.state.player; return Math.max(1, Math.round(base * (1 - (skillBonus().manaCostCut || 0)))); }
   function spendMana(base) { const p = Game.state.player; const c = manaCost(base); if ((p.mp || 0) < c) return false; p.mp -= c; if (Game.UI.refreshStats) Game.UI.refreshStats(); return true; }
@@ -1814,7 +1823,7 @@ Game.Player = (function () {
     interact, useNearby, gainXP, totalArmor, statusResist, setBonus, sleep, checkGroupSleep, vehicleTakeDamage, updateWreck, equipSelectedArmor, equipFromInventory, equipRelic, equipOffhand, unequipSlot, applyEquipStats, bossesDefeated, bossTitle, travelToWaypoint,
     effAttack, spendMana, manaCost, magicPower, attackCooldown, levelDmgBonus, levelArmorBonus, spendStat, unlockSkill, respec,
     skillBonus, skillFlag, canUnlock, currentWeaponAtk, equippedArmorAt, xpForLevel,
-    reloadCurrent, magLoaded, magCap, selGunId, contextAction, toggleMissileMode, dropItemToGround,
+    reloadCurrent, magLoaded, magCap, selGunId, contextAction, toggleMissileMode, dropItemToGround, effAttackScaled,
     saveLoadout, applyLoadout,
     focusArmed, consumeFocus,
   };

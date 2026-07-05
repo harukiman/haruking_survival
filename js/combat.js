@@ -71,8 +71,11 @@ Game.Combat = (function () {
       const burst = (jd.burst || 10) + mounted * 4; // 増設機関銃で弾幕が濃くなる(基本10発)
       p.jetBurst = burst; p.jetEmitAcc = 0;
       p.jetBurstDir = Game.Projectiles.aimAngle ? Game.Projectiles.aimAngle() : 0; // 照準方向を固定
-      p.jetBurstDmg = Game.Player.effAttack(jd.dmg);
-      p.cannonCd = Math.ceil(burst / (jd.rate || 2.5)) + 2; // バースト射出中は再タップ不可
+      const cycle = Math.ceil(burst / (jd.rate || 2.5)) + 2; // 1トリガーの周期(tick)
+      // フラット加算をレート正規化(1発あたりの実効間隔/12)。機銃の加算DPS青天井を是正
+      const fscale = Math.max(0.06, Math.min(3, (cycle / burst) / 12));
+      p.jetBurstDmg = Game.Player.effAttackScaled ? Game.Player.effAttackScaled(jd.dmg, fscale) : Game.Player.effAttack(jd.dmg);
+      p.cannonCd = cycle; // バースト射出中は再タップ不可
       return true;
     }
     // 爆撃機: 攻撃ボタンで搭載爆弾を投下(所持している爆弾を消費)。重い爆弾を優先
