@@ -955,6 +955,12 @@ Game.Mobs = (function () {
           m.fleeTimer--;
           moveMob(m, -dxp, -dyp, m.def.speed * 1.3);
         } else {
+          // 臆病な動物(flee): 走って近づく足音に驚いて逃げ出す(そっと歩けば近づける=狩りの読み合い)
+          if (m.def.flee && distP < 4 * TS && Game.Input && Game.Input.intent && Game.Input.intent.dash) {
+            m.fleeTimer = 130;
+            if (Game.Render.spawnFloat && Game.state.tick % 8 === 0) Game.Render.spawnFloat(m.x, m.y - m.def.size, '!', '#ffe27a');
+            if (Game.UI && Game.UI.tipOnce) Game.UI.tipOnce('sneak_hunt', '🦌 臆病な動物は走る足音で逃げてしまう。歩いてそっと近づこう');
+          }
           wander(m);
         }
       }
