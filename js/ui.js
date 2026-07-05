@@ -2468,6 +2468,16 @@ Game.UI = (function () {
       mmCtx.fillRect(mx - 2, my - 2, 4, 4);
       mmCtx.strokeStyle = 'rgba(0,0,0,0.6)'; mmCtx.lineWidth = 1; mmCtx.strokeRect(mx - 2, my - 2, 4, 4);
     }
+    // 死亡地点💀: 視野内なら小マーク、視野外なら端に向きを示す(回収導線をミニマップでも)
+    const dsp2 = Game.state.deathSpot;
+    if (dsp2 && dsp2.world === Game.state.worldName) {
+      let mx2 = (Math.floor(dsp2.x / TS) - (ptx - half)) * scale, my2 = (Math.floor(dsp2.y / TS) - (pty - half)) * scale;
+      const inView = mx2 >= 0 && my2 >= 0 && mx2 <= size && my2 <= size;
+      if (!inView) { mx2 = Math.max(6, Math.min(size - 6, mx2)); my2 = Math.max(6, Math.min(size - 6, my2)); }
+      mmCtx.font = 'bold 10px sans-serif'; mmCtx.textAlign = 'center';
+      mmCtx.fillStyle = inView ? '#fff' : 'rgba(255,255,255,0.7)';
+      mmCtx.fillText('💀', mx2, my2 + 3); mmCtx.textAlign = 'left';
+    }
     // 動的ドット（敵=赤/ボス=大赤/NPC=黄/仲間=水色）
     const mobs = Game.state.mobs;
     let bossMk = null; // ボスは最前面＆画面外なら端に矢印で明示
