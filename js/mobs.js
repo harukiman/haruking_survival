@@ -1485,15 +1485,24 @@ Game.Mobs = (function () {
         ctx.beginPath(); ctx.arc(s.x, s.y, (14 + prog * 46) * z, 0, Math.PI * 2); ctx.stroke();
         ctx.restore();
       }
-      // 突進の溜めテレグラフ(向き矢印)
+      // 突進の溜めテレグラフ: 実際に突っ込んでくる方向(プレイヤーへの実角度)へ、突進の全長ラインを表示。
+      // 残り溜め時間が少ないほど明滅が速く濃くなる — 「どこへ避けるか」が正確に読める
       if (m.charge && m.charge.phase === 'windup') {
         const z = Game.Camera.zoom ? Game.Camera.zoom() : 1;
-        let ax = 0, ay = 0; if (m.dir === 'up') ay = -1; else if (m.dir === 'down') ay = 1; else if (m.dir === 'left') ax = -1; else ax = 1;
+        const pl3 = Game.state.player;
+        const ang3 = Math.atan2(pl3.y - m.y, pl3.x - m.x);
+        const ch3 = m.def.charge || {};
+        const lenPx = Math.min(((ch3.dashSpeed || 6) * (ch3.dashTicks || 14)), 320) * z;
+        const urg = Math.max(0, Math.min(1, 1 - m.charge.t / (ch3.windup || 20)));
+        const blink = (Game.state.tick % Math.max(2, 8 - Math.round(urg * 6))) < Math.max(1, 4 - Math.round(urg * 3));
         ctx.save();
-        ctx.strokeStyle = 'rgba(255,90,40,0.85)'; ctx.lineWidth = 3 * z; ctx.lineCap = 'round';
-        ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(s.x + ax * 34 * z, s.y + ay * 34 * z); ctx.stroke();
-        ctx.fillStyle = 'rgba(255,120,60,0.9)';
-        ctx.beginPath(); ctx.arc(s.x + ax * 34 * z, s.y + ay * 34 * z, 4 * z, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = 'rgba(255,90,40,' + (blink ? 0.35 + urg * 0.55 : 0.22) + ')';
+        ctx.lineWidth = (2.4 + urg * 1.6) * z; ctx.lineCap = 'round';
+        ctx.setLineDash([8 * z, 6 * z]);
+        ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(s.x + Math.cos(ang3) * lenPx, s.y + Math.sin(ang3) * lenPx); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = 'rgba(255,120,60,' + (0.6 + urg * 0.35) + ')';
+        ctx.beginPath(); ctx.arc(s.x + Math.cos(ang3) * lenPx, s.y + Math.sin(ang3) * lenPx, (3 + urg * 2.5) * z, 0, Math.PI * 2); ctx.fill();
         ctx.restore();
       }
       const r = m.def.size * 0.5 * (m.champion ? 1.55 : m.elite ? 1.3 : 1) * (m.sizeVar || 1);
