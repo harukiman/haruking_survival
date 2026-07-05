@@ -743,7 +743,7 @@ Game.Mobs = (function () {
               m.slam = null; m.slamCd = m.enraged ? 90 : 150;
               // 読み合い: 大技を回避されたら大きな「隙(スタン+被ダメ増)」。当てられたら猶予は短い。
               // 回避→反撃のループを全ボスに付与(A: 戦闘の読み合い)
-              m.stunned = hit ? 8 : 40; m.vulnerable = hit ? 24 : 96;
+              m.stunned = hit ? 8 : 40; m.vulnerable = hit ? 24 : 96; m.vulnMax = m.vulnerable;
               if (!hit && Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - m.def.size, 'スキ!', '#ffe27a', true);
               if (!hit && Game.UI.tipOnce) Game.UI.tipOnce('weakpoint', 'ボスの大技を回避すると「隙」が生まれ、その間は与ダメージが増えます。回避→反撃が鍵');
             }
@@ -813,7 +813,7 @@ Game.Mobs = (function () {
                 if (hit && Game.Survival.damage(Math.round((m.dmg || m.def.dmg) * 1.8), m.def.name || 'mob') !== false) { const kl = d2 || 1; p.x += (p.x - m.x) / kl * 22; p.y += (p.y - m.y) / kl * 22; }
                 Game.Render.spawnParticles(m.x, m.y, '#ffcaa0', 30); if (Game.Render.shake) Game.Render.shake(12); Game.Audio.play('boom_sfx');
                 m.leapZ = 0; m.leap = null; m.leapCd = enr ? 110 : 180;
-                m.stunned = hit ? 6 : 34; m.vulnerable = hit ? 20 : 84;
+                m.stunned = hit ? 6 : 34; m.vulnerable = hit ? 20 : 84; m.vulnMax = m.vulnerable;
                 if (!hit && Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - m.def.size, 'スキ!', '#ffe27a', true);
               }
               m.hopPhase += 0.2; continue;
@@ -1539,6 +1539,10 @@ Game.Mobs = (function () {
         const pl = 0.5 + Math.sin(Game.state.tick * 0.4) * 0.5;
         ctx.strokeStyle = 'rgba(255,220,80,' + (0.5 + pl * 0.4).toFixed(3) + ')'; ctx.lineWidth = 3 * z2;
         ctx.beginPath(); ctx.arc(s.x, s.y - hop, r * (1.5 + pl * 0.25), 0, Math.PI * 2); ctx.stroke();
+        // 残り時間アーク: 窓が閉じるまでの猶予が一目で分かる(全力を出すか離脱するかの判断材料)
+        const vfrac = Math.max(0, Math.min(1, m.vulnerable / (m.vulnMax || 90)));
+        ctx.strokeStyle = 'rgba(255,240,160,0.95)'; ctx.lineWidth = 2.2 * z2;
+        ctx.beginPath(); ctx.arc(s.x, s.y - hop, r * 1.5 + 5, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * vfrac); ctx.stroke();
         ctx.fillStyle = '#ffe27a'; ctx.font = 'bold ' + Math.round(13 * z2) + 'px sans-serif'; ctx.textAlign = 'center';
         ctx.fillText('!', s.x, s.y - r - hop - 20); ctx.textAlign = 'left';
       }
