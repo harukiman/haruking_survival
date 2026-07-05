@@ -127,7 +127,7 @@ Game.Projectiles = (function () {
       for (let i = 0; i < mobs.length; i++) { const mo = mobs[i]; if (mo.def.friendly || hitSet[mo.id]) continue; const d = Math.hypot(mo.x - fx, mo.y - fy); if (d < bd) { bd = d; best = mo; } }
       if (!best) break;
       hitSet[best.id] = 1;
-      if (Game.Net.isConnected() && !Game.Net.host) Game.Net.sendHit(best.id, dmg, fx, fy); else Game.Mobs.damageMob(best, dmg, fx, fy);
+      if (Game.Net.isConnected() && !Game.Net.host) Game.Net.sendHit(best.id, dmg, fx, fy); else { Game.Mobs.damageMob(best, dmg, fx, fy); if (Game.Mobs.applyDot) Game.Mobs.applyDot(best, 'chain'); } // 連鎖先にも感電
       if (Game.Render.spawnLightning) Game.Render.spawnLightning(fx, fy, best.x, best.y);
       fx = best.x; fy = best.y;
     }

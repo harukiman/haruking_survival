@@ -359,7 +359,7 @@ Game.Mobs = (function () {
   }
 
   // 弾の種類→敵の状態異常付与（fire=燃焼/venom・hex=毒/frost=鈍足）
-  const KIND_DOT = { fire: ['burn', 150], venom: ['poison', 180], hex: ['poison', 150], frost: ['slow', 150] };
+  const KIND_DOT = { fire: ['burn', 150], venom: ['poison', 180], hex: ['poison', 150], frost: ['slow', 150], chain: ['shock', 120] }; // 雷=感電
   // 元素反応: 熱衝撃(炎↔凍)。燃えている敵に凍/凍えている敵に炎を重ねると急激な温度差でバースト＋両状態を消費。
   // 属性を「重ねる」読み合いに意味を持たせる(密度A)。
   function thermalShock(m) {
@@ -399,7 +399,7 @@ Game.Mobs = (function () {
       if (Game.UI && Game.UI.tipOnce) Game.UI.tipOnce('elem_affinity', '属性相性！ 炎の敵に炎/氷の敵に氷は効かない。逆属性(炎の敵には氷、氷の敵には炎)が弱点だ');
       return;
     }
-    if (Game.UI && Game.UI.tipOnce) Game.UI.tipOnce('elem_intro', '元素武器: 🔥炎上(継続ダメ)/❄凍え(鈍足)/☠毒。凍った敵に会心で「粉砕」、逆属性は弱点。組み合わせを試そう');
+    if (Game.UI && Game.UI.tipOnce) Game.UI.tipOnce('elem_intro', '元素武器: 🔥炎上/❄凍え/☠毒/⚡感電(周期スタン)。凍った敵に会心で「粉砕」、逆属性は弱点。組み合わせを試そう');
     const weak = (kind === 'fire' && elem === 'ice') || (kind === 'frost' && elem === 'fire');
     if (weak && Game.Render.spawnFloat) Game.Render.spawnFloat(m.x, m.y - m.def.size * 0.5, '弱点!', '#ffe27a', true);
     if ((kind === 'fire' && (m.dot.slow || 0) > 0) || (kind === 'frost' && (m.dot.burn || 0) > 0)) { thermalShock(m); m.chill = 0; return; }
@@ -423,6 +423,7 @@ Game.Mobs = (function () {
     const wt2 = Game.state.weather && Game.state.weather.type;
     if (kind === 'fire' && (wt2 === 'rain' || wt2 === 'storm' || wt2 === 'snow' || wt2 === 'blizzard')) { wMul = 0.5; if (Game.UI && Game.UI.tipOnce) Game.UI.tipOnce('weather_fire', '🌧 雨や雪の中では炎が消えやすい(炎上半減)。天候に合わせて武器を選ぼう'); }
     if (kind === 'frost' && wt2 === 'blizzard') { wMul = 1.5; if (Game.UI && Game.UI.tipOnce) Game.UI.tipOnce('weather_frost', '🌨 吹雪の中では凍えが長引く(1.5倍)。氷武器の好機だ'); }
+    if (kind === 'chain' && (wt2 === 'rain' || wt2 === 'storm')) { wMul = 1.3; if (Game.UI && Game.UI.tipOnce) Game.UI.tipOnce('weather_shock', '⚡ 濡れた敵は感電が長引く(1.3倍)。雨の日は雷武器'); }
     m.dot[e[0]] = Math.max(m.dot[e[0]] || 0, Math.round(e[1] * (weak ? 1.6 : 1) * wMul)); // 弱点は状態異常が長い
   }
   // 武器由来の出血DoT: dmg/秒相当を dur フレーム継続(既存より深手を優先)
@@ -586,6 +587,11 @@ Game.Mobs = (function () {
       // 状態異常(DoT/鈍足): 炎/毒は継続ダメージ、凍は moveMob で減速
       if (m.dot) {
         if (m.dot.slow > 0) { m.dot.slow--; if (m.dot.slow === 0) m.chill = 0; } // 凍え終了で氷結ゲージ減衰
+        // 感電(雷): 約0.8秒毎に一瞬痺れて止まる(ボスは無効)。黄色い火花で視認
+        if ((m.dot.shock || 0) > 0) {
+          m.dot.shock--;
+          if (!m.def.boss && m.dot.shock % 24 === 0) { m.stunned = Math.max(m.stunned || 0, 5); if (Game.Render.spawnParticles) Game.Render.spawnParticles(m.x, m.y - m.def.size * 0.4, '#fff07a', 3); }
+        }
         if (Game.state.tick % 20 === 0 && ((m.dot.burn || 0) > 0 || (m.dot.poison || 0) > 0)) {
           const d = ((m.dot.burn || 0) > 0 ? 2 : 0) + ((m.dot.poison || 0) > 0 ? 1 : 0);
           m.hp -= d; m.hurt = Math.max(m.hurt, 2);
