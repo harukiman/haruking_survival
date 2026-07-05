@@ -903,7 +903,13 @@ Game.UI = (function () {
     if (!stack) return '';
     const def = Game.ITEMS[stack.id];
     const col = (def && def.color) || '#888';
-    const cnt = stack.count > 1 ? '<span class="cnt">' + stack.count + '</span>' : '';
+    let cnt = stack.count > 1 ? '<span class="cnt">' + stack.count + '</span>' : '';
+    // 装備の耐久ミニバー: 満タン未満のときだけスロット下部に表示(破損前に一目で気づける)
+    if (stack.dur != null && stack.durMax && stack.dur < stack.durMax) {
+      const fr = Math.max(0, stack.dur / stack.durMax);
+      const bcol = fr < 0.12 ? '#e0664a' : fr < 0.3 ? '#e0a84a' : '#7fc0d8';
+      cnt += '<span class="durbar"><i style="width:' + Math.round(fr * 100) + '%;background:' + bcol + '"></i></span>';
+    }
     let ring = '';
     if (stack.roll) ring = ';box-shadow:0 0 0 2px ' + Game.Loot.rarityColor(stack) + ',0 0 6px ' + Game.Loot.rarityColor(stack);
     const title = stack.roll ? Game.Loot.displayName(stack) : (def ? def.name : stack.id);

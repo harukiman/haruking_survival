@@ -860,3 +860,7 @@ body.dead #quest-tracker, body.dead #bounty-tracker, body.dead #boss-bar { displ
 
 /* タイトルのバージョン表記(キャッシュ版数から自動導出)。不具合報告時の特定用 */
 #ver-label { margin-top: 8px; font-size: .64rem; color: #55627a; letter-spacing: 1px; }
+
+/* スロットの耐久ミニバー(満タン未満のみ表示) */
+.slot .durbar { position: absolute; left: 5px; right: 5px; bottom: 3px; height: 3px; background: rgba(10,14,24,0.75); border-radius: 2px; overflow: hidden; pointer-events: none; }
+.slot .durbar i { display: block; height: 100%; border-radius: 2px; }
