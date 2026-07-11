@@ -352,6 +352,22 @@ Game.Survival = (function () {
       Game.state.paused = true;
       Game.Audio.play('hurt');
       Game.UI.showDeath(summary);
+      // w04-03: ドロップ/バーツ半減のペナルティを死亡画面に予告表示(乱数結果は respawn 後に確定するため予告形)。
+      // showDeath が innerHTML を毎回組み直すため、ここでの追記は次回死亡時に残らない
+      const box = document.getElementById('death-stats');
+      if (box && !box.querySelector('.death-penalty')) {
+        // 値は単一の <b> にまとめる(.ending-stats div は flex のため、複数要素だと不揃いな折返しになる)
+        let rows = '<div class="death-penalty" style="animation-delay:1.45s">持ち物　　<b style="color:#ff8a8a;font-weight:600">一部をその場に落とす（💀地点で回収可）</b></div>';
+        const btsB = p.bts || 0;
+        if (btsB > 0) {
+          rows += hasBtsGuard()
+            ? '<div class="death-penalty" style="animation-delay:1.6s">バーツ　　<b>' + btsB + ' <span style="color:#8ad0ff;font-weight:600">守銭の護符が守る</span></b></div>'
+            : '<div class="death-penalty" style="animation-delay:1.6s">バーツ　　<b>' + btsB + ' <span style="color:#ff8a8a;font-weight:600">→ 復活後 ' + Math.floor(btsB / 2) + ' bts（半減）</span></b></div>';
+        }
+        const hint = box.querySelector('.death-hint');
+        if (hint) hint.insertAdjacentHTML('beforebegin', rows);
+        else box.insertAdjacentHTML('beforeend', rows);
+      }
       return;
     }
     respawn();
@@ -367,14 +383,16 @@ Game.Survival = (function () {
     if (Game.Audio && Game.Audio.vehicleLoop) Game.Audio.vehicleLoop(null);
     p.lifeStart = Game.state.tick;
     const btsGuarded = hasBtsGuard(); // ドロップ前に判定(護符が落ちても今回の死は守られる)
-    Game.UI.toast('力尽きた…リスポーンします');
     // 所持品の一部をその場にドロップ（守銭の護符など keepBts 品は落とさない）
+    // w04-03: 冒頭の汎用toastを廃し、確定したドロップ数/バーツを末尾の1本に統合して通知(相互上書きスパム削減)
     const TS = Game.CFG.TILE_SIZE;
     const s = Game.Inventory.slots();
+    let droppedSlots = 0;
     for (let i = 0; i < s.length; i++) {
       if (s[i] && !(Game.ITEMS[s[i].id] && Game.ITEMS[s[i].id].keepBts) && Math.random() < 0.5) {
         Game.state.drops.push({ id: s[i].id, count: s[i].count, roll: s[i].roll || null, x: p.x + (Math.random() - 0.5) * 30, y: p.y + (Math.random() - 0.5) * 30 });
         s[i] = null;
+        droppedSlots++;
       }
     }
     // 死亡地点を記録: 落としたアイテムの回収導線(大マップに💀表示、接近で消える)
@@ -390,14 +408,17 @@ Game.Survival = (function () {
       Game.UI.toast('力尽きた… レベルが ' + lost + ' 失われた（Lv.' + p.level + '）');
     }
     // バーツ(通貨): 死亡で半分を失う。守銭の護符を持っていれば失わない
+    const penaltyParts = [];
+    if (droppedSlots > 0) penaltyParts.push('持ち物 ' + droppedSlots + ' スロット分を落とした（💀地点で回収可）');
     if ((p.bts || 0) > 0) {
       if (btsGuarded) {
-        Game.UI.toast('守銭の護符が輝いた — バーツ ' + p.bts + ' bts は失われない');
+        penaltyParts.push('守銭の護符が輝き バーツ ' + p.bts + ' bts は守られた');
       } else {
         const before = p.bts; p.bts = Math.floor(p.bts / 2);
-        Game.UI.toast('バーツを落とした… ' + before + ' → ' + p.bts + ' bts');
+        penaltyParts.push('バーツ ' + before + ' → ' + p.bts + ' bts');
       }
     }
+    Game.UI.toast(penaltyParts.length ? '💀 ' + penaltyParts.join('・') : '力尽きた…リスポーンします');
     p.health = p.maxHealth; p.hunger = Math.max(40, p.hunger);
     p.invuln = 60;
     // 協力: MPで同じ世界に生存中の仲間が居れば、その傍らに復活してはぐれない

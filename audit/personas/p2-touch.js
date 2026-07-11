@@ -42,6 +42,29 @@ async function run(ctx) {
     }
     return { minDragPx: null, neverMoved: true };
   });
+  // トラッカー矩形内からのドラッグ: #quest-tracker が移動ゾーンに常駐するため、
+  // pointer-events:none 化 (w04-02) の回帰検査としてトラッカー中心からのドラッグで移動できるかを直接測る
+  await runner.probe('joystick.fromTracker', async () => {
+    const rc = await page.evaluate(() => {
+      const t = document.getElementById('quest-tracker');
+      if (!t || t.classList.contains('hidden')) return null;
+      const r = t.getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: Math.round(r.width), h: Math.round(r.height) };
+    });
+    if (!rc) return { works: false, trackerHidden: true };
+    const before = await page.evaluate(() => ({ x: Game.state.player.x, y: Game.state.player.y }));
+    await touch.drag(rc.x, rc.y, 60, -60, 1200, 5);
+    const after = await page.evaluate(() => ({ x: Game.state.player.x, y: Game.state.player.y }));
+    const movedPx = Math.round(Math.hypot(after.x - before.x, after.y - before.y));
+    // クエストパネルの誤開閉 (旧挙動: トラッカー上スワイプ→openQuest) も併せて検出し、開いていたら閉じて回復
+    const panelOpened = await page.evaluate(() => {
+      const q = document.getElementById('quest-screen');
+      return !!(q && !q.classList.contains('hidden'));
+    });
+    if (panelOpened) await page.evaluate(() => { const b = document.getElementById('btn-close-quest'); if (b) b.click(); });
+    await new Promise(r => setTimeout(r, 150));
+    return { origin: { x: Math.round(rc.x), y: Math.round(rc.y) }, tracker: { w: rc.w, h: rc.h }, movedPx, questPanelOpened: panelOpened, works: movedPx > 4 && !panelOpened };
+  });
   await runner.shot(page, 'joystick-active');
 
   // アクションボタン群の実タップ: 位置取得 → タップ → 反応確認 (UIが開く/閉じる等)

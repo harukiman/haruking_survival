@@ -1946,5 +1946,6 @@ Game.Player = (function () {
     reloadCurrent, magLoaded, magCap, selGunId, contextAction, toggleMissileMode, dropItemToGround, effAttackScaled, pointerWorld,
     saveLoadout, applyLoadout,
     focusArmed, consumeFocus,
+    nearestTreeDir, // w04-01: UI(hint-pill)の方角誘導用。表示/toast時のみ呼ぶこと(毎tick走査禁止)
   };
 })();

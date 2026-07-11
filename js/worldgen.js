@@ -528,16 +528,18 @@ Game.WorldGen = (function () {
     }
   }
 
-  // 候補の半径10タイル以内に最初のクエスト対象の O.TREE があるか(genTileベース・決定論)
+  // 候補の半径5タイル以内に最初のクエスト対象の O.TREE があるか(genTileベース・決定論)
+  // w04-01: ポートレートの可視半幅は約6タイルなので、半径10だと保証成立でも木が画面外になる。
+  // 半径5に縮めて「スポーン直後に木が画面内に映る」ことまで保証する(走査コストも約1/4)
   function treeNear(tx, ty, seed) {
-    for (let dy = -10; dy <= 10; dy++)
-      for (let dx = -10; dx <= 10; dx++)
+    for (let dy = -5; dy <= 5; dy++)
+      for (let dx = -5; dx <= 5; dx++)
         if (genTile(tx + dx, ty + dy, seed).obj === O.TREE) return true;
     return false;
   }
 
   // 歩けるスポーン地点を原点付近から探す -> {tx, ty}
-  // 木ゼロのビーチスポーン対策(w03-01): 半径10タイル以内に O.TREE がある候補を優先する。
+  // 木ゼロのビーチスポーン対策(w03-01): 半径5タイル以内(=画面内)に O.TREE がある候補を優先する。
   // 木なし地帯(砂漠/海洋シード)でも無限ループしないよう、最初の walkable を控えて
   // 木走査は上限回数で打ち切り従来挙動へ fallback する(400周探索も維持)
   function findSpawn(seed) {
@@ -553,7 +555,7 @@ Game.WorldGen = (function () {
           !inSkyEnclave(tx, ty, seed) && !inRuinCity(tx, ty, seed); // 空島/古代都市の草地を初期スポーンに選ばない
         if (!walkable) continue;
         if (!firstWalkable) firstWalkable = { tx, ty };
-        if (treeScans >= 60) return firstWalkable; // 木なし地帯: 走査コスト上限で従来挙動へ
+        if (treeScans >= 150) return firstWalkable; // 木なし地帯: 走査コスト上限で従来挙動へ(半径縮小で1回が軽いため 60→150)
         treeScans++;
         if (treeNear(tx, ty, seed)) return { tx, ty };
       }

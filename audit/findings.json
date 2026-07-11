@@ -36,6 +36,16 @@
     "03f": {
       "ranAt": "2026-07-11T05:50:28.813Z",
       "note": "wave-3統合検証: 方角誘導33ms/joystick8/8/LH実操作73px・overlaps 10521→64px2/近接hit成立(18→10)/混戦遮蔽0%/toast幅キャップ解消"
+    },
+    "04": {
+      "ranAt": "2026-07-11T06:12:11.256Z",
+      "confirmedNew": 3,
+      "regressions": 0,
+      "note": "wave-3修正9件全resolved。新規P1×3 (木可視性/トラッカードラッグ食い/死亡ペナルティ不可視) — dry未達"
+    },
+    "04f": {
+      "ranAt": "2026-07-11T06:28:36.889Z",
+      "note": "wave-4統合検証: fromTracker works/8シード木≤5タイル/死亡画面ペナルティ2行/方角常設。全ペルソナ緑"
     }
   },
   "findings": [
@@ -1582,6 +1592,184 @@
       "files": [
         "css/style.css",
         "js/ui.js"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w04-01",
+      "status": "fixed",
+      "severity": "P1",
+      "category": "onboarding",
+      "element": "findSpawn 木保証半径 × 390pxポートレート可視域 (最初のクエスト対象の可視性)",
+      "summary": "スポーン木保証 (w03-01) の半径10タイルはポートレート画面の可視半幅 (約5タイル) より広いため、wave-04 のビーチシードでは操作開始から計測終了 (3min-state) まで最初のクエスト対象の木が一度も画面内に映らず、方角情報も「対象なしで攻撃を空振りする」ことでしか得られない (whiff トーストは一過性で、常設のトラッカー/ピルには方角が載らない) — questIndex=0 のままセッション終了",
+      "evidence": [
+        "p1-firsttime-06-first-control.png / p1-firsttime-07-after-wander.png / p1-firsttime-08-gameplay-3min-state.png (wave-04: 全ゲームプレイショットで視界は水+砂+岩のみ、木ゼロ。wave-04r は森スポーンで照準枠が即木に乗り対照的)",
+        "metric: firstAction.feedback.newToasts=[{msg:'💡 まずは南東の方の木を叩こう', latencyMs:45}] (方角は空振り時トーストのみ・数秒で消える)",
+        "metric: pacing.state.questIndex=0, tips=0 (セッション終了時点で木材未入手)"
+      ],
+      "suggested_fix": "js/worldgen.js:532-536 — shrink treeNear Chebyshev radius from 10 to 4-5 (portrait visible half-width is ~6 tiles at zoom 1 minus look-ahead drift), which also cuts scan cost ~4x allowing the treeScans cap (js/worldgen.js:543/556) to be raised. Plus persistent direction: js/ui.js:1439 — resolve nearestTreeDir() (js/player.js:46) into the step2 hint text when the hint is shown/advanced (not per tick), e.g. '南東の方の木を叩いて木材を集めよう'; or add a screen-edge arrow while questIndex==0 and no O.TREE is within the visible tile range, reusing the boss edge-arrow pattern around js/ui.js:2601.",
+      "files": [
+        "js/worldgen.js",
+        "js/ui.js",
+        "js/player.js"
+      ],
+      "dupes": 1,
+      "fixedWave": "04"
+    },
+    {
+      "id": "w04-02",
+      "status": "fixed",
+      "severity": "P1",
+      "category": "ergonomics",
+      "element": "#quest-tracker (pointer-events:auto) × 仮想ジョイスティック移動ゾーン",
+      "summary": "クエストトラッカーが pointer-events:auto の click ターゲット (openQuest) のままジョイスティック受付ゾーン内に常駐しており (通常モード: 左下 x18-145 < 214.5 / 左手モード: wave-3 のミラーで右下 x245-372 > 175.5 に移動)、ジョイスティック touchstart が canvas 限定のためトラッカー上から始まる移動ドラッグは全て食われて移動不発になり、短いスワイプはクエストパネル誤開閉になる — hint-pill には適用済みの pointer-events:none 化 (w01-01/06) がトラッカーには未適用の残存",
+      "evidence": [
+        "p2-touch-01-gameplay-start.png (通常モード: トラッカー『生きる糧…』が左下 CSS x≈18-145, y≈675-732 = 移動ゾーン x<214.5 かつ y>90 の親指弧内)",
+        "p2-touch-04-left-handed.png (左手モード: ミラーで右下 CSS x≈245-372, y≈675-732 = LH移動ゾーン x>175.5 の内側へ移動)",
+        "code: css/style.css:368 『pointer-events: auto; cursor: pointer』 + css/style.css:432 body.left-handed ミラーが left:auto; right:8px で LH ゾーン内へ配置"
+      ],
+      "suggested_fix": "css/style.css:368 — change #quest-tracker to pointer-events:none (drop cursor:pointer), mirroring the hint-pill fix at style.css:837/843. Keep the openQuest entry point by adding a small ~44px chevron ('›') child button at the tracker's right edge with pointer-events:auto, and move the js/ui.js:141 click listener from el.questTracker to that button. Alternative: keep pointer-events:auto but implement tap-vs-drag discrimination (touchstart/touchend delta <10px and <300ms → openQuest, else forward to joystick) in js/input.js — costlier and riskier. After fixing, extend audit/personas/p2-touch.js so a direction8 drag originates inside the tracker rect (bottom-left normal, bottom-right left-handed), since the current 8/8 pass uses origins outside the tracker and cannot detect this class of defect.",
+      "files": [
+        "css/style.css",
+        "js/input.js",
+        "js/ui.js"
+      ],
+      "dupes": 1,
+      "fixedWave": "04"
+    },
+    {
+      "id": "w04-03",
+      "status": "fixed",
+      "severity": "P1",
+      "category": "feedback",
+      "element": "死亡画面サマリー (Game.UI.showDeath) × respawn() ペナルティ通知",
+      "summary": "死亡の最重要ペナルティである「所持品のスロット毎50%その場ドロップ」と「バーツ半減」が死亡画面のどこにも表示されず、その通知toast群は復活タップ直後に自動再生される初回死亡ムービーの裏で単一スロットtoastが相互上書きして消えるため、ハクスラの核心である厳選装備の喪失事実と回収導線(💀地点)をプレイヤーが知る術がない",
+      "evidence": [
+        "p3-combat-04-death-screen.png (死亡画面の項目は死因/生存/レベル/撃破ボス/討伐総数/所持金塊のみ — レベル-2は「8 → 復活後 Lv.6（-2）」と予告されるのに、アイテムドロップとバーツ半減の行が存在しない)",
+        "p3-combat-05-after-revive.png (復活タップ直後に全画面カットシーンが表示され、respawn() が連続発行する「力尽きた…リスポーンします」「レベルが N 失われた」「バーツを落とした…」toastはこの裏で上書き・消失する)",
+        "code: js/survival.js:374-380 (スロット毎 Math.random()<0.5 でその場ドロップ) / js/survival.js:393-400 (bts半減) — いずれも死亡画面 summary 構築 (js/survival.js:342-351) に含まれず、respawn() 実行後にしか確定・通知されない"
+      ],
+      "suggested_fix": "js/survival.js:342-351 — add summary fields for the death penalties, mirroring the projLost pattern: pre-roll the drop selection at die() time (move the Math.random()<0.5 loop result into a pending list consumed by respawn()) so the death screen can show exact item count, plus btsBefore/btsAfter (respect hasBtsGuard()); render the rows in js/ui.js:2408-2418 with a '大マップの💀で回収可' note. For toasts: replace the direct Game.UI.toast calls at js/survival.js:370/390/398 with a queue flushed after the traveler cutscene ends (hook Story.unlock('traveler', true) completion at survival.js:415, or 2s post-revive when no cutscene), ending with one directional 💀 recovery toast; alternatively add a sequential display queue in plainToast (js/ui.js:2428).",
+      "files": [
+        "js/survival.js",
+        "js/ui.js"
+      ],
+      "dupes": 1,
+      "fixedWave": "04"
+    },
+    {
+      "id": "w04-04",
+      "status": "open",
+      "severity": "P2",
+      "category": "readability",
+      "element": "#hint-pill .hp-ic (木集めヒントの ⛏ アイコン)",
+      "summary": "木集めヒントのアイコン ⛏ (U+26CF) が絵文字セレクタ (U+FE0F) なしのためモノクロのテキスト表示で描画され、12px 相当のサイズでは「↖ (北西向き矢印)」と誤読される — 同一画面で whiff トーストが「南東の方の木を叩こう」と方角を提示するため、矢印と読んだ初見には正反対の方向指示が並んでいるように見える",
+      "evidence": [
+        "p1-firsttime-08-gameplay-3min-state.png (wave-04: 上部トースト『💡 まずは南東の方の木を叩こう』とピル『⛏ まず木を叩いて木材を集めよう』が同時表示、⛏ が細いモノクログリフで ↖ に見える)",
+        "p1-firsttime-07-after-wander.png (wave-04 / wave-04r 両シードで同一のモノクロ描画 — 拡大クロップで矢印状の見た目を確認)"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w04-05",
+      "status": "open",
+      "severity": "P2",
+      "category": "feedback",
+      "element": "通常敵の接触攻撃 (mobs.js 接触ダメージ分岐) — 予備動作なし",
+      "summary": "ザコ敵(クモ/ゾンビ等)の接触攻撃は範囲内+クールダウン明けで即時ダメージが入り予備動作フェーズが一切ないため、windup明滅による「構えを見てロールで避ける」読み合いが slam/charge/leap 等の特殊技(主にボス級)限定になっており、夜の乱戦の被弾が読んで避ける対象でなく回避不能なチップダメージになっている",
+      "evidence": [
+        "code: js/mobs.js:933-953 — 接触攻撃は `distP < (m.def.size*0.5+12) && m.attackCd <= 0` で即時 Game.Survival.damage、windup フェーズが存在しない (影世界側 js/mobs.js:1030-1037 も同様)",
+        "code: js/mobs.js:1560-1643 — 構え明滅 (溜め中は体が明滅) の対象は slam/aim/radial/fuse/charge(windup)/leap(crouch) のみで、基本の接触攻撃は含まれない"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w04-06",
+      "status": "open",
+      "severity": "P2",
+      "category": "onboarding",
+      "element": "#btn-shift (影渡りボタン) の初期表示状態",
+      "summary": "影渡りボタンが影鏡未所持のゲーム開始直後 (クエスト0時点) に表示されてしまい、1クエスト後に消える — ロック中アビリティが初見の最初の操作画面で「使える」ボタンとして見えるうえ、直後に黙って消滅するため誤学習を誘う",
+      "evidence": [
+        "p4-progression-01-quest-00-gather.png (quest 0・影鏡0所持で『影渡り』ボタンが表示)",
+        "p4-progression-02-quest-01-tool.png / -03 / -04 (同ボタンが消滅、-05 の shift クエストで再出現)"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w04-07",
+      "status": "open",
+      "severity": "P2",
+      "category": "feedback",
+      "element": "quest 'gear' / 'reunify' のトラッカー文言 (複合目標の段階進捗)",
+      "summary": "2段階構成の中盤クエスト『光を継ぐ者』(影鋼を精錬→装備を作る) と最終『世界を還す』(核を作る→使う) だけ desc が静的文字列で、前半段階を完了してもトラッカーが一切変化せず、隣接するクエスト (鏡/影晶/石碑) がカウンタで進捗を返すのと不整合 — 精錬まで済ませたプレイヤーが「登録されたのか」「次はどちらの半分か」を画面から確認できない",
+      "evidence": [
+        "p4-progression-07-quest-06-gear.png (『光を継ぐ者：影晶と鉄を炉で 影鋼 にし、影鋼の装備を作る』— 進捗表示なし)",
+        "p4-progression-11-quest-final-state.png (『世界を還す：統合の核 を作り、使って二相の世界を還す』— 同様に段階表示なし)"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w04-08",
+      "status": "open",
+      "severity": "P2",
+      "category": "pacing",
+      "element": "quest 'night' (最初の夜) の日中提示",
+      "summary": "クエスト『最初の夜：夜に現れる魔物を1体倒す』が朝07:57頃 (timeOfDay≈0.33) に提示されるが夜は t>0.78 からしか始まらないため、実時間約6分間はアクティブ目標が構造的に達成不能で、その間の準備行動 (松明/武器/拠点) への誘導が tips 0件・トラッカー一文のみで一切示されない",
+      "evidence": [
+        "p4-progression-03-quest-02-night.png (☀️07:57 の昼にトラッカー『最初の夜：夜に現れる魔物を1体倒す』)",
+        "metric: quest.hintCoverage.tipsFired=[] (チェーン全体で文脈tip発火ゼロ — 待ち時間の副目標提示なし)"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w04-09",
+      "status": "open",
+      "severity": "P2",
+      "category": "ergonomics",
+      "element": ".trade-row (バーツ商館の商品行) 購入フロー",
+      "summary": "ショップの商品行は1タップで即時購入され確認・取り消し手段が一切ない (買い戻し導線は売却品のみ) ため、332x56pxの全幅行が23件並ぶスクロールリスト内の誤タップ1回で救急キット25バーツ等が無警告で消費される — 効果説明が省略表示のままタップ=購入なので「詳細を見ようとしたタップ」がそのまま課金操作になる",
+      "evidence": [
+        "p5-tourist-05-screen-shop.png (全幅の商品行が縦に連続、救急キットは効果文『…一時…』省略のまま購入対象)",
+        "metric: screens.tour[shop].closeAffordance に trade-row 332x56 が23件 (包帯〜誘導ミサイル/星鋼まで同一リスト)"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w04-10",
+      "status": "open",
+      "severity": "P2",
+      "category": "onboarding",
+      "element": "インベントリ装備欄 (武器スロット欠落) × ステータス画面装備グリッド",
+      "summary": "インベントリの装備欄は頭/胴/遺物1/遺物2/左手のみで武器スロットが存在しない一方、ステータス画面の装備グリッドには『武器 素手』が表示されるため、剣を6本所持した状態でも『どこで武器を装備するのか』をインベントリ画面から読み取れない (実際の装備経路はアイテム詳細の『ホットバーへ装備』ボタンだが、2画面で装備モデルの見え方が食い違う)",
+      "evidence": [
+        "p5-tourist-07-inventory-loaded.png (iron_sword 6本所持だが装備欄に武器枠がなく、頭/胴/遺物/左手は全て空きのまま)",
+        "p5-tourist-02-screen-stats.png (ステータス側の装備グリッドは『武器 ― 素手』枠を表示)"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w04-11",
+      "status": "open",
+      "severity": "P2",
+      "category": "ergonomics",
+      "element": ".pad-btn (オプション画面のコントローラ設定リバインドボタン)",
+      "summary": "オプション画面のコントローラ設定リバインドボタン (.pad-btn) に CSS 規則が一切存在せず、ブラウザ既定の無装飾ボタンとして 14x20px 程度で描画され、44px タップ基準を大幅に下回るうえ、同列の .kb-btn (キーボード設定) と視覚的に不整合で、リバインド待受中の .listening 状態のハイライトも効かない",
+      "evidence": [
+        "metric: wave-04 p5-tourist screens.tour[options].closeAffordance {id:'✕', w:14, h:20} — PAD_BTN_LABELS の ✕ (js/input.js:227) を表示する pad-btn が閉じるボタン走査に混入して実寸が露出",
+        "code: css/style.css を 'pad-btn' で grep して 0 件 — .kb-btn のみ css/style.css:182 『.kb-btn { min-width: 72px; padding: 8px 10px; … }』で装飾され、押下フィードバック共通セレクタ (css/style.css:10-15) にも .pad-btn は含まれない"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w04-12",
+      "status": "open",
+      "severity": "P2",
+      "category": "onboarding",
+      "element": "whiff toast × hint-pill 方角の不一致",
+      "summary": "空振りtoastとhint-pillが解決タイミング差で異なる方角を出し得る (移動後は正常)",
+      "evidence": [
+        "wave-4 UI修正エージェントの設計メモ"
       ],
       "dupes": 1
     }

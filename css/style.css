@@ -362,10 +362,18 @@ body.left-handed .abtn.missile { right: auto; left: 74px; }
 #boss-bar.enraged #boss-bar-track { border-color: #ff4a4a; box-shadow: 0 0 14px rgba(255,40,40,0.6); }
 #boss-bar.enraged #boss-bar-name { color: #ff8a7a; text-shadow: 0 2px 4px #000, 0 0 10px rgba(255,40,40,0.8); }
 @keyframes enragePulse { from { filter: brightness(1); } to { filter: brightness(1.4); } }
+/* 本体は pointer-events:none でタッチを透過し、移動ゾーン内でもジョイスティックを妨げない(w04-02)。
+   目標一覧の開閉入口は右端の › ボタン(#qt-open)だけに集約する */
 #quest-tracker { position: absolute; bottom: calc(94px + max(var(--ey,16px), env(safe-area-inset-bottom))); left: 50%; transform: translateX(-50%); z-index: 18;
   background: rgba(8,12,20,0.7); border: 1px solid #3a4a64; color: #ffe9a0; font-size: .8rem;
-  padding: 5px 14px; border-radius: 20px; max-width: 64vw; white-space: nowrap; overflow: hidden;
-  text-overflow: ellipsis; pointer-events: auto; cursor: pointer; }
+  padding: 5px 14px; border-radius: 20px; max-width: 64vw;
+  display: flex; align-items: center; gap: 6px; pointer-events: none; }
+#quest-text { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* › ボタン: 実体44px(タップ域)を負マージンで20pxのレイアウト枠に収め、視覚は::beforeの20px円だけ描く */
+#qt-open { flex: none; position: relative; width: 44px; height: 44px; margin: -12px; display: inline-flex; align-items: center; justify-content: center;
+  border: none; border-radius: 50%; background: none; color: #ffe9a0; font: inherit; font-size: .95rem;
+  line-height: 1; padding: 0; cursor: pointer; pointer-events: auto; }
+#qt-open::before { content: ''; position: absolute; inset: 12px; border-radius: 50%; background: rgba(255,255,255,0.1); z-index: -1; }
 #bounty-tracker { position: absolute; bottom: calc(124px + max(var(--ey,16px), env(safe-area-inset-bottom))); left: 50%; transform: translateX(-50%); z-index: 18;
   background: rgba(20,14,8,0.72); border: 1px solid #6a5224; color: #ffd86b; font-size: .8rem;
   padding: 5px 14px; border-radius: 20px; max-width: 64vw; white-space: nowrap; overflow: hidden;
@@ -425,12 +433,14 @@ body.left-handed .abtn.missile { right: auto; left: 74px; }
 @media (max-width: 560px) {
   /* スマホ: 目標/賞金首ピルは左下に寄せ、右下の扇状ボタン群(左端 = 100vw - 236px - 左右エッジ余白)に届かない幅で折り返し表示。
      進捗カウンタ(欠片 0/8 等)まで読めるよう nowrap をやめ最大4行で全文を出す */
-  #quest-tracker { left: calc(8px + max(var(--ex,10px), env(safe-area-inset-left))); transform: none; bottom: calc(96px + max(var(--ey,16px), env(safe-area-inset-bottom))); font-size: .7rem; padding: 5px 11px; max-width: calc(100vw - 262px);
-    white-space: normal; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; line-height: 1.35; border-radius: 12px; }
+  #quest-tracker { left: calc(8px + max(var(--ex,10px), env(safe-area-inset-left))); transform: none; bottom: calc(96px + max(var(--ey,16px), env(safe-area-inset-bottom))); font-size: .7rem; padding: 5px 11px; max-width: calc(100vw - 262px); line-height: 1.35; border-radius: 12px; }
+  #quest-text { white-space: normal; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; }
   #bounty-tracker { left: calc(8px + max(var(--ex,10px), env(safe-area-inset-left))); transform: none; bottom: calc(176px + max(var(--ey,16px), env(safe-area-inset-bottom))); font-size: .7rem; padding: 4px 11px; max-width: calc(100vw - 262px); }
   /* 左手モードはボタン群が左下へミラーされるため、左下のトラッカー/ヒントは右側へ退避(重なり回避) */
   body.left-handed #quest-tracker, body.left-handed #bounty-tracker, body.left-handed #hint-pill {
     left: auto; right: calc(8px + max(var(--ex,10px), env(safe-area-inset-right))); text-align: right; }
+  /* 左手モードはトラッカーが右下へ移るため、›ボタンは画面中央側(左端)へミラー */
+  body.left-handed #qt-open { order: -1; }
   .ending-box h1 { font-size: 1.3rem; }
 }
 /* 影世界モードの全体トーン */

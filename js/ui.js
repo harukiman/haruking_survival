@@ -138,7 +138,15 @@ Game.UI = (function () {
     var cda = document.getElementById('chest-deposit-all'); if (cda) cda.addEventListener('click', depositAll);
     document.getElementById('btn-close-lore').addEventListener('click', closeLore);
     document.getElementById('btn-close-quest').addEventListener('click', closeQuest);
-    el.questTracker.addEventListener('click', openQuest);
+    // トラッカー本体は pointer-events:none で移動ドラッグを透過する(w04-02)ため、開閉入口は右端の›ボタンに集約。
+    // refreshQuest は #quest-text の textContent しか書き換えないので、init で一度だけ appendChild すれば恒久
+    {
+      const qo = document.createElement('button');
+      qo.id = 'qt-open'; qo.type = 'button'; qo.setAttribute('aria-label', '目標一覧を開く');
+      qo.textContent = '›';
+      qo.addEventListener('click', openQuest);
+      el.questTracker.appendChild(qo);
+    }
     document.getElementById('btn-ending-continue').addEventListener('click', function () {
       el.endingScreen.classList.add('hidden'); Game.state.paused = false;
     });
@@ -1436,7 +1444,8 @@ Game.UI = (function () {
   // ui.js 管轄の localStorage キー(シード毎)で永続化する。
   const HINT_STEPS = [
     { icon: '🕹', text: '画面の左半分をなぞると移動できる', life: 20, done: function () { const p = Game.state.player, sp = Game.state.spawn, TS = Game.CFG.TILE_SIZE; if (!sp || sp.tx == null) return false; return Math.hypot(p.x - (sp.tx + 0.5) * TS, p.y - (sp.ty + 0.5) * TS) > 140; } },
-    { icon: '⛏', text: 'まず木を叩いて木材を集めよう', life: 40, done: function () { return Game.Inventory.count('wood') > 0; } },
+    // 木材ステップは表示時に最寄りの木の8方位を解決して常設誘導する(w04-01)。text関数は表示時のみ評価・毎tick走査禁止
+    { icon: '⛏', text: function () { let d = null; try { d = Game.Player.nearestTreeDir ? Game.Player.nearestTreeDir() : null; } catch (e) {} return d ? 'まず' + d + 'の方の木を叩いて木材を集めよう' : 'まず木を叩いて木材を集めよう'; }, life: 40, done: function () { return Game.Inventory.count('wood') > 0; } },
     { icon: '🔨', text: '「袋」を開いてクラフトで道具を作ろう', life: 45, done: function () { return Game.Achievements && Game.Achievements.has('first_craft'); } },
     { icon: '⚔️', text: '武器をホットバーで選び、敵に近づいて「攻撃」で戦う', life: 35, done: function () { const best = Game.state.bestiary || {}; for (const k in best) { const m = Game.MOBS[k]; if (m && m.hostile) return true; } return false; } },
     // ★核(光と影の二相渡り)を序盤で北極星として提示。影の欠片を集め始めると自動前進
@@ -1475,7 +1484,8 @@ Game.UI = (function () {
       (document.getElementById('app') || document.body).appendChild(hintPill);
     }
     const st = HINT_STEPS[hintIdx];
-    hintPill.innerHTML = '<span class="hp-ic">' + st.icon + '</span><span class="hp-tx">' + st.text + '</span><span class="hp-x">✕</span>';
+    let tx = st.text; if (typeof tx === 'function') { try { tx = tx(); } catch (e) { tx = ''; } } // 動的文言は表示時に一度だけ解決
+    hintPill.innerHTML = '<span class="hp-ic">' + st.icon + '</span><span class="hp-tx">' + tx + '</span><span class="hp-x">✕</span>';
     hintPill.classList.add('in');
     hintShownAt = Game.state.tick;
   }
