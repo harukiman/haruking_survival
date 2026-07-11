@@ -120,6 +120,9 @@ button { font-family: inherit; touch-action: manipulation; }
 .title-acc > :not(summary) { margin: 4px 13px 10px; }
 /* スタミナバー */
 .bar-fill.stamina { background: linear-gradient(90deg, #c9a23a, #ffe27a); }
+/* スタミナ切れ明滅(クラス付与は survival.js / input.js 側で #stamina-bar に行う) */
+.stamina-flash { animation: stamFlash .5s 2; }
+@keyframes stamFlash { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(2); } }
 .bar-fill.mana-fill { background: linear-gradient(90deg, #5a3ad0, #9f7aff); }
 /* ダッシュ/オプションボタン */
 .abtn.dash { background: rgba(200,160,60,0.82); border-color: #ffe27a; }
@@ -472,7 +475,8 @@ body.shadow-mode #app::after {
 .eq-nm { font-size: .66rem; color: #cdd8ea; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .inv-box h2 { font-size: 1.05rem; color: #cfe0f0; margin: 14px 0 8px; }
 .inv-box h2:first-child { margin-top: 0; }
-.x-btn { background: #33455e; border: none; color: #fff; width: 40px; height: 40px; border-radius: 10px; cursor: pointer; font-size: 1.05rem; flex: 0 0 auto; }
+/* 閉じる✕: 全パネル共通。モバイル最低タップ域44pxを常に満たす */
+.x-btn { background: #33455e; border: none; color: #fff; width: 44px; height: 44px; border-radius: 10px; cursor: pointer; font-size: 1.05rem; flex: 0 0 auto; }
 .grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 5px; }
 .grid .slot { touch-action: none; }
 /* インベントリ: 4行を1ページとし、5行目以降は横スクロールで切り替える(下に伸ばさない=説明が隠れない) */
@@ -651,9 +655,14 @@ body.desktop .abtn:hover, body.desktop .dbtn:hover { filter: brightness(1.18); }
 @keyframes ctxPop { 0% { opacity: 0; transform: translateX(-50%) translateY(7px); } 100% { opacity: 1; transform: translateX(-50%) translateY(0); } }
 
 /* ===== トースト ===== */
+/* 上部帯が接敵方向を隠さないよう、背景は半透明(背後のモブが透ける)＋高さは2行相当まで */
 #toast { position: absolute; bottom: 78px; left: 50%; transform: translateX(-50%) translateY(10px);
-  background: rgba(8,12,20,0.9); border: 1px solid #2c3a52; color: #fff; padding: 8px 16px;
-  border-radius: 10px; font-size: .9rem; opacity: 0; transition: opacity .2s, transform .2s; z-index: 30; pointer-events: none; }
+  background: rgba(8,12,20,0.72); border: 1px solid #2c3a52; color: #fff; padding: 8px 16px;
+  border-radius: 10px; font-size: .9rem; line-height: 1.4;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; /* 2行で省略(…) */
+  max-height: calc(2.8em + 18px); overflow: hidden;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.85);
+  opacity: 0; transition: opacity .2s, transform .2s; z-index: 30; pointer-events: none; }
 #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
 /* ===== スマホ最適化 ===== */
@@ -681,7 +690,6 @@ body.desktop .abtn:hover, body.desktop .dbtn:hover { filter: brightness(1.18); }
   .game-title .t-haru { font-size: 2.2rem; letter-spacing: 4px; }
   .game-title .t-surv { font-size: 1.3rem; letter-spacing: 9px; margin-left: 9px; }
   .inv-box { padding: 14px 12px; max-height: 92vh; }
-  .x-btn { width: 38px; height: 38px; }
   /* トースト: 左下の目標トラッカー/右下の扇状ボタンと物理的に重ならないよう、画面上部中央(ボスバー帯の直下)に表示 */
   #toast { top: calc(max(var(--et,8px), env(safe-area-inset-top)) + 218px); bottom: auto; font-size: .8rem; max-width: 88vw; left: 50%; transform: translateX(-50%) translateY(-8px); }
   #toast.show { transform: translateX(-50%) translateY(0); }
@@ -807,7 +815,8 @@ body.desktop .abtn:hover, body.desktop .dbtn:hover { filter: brightness(1.18); }
    本体は常に pointer-events:none でタッチを透過させ、左半分なぞり移動を一切妨げない(✕のみ操作可) */
 #hint-pill { position: fixed; left: calc(8px + max(var(--ex,10px), env(safe-area-inset-left))); bottom: calc(126px + max(var(--ey,16px), env(safe-area-inset-bottom)));
   z-index: 19; display: flex; align-items: center; gap: 7px; min-height: 44px; max-width: min(54vw, 340px); padding: 8px 12px;
-  border-radius: 22px; background: rgba(12,20,34,0.9); border: 1px solid #4a6a8e; color: #dfeaf8; font-size: .78rem;
+  border-radius: 22px; background: rgba(12,20,34,0.72); border: 1px solid #4a6a8e; color: #dfeaf8; font-size: .78rem;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.85); /* 背景を透かした分の可読性補償 */
   text-align: left; opacity: 0; transform: translateY(6px); transition: opacity .3s, transform .3s; pointer-events: none; }
 #hint-pill.in { opacity: 1; transform: none; }
 #hint-pill .hp-ic { font-size: 1.05rem; flex: none; }

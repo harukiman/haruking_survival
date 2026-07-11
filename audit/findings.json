@@ -16,6 +16,16 @@
       "ranAt": "2026-07-11T04:22:15.445Z",
       "note": "wave-1修正後の再検証。joystick 0/8→8/8, deadzone 8px, firstAction silent→false, stuck→false, tracker×action-btns重なり 1652→0px2。FPSは環境スロットル(headless rAF 30Hz)によりHEADでも30fps=コード非起因。以後FPSは同一実行内 baseline vs chaos の相対比較のみ有効",
       "fpsNote": "environment-throttled"
+    },
+    "02": {
+      "ranAt": "2026-07-11T04:41:05.718Z",
+      "confirmedNew": 9,
+      "regressions": 0,
+      "ledgerRecheck": "fixed11全resolved+w01-11/16副次解消, still-repro: w01-07/10/12"
+    },
+    "02f": {
+      "ranAt": "2026-07-11T05:05:11.432Z",
+      "note": "wave-2修正後統合検証: firstAction=木tip 28ms, stuck=false, 3分スタミナ100/100 (基線28), closeAffordance全44px, joystick 8/8維持, 戦闘中tip帯なし。pageErrorsはAudioContextノイズのみ(ハーネスで除外化)"
     }
   },
   "findings": [
@@ -156,7 +166,7 @@
     },
     {
       "id": "w01-07",
-      "status": "open",
+      "status": "fixed",
       "severity": "P1",
       "category": "onboarding",
       "element": "quest-tracker / spawn-viewport",
@@ -172,7 +182,8 @@
         "js/quests.js",
         "js/render.js"
       ],
-      "dupes": 1
+      "dupes": 1,
+      "fixedWave": "02"
     },
     {
       "id": "w01-08",
@@ -236,7 +247,7 @@
     },
     {
       "id": "w01-11",
-      "status": "open",
+      "status": "fixed",
       "severity": "P1",
       "category": "ergonomics",
       "element": "tip-toast × #btn-use / action-btns",
@@ -250,7 +261,9 @@
         "js/ui.js",
         "css/style.css"
       ],
-      "dupes": 1
+      "dupes": 1,
+      "fixedWave": "01",
+      "note": "wave-1のtoast上部退避で副次的に解消 (wave-02照合で確認)"
     },
     {
       "id": "w01-12",
@@ -335,7 +348,7 @@
     },
     {
       "id": "w01-16",
-      "status": "open",
+      "status": "fixed",
       "severity": "P1",
       "category": "hierarchy",
       "element": "#toast / #quest-tracker / hint-text stack (bottom-left)",
@@ -350,7 +363,9 @@
         "js/ui.js",
         "css/style.css"
       ],
-      "dupes": 1
+      "dupes": 1,
+      "fixedWave": "01",
+      "note": "wave-1のtoast上部退避で副次的に解消 (wave-02照合で確認)"
     },
     {
       "id": "w01-17",
@@ -751,6 +766,457 @@
       "suggested_fix": "デスクトップ media でも toast を上部または右下へ退避し、トラッカーとの物理的分離を全モードで統一",
       "files": [
         "css/style.css"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w02-01",
+      "status": "fixed",
+      "severity": "P1",
+      "category": "onboarding",
+      "element": "hint-pill テキスト (ui.js:1437-1438) + 素手採掘メッセージ",
+      "summary": "序盤ガイド2種 (「「採掘」ボタンで木や石を集めよう」と空振りtip「近くの木や岩に近づいて叩こう」) が素手では掘れない石を木と同列に提示するため、岩しか見えないビーチスポーンでは初手が必ず「ツルハシが必要だ」の行き止まりになり、さらにヒントの done 条件 (wood>0||stone>0) が満たせず wave-02r では3分間ヒントが滞留し続ける",
+      "evidence": [
+        "p1-firsttime-08-gameplay-3min-state.png (照準は岩、toast「ツルハシが必要だ（素手で石は掘れない）。木を集めて木のツルハシを作ろう」とヒント「採掘ボタンで木や石を集めよう」が同時表示)",
+        "wave-02r/shots/p1-firsttime-07-after-wander.png / -08 (視界に岩と水のみ、木ゼロ、同ヒントが3分後も滞留)",
+        "metric: firstAction.feedback.newToasts=「ツルハシが必要だ…」(wave-02) /「💡 近くの木や岩に近づいて叩こう」(wave-02r)"
+      ],
+      "suggested_fix": "js/ui.js:1438 — change text to 「まず木を叩いて木材を集めよう」 and done to Game.Inventory.count('wood')>0 only. js/player.js:24 — first_whiff tip to 「近くの木に近づいて叩こう」. js/player.js:616 — augment the pickaxe-required mineHint with direction to the nearest O.TREE (reuse the w01-07 arrow/guidance implementation), e.g. 「北の草地に木がある」. Optionally have startHints/advanceHint skip or reword the mining step when no tree is within视界 (nearest-tree scan already needed for the arrow).",
+      "files": [
+        "js/ui.js",
+        "js/player.js",
+        "js/quests.js"
+      ],
+      "dupes": 1,
+      "fixedWave": "02"
+    },
+    {
+      "id": "w02-02",
+      "status": "fixed",
+      "severity": "P1",
+      "category": "pacing",
+      "element": "仮想ジョイスティック押し込みラン (input.js:388 joyPush) × スタミナ経済",
+      "summary": "スティックを端まで倒すと自動ダッシュになる仕様 (jl>0.9) が初見の自然な大きめスワイプで常時発動し、最初の探索30秒程度でスタミナが両シードとも 0-1/100 まで枯渇 — 回避 (20必要) が封じられ移動も急減速するのに、押し込み=走るという仕組みはゲーム内のどこにも説明がない (dashTip はボタン経由のみ、遊び方ヘルプにも記載なし)",
+      "evidence": [
+        "p1-firsttime-07-after-wander.png (単純な4方向ドラッグ直後にスタミナ 1/100)",
+        "wave-02r/shots/p1-firsttime-07-after-wander.png (別シードで 0/100)",
+        "metric: fonts.gameplay #stamina-val 28/100 (wave-02) / 32/100 (wave-02r) — 3分時点でも半分未満"
+      ],
+      "suggested_fix": "js/input.js:388 — raise the joyPush threshold and add hysteresis (e.g. engage at jl > 0.97, release below 0.85; track a persistent joyPushOn flag next to dashLatch at js/input.js:11) so ordinary full-length swipes don't lock into dash. Same area: on the first frame joyPush engages, fire a one-time tip via Game.UI.toast (mirror the dashTipShown pattern at js/input.js:191), e.g. \"スティックを端まで倒すと走る（⚡スタミナ消費）\". Optionally in js/survival.js:83 stamina-depletion branch, also flash the #stamina-val bar (add a CSS class in css/style.css) so depletion is visible mid-combat.",
+      "files": [
+        "js/input.js",
+        "js/player.js",
+        "js/ui.js"
+      ],
+      "dupes": 1,
+      "fixedWave": "02"
+    },
+    {
+      "id": "w02-03",
+      "status": "fixed",
+      "severity": "P1",
+      "category": "hierarchy",
+      "element": "#toast (wave-1 モバイル上部新配置) × 夜戦バトルフィールド",
+      "summary": "wave-1 で toast を画面上部 (top: safe-area+218px, 中央寄せ, max-width 88vw) へ移動した結果、夜の混戦中に4行の長文チップ (グレイズ解説) が自機のすぐ上=北側からの接敵コリドーを不透明な帯で覆い、接近中のモブ複数を隠す — 章オーバーレイ (w01-18) と同時発火すると画面中央帯の約4割がテキストで埋まる",
+      "evidence": [
+        "p3-combat-01-night-chaos-start.png (💡グレイズtipが戦場中央上部を覆い、帯の縁・直下のモブと章タイトル『— 影の世界 —』に密接、自機は直下で25体湧き中)",
+        "metric: toast.spamRate last15s=5 (戦闘中も toast は高頻度で発火し続ける)",
+        "metric: setup.nightChaos.spawned=25"
+      ],
+      "suggested_fix": "js/ui.js:2503 — in tipOnce, add a combat gate (nearby-enemy or recent-damage flag from Game.state); when in combat, push long tips into a pending queue and flush after N seconds without combat (same mechanism satisfies open w01-11). css/style.css:686 — clamp the mobile top-anchored #toast to ~2 text lines (max-height + overflow handling or shorter tip copy) and lower background opacity (e.g. rgba(...,0.72)) so mob silhouettes remain visible behind it; alternatively suppress/queue toasts while the chapter overlay is active to avoid the double text band. audit/lib/probes.js:81 — add a play-area occlusion metric: intersect #toast (and other HUD boxes) with the projected player-centered band (player screen position ± N tiles) and report overlap px so this regression class is detected in future waves.",
+      "files": [
+        "js/ui.js",
+        "css/style.css"
+      ],
+      "dupes": 1,
+      "fixedWave": "02"
+    },
+    {
+      "id": "w02-04",
+      "status": "fixed",
+      "severity": "P1",
+      "category": "ergonomics",
+      "element": "#btn-close-inv / #btn-close-stats / #btn-close-options / #btn-close-trade (全パネル共通の閉じる✕)",
+      "summary": "全パネル(インベントリ/ステータス/オプション/ショップ)の閉じる✕が38x38pxでタップ基準44px未満のうえ、390x844の片手持ちで最も届きにくい右上隅(x=323, y=49)に固定されており、毎セッション何度も繰り返す「閉じる」操作のたびに持ち替えが必要になる",
+      "evidence": [
+        "metric: screens.tour[inventory].closeAffordance btn-close-inv w=38 h=38 (x=323,y=49)",
+        "metric: screens.tour[options].closeAffordance btn-close-options w=38 h=38 / screens.tour[shop] btn-close-trade w=38 h=38",
+        "metric: screens.tour[stats].tapTargets.violations #btn-close-stats 38x38 (x=323,y=122)"
+      ],
+      "suggested_fix": "css/style.css:684 の `.x-btn { width: 38px; height: 38px; }` を削除または 44px 化し、css/style.css:475 を width/height 44px (視覚サイズ維持なら position:relative + ::after { content:''; position:absolute; inset:-4px } でヒット域のみ拡張) に変更。加えて js/ui.js:127 付近 (btn-close-inv リスナー登録箇所) で el.invScreen / trade-screen / options 画面 / stats 画面それぞれに click リスナーを追加し `if (e.target === screenEl)` のとき対応する close 処理を呼ぶ backdrop dismiss を共通実装 (index.html:147/168/221/242 の .overlay 直タップ判定)。bigmap の下端閉じるバー方式 (実測65x56) の横展開も可。",
+      "files": [
+        "css/style.css",
+        "index.html",
+        "js/ui.js"
+      ],
+      "dupes": 1,
+      "fixedWave": "02"
+    },
+    {
+      "id": "w02-05",
+      "status": "fixed",
+      "severity": "P1",
+      "category": "ergonomics",
+      "element": ".x-btn (全パネル共通の閉じる✕: #btn-close-inv/#btn-close-stats/#btn-close-options/#btn-close-trade ほか10箇所)",
+      "summary": "モバイル(≤560px)で全モーダルパネルの閉じる✕ボタンが38x38pxに縮小され、44pxハード基準を全パネル一律で下回っている（毎セッション頻用のインベントリ閉鎖を含む）",
+      "evidence": [
+        "metric: p5-tourist screens.tour[inventory].violations #btn-close-inv 38x38 @(323,49)",
+        "metric: p5-tourist screens.tour[stats].violations #btn-close-stats 38x38 @(323,122)",
+        "metric: p5-tourist screens.tour[options].violations #btn-close-options 38x38 / closeAffordance w38 h38"
+      ],
+      "suggested_fix": "css/style.css:475 の .x-btn を width:44px; height:44px に引き上げ、css/style.css:684 のモバイル縮小オーバーライド `.x-btn { width: 38px; height: 38px; }` を削除 (または 44px に統一)。.x-btn は flex: 0 0 auto かつ inv-header が flex のためレイアウト崩れリスクは低い。修正後は audit/lib/harness.js の p5-tourist screens.tour を再実行し closeAffordance が 44x44 になること、560px 幅で inv-header の他ボタン (記憶回廊/整理) と重ならないことを確認。index.html の全10使用箇所に一括で効く。",
+      "files": [
+        "css/style.css:684",
+        "css/style.css:475",
+        "index.html:149"
+      ],
+      "dupes": 1,
+      "dupeOf": "w02-04",
+      "fixedWave": "02"
+    },
+    {
+      "id": "w02-06",
+      "status": "open",
+      "severity": "P2",
+      "category": "readability",
+      "element": "#quest-tracker (#quest-text)",
+      "summary": "w01-09 は fixed 扱いだがフォント面が未完了で、クエストトラッカーは wave-02 でも 11.2px (.7rem) のまま12pxハード基準を下回り続けている（重なり・省略は解消済みの残存違反）",
+      "evidence": [
+        "p4-progression-07-quest-06-gear.png (『光を継ぐ者：影/晶と鉄を炉で 影鋼/にし、影鋼の装備を/作る』— アイテム名 影晶 が行跨ぎ)",
+        "p4-progression-04-quest-03-mirror.png (『鏡を磨く：影の/欠片と鉄で 影鏡 を/作る（欠片 0/8）』)",
+        "p4-progression-10-quest-09-lore.png (『碑文を辿る：各/地の石碑を読み解く/（0/5）』)"
+      ],
+      "suggested_fix": "css/style.css:418 の @media(max-width:560px) 内 #quest-tracker の font-size: .7rem を .75rem (12px) 以上へ。同 media query 内 css/style.css:420 の #bounty-tracker も同じ .7rem 違反なので同時に引き上げる。2行〜4行クランプ (-webkit-line-clamp: 4) 済みのため高さ増は軽微だが、bottom: calc(96px+...) と #bounty-tracker (bottom: 176px) の縦間隔が詰まらないか確認。修正後 fonts.gameplay プローブで #quest-text >= 12px を再検証。",
+      "files": [
+        "js/ui.js",
+        "css/style.css",
+        "js/quests.js",
+        "css/style.css:418"
+      ],
+      "dupes": 2
+    },
+    {
+      "id": "w02-07",
+      "status": "fixed",
+      "severity": "P2",
+      "category": "hierarchy",
+      "element": "#hint-pill (bottom:300px 中段配置)",
+      "summary": "wave-1 でヒントピルを上退避した結果、ほぼ不透明 (rgba(12,20,34,0.9)) な最大 78vw 幅の帯がプレイフィールド中段左 (プレイヤーの真下、移動時の主視線方向) に常駐するようになり、ヒントが連鎖する序盤はゲーム内約 1 時間分 (07:55→08:49 の全 4 ショット) にわたり背後のタイル・接近するモブを隠し続ける",
+      "evidence": [
+        "p2-touch-01-gameplay-start.png / p2-touch-02-joystick-active.png / p2-touch-03-after-mash.png / p2-touch-04-left-handed.png (全ショットで y≈506 の中段にピルが常駐、プレイヤー y≈420 の直下帯を遮蔽)",
+        "css/style.css:810 `background: rgba(12,20,34,0.9)` (透過化後もほぼ不透明)",
+        "css/style.css:870 `bottom: calc(300px + ...)` で 844px 画面の垂直中央付近に配置"
+      ],
+      "suggested_fix": "css/style.css:810 — lower pill background alpha from rgba(12,20,34,0.9) to ~0.55 so terrain/mobs behind remain visible. css/style.css:870 — replace the mid-screen bottom:calc(300px+...) mobile placement with a top band below the HUD (e.g. top: calc(safe-area + 120px); left:50%; transform:translateX(-50%)), which w01-08's suggested_fix already recommended; the HUD-top area is clear in all p2/p4 screenshots. Additionally/alternatively, in js/input.js at joystick touchstart/touchend, toggle a body class (e.g. body.joy-active) and add `body.joy-active #hint-pill { opacity: .25; }` in css/style.css — same pattern as the existing dodge/stamina fade. Re-verify with audit/personas/p2-touch.js shots that the pill no longer intersects the player-adjacent tile band.",
+      "files": [
+        "css/style.css",
+        "js/input.js",
+        "js/ui.js"
+      ],
+      "dupes": 2,
+      "fixedWave": "02"
+    },
+    {
+      "id": "w02-08",
+      "status": "open",
+      "severity": "P2",
+      "category": "onboarding",
+      "element": "hint-pill 移動ヒント × 左手モード ジョイスティックゾーン",
+      "summary": "左手モードではジョイスティック受付が右半分 (clientX > innerWidth*0.45) に反転するのに、移動ヒントは常に「画面の左半分をなぞると移動できる」と表示され、左手モード利用者に誤った操作指示を出す — 指示通り左半分 (アクションボタン群が移動してきた側) をなぞっても移動できない",
+      "evidence": [
+        "js/input.js:118-119 `const lh = Game.Settings.get('leftHanded'); const inZone = lh ? (t.clientX > window.innerWidth * 0.45) : (t.clientX < window.innerWidth * 0.55);`",
+        "js/ui.js:1437 ヒント文字列 '画面の左半分をなぞると移動できる' が leftHanded 分岐なしの固定文言 (grep で唯一の出現箇所)",
+        "p2-touch-04-left-handed.png (左手モードで左下にアクションボタン群が展開し、左半分ドラッグ域が実質ボタンに置換されている)"
+      ],
+      "suggested_fix": "js/ui.js:1437 — make the first HINT_STEPS entry's text dynamic: either store text as a function and resolve it in advanceHint (js/ui.js:1476-1477 where hp-tx innerHTML is built), returning '画面の右半分をなぞると移動できる' when Game.Settings.get('leftHanded') is true. Additionally, in js/settings.js:28 (the root.classList.toggle('left-handed', ...) apply point) add a hook that re-renders the currently displayed hint pill's .hp-tx so a mid-hint toggle updates the wording.",
+      "files": [
+        "js/ui.js",
+        "js/input.js",
+        "js/settings.js"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w02-09",
+      "status": "open",
+      "severity": "P2",
+      "category": "ergonomics",
+      "element": "インベントリパネル操作群 (#btn-sort-inv / #btn-inv-story / #lo-save / #lo-apply / .inv-page-arrow / 固定ホットバー .slot 33px) + #btn-zoom との1pxギャップ",
+      "summary": "インベントリ画面内の操作ボタン27要素が44px未満（整理56x33・記憶回廊100x37・保存56x35・ページ矢印34x30・固定ホットバー枠33x33）で、さらにHUDのズームボタンと整理ボタンのギャップが1pxしかなく整理を押すつもりでズームを誤爆する",
+      "evidence": [
+        "metric: p5-tourist screens.tour[inventory].violations 27件 (#btn-sort-inv 56x33, #btn-inv-story 100x37, #lo-save 56x35, #lo-apply 132x35, .inv-page-arrow 34x30, .slot 33x33 x9)",
+        "metric: p5-tourist screens.tour[inventory].adjacency `#btn-zoom × #btn-sort-inv gap: 1`（inventory.loaded 再スキャンでも同値で再現）",
+        "code: css/style.css:456 `#btn-sort-inv { padding: 6px 14px; }`、css/style.css:494 `.inv-page-arrow { width: 34px; height: 30px; }`、css/style.css:490 `#inv-hotbar-fixed .slot { max-width: 46px; }`（9列圧縮で実測33px）"
+      ],
+      "suggested_fix": "css/style.css:456 #btn-sort-inv と #btn-inv-story(.map-btn) に min-height:44px、css/style.css:494付近 .inv-page-arrow を 44x40 以上へ、#lo-save/#lo-apply も min-height:44px (同ファイル .lo-arrow は既に 44x40 で整合)。css/style.css:490 #inv-hotbar-fixed はモバイルで 6列+横スクロール化 (css/style.css:484 #inv-grid .inv-page の @media repeat(6,1fr) と同形) で1枠44px確保。#btn-zoom の非表示追加 (css/style.css:882 の ui-overlay リスト) は誤爆防止としては不要 (overlay がヒットを遮断済み) だが、半透明背景越しに見えて紛らわしいため視覚ノイズ低減として追加してよい。",
+      "files": [
+        "css/style.css:456",
+        "css/style.css:494",
+        "css/style.css:490",
+        "css/style.css:882"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w02-10",
+      "status": "open",
+      "severity": "P2",
+      "category": "hierarchy",
+      "element": "toast / hint-pill / quest-tracker の同時3チャネル指示",
+      "summary": "操作開始3分時点の画面に「ツルハシが必要だ…」(上部toast)・「採掘ボタンで木や石を…」(中央hint)・「生きる糧：木を叩いて…」(左下tracker) の3つの指示テキストが別々の位置に同時表示され、内容も微妙に食い違うため初見がいまの正解を1つ選べない",
+      "evidence": [
+        "p1-firsttime-08-gameplay-3min-state.png (3指示が同一画面に並存)",
+        "wave-02r/shots/p1-firsttime-08-gameplay-3min-state.png (tip toast + hint + tracker の3枚並存)"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w02-11",
+      "status": "open",
+      "severity": "P2",
+      "category": "ergonomics",
+      "element": "cutscene スキップボタン (#cutscene-skip)",
+      "summary": "46.6秒の初回必見ムービー中に操作できる唯一の要素「スキップ▶」が画面右上角 (縦持ち親指弧の外) にあり、ルーブリックが禁じる上端角配置のまま章遷移ムービーごとに繰り返される",
+      "evidence": [
+        "p1-firsttime-02-cutscene-3s.png 〜 -05-cutscene-30s.png (スキップが常に右上角、他に操作要素なし)",
+        "metric: cutscene.watch.durationSec=46.611 (wave-02) / 46.58 (wave-02r), skipButtonSeen=true"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w02-12",
+      "status": "open",
+      "severity": "P2",
+      "category": "hierarchy",
+      "element": "#hint-pill 表示位置 (画面高さ約60%の中央左帯)",
+      "summary": "wave-1 で上退避した hint-pill がプレイフィールド中央帯 (プレイヤーのすぐ下、下方向の照準先) に常駐し、finding 1 の done 条件未達と重なると3分以上ワールドの帯状領域 (スポーン時は照準枠直下の2タイル分) を覆い続ける",
+      "evidence": [
+        "p1-firsttime-06-first-control.png (pill がプレイヤー/照準枠の直下タイルを被覆)",
+        "wave-02r/shots/p1-firsttime-07-after-wander.png (照準枠 y≈815 の直下 y≈1012 に pill、下方の視界を分断)"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w02-13",
+      "status": "open",
+      "severity": "P2",
+      "category": "ergonomics",
+      "element": "#btn-place (使う/設置) × 選択中の食料",
+      "summary": "食料ゲージ 96/100 のほぼ満腹状態でも「使う/設置」の 1 タップでりんごが即時消費される (確認・長押し・満腹ガードなし) — 使う/設置は攻撃ボタン採掘と同じ扇状クラスタ内で隣接しており、混戦中の誤タップ 1 回が貴重な食料をほぼ無駄に (回復量の大半がオーバーフロー) 消滅させる",
+      "evidence": [
+        "p2-touch-02-joystick-active.png (食料 96/100, ホットバーりんご x3)",
+        "p2-touch-03-after-mash.png (食料 99/100, りんご x2 — buttons.tapResponse の btn-place 1 タップで消費され +3 しか回復していない)"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w02-14",
+      "status": "open",
+      "severity": "P2",
+      "category": "ergonomics",
+      "element": "#hint-pill .hp-x (48px 拡張タップ判定) × 移動ドラッグゾーン",
+      "summary": "ヒントピルの ✕ ボタンは約 48px 四方のタップ判定 (::after inset:-11px) を持つ pointer-events:auto 要素として画面中段 (bottom≈300px, y≈500 前後) に浮いており、左手モードの移動ゾーン (x>175) 内 — 短文ヒントでは通常モードのゾーン (x<214) 内にも — 位置するため、そこから始まる移動ドラッグは canvas の touchstart に届かずジョイスティックが発動しない上、指を離すと click でヒントが意図せず前進/消滅する",
+      "evidence": [
+        "css/style.css:815-819 `.hp-x` 26px + `::after { inset: -11px }` で判定 ~48px、style.css:817 `#hint-pill.in .hp-x { pointer-events: auto; }`",
+        "css/style.css:870 `#hint-pill { bottom: calc(300px + ...); }` によりピルが画面中段に常駐"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w02-15",
+      "status": "open",
+      "severity": "P2",
+      "category": "feedback",
+      "element": "グレイズ float (Render.spawnFloat)",
+      "summary": "グレイズが連続成立すると『グレイズ』float が y 固定 (-18)・x±7px のみのオフセットで同位置に多重スポーンし、自機頭上で『ググレイズ』のような判読不能の合字になる — 報酬演出がノイズ化し、繰り返し演出は控えめにする方針にも反する",
+      "evidence": [
+        "p3-combat-01-night-chaos-start.png (自機頭上に『ググレイズ』と読める多重描画)",
+        "js/projectiles.js:380 『spawnFloat(pl.x + (Math.random()-0.5)*14, pl.y - 18, 'グレイズ', ...)』 (throttle は tick%2 のみで、隣接フレームの float が同一 y に重なる)"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w02-16",
+      "status": "open",
+      "severity": "P2",
+      "category": "readability",
+      "element": "赤照準タイル枠 vs 近接オートターゲット",
+      "summary": "近接戦闘中、採掘用の赤照準枠は向きベースの空タイルに残る一方、実際の攻撃は前方180°+至近14px の最近傍敵に自動命中するため、画面上の『ターゲット表示』と実際の攻撃対象が矛盾し、密着戦で誰を攻撃しているのか読めない — w01-12 (採掘ラベル) と相乗して『攻撃できない』誤解を強める",
+      "evidence": [
+        "p3-combat-02-night-chaos-mid.png (敵が右に密着し -4 が出ているのに赤枠は左下の空タイル)",
+        "p3-combat-03-combat-close.png (敵が左に密着、赤枠は右の空タイル上)"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w02-17",
+      "status": "open",
+      "severity": "P2",
+      "category": "feedback",
+      "element": "状態異常 (感染/出血) の戦闘中表示 — #status-row / #toast",
+      "summary": "混戦中に付与された感染・出血の告知が、単一スロット toast (直後の実績・戦利品 toast で即上書き) と左上の約24pxアイコンのみで、自機や画面中央に持続的な視覚シグナルが無く、DoT で HP が減り続ける理由を戦闘中に把握できない",
+      "evidence": [
+        "metric: toast.spamRate.sample = [夜告知, 感染状態になった, 出血状態になった, 実績, 入手] — 状態異常2件が15秒内の後続 toast に即座に置き換えられている",
+        "p3-combat-02-night-chaos-mid.png (感染中だが左上の小さな🦠アイコンのみで、被弾中の自機周辺に状態異常の視覚表現が見えない)"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w02-18",
+      "status": "open",
+      "severity": "P2",
+      "category": "feedback",
+      "element": "quest-celebration (spawnFloat + #toast) 連鎖達成時",
+      "summary": "複数クエストが近接して達成されると『目標達成』フロートがほぼ同座標に重畳して黄金文字が判読不能なグリフ塊になり、単一 #toast は上書きされるため中間クエストの達成通知が消失する",
+      "evidence": [
+        "p4-progression-04-quest-03-mirror.png / p4-progression-05-quest-04-shift.png / p4-progression-06-quest-05-crystal.png / p4-progression-09-quest-08-boss.png (『目標達成』が2枚重畳し文字が潰れて判読不能)",
+        "code: js/quests.js update() の while(true) ループは同一 tick で複数クエストを連鎖達成させ celebrate() を連続呼出し (素材先取りプレイで実発生: 剣を先にクラフト→gather達成瞬間にtoolも達成)"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w02-19",
+      "status": "open",
+      "severity": "P2",
+      "category": "feedback",
+      "element": "#quest-tracker クエスト遷移 (新目標提示)",
+      "summary": "クエスト達成の瞬間、上部トーストと中央フロートは両方とも旧クエスト名のみを示し、新しい目標は左下の小さなトラッカー文字が無演出で差し替わるだけなので、11回の遷移すべてで次にやることへの注意誘導がゼロ",
+      "evidence": [
+        "p4-progression-02-quest-01-tool.png 〜 p4-progression-11-quest-final-state.png (トースト『目標達成: <旧名>』+ フロート『目標達成』のみで、新目標はトラッカーの静的テキスト差し替え)",
+        "code: js/ui.js:2332-2341 refreshQuest は el.questText.textContent 代入のみで、ハイライト/パルス等の遷移演出クラスを一切付与しない (w01-13 fix のオプション部は未実装)"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w02-20",
+      "status": "open",
+      "severity": "P2",
+      "category": "ergonomics",
+      "element": "#btn-zoom × #btn-sort-inv (インベントリヘッダ)",
+      "summary": "インベントリ画面でヘッダの「整理」ボタン(56x33px、これ自体44px未満)と隣接する#btn-zoomのギャップが1pxしかなく、整理を狙ったタップがズーム誤発動する誤爆リスクが高い",
+      "evidence": [
+        "metric: screens.tour[inventory].tapTargets.adjacency {a:'#btn-zoom', b:'#btn-sort-inv', gap:1}",
+        "metric: screens.tour[inventory].tapTargets.violations #btn-sort-inv 56x33 (x=259,y=51)"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w02-21",
+      "status": "open",
+      "severity": "P2",
+      "category": "feedback",
+      "element": "quest celebration float + #toast (ロード直後)",
+      "summary": "セーブをロードすると再導出で複数クエストが同時達成扱いになり、中央の「目標達成」フロートが2枚重なって「目目標達成」と文字化けして見え、単一スロットのtoastも片方の達成名(道具を手に)しか表示せずもう一方が無通知で消える",
+      "evidence": [
+        "p5-tourist-08-after-load.png (中央フロートが『目目標達成』と二重描画、toastは『目標達成: 道具を手に』のみ)",
+        "metric: save.roundtrip.diffs questIndex before=0 after=2 (ロード直後に2段同時前進)"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w02-22",
+      "status": "open",
+      "severity": "P2",
+      "category": "readability",
+      "element": "shop .tr-eff (商品効果テキスト)",
+      "summary": "ショップの購入判断に必要な効果説明が10.9pxと最小基準未満で、救急キット等は「…火傷を治す / 一時…」と省略されて効果全文を確認する手段がないまま25バーツの購入判断を迫られる",
+      "evidence": [
+        "metric: screens.tour[shop].fonts.violations .tr-eff fontPx=10.9 'HP+8 / 出血を治す'",
+        "p5-tourist-05-screen-shop.png (救急キット行が『HP+40 / 毒・感染・出血・火傷を治す / 一時…』で切詰め)"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w02-23",
+      "status": "open",
+      "severity": "P2",
+      "category": "ergonomics",
+      "element": "options パネル下端の .opt-toggle / .opt-slider",
+      "summary": "オプション画面の下端トグル(y=837, h=36)が844px viewportの外まで食み出してホームインジケータのジェスチャ域に食い込み、ラベルも「スティック感/度」「カーソル感度/(パッド)」と語中で不自然に折り返している",
+      "evidence": [
+        "metric: screens.tour[options].tapTargets.violations .opt-toggle.on x=295 y=837 w=66 h=36 (下端873px > viewport 844px)",
+        "p5-tourist-04-screen-options.png (最下行『スティック追従(指を追う)』のONトグルが画面端で見切れ、『スティック感/度』が語中折返し)"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w02-24",
+      "status": "open",
+      "severity": "P2",
+      "category": "hierarchy",
+      "element": "#toast (新・上部配置) × story chapter overlay (夜)",
+      "summary": "上部退避後のtoastが夜の章演出と同じ画面中央カラムに落ち、日没時はtoast(4行)+章タイトル「— 影の世界 —」+フレーバー2行の計4ブロックのテキストが縦一列にプレイフィールドを占拠して、暗闇の索敵が数秒間テキスト越しになる",
+      "evidence": [
+        "p5-tourist-06-night-hud.png (toast『夜——鏡の向こうに…』の直下に章タイトルとフレーバー2行が同時表示、右奥のモブ影がtoast帯に部分的に隠れる)",
+        "metric: night.readability (同時刻20:25-20:26に .hp-tx とtoastが併存)"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w02-25",
+      "status": "open",
+      "severity": "P2",
+      "category": "ergonomics",
+      "element": ".opt-slider (オプション画面の全スライダー7本)",
+      "summary": "オプション画面のBGM/SFX音量・明るさ・ボタンサイズ/透明度・スティック感度・パッドカーソル速度の全スライダーがタップ高さ26pxしかなく、スマホの指ではつまみのドラッグ開始が困難",
+      "evidence": [
+        "metric: p5-tourist screens.tour[options].violations .opt-slider 169x26 が7件 @(192,136)〜(192,728)",
+        "code: css/style.css:174 `.opt-slider { flex: 1.1; min-width: 100px; accent-color: #5a8fd6; height: 26px; }`"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w02-26",
+      "status": "open",
+      "severity": "P2",
+      "category": "ergonomics",
+      "element": ".craft-tab (ステータス画面タブ: ステータス/スキル/図鑑/実績)",
+      "summary": "ステータス画面の4タブが高さ34pxで44px基準未満、かつ隣接ギャップ4-6pxで、スキル振り・図鑑確認のたびにタブの押し分けを誤りやすい",
+      "evidence": [
+        "metric: p5-tourist screens.tour[stats].violations .craft-tab 101x34 / 71x34 / 64x34 / 64x34",
+        "metric: p5-tourist screens.tour[stats].adjacency .craft-tab gap 4-6px x3"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w02-27",
+      "status": "open",
+      "severity": "P2",
+      "category": "readability",
+      "element": "インベントリ装備欄ラベル (.eq-lbl / .eq-nm) と ホットバー見出し (.inv-hb-label)",
+      "summary": "インベントリの装備スロットラベル（武器/遺物1等）が9.9px・装備名が10.6px・『ホットバー（横スクロールしても固定）』見出しが11.2pxと、パネル内テキスト3種が12pxハード基準を下回る",
+      "evidence": [
+        "metric: p5-tourist screens.tour[inventory].fonts.violations `.eq-lbl fontPx=9.9 (遺物1)` / `.eq-nm fontPx=10.6 (空き)` / `.inv-hb-label fontPx=11.2` x2",
+        "code: css/style.css:469 `.eq-lbl { font-size: .62rem; }`、css/style.css:472 `.eq-nm { font-size: .66rem; }`、css/style.css:486 `.inv-hb-label { font-size: .7rem; }`"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w02-28",
+      "status": "open",
+      "severity": "P2",
+      "category": "readability",
+      "element": "ショップ商品効果テキスト (.tr-eff) と説明/カテゴリ (.trade-sub / .trade-cat)",
+      "summary": "ショップで購入判断の根拠になる効果説明行（『HP+8 / 出血を治す』等）が10.9pxで12px基準未満、カテゴリ見出しと説明文も11.8pxで、バーツ消費の意思決定情報が最も読みにくい層に置かれている",
+      "evidence": [
+        "metric: p5-tourist screens.tour[shop].fonts.violations `.tr-eff fontPx=10.9 (HP+8 / 出血を治す)` / `.trade-sub fontPx=11.8` / `.trade-cat fontPx=11.8`",
+        "code: css/style.css:542 `.trade-row .tr-eff { font-size: .68rem; ... ellipsis }`、css/style.css:530-531 `.trade-sub / .trade-cat { font-size: .74rem; }`"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w02-29",
+      "status": "open",
+      "severity": "P2",
+      "category": "pacing",
+      "element": "tipOnce 戦闘保留キュー",
+      "summary": "戦闘文脈のtip (グレイズ解説等) も戦闘終了3秒後まで遅延するため「今の出来事」前提の文言が文脈とズレる可能性",
+      "evidence": [
+        "wave-2 UI修正エージェントの設計メモ"
+      ],
+      "suggested_fix": "戦闘文脈tipは短文化して即時表示を許可するか、文言を事後説明形に調整",
+      "files": [
+        "js/ui.js"
       ],
       "dupes": 1
     }

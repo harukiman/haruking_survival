@@ -23,8 +23,10 @@ async function launch() {
   const page = await browser.newPage();
   await page.setViewport(VIEWPORT);
   const errors = [];
-  page.on('pageerror', e => errors.push({ type: 'pageerror', msg: String(e.message), t: Date.now() }));
-  page.on('console', m => { if (m.type() === 'error') errors.push({ type: 'console.error', msg: m.text(), t: Date.now() }); });
+  // headless 環境の AudioContext ノイズは既知 (実機無関係) のため除外
+  const envNoise = /AudioContext encountered an error/;
+  page.on('pageerror', e => { if (!envNoise.test(e.message)) errors.push({ type: 'pageerror', msg: String(e.message), t: Date.now() }); });
+  page.on('console', m => { if (m.type() === 'error' && !envNoise.test(m.text())) errors.push({ type: 'console.error', msg: m.text(), t: Date.now() }); });
   const cdp = await page.target().createCDPSession();
   return { browser, page, errors, cdp };
 }

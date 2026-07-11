@@ -21,7 +21,7 @@ Game.Player = (function () {
     // 初回のみ誘導ヒント。tipOnce と同じ once 記憶(_tips)を共有しつつ、表示は export された
     // Game.UI.toast を経由する(tipOnce 内部の toast 直呼びはモジュール外の計測/差し替えに掛からないため)
     const tips = Game.state._tips || (Game.state._tips = {});
-    if (!tips.first_whiff) { tips.first_whiff = 1; Game.UI.toast('💡 近くの木や岩に近づいて叩こう'); }
+    if (!tips.first_whiff) { tips.first_whiff = 1; Game.UI.toast('💡 近くの木に近づいて叩こう'); }
   }
 
   // 掘れない対象へのヒント: tick%N 同期だと短いタップ(3-4tick)が窓を外して完全無音になるため、
@@ -32,6 +32,28 @@ Game.Player = (function () {
     if (now - mineHintT < 30) return;
     mineHintT = now;
     Game.UI.toast(msg);
+  }
+
+  // 最寄りの木の8方位: 素手で石を叩いた行き止まりからツルハシ素材(木)へ誘導する(w01-07/w02-01)。
+  // Discovery.scan と同じ objAt 走査だが、Chebyshev環を内側から広げて最初に見つけた環で打ち切る。
+  // toast発火時のみ呼ぶこと(毎tick走査禁止)。見つからなければ null(=従来文言のまま)
+  const DIR8_JA = ['東', '南東', '南', '南西', '西', '北西', '北', '北東']; // atan2(dy,dx)/45°のインデックス順(画面上=北)
+  function nearestTreeDir() {
+    const pt = playerTile(), TREE = Game.OBJ.TREE;
+    const at = function (dx, dy) { return Game.World.objAt(pt.tx + dx, pt.ty + dy) === TREE; };
+    for (let r = 1; r <= 40; r++) {
+      for (let i = -r; i <= r; i++) {
+        let dx = null, dy = null;
+        if (at(i, -r)) { dx = i; dy = -r; }         // 上辺
+        else if (at(i, r)) { dx = i; dy = r; }      // 下辺
+        else if (i > -r && i < r) {                  // 左右辺(角は上下辺で走査済み)
+          if (at(-r, i)) { dx = -r; dy = i; }
+          else if (at(r, i)) { dx = r; dy = i; }
+        }
+        if (dx !== null) return DIR8_JA[((Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) % 8) + 8) % 8];
+      }
+    }
+    return null;
   }
 
   // 回避拒否フィードバック: スタミナ不足/CD中の回避入力に乾いた不発音+ボタン振動で応える(w01-04)。
@@ -613,7 +635,14 @@ Game.Player = (function () {
     const selT = Game.Inventory.selectedItemDef();
     if (meta.tool === 'pickaxe' && !(selT && selT.tool === 'pickaxe')) {
       mining.active = false; mining.progress = 0;
-      mineHint('ツルハシが必要だ（素手で石は掘れない）。木を集めて木のツルハシを作ろう');
+      // 岩しか見えないスポーンでの行き止まり対策: 最寄りの木の方角を添える(w02-01)。
+      // 木の走査はtoastが実際に出る時だけ(mineHintのthrottleと同条件を先に判定)
+      let msg = 'ツルハシが必要だ（素手で石は掘れない）。木を集めて木のツルハシを作ろう';
+      if (Game.state.tick - mineHintT >= 30) {
+        const d8 = nearestTreeDir();
+        if (d8) msg = 'ツルハシが必要だ（素手で石は掘れない）。まずは' + d8 + 'の方の木を叩こう';
+      }
+      mineHint(msg);
       return;
     }
     const tierUsed = toolTierFor(meta.tool);

@@ -7,6 +7,20 @@ Game.Survival = (function () {
   let sanWarn1 = false, sanWarn2 = false, sanCued = false;
   let wasWellfed = false, wellfedToasted = false;
   let hungerCritCued = false;
+  let stamFlashT = -999; // スタミナ枯渇フラッシュのthrottle(tick)
+
+  // スタミナ枯渇の視覚合図: ⚡バーを一瞬光らせる(.stamina-flash はCSS側定義)。
+  // トーストは視線が中央に無いと読まれないため、枯渇の原因表示であるバー自体を光らせる(w02-02)
+  function staminaFlash() {
+    const now = Game.state.tick;
+    if (now - stamFlashT < 60) return; // 約2秒throttle(連発防止)
+    stamFlashT = now;
+    const bar = document.getElementById('stamina-bar');
+    if (!bar) return;
+    const els = [bar]; const wrap = bar.closest && bar.closest('.bar-wrap'); if (wrap) els.push(wrap);
+    els.forEach(function (el) { el.classList.remove('stamina-flash'); void el.offsetWidth; el.classList.add('stamina-flash'); }); // reflowでCSSアニメを毎回リスタート
+    setTimeout(function () { els.forEach(function (el) { el.classList.remove('stamina-flash'); }); }, 700);
+  }
 
   function update() {
     // 低HPの心拍音: HP25%未満で約1.6秒毎にドクン(設定 lowHpWarn がOFFなら鳴らさない)
@@ -82,6 +96,7 @@ Game.Survival = (function () {
       stamWarned = true;
       Game.UI.toast('💨 息が切れた… 少し歩みを緩めて呼吸を整えよう');
       if (!stamCued && Game.Audio) { stamCued = true; Game.Audio.play('lowhp'); }
+      staminaFlash();
     } else if (p.stamina > 45 && stamWarned) { stamWarned = false; }
 
     // 満腹(wellfed)になった瞬間の快調フィードバック(初回は盛大・以降は控えめな輝きのみ)

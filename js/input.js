@@ -5,10 +5,12 @@ Game.Input = (function () {
   const keys = {};
   const mouse = { x: 0, y: 0, down: false, inside: false, moved: false };
   const touch = { up: false, down: false, left: false, right: false, mine: false, dash: false };
-  const joy = { active: false, id: null, ox: 0, oy: 0, dx: 0, dy: 0 }; // フローティング仮想スティック
+  const joy = { active: false, id: null, ox: 0, oy: 0, dx: 0, dy: 0, osT: -999 }; // フローティング仮想スティック(osT=外向き押し込みを検知した最終tick)
   const joySm = { x: 0, y: 0 };      // スティック出力の平滑化（方向のガタつき防止）
   let dashLatch = false;             // 走るボタン: 短タップでON/OFF固定（押しっぱ不要）
   let dashDownT = 0, dashLatchIdle = 0, dashTipShown = false;
+  let joyPushOn = false, joyPushTipShown = false; // 押し込みラン状態(ヒステリシス)＋初回説明の一度きりフラグ
+  let joyPinT = 0;                   // スティックが端(>0.97)に張り付いている連続tick数(押し込みラン発動の前提条件)
   let placeQueued = false;   // 設置エッジ
   let useQueued = false;     // 開く/使うエッジ
   let shiftBtnShown = null;  // 影渡りボタンの表示状態キャッシュ(影鏡所持時のみ表示)
@@ -130,6 +132,9 @@ Game.Input = (function () {
           const t = e.changedTouches[i];
           if (t.identifier !== joy.id) continue;
           let dx = t.clientX - joy.ox, dy = t.clientY - joy.oy; let len = Math.hypot(dx, dy);
+          // 外向きの明確な押し込み(1イベントで縁を6px以上超える)を記録 → poll側の押し込みラン判定に使う。
+          // 縁沿いの操舵や通常スワイプの通過は超過量が小さく、ここには掛からない
+          if (len - JR > 6 && Game.state) joy.osT = Game.state.tick;
           // 追従式: 半径を超えた分だけ原点を指へ引きずる → 反転入力が即応する
           if (len > JR && (!Game.Settings || Game.Settings.get('joyFollow') !== false)) {
             const k = (len - JR) / len;
@@ -385,13 +390,23 @@ Game.Input = (function () {
     let jx = 0, jy = 0, joyPush = false;
     if (joy.active) {
       const jl = Math.hypot(joy.dx, joy.dy), DZ = 0.14;
-      joyPush = jl > 0.9; // スティックを端まで倒す=走る(押し込みラン。ボタン不要でスマホの動詞を削減)
+      // スティックを端まで倒し「さらに押し込む」=走る(押し込みラン。ボタン不要でスマホの動詞を削減)。
+      // 追従式スティックは普通の大きめスワイプでも倒し量が1.0に張り付くため、位置閾値だけでは
+      // 無自覚に走り続けてスタミナが枯渇する(w02-02)。発動は「端(>0.97)に0.5秒張り付いた後の
+      // 明確な外向き押し込み(touchmoveのosT)」を要求し、解除は0.85のヒステリシス＝走行の維持は楽に
+      if (jl > 0.97) joyPinT++; else joyPinT = 0;
+      if (joyPushOn) { if (jl < 0.85) joyPushOn = false; }
+      else if (joyPinT > 15 && Game.state && Game.state.tick - joy.osT <= 3) {
+        joyPushOn = true;
+        if (!joyPushTipShown && Game.UI) { joyPushTipShown = true; Game.UI.toast('スティックを端まで倒し、さらに押し込むと走る（⚡スタミナ消費）'); }
+      }
+      joyPush = joyPushOn;
       if (jl > DZ) {
         const g = Math.min(1, (jl - DZ) / (1 - DZ));
         const sn = (Game.Settings ? Game.Settings.get('joySens') : 100) / 100;
         jx = (joy.dx / jl) * g * sn; jy = (joy.dy / jl) * g * sn;
       }
-    }
+    } else { joyPushOn = false; joyPinT = 0; } // 指を離したら押し込みランも解除(次のタッチへ持ち越さない)
     if (jx === 0 && jy === 0) { joySm.x = 0; joySm.y = 0; } // 離した瞬間は即停止（滑り防止）
     else { joySm.x += (jx - joySm.x) * 0.55; joySm.y += (jy - joySm.y) * 0.55; }
     dx += joySm.x; dy += joySm.y;

@@ -1426,6 +1426,7 @@ Game.UI = (function () {
     // 低頻度の見守り処理をここに相乗り(0.5秒周期・非ポーズ時のみ呼ばれる)
     statusTicks++;
     hintTick();
+    tipQueueTick();
     if (statusTicks % 4 === 0) craftableTick(); // 約2秒ごと
   }
 
@@ -1435,7 +1436,7 @@ Game.UI = (function () {
   // ui.js 管轄の localStorage キー(シード毎)で永続化する。
   const HINT_STEPS = [
     { icon: '🕹', text: '画面の左半分をなぞると移動できる', life: 20, done: function () { const p = Game.state.player, sp = Game.state.spawn, TS = Game.CFG.TILE_SIZE; if (!sp || sp.tx == null) return false; return Math.hypot(p.x - (sp.tx + 0.5) * TS, p.y - (sp.ty + 0.5) * TS) > 140; } },
-    { icon: '⛏', text: '「採掘」ボタンで木や石を集めよう', life: 40, done: function () { return Game.Inventory.count('wood') > 0 || Game.Inventory.count('stone') > 0; } },
+    { icon: '⛏', text: 'まず木を叩いて木材を集めよう', life: 40, done: function () { return Game.Inventory.count('wood') > 0; } },
     { icon: '🔨', text: '「袋」を開いてクラフトで道具を作ろう', life: 45, done: function () { return Game.Achievements && Game.Achievements.has('first_craft'); } },
     { icon: '⚔️', text: '武器をホットバーで選び、敵に近づいて「攻撃」で戦う', life: 35, done: function () { const best = Game.state.bestiary || {}; for (const k in best) { const m = Game.MOBS[k]; if (m && m.hostile) return true; } return false; } },
     // ★核(光と影の二相渡り)を序盤で北極星として提示。影の欠片を集め始めると自動前進
@@ -2499,12 +2500,36 @@ Game.UI = (function () {
     richToast(ic + '<b style="color:' + col + '">' + esc(name) + '</b><span class="tst-r" style="color:' + col + '">' + esc(rname) + '</span>', 'tst-rare r' + idx, 1900);
     return true;
   }
-  // 一度きりのチュートリアル的ヒント(新システムの発見性を高める)。keyごとに初回のみ表示
+  // 一度きりのチュートリアル的ヒント(新システムの発見性を高める)。keyごとに初回のみ表示。
+  // 戦闘中(近傍に敵 or 被弾直後)は上部トースト帯が接敵方向を覆うため保留キューに積み、
+  // 接敵が約3秒途切れてから1件ずつ流す。_tips 記録は積んだ時点で行い重複投入を防ぐ。
+  // 短い達成系トースト(toast 直呼び)は従来どおり即時表示。
+  const tipQ = [];
+  let tipCalmAt = 0, tipNextAt = 0;
+  function tipInCombat() {
+    const st = Game.state; if (!st || !st.player) return false;
+    const p = st.player;
+    if ((p.invuln || 0) > 0) return true; // 被弾直後/回避中
+    const mobs = st.mobs || [];
+    for (let i = 0; i < mobs.length; i++) {
+      const m = mobs[i];
+      if (m && m.def && m.def.hostile && Math.hypot(m.x - p.x, m.y - p.y) < 200) return true;
+    }
+    return false;
+  }
+  function tipQueueTick() { // refreshStatus に相乗り(約0.5秒周期・非ポーズ時)
+    const now = Date.now();
+    if (tipInCombat()) { tipCalmAt = now + 3000; return; }
+    if (!tipQ.length || now < tipCalmAt || now < tipNextAt) return;
+    toast('💡 ' + tipQ.shift());
+    tipNextAt = now + 2400; // 連続放出せず1件ずつ読める間隔で
+  }
   function tipOnce(key, msg) {
     if (!Game.state) return;
     if (!Game.state._tips) Game.state._tips = {};
     if (Game.state._tips[key]) return;
     Game.state._tips[key] = 1;
+    if (tipInCombat()) { tipQ.push(msg); return; }
     toast('💡 ' + msg);
   }
   function toast(msg) {
