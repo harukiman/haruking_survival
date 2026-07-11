@@ -52,6 +52,17 @@
       "confirmedNew": 1,
       "regressions": 0,
       "note": "新規P1×1 (トラッカー縦塔) を同波内で修正・検証済 (overflow 0/10, fromTracker works)。P2×2も同時修正。dry未達 (P1>0)"
+    },
+    "06": {
+      "ranAt": "2026-07-11T07:01:23.606Z",
+      "confirmedNew": 1,
+      "newP0P1": 0,
+      "regressions": 0,
+      "note": "★dry 1/2 達成 — 新規P0/P1ゼロ。確定P2×1は即修正。P2ポリッシュフェーズ移行"
+    },
+    "06f": {
+      "ranAt": "2026-07-11T07:27:29.334Z",
+      "note": "P2ポリッシュ統合検証: 名詞行跨ぎ0/凡例色+形分離/敵HPバー所有者明示/採掘押下感/autosave移設/LHピル。全ペルソナ緑"
     }
   },
   "findings": [
@@ -1817,7 +1828,7 @@
     },
     {
       "id": "w05-03",
-      "status": "open",
+      "status": "fixed",
       "severity": "P2",
       "category": "feedback",
       "element": "敵HPバー (密着戦の描画位置)",
@@ -1830,11 +1841,12 @@
         "js/mobs.js",
         "js/render.js"
       ],
-      "dupes": 1
+      "dupes": 1,
+      "fixedWave": "06"
     },
     {
       "id": "w05-04",
-      "status": "open",
+      "status": "fixed",
       "severity": "P2",
       "category": "hierarchy",
       "element": "#autosave-ind × hotbar",
@@ -1846,7 +1858,102 @@
       "files": [
         "css/style.css"
       ],
-      "dupes": 1
+      "dupes": 1,
+      "fixedWave": "06"
+    },
+    {
+      "id": "w06-01",
+      "status": "fixed",
+      "fixedWave": "06",
+      "severity": "P2",
+      "category": "ergonomics",
+      "element": "#qt-open × #btn-place gap4px",
+      "summary": "シェブロンと使う/設置の隣接ギャップ4px<8基準 — 誤爆リスク",
+      "evidence": [
+        "metric: adjacency gap=4 (dupes3)"
+      ],
+      "suggested_fix": "実施: トラッカー予約幅 200→208px",
+      "files": [
+        "css/style.css"
+      ],
+      "dupes": 3
+    },
+    {
+      "id": "w06-02",
+      "status": "fixed",
+      "severity": "P2",
+      "category": "readability",
+      "element": "#hint-pill (body.left-handed)",
+      "summary": "左手モードで hint-pill 内のアイコン(左端)とテキスト(右端寄せ)が分離し、ピル中央に約1/3幅の空白帯が生じたまま全幅近くに引き伸ばされる — 通常モードのコンパクトな「アイコン+テキスト隣接」表示と不整合で、遮蔽面積も不必要に拡大",
+      "evidence": [
+        "p2-touch-04-left-handed.png (⛏アイコンとテキスト『まず東の方の木を叩いて木材を集めよう』の間に大きな空白、テキストが✕側へ右寄せ)",
+        "p2-touch-03-after-mash.png (通常モードでは同一ヒントがアイコン直後からテキスト開始のコンパクト表示)"
+      ],
+      "suggested_fix": "body.left-handed の #hint-pill ミラー規則 (left/right 反転) で幅が伸長しないよう width:fit-content / max-width を維持し、内部 flex の justify-content が space-between 化しないよう明示指定する。ミラーは位置のみとし内部レイアウトは共通化",
+      "files": [
+        "css/style.css"
+      ],
+      "dupes": 1,
+      "fixedWave": "06"
+    },
+    {
+      "id": "w06-03",
+      "status": "fixed",
+      "severity": "P2",
+      "category": "feedback",
+      "element": "#btn-mine (採掘/攻撃 主ボタン)",
+      "summary": "4ボタン中で最頻用の主ボタン採掘だけタップ時の DOM 反応が検出されず (btn-inv/btn-roll/btn-place は domReacted=true)、wave-01 計測では btn-mine は true だったため押下状態フィードバックのリグレッション疑い — 空振り演出はcanvas側で担保済みだがボタン自体の押下感が他と不整合",
+      "evidence": [
+        "metric: buttons.tapResponse btn-mine {w:84, h:84, domReacted:false} (btn-inv/btn-roll/btn-place は true)",
+        "台帳 w01-04 evidence『btn-roll domReacted=false (btn-inv/btn-mine/btn-place は true)』— wave-01 時点では btn-mine は反応していた"
+      ],
+      "suggested_fix": "css/style.css の押下フィードバック共通セレクタ (:active / pressed クラス付与) に .abtn.main が含まれているか、js/input.js の btn-mine ハンドラが touchstart で押下クラスを付ける経路から外れていないかを確認し、他3ボタンと同一の押下表示に揃える",
+      "files": [
+        "css/style.css",
+        "js/input.js",
+        "js/ui.js"
+      ],
+      "dupes": 1,
+      "fixedWave": "06"
+    },
+    {
+      "id": "w06-04",
+      "status": "fixed",
+      "severity": "P2",
+      "category": "readability",
+      "element": "#quest-tracker (#quest-text) の行折返し位置",
+      "summary": "拡幅後トラッカーの text-wrap:balance + CJK 文字単位折返しが、クエスト文が空白で区切って提示するアイテム名/目標名そのものを行跨ぎで分断し（ツルハ/シ、影の欠/片、影/の主、採/掘）、目標対象の名称が一目で読み取れない",
+      "evidence": [
+        "p4-progression-02-quest-01-tool.png (『道具を手に：ク/ラフトで ツルハ/シ か 剣 を作る』— クラフト と ツルハシ が両方分断)",
+        "p4-progression-04-quest-03-mirror.png (『鏡を磨く：影の欠/片と鉄で 影鏡 を/作る（欠片 0/8）』— 欠片 が分断)"
+      ],
+      "suggested_fix": "js/ui.js の refreshQuest で desc の空白区切りトークン（アイテム名・目標名）を white-space:nowrap の span でラップして描画する（または各トークン内に U+2060 word-joiner を挿入）。desc 側の空白が既に意味単位の区切りとして存在するため、split(' ') ベースで機械的に適用可能。CSS 全体への word-break:keep-all は長い連続句でのはみ出しリスクがあるためトークン限定が安全。修正後は p4 の全 11 段スクショで名詞の行跨ぎゼロ + trackerOverflow=false 維持を確認",
+      "files": [
+        "js/ui.js",
+        "css/style.css",
+        "js/quests.js"
+      ],
+      "dupes": 1,
+      "fixedWave": "06"
+    },
+    {
+      "id": "w06-05",
+      "status": "fixed",
+      "severity": "P2",
+      "category": "readability",
+      "element": "#bigmap-legend / LANDMARKS マーカー配色 (js/ui.js:788-797)",
+      "summary": "大マップの凡例10種のうち7種が色衝突しており (宝箱・野営地#ffd86b/共鳴遺跡#e3c24a/古の祭壇#ffe27a の黄3種、ダンジョン#e0644a/ボス#ff5a4a/深域の赤3種、石碑#b6a6f0/異界への門#c0a0f0 の淡紫2種)、しかも凡例チップは一律9x9の色付き角丸四角 (ui.js:824 の <i style=background>) でマーカー実描画の形状差 (square/diamondHollow/circle/pillar) を一切反映しないため、凡例の唯一の識別信号である色が機能せず地図上のマーカー種別を照合できない — さらに共鳴遺跡と異界への門は形状も同一 diamondHollow で完全に区別不能",
+      "evidence": [
+        "p5-tourist-03-screen-bigmap.png (凡例の 宝箱・野営地/共鳴遺跡/古の祭壇 の3チップが同一の黄に見え、ダンジョン/ボス/深域の赤系3チップも判別不能)",
+        "code: js/ui.js:788-797 LANDMARKS { treasure:'#ffd86b', vault:'#e3c24a', altar:'#ffe27a', dungeon:'#e0644a', boss:'#ff5a4a', stela:'#b6a6f0', portal:'#c0a0f0' } — vault と portal は shape も同じ 'diamondHollow'"
+      ],
+      "suggested_fix": "(1) js/ui.js:788-797 の LANDMARKS 配色を色相で分離する — 黄3種は 宝箱#ffd86b(金) / 共鳴遺跡#5ee0c0(翡翠) / 古の祭壇#fff6e0(白金)、赤系は ダンジョン#e08a4a(橙) / ボス#ff5a4a(赤) に再割当てし、石碑と異界への門も紫の明度/彩度を離す。(2) portal の shape を diamondHollow から別形状 (例: ring/gate 形) に変更し vault との形状重複を解消。(3) js/ui.js:824 の凡例生成をミニ canvas (drawLandmark 流用) か CSS clip-path でマーカーと同形状のチップにし、色+形の二重符号を凡例にも載せる。修正後は p5 screens.tour[bigmap] スクショで凡例10種が相互識別可能なことを目視確認",
+      "files": [
+        "js/ui.js",
+        "css/style.css"
+      ],
+      "dupes": 1,
+      "fixedWave": "06"
     }
   ]
 }

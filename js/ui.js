@@ -155,6 +155,23 @@ Game.UI = (function () {
       el.endingScreen.classList.add('hidden'); Game.startNGPlus();
     });
     buildHotbar();
+    // w06-03: アクションボタンの押下フィードバック。input.js 側が touchstart を preventDefault する
+    // ため :active が発火しない環境があり、採掘だけ押下表示が出ないことがあった。
+    // JS でクラスを付けて保持中(.pressed)+離した後の短い残光(.tapped)を全ボタン共通で保証する
+    ['btn-mine', 'btn-place', 'btn-roll', 'btn-inv', 'btn-shift', 'btn-missile'].forEach(function (id) {
+      const b = document.getElementById(id); if (!b) return;
+      const down = function () { b.classList.add('pressed'); };
+      const up = function () {
+        if (!b.classList.contains('pressed')) return;
+        b.classList.remove('pressed');
+        b.classList.remove('tapped'); void b.offsetWidth; // アニメ再始動のためリフロー
+        b.classList.add('tapped');
+      };
+      b.addEventListener('touchstart', down, { passive: true });
+      b.addEventListener('touchend', up); b.addEventListener('touchcancel', up);
+      b.addEventListener('mousedown', down); b.addEventListener('mouseup', up); b.addEventListener('mouseleave', up);
+      b.addEventListener('animationend', function () { b.classList.remove('tapped'); });
+    });
     // モバイル端末ならタッチUI表示
     if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
       el.touch.classList.remove('hidden');
@@ -785,15 +802,17 @@ Game.UI = (function () {
 
   // 発見済みランドマークのマーカー色
   // 種別ごとの色・形・凡例ラベル
+  // w06-05: 凡例の色衝突解消 — 黄系3種を 金/翡翠/白金 に、赤系を 橙/赤 に色相分離し、
+  // 紫2種は明度で分離。portal は vault と同形だった diamondHollow から ring へ(色+形の二重符号)
   const LANDMARKS = {
-    dungeon:  { col: '#e0644a', shape: 'diamond', label: 'ダンジョン' },
+    dungeon:  { col: '#e08a4a', shape: 'diamond', label: 'ダンジョン' },
     treasure: { col: '#ffd86b', shape: 'square', label: '宝箱・野営地' },
     cosmic:   { col: '#7fc8ff', shape: 'star', label: '星の宝' },
-    stela:    { col: '#b6a6f0', shape: 'pillar', label: '石碑' },
-    vault:    { col: '#e3c24a', shape: 'diamondHollow', label: '共鳴遺跡' },
+    stela:    { col: '#8a74d8', shape: 'pillar', label: '石碑' },
+    vault:    { col: '#5ee0c0', shape: 'diamondHollow', label: '共鳴遺跡' },
     boss:     { col: '#ff5a4a', shape: 'cross', label: 'ボス' },
-    altar:    { col: '#ffe27a', shape: 'circle', label: '古の祭壇' },
-    portal:   { col: '#c0a0f0', shape: 'diamondHollow', label: '異界への門' },
+    altar:    { col: '#fff6e0', shape: 'circle', label: '古の祭壇' },
+    portal:   { col: '#d8a8ff', shape: 'ring', label: '異界への門' },
   };
   function drawLandmark(ctx, x, y, kind) {
     const d = LANDMARKS[kind]; const col = d ? d.col : '#fff'; const shape = d ? d.shape : 'circle';
@@ -814,16 +833,27 @@ Game.UI = (function () {
     } else if (shape === 'cross') {
       ctx.lineWidth = 3; ctx.strokeStyle = col;
       ctx.beginPath(); ctx.moveTo(x - s, y - s); ctx.lineTo(x + s, y + s); ctx.moveTo(x + s, y - s); ctx.lineTo(x - s, y + s); ctx.stroke();
+    } else if (shape === 'ring') {
+      ctx.lineWidth = 2; ctx.strokeStyle = col;
+      ctx.beginPath(); ctx.arc(x, y, s - 0.5, 0, Math.PI * 2); ctx.stroke();
     } else { ctx.beginPath(); ctx.arc(x, y, s, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
     ctx.restore();
   }
   let legendBuilt = false;
   function buildLegend() {
     const el2 = document.getElementById('bigmap-legend'); if (!el2 || legendBuilt) return;
-    let h = '';
-    for (const k in LANDMARKS) h += '<span class="lg-item"><i style="background:' + LANDMARKS[k].col + '"></i>' + LANDMARKS[k].label + '</span>';
-    h += '<span class="lg-item"><i style="background:rgba(255,150,50,0.55)"></i>辺境(危険帯)</span><span class="lg-item"><i style="background:rgba(255,60,60,0.6)"></i>深域(高危険)</span>';
-    el2.innerHTML = h; legendBuilt = true;
+    el2.innerHTML = '';
+    // マーカー種は drawLandmark をミニ canvas に流用し、地図の実描画と同じ「色+形」で凡例化 (w06-05)
+    for (const k in LANDMARKS) {
+      const it = document.createElement('span'); it.className = 'lg-item';
+      const cv = document.createElement('canvas'); cv.width = 14; cv.height = 14; cv.className = 'lg-mk';
+      drawLandmark(cv.getContext('2d'), 7, 7, k);
+      it.appendChild(cv); it.appendChild(document.createTextNode(LANDMARKS[k].label));
+      el2.appendChild(it);
+    }
+    // 危険帯はエリア塗りなので従来どおり色チップ
+    el2.insertAdjacentHTML('beforeend', '<span class="lg-item"><i style="background:rgba(255,150,50,0.55)"></i>辺境(危険帯)</span><span class="lg-item"><i style="background:rgba(255,60,60,0.6)"></i>深域(高危険)</span>');
+    legendBuilt = true;
   }
 
   // 世界地図のズーム(0=近景120 / 1=広域360)。探索済みチャンクのみ描画(フォグ・オブ・ウォー)
@@ -2340,13 +2370,46 @@ Game.UI = (function () {
   }
 
   // ===== クエスト =====
+  // w06-04: クエスト文の名詞(アイテム名/目標名)が text-wrap:balance のCJK折返しで
+  // 行跨ぎ分断される(ツルハ/シ 等)のを防ぐ。空白区切りトークンをさらに 、/：/（ で意味単位に
+  // 細分し、各断片(<=9文字=アイコン/›ボタン込みの実測1行幅に収まる)を white-space:nowrap の span で包む。
+  function questChunks(tok) {
+    const out = []; let cur = '';
+    for (const ch of tok) {
+      if (ch === '（' && cur) { out.push(cur); cur = ch; }
+      else { cur += ch; if (ch === '、' || ch === '：') { out.push(cur); cur = ''; } }
+    }
+    if (cur) out.push(cur);
+    // トラッカーの1行は約11文字。長い節はさらに助詞の直後で細分し、
+    // 「行数増(clamp切り捨て)」と「名詞の行跨ぎ」を両立回避する
+    const fine = [];
+    out.forEach(function (c) {
+      if (c.length <= 9) { fine.push(c); return; }
+      let cur2 = '';
+      for (const ch of c) {
+        cur2 += ch;
+        if (cur2.length >= 3 && 'をにでとへは'.indexOf(ch) >= 0) { fine.push(cur2); cur2 = ''; }
+      }
+      if (cur2) fine.push(cur2);
+    });
+    return fine;
+  }
+  function questHTML(txt) {
+    // 括弧内カウンタの空白(例: （欠片 0/8）)は NBSP 化して1断片に保つ
+    txt = String(txt).replace(/（([^）]*) ([^）]*)）/g, '（$1\u00A0$2）');
+    return txt.split(' ').map(function (tok) {
+      return questChunks(tok).map(function (c) {
+        return c.length <= 9 ? '<span class="qt-w">' + esc(c) + '</span>' : esc(c);
+      }).join('');
+    }).join(' ');
+  }
   function refreshQuest() {
     if (!el.questTracker || !Game.state) return;
     const q = Game.Quests.current();
     if (!q || (q.id === 'reunify' && Game.state.reunified)) {
-      el.questText.textContent = 'すべての目標を達成した';
+      el.questText.innerHTML = questHTML('すべての目標を達成した');
     } else {
-      el.questText.textContent = q.name + '：' + q.desc;
+      el.questText.innerHTML = questHTML(q.name + '：' + q.desc);
     }
     el.questTracker.classList.remove('hidden');
   }
@@ -2760,12 +2823,13 @@ Game.UI = (function () {
     comboTimer = setTimeout(function () { if (comboEl) comboEl.style.opacity = '0'; }, 1200);
   }
 
-  // 控えめなオートセーブ表示(右下に一瞬フェード)。proactive-UX原則: 邪魔しない
+  // 控えめなオートセーブ表示(右上・HUD直下に一瞬フェード)。proactive-UX原則: 邪魔しない。
+  // w05-04: 旧右下配置はホットバー(ほぼ全幅)と重なったため、#status-pop(top:118px)と対の右上へ退避
   let saveEl = null, saveTimer = null;
   function flashSave(reason) {
     if (!saveEl) {
       saveEl = document.createElement('div'); saveEl.id = 'autosave-ind';
-      saveEl.style.cssText = 'position:fixed;right:calc(10px + max(var(--ex,10px), env(safe-area-inset-right)));bottom:calc(10px + max(var(--ey,16px), env(safe-area-inset-bottom)));z-index:60;background:rgba(16,24,42,.82);color:#9fd8a0;border:1px solid #33455e;border-radius:8px;padding:5px 9px;font-size:.72rem;pointer-events:none;opacity:0;transition:opacity .35s;backdrop-filter:blur(2px)';
+      saveEl.style.cssText = 'position:fixed;right:calc(10px + max(var(--ex,10px), env(safe-area-inset-right)));top:118px;z-index:60;background:rgba(16,24,42,.82);color:#9fd8a0;border:1px solid #33455e;border-radius:8px;padding:5px 9px;font-size:.72rem;pointer-events:none;opacity:0;transition:opacity .35s;backdrop-filter:blur(2px)';
       (document.getElementById('app') || document.body).appendChild(saveEl);
     }
     saveEl.textContent = '💾 オートセーブ';

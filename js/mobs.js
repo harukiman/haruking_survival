@@ -1483,6 +1483,13 @@ Game.Mobs = (function () {
 
   function draw(ctx, alpha) {
     const mobs = Game.state.mobs;
+    // 自機スプライトの画面位置(HPバー所有者の曖昧さ回避用・フレームに1回だけ計算)
+    const pl = Game.state.player;
+    let psx = -9999, psy = -9999;
+    if (pl && pl.health > 0) {
+      const pp = Game.Camera.worldToScreen(pl.prevX + (pl.x - pl.prevX) * alpha, pl.prevY + (pl.y - pl.prevY) * alpha);
+      psx = pp.x; psy = pp.y;
+    }
     for (let i = 0; i < mobs.length; i++) {
       const m = mobs[i];
       const x = m.prevX + (m.x - m.prevX) * alpha;
@@ -1806,12 +1813,17 @@ Game.Mobs = (function () {
         ctx.fillStyle = '#ffe66b'; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center';
         ctx.fillText(m.traded ? '✓' : '!', s.x, s.y - r - hop - 8); ctx.textAlign = 'left';
       }
-      // HPバー
+      // HPバー(自機スプライトに重なる場合はモブの下側へフリップし所有者を明示 w05-03)
       if (m.hp < m.maxHp && !m.def.npc) {
         const bw = m.def.size + 6;
-        ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(s.x - bw / 2, s.y - r - hop - 9, bw, 4);
+        let by2 = s.y - r - hop - 9;
+        if (Math.abs(s.x - psx) < bw / 2 + 12 && by2 + 4 > psy - 24 && by2 < psy + 13) {
+          by2 = s.y + r + 5; // 下側へフリップ
+          if (by2 < psy + 13) by2 = psy + 13; // 完全密着でも自機の影の下に押し出す
+        }
+        ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(s.x - bw / 2, by2, bw, 4);
         ctx.fillStyle = m.def.hostile ? '#e44' : '#6c6';
-        ctx.fillRect(s.x - bw / 2, s.y - r - hop - 9, bw * (m.hp / m.maxHp), 4);
+        ctx.fillRect(s.x - bw / 2, by2, bw * (m.hp / m.maxHp), 4);
       }
     }
   }
