@@ -206,6 +206,13 @@ button { font-family: inherit; touch-action: manipulation; }
 #action-btns { transform: scale(var(--btn-scale, 1)); transform-origin: bottom right; opacity: var(--btn-opacity, 0.92); }
 #dpad, #joystick { opacity: var(--btn-opacity, 0.92); }
 body.left-handed #action-btns { right: auto; left: calc(12px + max(var(--ex,10px), env(safe-area-inset-left))); transform-origin: bottom left; }
+/* 左手モードは内部レイアウトも左右ミラー: 採掘を左下角へ密着させ、クラスタが右側の移動ゾーン(x>45vw)に食い込まないようにする */
+body.left-handed .abtn.main { right: auto; left: 0; }
+body.left-handed #btn-place { right: auto; left: 92px; } /* 厳密ミラー96だと右端x180が移動ゾーン(x>175.5)に4.5px食い込むため4px内寄せ */
+body.left-handed .abtn.roll { right: auto; left: 76px; }
+body.left-handed #btn-inv { right: auto; left: 6px; }
+body.left-handed .abtn.shift { right: auto; left: 74px; }
+body.left-handed .abtn.missile { right: auto; left: 74px; }
 /* ステータス & スキル画面 */
 .stat-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
 .stat-row .sname { flex: 1; font-weight: 700; }
@@ -421,6 +428,9 @@ body.left-handed #action-btns { right: auto; left: calc(12px + max(var(--ex,10px
   #quest-tracker { left: calc(8px + max(var(--ex,10px), env(safe-area-inset-left))); transform: none; bottom: calc(96px + max(var(--ey,16px), env(safe-area-inset-bottom))); font-size: .7rem; padding: 5px 11px; max-width: calc(100vw - 262px);
     white-space: normal; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; line-height: 1.35; border-radius: 12px; }
   #bounty-tracker { left: calc(8px + max(var(--ex,10px), env(safe-area-inset-left))); transform: none; bottom: calc(176px + max(var(--ey,16px), env(safe-area-inset-bottom))); font-size: .7rem; padding: 4px 11px; max-width: calc(100vw - 262px); }
+  /* 左手モードはボタン群が左下へミラーされるため、左下のトラッカー/ヒントは右側へ退避(重なり回避) */
+  body.left-handed #quest-tracker, body.left-handed #bounty-tracker, body.left-handed #hint-pill {
+    left: auto; right: calc(8px + max(var(--ex,10px), env(safe-area-inset-right))); text-align: right; }
   .ending-box h1 { font-size: 1.3rem; }
 }
 /* 影世界モードの全体トーン */
@@ -535,6 +545,8 @@ body.shadow-mode #app::after {
 .trade-cat { color: #8fa3bb; font-size: .74rem; font-weight: 700; letter-spacing: 1px; margin: 11px 0 4px;
   border-bottom: 1px solid rgba(255,255,255,0.07); padding-bottom: 3px; }
 .trade-list { display: flex; flex-direction: column; gap: 6px; }
+/* 売却トグルは頻用のためタップ基準44px以上を保証 (.map-btn 全体には波及させない) */
+#trade-sell-toggle { min-height: 44px; }
 .trade-row { display: flex; align-items: center; gap: 9px; padding: 8px 10px; min-height: 48px; border: 1px solid #4a5e7e; border-radius: 9px;
   background: rgba(30,42,62,0.7); color: #e8edf2; cursor: pointer; width: 100%; text-align: left; }
 .trade-row:active { filter: brightness(1.2); }
@@ -613,10 +625,13 @@ body.shadow-mode #app::after {
   background: radial-gradient(circle at 35% 30%, rgba(66,116,176,0.92), rgba(38,74,120,0.9)); border-color: #5a8fd6; }
 .abtn.roll { width: 62px; height: 62px; right: 76px; bottom: 76px; font-size: .78rem; }
 #btn-inv { width: 54px; height: 54px; right: 6px; bottom: 100px; font-size: .78rem; }
-.abtn.shift { width: 54px; height: 54px; right: 160px; bottom: 56px; font-size: .72rem; }
+/* 影渡りはミサイルと同じ外周スロット(右下から x≥220): 旧 right:160 は移動ジョイスティック受付域(x<55vw)内でドラッグを飲んでいた */
+.abtn.shift { width: 54px; height: 54px; right: 74px; bottom: 146px; font-size: .72rem; }
 .abtn.missile { width: 62px; height: 62px; right: 74px; bottom: 146px; }
 .abtn.small { font-size: .74rem; background: rgba(56,66,88,0.88); border-color: #6a7894; }
 .abtn.dash { background: rgba(200,160,60,0.82); border-color: #ffe27a; }
+/* 敵近傍では採掘ボタンが「攻撃」表示になり赤系へ(ui.js refreshContext が付け外し) */
+.abtn.main.combat { background: radial-gradient(circle at 35% 30%, rgba(214,92,68,0.95), rgba(148,50,38,0.92)); border-color: #ff9a7a; }
 /* 走り続けるモード中は点灯 */
 .abtn.dash.latched { background: rgba(232,190,74,0.95); border-color: #fff0b0; color: #241a05;
   box-shadow: 0 0 12px rgba(255,226,122,0.75), inset 0 1px 0 rgba(255,255,255,0.3); }
@@ -656,14 +671,16 @@ body.desktop .abtn:hover, body.desktop .dbtn:hover { filter: brightness(1.18); }
 
 /* ===== トースト ===== */
 /* 上部帯が接敵方向を隠さないよう、背景は半透明(背後のモブが透ける)＋高さは2行相当まで */
-#toast { position: absolute; bottom: 78px; left: 50%; transform: translateX(-50%) translateY(10px);
+/* 中央寄せは left/right:0 + margin auto + fit-content (left:50% 方式は shrink-to-fit が残余50vwにキャップされる) */
+#toast { position: absolute; bottom: 78px; left: 0; right: 0; margin-inline: auto; width: fit-content; max-width: 88vw;
+  transform: translateY(10px);
   background: rgba(8,12,20,0.72); border: 1px solid #2c3a52; color: #fff; padding: 8px 16px;
   border-radius: 10px; font-size: .9rem; line-height: 1.4;
-  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; /* 2行で省略(…) */
-  max-height: calc(2.8em + 18px); overflow: hidden;
   text-shadow: 0 1px 2px rgba(0,0,0,0.85);
   opacity: 0; transition: opacity .2s, transform .2s; z-index: 30; pointer-events: none; }
-#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+/* 2行で省略(…): padding のない内側ラッパーにクランプを掛ける(#toast 直だと padding 越しに3行目が半欠け露出する) */
+#toast .tst-msg { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+#toast.show { opacity: 1; transform: translateY(0); }
 
 /* ===== スマホ最適化 ===== */
 @media (max-width: 560px) {
@@ -691,8 +708,8 @@ body.desktop .abtn:hover, body.desktop .dbtn:hover { filter: brightness(1.18); }
   .game-title .t-surv { font-size: 1.3rem; letter-spacing: 9px; margin-left: 9px; }
   .inv-box { padding: 14px 12px; max-height: 92vh; }
   /* トースト: 左下の目標トラッカー/右下の扇状ボタンと物理的に重ならないよう、画面上部中央(ボスバー帯の直下)に表示 */
-  #toast { top: calc(max(var(--et,8px), env(safe-area-inset-top)) + 218px); bottom: auto; font-size: .8rem; max-width: 88vw; left: 50%; transform: translateX(-50%) translateY(-8px); }
-  #toast.show { transform: translateX(-50%) translateY(0); }
+  #toast { top: calc(max(var(--et,8px), env(safe-area-inset-top)) + 218px); bottom: auto; font-size: .8rem; max-width: 88vw; transform: translateY(-8px); }
+  #toast.show { transform: translateY(0); }
 }
 /* 縦が短い端末(小型スマホ縦): 右下ボタン群をややコンパクトに */
 @media (max-height: 740px) and (orientation: portrait) {

@@ -21,7 +21,12 @@ Game.Player = (function () {
     // 初回のみ誘導ヒント。tipOnce と同じ once 記憶(_tips)を共有しつつ、表示は export された
     // Game.UI.toast を経由する(tipOnce 内部の toast 直呼びはモジュール外の計測/差し替えに掛からないため)
     const tips = Game.state._tips || (Game.state._tips = {});
-    if (!tips.first_whiff) { tips.first_whiff = 1; Game.UI.toast('💡 近くの木に近づいて叩こう'); }
+    if (!tips.first_whiff) {
+      tips.first_whiff = 1;
+      // ビーチスポーンで木が視界ゼロでも方角で誘導する(w03-01)。走査はこのtoast発火時の1回のみ
+      const d8 = nearestTreeDir();
+      Game.UI.toast(d8 ? '💡 まずは' + d8 + 'の方の木を叩こう' : '💡 近くの木に近づいて叩こう');
+    }
   }
 
   // 掘れない対象へのヒント: tick%N 同期だと短いタップ(3-4tick)が窓を外して完全無音になるため、

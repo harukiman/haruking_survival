@@ -26,6 +26,16 @@
     "02f": {
       "ranAt": "2026-07-11T05:05:11.432Z",
       "note": "wave-2修正後統合検証: firstAction=木tip 28ms, stuck=false, 3分スタミナ100/100 (基線28), closeAffordance全44px, joystick 8/8維持, 戦闘中tip帯なし。pageErrorsはAudioContextノイズのみ(ハーネスで除外化)"
+    },
+    "03": {
+      "ranAt": "2026-07-11T05:31:16.004Z",
+      "confirmedNew": 8,
+      "regressions": 0,
+      "ledgerRecheck": "wave-2修正6件全resolved、still-repro: w01-10(真因=w03-03)/w01-12(選定済)"
+    },
+    "03f": {
+      "ranAt": "2026-07-11T05:50:28.813Z",
+      "note": "wave-3統合検証: 方角誘導33ms/joystick8/8/LH実操作73px・overlaps 10521→64px2/近接hit成立(18→10)/混戦遮蔽0%/toast幅キャップ解消"
     }
   },
   "findings": [
@@ -228,7 +238,7 @@
     },
     {
       "id": "w01-10",
-      "status": "open",
+      "status": "fixed",
       "severity": "P1",
       "category": "ergonomics",
       "element": "left-handed mode action-btns cluster",
@@ -243,7 +253,8 @@
         "js/settings.js",
         "js/ui.js"
       ],
-      "dupes": 1
+      "dupes": 1,
+      "fixedWave": "03"
     },
     {
       "id": "w01-11",
@@ -267,7 +278,7 @@
     },
     {
       "id": "w01-12",
-      "status": "open",
+      "status": "fixed",
       "severity": "P1",
       "category": "readability",
       "element": "primary-action-btn (採掘)",
@@ -282,7 +293,8 @@
         "js/combat.js",
         "js/ui.js"
       ],
-      "dupes": 1
+      "dupes": 1,
+      "fixedWave": "03"
     },
     {
       "id": "w01-13",
@@ -1216,6 +1228,359 @@
       ],
       "suggested_fix": "戦闘文脈tipは短文化して即時表示を許可するか、文言を事後説明形に調整",
       "files": [
+        "js/ui.js"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w03-01",
+      "status": "fixed",
+      "severity": "P1",
+      "category": "onboarding",
+      "element": "序盤の木誘導 (first_whiff toast / hint-pill step2 / findSpawn)",
+      "summary": "ビーチスポーンでは最初のクエスト対象の木が視界内に一本も無いのに、空振り時の誘導は方角なしの「近くの木に近づいて叩こう」だけで、方角付き誘導 (nearestTreeDir) は素手で石を叩いた経路にしか実装されておらず、木の方向を知る手段がないまま session 終了時点で木材0・questIndex=0 のまま — wave-2 の方角誘導修正は whiff 経路とスポーン保証をカバーしていない",
+      "evidence": [
+        "p1-firsttime-06-first-control.png / -07-after-wander.png / -08-gameplay-3min-state.png (wave-03: 全視界が水+砂+岩のみ、木ゼロ、方角矢印なし)",
+        "metric: firstAction.feedback.newToasts=[{msg:'💡 近くの木に近づいて叩こう'}] (方角なし固定文言)",
+        "metric: pacing.state questIndex=0, wave-03r 比較では木が隣接し同時点で step2 ヒントまで進行 (wave-03r/shots/p1-firsttime-07-after-wander.png)"
+      ],
+      "suggested_fix": "(a) js/player.js:24 — in whiffFx, when the first_whiff toast fires, call nearestTreeDir() and if non-null use 「💡 まずは◯の方の木を叩こう」 (same pattern as js/player.js:640-644; scan only on toast emission, never per tick). (b) js/worldgen.js:539-542 — extend findSpawn walkable check with an O.TREE-within-~10-tiles genTile scan before accepting a candidate; keep the 400-ring fallback so ocean seeds still spawn. This is the load-bearing fix: nearestTreeDir caps at r=40 and returns null on tree-less seeds, so (a) alone can still produce the direction-less fallback. (c) js/ui.js:1478 — resolve direction into the step text at render time for the wood-gathering hint step (js/ui.js:1439) so all three guidance paths agree.",
+      "files": [
+        "js/player.js",
+        "js/worldgen.js",
+        "js/ui.js"
+      ],
+      "dupes": 1,
+      "fixedWave": "03"
+    },
+    {
+      "id": "w03-02",
+      "status": "fixed",
+      "severity": "P1",
+      "category": "readability",
+      "element": "#toast (モバイル上部配置)",
+      "summary": "モバイルの #toast は max-width:88vw を指定しているのに、absolute + left:50% の shrink-to-fit 幅計算が「left から右端までの残り 195px」で打ち切られるため実効幅が常に 50vw にキャップされ、13文字程度の短文でも「…叩こ/う」と1文字 orphan 折返しし、長文 tip は不必要に4行の帯になって戦場の遮蔽面積を倍増させている",
+      "evidence": [
+        "live repro (scratchpad/toast_width_check.js): 短文・長文とも offsetWidth=195px (viewport 390px, computed max-width=343.2px が不使用)",
+        "p1-firsttime-08-gameplay-3min-state.png (wave-03 / wave-03r 両方で『近くの木に近づいて叩こ/う』の1文字折返し)",
+        "code: css/style.css:694 `#toast { max-width: 88vw; left: 50%; transform: translateX(-50%) }` — left:50% により包含ブロックの残余=50vw が shrink-to-fit の上限になる"
+      ],
+      "suggested_fix": "css/style.css:694-695 (mobile block) and css/style.css:659,666 (desktop base): replace the left:50% + translateX(-50%) centering with `left:0; right:0; margin-inline:auto; width:fit-content; max-width:88vw;` and keep only translateY in the transform (both the base rule and the .show rule). Verify no JS reads/overwrites #toast style.left/transform (js/ui.js toast()) and re-run the 390px repro expecting short-text width ~215px on one line and long-tip width up to 343px.",
+      "files": [
+        "css/style.css"
+      ],
+      "dupes": 1,
+      "fixedWave": "03"
+    },
+    {
+      "id": "w03-03",
+      "status": "fixed",
+      "severity": "P1",
+      "category": "ergonomics",
+      "element": "body.left-handed #action-btns (内部レイアウト非ミラー)",
+      "summary": "左手モードはコンテナ位置だけ左へ移し内部の right: オフセットを反転しないため、最重要の採掘ボタンが左下角から154pxも離れた画面中央寄り (CSS x=154-238) に来て親指の弧から外れ、さらに採掘・袋の2ボタンが左手モードのジョイスティック受付域 (x>175.5) 内に食い込み、そこから始まる移動ドラッグをボタンが飲み込んで移動不発+誤タップ (袋=インベントリ誤開) を誘発する",
+      "evidence": [
+        "p2-touch-04-left-handed.png (採掘円 CSS x≈152-239 で画面中央寄り、袋 x≈179-231、通常モードの p2-touch-01 では採掘が右角 x≈287-368 に密着)",
+        "css/style.css:208 『body.left-handed #action-btns { right: auto; left: calc(12px + ...); }』のみでボタン個別の right:0/right:6/right:96 (style.css:611-615) は未反転 — 計算値 (採掘 left=22+132=154, 袋 left=178) がスクショ実測と一致",
+        "js/input.js:121 『inZone = lh ? (t.clientX > window.innerWidth * 0.45)』→ 390px幅で境界175.5px、袋(178-232)は全域・採掘(154-238)は右側62pxが移動ゾーン内"
+      ],
+      "suggested_fix": "css/style.css:208 の直後に body.left-handed 配下の per-button ミラーを追加: `body.left-handed .abtn.main { right:auto; left:0; }` / `body.left-handed #btn-place { right:auto; left:96px; }` / `body.left-handed .abtn.roll { right:auto; left:76px; }` / `body.left-handed #btn-inv { right:auto; left:6px; }` / `body.left-handed .abtn.shift { right:auto; left:160px; }` / `body.left-handed .abtn.missile { right:auto; left:74px; }` (style.css:611-616 の right 値をそのまま left へ)。これで採掘が左下角に密着しクラスタ右端が x≈238→104 となり js/input.js:121 の LH 移動ゾーン (x>175.5) との交差が消える。修正後は左手モードで joystick.direction8 監査を再実行し、ドラッグ開始点がボタンに食われないこと、w01-10 のヒント/クエスト重なりが悪化しないこと (layout.leftHanded hudOverlap) を確認する。",
+      "files": [
+        "css/style.css",
+        "js/input.js"
+      ],
+      "dupes": 1,
+      "fixedWave": "03"
+    },
+    {
+      "id": "w03-04",
+      "status": "fixed",
+      "severity": "P1",
+      "category": "readability",
+      "element": "#toast 2行クランプ (wave-2修正) の3行目半欠け描画",
+      "summary": "wave-2で導入したtoastの2行クランプが機能不全で、-webkit-line-clamp:2 の省略(…)が2行目末尾に付くのに max-height+overflow:hidden で切られた3行目がバブル背景の外へ上半分だけはみ出して描画され、夜告知の肝心の行動指示「《影鏡》を作れば渡れる」がギロチン状の判読不能グリフになる",
+      "evidence": [
+        "p3-combat-01-night-chaos-start.png (toast 3行目「鏡》を作れば渡れる」が上半分のみ・角丸背景の外に露出、2行目末尾には既に《影…の省略記号)",
+        "css/style.css:662-663 `-webkit-line-clamp: 2;` と `max-height: calc(2.8em + 18px); overflow: hidden;` が併存 (クランプ対象と実コンテンツ構造の不一致でclampが効かずmax-heightが文字を水平に裁断)",
+        "metric: toast.spamRate.sample[0]='🌓 夜——鏡の向こうに、もう一つの世界の気配。《影鏡》を作' (全文はクランプ想定より長い)"
+      ],
+      "suggested_fix": "css/style.css:659-665 — the third line shows through the 8px bottom padding because overflow:hidden clips at the padding-box edge, not the content edge. Fix by moving the clamp onto a padding-less inner wrapper: have js/ui.js toast() (line ~2429) and toastBig() (line ~2436) write the message into an inner <span class=\"tst-msg\"> inside #toast, apply display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden to .tst-msg, and remove the max-height hard cut plus the -webkit-box properties from #toast (keep its padding/background). Also shorten the night string at js/daynight.js:15 so the action instruction 《影鏡》を作れば渡れる fits within 2 lines at .8rem/88vw (style.css:694), ideally front-loaded.",
+      "files": [
+        "css/style.css:659-666",
+        "css/style.css:694",
+        "js/ui.js"
+      ],
+      "dupes": 1,
+      "fixedWave": "03"
+    },
+    {
+      "id": "w03-05",
+      "status": "fixed",
+      "severity": "P1",
+      "category": "feedback",
+      "element": "近接オートターゲット選択 (combat.js best-mob loop) — 正面密着の敵に攻撃が乗らない",
+      "summary": "正面20px(密着)の敵に向きを合わせて6回連続で攻撃しても対象のHPが9のまま一切減らず(1567ms)、ダメージは代わりに垂直方向の別モブに発生しており、前方180°半平面+最近傍という選択則が真横(dot≈0)のモブも候補に含めるため『いま向いている敵を殴っている』という近接の読み合いの前提が乱戦で崩れる — wave-02では同一probeがdamaged=trueでありリグレッション",
+      "evidence": [
+        "metric: combat.hitFeedback distance=0 hpBefore=9 hpAfter=9 damaged=false elapsedMs=1567 (probeは対象の20px左・dir='right'から6スイング)",
+        "p3-combat-03-combat-close.png (probe直後: ダメージ数字「4」がプレイヤー真上=垂直方向のモブに出現し、正面の追跡対象は無傷)",
+        "js/combat.js:255-264 標的ループ `if (d > 14 && dot < 0) continue;` — dot==0 (真横) を前方扱いし、hp<=0 チェックも無く、最近傍1体のみ選択"
+      ],
+      "suggested_fix": "js/combat.js:254-264 の best 選択に向き整合を導入する。例: cos = dot / Math.max(d, 1) を計算し、(1) d > 14 のとき cos < 0.3 (約72°超の横) は候補から除外または大幅減点、(2) スコア score = d - cos * 12 のような正面優先の重み付き最近傍で best を選ぶ、(3) d <= 14 の密着例外は現状維持、(4) ついでに m.hp <= 0 の候補スキップを追加。回帰確認は audit/personas/p3-combat.js:71-86 の combat.hitFeedback probe で damaged=true 復帰を条件にする (probe 側も nearest 選択時に m.def.friendly を除外すると計測が頑健になる)。関連 open の w02-16 (照準枠と実標的の不一致) はこの修正で実標的が向きと一致するため同時に解消しやすい。",
+      "files": [
+        "js/combat.js:255-264",
+        "js/player.js"
+      ],
+      "dupes": 1,
+      "fixedWave": "03"
+    },
+    {
+      "id": "w03-06",
+      "status": "fixed",
+      "severity": "P1",
+      "category": "ergonomics",
+      "element": "#btn-shift (影渡り) × 仮想ジョイスティック移動ゾーン",
+      "summary": "クエスト4で恒久表示になる影渡りボタン (CSS実測 x=156-210px) が移動ジョイスティック受付ゾーン (clientX < 390*0.55 = 214.5px, input.js:121) の完全に内側に配置されており、そこから始まる移動ドラッグはボタンに食われて移動不能になるうえ、短いスワイプの click 化で意図しない世界シフト (戦闘中のテレポート級の重い動作) が誤爆する",
+      "evidence": [
+        "p4-progression-05-quest-04-shift.png 〜 p4-progression-11-quest-final-state.png (影渡り円の中心 ≈ CSS(182,662)、全域が x<214 の移動ゾーン内)",
+        "code: css/style.css:616 `.abtn.shift { width: 54px; right: 160px; }` + style.css:601 #action-btns width:216px right:calc(10px+…) → ボタン左端 = 390-20-216+ (216-160-54) = x156",
+        "code: js/input.js:121 `const inZone = lh ? … : (t.clientX < window.innerWidth * 0.55);` (390px幅で214.5px)"
+      ],
+      "suggested_fix": "Two complementary fixes: (a) css/style.css:616 — move .abtn.shift out of the movement zone, e.g. to the missile slot position (right:74; bottom:146; see style.css:617 .abtn.missile) which starts at x=234 > zone edge 214.5; the CSS comment already states shift (on-foot) and missile (vehicle) are mutually exclusive, so slot sharing is safe. (b) js/input.js:186-187 — replace the bare click listener with the same touchstart/touchend tap-discriminator pattern used by btn-dash (js/input.js:190-201): record touchstart position/time, only call Game.World.shift() on touchend if movement < ~10px and duration < ~300ms, so a movement drag that begins on the button neither misfires the shift nor silently dies (optionally hand the drag off to the joystick).",
+      "files": [
+        "css/style.css",
+        "js/input.js",
+        "index.html"
+      ],
+      "dupes": 1,
+      "fixedWave": "03"
+    },
+    {
+      "id": "w03-07",
+      "status": "dupe",
+      "severity": "P1",
+      "category": "readability",
+      "element": "#toast (モバイル上部配置・2行クランプ)",
+      "summary": "wave-2 で導入した toast の2行クランプが省略記号でなく高さ切りで実装されており、3行目が文字の上半分だけ見える形で欠け、夜告知では肝心の行動指示「《影鏡》を作れば渡れる」の部分が判読不能になる",
+      "evidence": [
+        "p5-tourist-06-night-hud.png (toast 3行目「鏡》を作れば渡れる」がグリフの上半分だけ露出して縦に切断されている)",
+        "metric: night.readability.warnings #toast text='🌓 夜——鏡の向こうに、もう一つの世界の気配。《影...' (計測テキストも途中で途切れ)"
+      ],
+      "suggested_fix": "css/style.css:660-663 — the suggested \"switch to line-clamp\" is a no-op (already present). Real fix: stop the clipped 3rd line showing through padding-bottom. Move the clamp to an inner element: keep padding on #toast but wrap the message in a child (e.g. #toast .tst-msg) carrying display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden and no padding (js/ui.js:2535 toast() would set innerHTML into that child). CSS-only alternative: replace #toast's padding-bottom with transparent border-bottom (border-box keeps size) so overflow clips flush at line 2. Then remove the now-redundant max-height. Additionally js/daynight.js:15 — reorder the night message so the action instruction comes first: 「🌓 夜が来た。《影鏡》を作れば影の世界へ渡れる——鏡の向こうに、もう一つの世界の気配」.",
+      "files": [
+        "css/style.css",
+        "js/ui.js"
+      ],
+      "dupes": 1,
+      "dupeOf": "w03-04",
+      "fixedWave": "03"
+    },
+    {
+      "id": "w03-08",
+      "status": "fixed",
+      "severity": "P2",
+      "category": "ergonomics",
+      "element": "#trade-sell-toggle (ショップの売却モード切替)",
+      "summary": "ショップで購入/売却モードを切り替える全幅ボタン「いらない装備を売る」が高さ37pxで44px基準未満のまま残っており、戦利品売却のたびに使う頻用トグルがパネル内で最も押しにくい部類になっている",
+      "evidence": [
+        "metric: screens.tour[shop].tapTargets.violations #trade-sell-toggle x=29 y=182 w=332 h=37",
+        "p5-tourist-05-screen-shop.png",
+        "metric: wave-03 p5-tourist screens.tour[shop].violations #trade-sell-toggle x=29 y=182 w=332 h=37"
+      ],
+      "suggested_fix": "css/style.css:163 付近に `#trade-sell-toggle { min-height: 44px; }` を追加 (または js/ui.js:452 のインライン style に min-height:44px を足す)。.trade-row (css/style.css:538, min-height:48px) と行高を揃えるなら padding を 11px 前後へ増やすのでも可。.map-btn 全体への min-height 付与は #bigmap-bar 等の小型ボタン群に波及するため、ID セレクタで限定するのが安全。",
+      "files": [
+        "css/style.css",
+        "index.html",
+        "css/style.css:163",
+        "js/ui.js:452"
+      ],
+      "dupes": 2,
+      "fixedWave": "03"
+    },
+    {
+      "id": "w03-09",
+      "status": "open",
+      "severity": "P2",
+      "category": "pacing",
+      "element": "audit/personas/p1-firsttime.js の『3min-state』計測点",
+      "summary": "『gameplay-3min-state』と銘打たれたショット/メトリクスは実際には操作開始から約18秒時点 (tick 7920→8464, 30tps) で、persona 全体も67.6秒 (うち46.8秒はカットシーン視聴) しかなく、台帳の『3分スタミナ100/100』等のペーシング比較や『60秒以内に次の行動が読み取れるか』以降の初見タイムライン評価が実質20秒分のデータで下されている",
+      "evidence": [
+        "live repro (scratchpad/hint_life_check.js): 新規開始直後の tick=7920, 進行レート≈30tick/s → shot08 の tick 8464 は操作開始+18.1秒",
+        "metric: p1-firsttime.json startedAt 05:05:35.598 / finishedAt 05:06:43.215 (計67.6秒) − cutscene.watch.durationSec=46.78 → ゲームプレイ実測は約20秒"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w03-10",
+      "status": "open",
+      "severity": "P2",
+      "category": "onboarding",
+      "element": "hint-pill step1 (移動ヒント) done 条件",
+      "summary": "移動ヒントの完了判定が「スポーンから140px (約4.4タイル) 離れたか」なので、ビーチのような可動域が狭いスポーンや近場を往復する自然な動きでは移動に成功していてもヒントが消えず (wave-03 は3ショット連続で滞留、wave-03r は同時刻に step2 へ前進)、その間は次の木ヒントが表示されないうえ whiff toast と合わさって指示3枚並存の混雑を悪化させる",
+      "evidence": [
+        "p1-firsttime-06/-07/-08 (wave-03: 移動成功後も『画面の左半分をなぞると移動できる』が滞留) vs wave-03r/shots/p1-firsttime-07-after-wander.png (step2 へ前進済み)",
+        "metric: wander.stuck.stuck=false, minDisplacementTilesPer4s=1.88 (プレイヤーは実際に移動している)"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w03-11",
+      "status": "open",
+      "severity": "P2",
+      "category": "onboarding",
+      "element": "採掘照準枠 (白枠ハイライト) × 素手不可の岩",
+      "summary": "序盤ヒント/クエスト/方角矢印が「木を叩け」と誘導する一方で、照準枠は隣接する岩を白枠 (有効ターゲット風) でハイライトし続けるため、初見は最も目立つアフォーダンスに従って岩をタップし「ツルハシが必要」の失敗を踏んでから木に向かうことになり、誘導と照準の指示が競合する",
+      "evidence": [
+        "p2-touch-03-after-mash.png (照準枠が岩の上で白枠表示、同時にヒント『↖ まず木を叩いて木材を集めよう』とトラッカー『生きる糧：木を叩いて…』が木を指示)",
+        "p2-touch-01-gameplay-start.png / p2-touch-02-joystick-active.png (対象なしタイルでは赤枠 — 白枠=有効の色分けが岩にも適用され『叩ける』と読める)"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w03-12",
+      "status": "open",
+      "severity": "P2",
+      "category": "onboarding",
+      "element": "#btn-shift 出現時の導入 (影鏡入手 → 新ボタン)",
+      "summary": "中核アビリティの影渡りボタンが影鏡入手の瞬間に無告知で display 切替されるだけで、tip/トースト/パルス等の導入が一切なく、クエスト文言も「影鏡を使い」とアイテム使用しか示さないため、新しく増えた円ボタンと影鏡の関係をプレイヤーが自力で推測するしかない",
+      "evidence": [
+        "p4-progression-04-quest-03-mirror.png → p4-progression-05-quest-04-shift.png (ボタンが突然出現、画面上の告知は前クエストの『目標達成: 鏡を磨く』トーストのみ)",
+        "metric: quest.hintCoverage.tipsFired=[] (チェーン全11段で文脈tip発火ゼロ)"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w03-13",
+      "status": "open",
+      "severity": "P2",
+      "category": "onboarding",
+      "element": "quest 'seal' トラッカー文言 (封印を解く)",
+      "summary": "クエスト『封印を解く』の文言「光と影を共鳴させ、遺跡の封印を解く」は比喩のみで、実際の達成行動 (影の世界の遺跡で核を壊す = achievement 'resonance') を示すゲーム内語彙 (核/影の世界/遺跡の場所) がトラッカーにもtipにも一切現れず、他クエストが具体物 (木材/ツルハシ/影晶) を名指しするのと対照的に行動へ翻訳できない",
+      "evidence": [
+        "p4-progression-08-quest-07-seal.png (トラッカー『封印を解く：光と影を共鳴させ、遺跡の封印を解く』以外の手掛かりゼロ)",
+        "code: js/quests.js:23 `{ id: 'seal', …, check: () => A('resonance') }` — 達成条件は実装上『影で核を壊す』(js/world.js:374-385)"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w03-14",
+      "status": "open",
+      "severity": "P2",
+      "category": "readability",
+      "element": ".abtn.shift 配色 (影渡りボタン)",
+      "summary": "影渡り用に意図された紫の配色 (style.css:324) が、後方で宣言された同特異度の .abtn.small (style.css:618) の灰色背景に上書きされて死にスタイルになっており、世界を渡る特別なアビリティのボタンが日用の『袋』ボタンと同じ灰色で描画されて機能の重みが読み取れない",
+      "evidence": [
+        "p4-progression-05-quest-04-shift.png 〜 -11 (影渡りと袋がほぼ同一の暗灰色調)",
+        "code: css/style.css:324 `.abtn.shift { background: rgba(122,79,176,0.85); border-color: #b884e8; }` (特異度0,2,0)"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w03-15",
+      "status": "open",
+      "severity": "P2",
+      "category": "readability",
+      "element": ".hint (インベントリ最下部の操作説明行)",
+      "summary": "インベントリパネル下端の操作説明「アイテムをタップで選択／同じ物を2回タップですぐ使用・装備／なぞって並べ替え」が『装備』の語中で折り返した上に2行目がパネル下端で半分切断され、並べ替え操作の存在を初見が読み取れない",
+      "evidence": [
+        "p5-tourist-01-screen-inventory.png (2行目「備 ／ なぞって並べ替え」が下端で縦に半欠け)",
+        "p5-tourist-07-inventory-loaded.png (同一の切断が再現)"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w03-16",
+      "status": "open",
+      "severity": "P2",
+      "category": "ergonomics",
+      "element": ".stat-minus / .stat-plus (ステータス振り分け±)",
+      "summary": "レベルアップごとに繰り返しタップするステータス振り分けの－/＋ボタン6個が全て46x40pxで44px基準を高さ側で下回り、ポイント連打割り振り時のミスタップ余地がある",
+      "evidence": [
+        "metric: screens.tour[stats].tapTargets.violations .stat-minus/.stat-plus 46x40 が6件 @(219,563)〜(315,677)",
+        "p5-tourist-02-screen-stats.png (力STR/体VIT/技DEXの各行)"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w03-17",
+      "status": "open",
+      "severity": "P2",
+      "category": "hierarchy",
+      "element": "#hint-pill × インベントリ等モーダルパネル",
+      "summary": "モーダルパネルを開いても中段の hint-pill (bottom:300px帯) が非表示にならず、半透明のパネル越しに判読不能なゴースト文字列として装備スロット「左手」右側に透けて写り込み、パネル内情報と視覚的に干渉する",
+      "evidence": [
+        "p5-tourist-01-screen-inventory.png (左手スロット右に薄い2行のゴーストテキスト)",
+        "p5-tourist-07-inventory-loaded.png (同位置に別文言のゴーストが再現 — 背後のヒント/通知テキストがパネル背景を透過)"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w03-18",
+      "status": "open",
+      "severity": "P2",
+      "category": "ergonomics",
+      "element": ".stat-plus / .stat-minus / .lo-arrow (高さ40pxボタン群)",
+      "summary": "ステータス画面のスキル振り＋−ボタン6個 (46x40) とインベントリ装備セットのページ矢印 #lo-prev/#lo-next (44x40) が高さ40pxで44pxハード基準を下回る — w02-09 は .lo-arrow を『44x40で整合』と誤って合格扱いしており台帳未登録",
+      "evidence": [
+        "metric: wave-03 p5-tourist screens.tour[stats].violations .stat-minus/.stat-plus 46x40 ×6 @(219,563)〜(315,677)",
+        "metric: wave-03 p5-tourist screens.tour[inventory].violations #lo-prev 44x40 @(29,347) / #lo-next 44x40 @(219,347)"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w03-19",
+      "status": "open",
+      "severity": "P2",
+      "category": "readability",
+      "element": ".gs-lbl / .opt-sect / #ver-label / .slot-sub / #clock-text (残存<12pxフォント台帳未登録分)",
+      "summary": "ステータス画面の装備サマリーラベル (10.9px)・オプションのセクション見出し (11.8px)・タイトルのビルド表記 (10.2px)・セーブ枠サブラベル (10.9px)・HUD時計 (11.8px) が12pxハード基準未満のまま台帳のどのフォントfindingにも含まれていない",
+      "evidence": [
+        "metric: wave-03 p5-tourist screens.tour[stats].fonts.violations .gs-lbl fontPx=10.9 '武器'",
+        "metric: wave-03 p5-tourist screens.tour[options].fonts.violations .opt-sect fontPx=11.8 '🔉 サウンド'"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w03-20",
+      "status": "open",
+      "severity": "P2",
+      "category": "feedback",
+      "element": "combat.hitFeedback probe × Combat.tryAttack 標的選択",
+      "summary": "隣接モブへの6回攻撃 (1567ms) で追跡モブのHPが9のまま不変 (damaged=false、wave-01では true) — ただしコード追跡では damageMob (mobs.js:1110) に早期returnは無く、25体密集下で probe が追跡する『最寄りモブ』と tryAttack が選ぶ『前方最近傍の敵対モブ』(combat.js:255-262) が別個体になる probe 側アーティファクトの可能性が高い",
+      "evidence": [
+        "metric: wave-03 p3-combat combat.hitFeedback {distance:0, hpBefore:9, hpAfter:9, damaged:false, elapsedMs:1567} (wave-01 台帳 w01-12 evidence では damaged=true)",
+        "code: audit/personas/p3-combat.js:75-82 — probe は friendly 除外なし・単一モブ隔離なしで最寄りモブのhpのみ追跡、tryAttack の実標的は検証していない"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w03-21",
+      "status": "open",
+      "severity": "P2",
+      "category": "ergonomics",
+      "element": "アクションボタン上で始まるドラッグ",
+      "summary": "ボタン直上から始まる短スワイプが click 誤爆になり得る (移動ゾーン交差は w03-06 で解消済、ドラッグのjoystick引き渡しは未実装)",
+      "evidence": [
+        "wave-3 UI修正エージェントの引き継ぎメモ"
+      ],
+      "suggested_fix": "input.js のボタン touchstart で移動量>8pxならタップ扱いをキャンセルし joystick へハンドオフ",
+      "files": [
+        "js/input.js"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w03-22",
+      "status": "open",
+      "severity": "P2",
+      "category": "hierarchy",
+      "element": "#hint-pill (序盤の中央帯遮蔽19.4%)",
+      "summary": "チュートリアル期の hint-pill がプレイフィールド中央帯の19.4%を覆う (透過0.72済みだが面積は大きい)",
+      "evidence": [
+        "metric: wave-03f p1 hud.playfieldOcclusion coveragePct=19.4"
+      ],
+      "suggested_fix": "ピルの表示位置/サイズ再検討 or 数秒後の自動最小化",
+      "files": [
+        "css/style.css",
         "js/ui.js"
       ],
       "dupes": 1

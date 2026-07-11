@@ -91,15 +91,21 @@ async function run(ctx) {
   await runner.probe('layout.tapTargets', () => probes.tapTargetScan(page, 'touch-normal'));
   await runner.probe('layout.hudOverlap', () => probes.hudOverlapScan(page, 'touch-normal'));
 
-  // 左手モード: 切替 → 再走査 + スクショ
+  // 左手モード: 設定経由で本当に切替 (入力ゾーン反転含む) → 実ドラッグ + 再走査 + スクショ
   await runner.probe('layout.leftHanded', async () => {
-    await page.evaluate(() => { document.body.classList.add('left-handed'); });
+    await page.evaluate(() => { Game.Settings.set('leftHanded', true); Game.Settings.apply(); });
     await new Promise(r => setTimeout(r, 300));
     const scan = await probes.tapTargetScan(page, 'touch-lefthand');
-    return scan;
+    const overlap = await probes.hudOverlapScan(page, 'touch-lefthand');
+    // 右半分ドラッグで移動できるか (左手モードの実操作)
+    const before = await page.evaluate(() => ({ x: Game.state.player.x, y: Game.state.player.y }));
+    await touch.drag(300, 620, -80, -40, 1200, 5);
+    const after = await page.evaluate(() => ({ x: Game.state.player.x, y: Game.state.player.y }));
+    const movedPx = Math.round(Math.hypot(after.x - before.x, after.y - before.y));
+    return { scan, overlap, rightZoneDrag: { movedPx, works: movedPx > 4 } };
   });
   await runner.shot(page, 'left-handed');
-  await page.evaluate(() => { document.body.classList.remove('left-handed'); });
+  await page.evaluate(() => { Game.Settings.set('leftHanded', false); Game.Settings.apply(); });
 
   // 画面下端 (ホームインジケータ領域) との干渉確認用スクショ
   await runner.probe('layout.bottomEdge', () => page.evaluate(() => {

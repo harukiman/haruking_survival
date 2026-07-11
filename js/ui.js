@@ -2424,16 +2424,17 @@ Game.UI = (function () {
   // 節目イベント(レベルアップ/ボス討伐/実績/レジェンダリー入手)はバナー演出へ昇格する。
   const RM = (typeof window.matchMedia === 'function') && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  // 本文は padding のない .tst-msg に入れて2行クランプ(CSS)を効かせる(#toast 直書きだと3行目が半欠け露出)
   function plainToast(msg) {
     el.toast.className = ''; // 前回のレアリティ装飾等を解除
-    el.toast.textContent = msg;
+    el.toast.innerHTML = '<span class="tst-msg">' + esc(msg) + '</span>';
     el.toast.classList.add('show');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(function () { el.toast.classList.remove('show'); }, 1600);
   }
   function richToast(html, cls, ms) {
     el.toast.className = cls || '';
-    el.toast.innerHTML = html;
+    el.toast.innerHTML = '<span class="tst-msg">' + html + '</span>';
     el.toast.classList.add('show');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(function () { el.toast.classList.remove('show'); }, ms || 1800);
@@ -2639,8 +2640,31 @@ Game.UI = (function () {
   // 文脈アクションボタン: チェスト等に近づくと「📦 開ける」等を表示しタップで実行(マイクラ式の開封導線)
   let ctxBtn = null, ctxLabel = '';
   let _overlayOpenCls = false; // オーバーレイ表示中クラスのキャッシュ
+  // 敵近傍(半径180px)ではメインボタンを「攻撃」表示に。DOM書換は状態変化時のみ、復帰は約1秒のヒステリシス
+  let mineBtnEl = null, mineCombat = false, mineScanTick = 0, mineCalm = 0;
+  function updateMineLabel() {
+    if ((mineScanTick = (mineScanTick + 1) % 10) !== 0) return; // 走査は約10フレームに1回
+    if (!mineBtnEl) { mineBtnEl = document.getElementById('btn-mine'); if (!mineBtnEl) return; }
+    const st = Game.state, p = st && st.player;
+    let near = false;
+    if (p) {
+      const mobs = st.mobs || [];
+      for (let i = 0; i < mobs.length; i++) {
+        const m = mobs[i];
+        if (m && m.def && m.def.hostile && Math.hypot(m.x - p.x, m.y - p.y) < 180) { near = true; break; }
+      }
+    }
+    if (near) {
+      mineCalm = 0;
+      if (!mineCombat) { mineCombat = true; mineBtnEl.textContent = '攻撃'; mineBtnEl.classList.add('combat'); }
+    } else if (mineCombat && ++mineCalm >= 6) { // 約1秒敵不在が続いたら戻す
+      mineCombat = false; mineCalm = 0;
+      mineBtnEl.textContent = '採掘'; mineBtnEl.classList.remove('combat');
+    }
+  }
   function refreshContext() {
     if (!Game.state || !Game.Player.contextAction) return;
+    updateMineLabel();
     // オーバーレイ(地図/インベントリ等)表示中は下部のフィールドUI(アクションボタン/ヒント)をCSSで隠す
     const bm2 = document.getElementById('bigmap-screen');
     const anyOverlay = !!document.querySelector('.overlay:not(.hidden)') || (bm2 && !bm2.classList.contains('hidden'));

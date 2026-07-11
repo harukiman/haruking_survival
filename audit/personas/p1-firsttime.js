@@ -89,6 +89,7 @@ async function run(ctx) {
 
   // 3分時点までの HUD 状態
   await runner.probe('hud.calm', () => probes.hudOverlapScan(page, 'gameplay-calm'));
+  await runner.probe('hud.playfieldOcclusion', () => probes.playfieldOcclusionScan(page, 'gameplay-calm'));
   await runner.probe('fonts.gameplay', () => probes.fontScan(page, 'gameplay'));
   await runner.probe('tapTargets.gameplay', () => probes.tapTargetScan(page, 'gameplay'));
   await runner.shot(page, 'gameplay-3min-state');

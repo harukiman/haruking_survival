@@ -202,4 +202,37 @@ async function saveLoadRoundtrip(page) {
   return { ok: diffs.length === 0, diffs, before, after };
 }
 
-module.exports = { tapTargetScan, fontScan, hudOverlapScan, overflowScan, feedbackLatency, stuckCheck, saveLoadRoundtrip };
+// プレイフィールド遮蔽検査: 自機周辺の中央帯 (接敵視認に必要な領域) を
+// 不透明オーバーレイ (toast/hint-pill/チップ等) がどれだけ覆っているか
+async function playfieldOcclusionScan(page, screenLabel) {
+  return page.evaluate((screen) => {
+    // 中央帯 = 横中央 76% × 縦 26%-62% (自機は画面中心、上方向の接敵コリドー含む)
+    const band = { x: innerWidth * 0.12, y: innerHeight * 0.26, w: innerWidth * 0.76, h: innerHeight * 0.36 };
+    const occluders = [];
+    for (const el of document.querySelectorAll('body *')) {
+      if (!el.id && !(el.classList && el.classList.length)) continue;
+      const cs = getComputedStyle(el);
+      if (cs.position !== 'fixed' && cs.position !== 'absolute') continue;
+      if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity < 0.05) continue;
+      let hiddenAnc = false;
+      for (let a = el; a; a = a.parentElement) { if (a.classList && a.classList.contains('hidden')) { hiddenAnc = true; break; } }
+      if (hiddenAnc) continue;
+      const r = el.getBoundingClientRect();
+      if (r.width < 20 || r.height < 14) continue;
+      if (r.width * r.height > innerWidth * innerHeight * 0.5) continue; // 全画面コンテナ除外
+      // 背景がほぼ透明な要素は遮蔽と見なさない
+      const bg = cs.backgroundColor.match(/rgba?\(([^)]+)\)/);
+      const alpha = bg ? (bg[1].split(',')[3] !== undefined ? parseFloat(bg[1].split(',')[3]) : 1) : 0;
+      if (alpha < 0.35) continue;
+      const ix = Math.max(0, Math.min(r.left + r.width, band.x + band.w) - Math.max(r.left, band.x));
+      const iy = Math.max(0, Math.min(r.top + r.height, band.y + band.h) - Math.max(r.top, band.y));
+      const area = ix * iy;
+      if (area > 400) occluders.push({ sel: el.id ? '#' + el.id : '.' + el.classList[0], areaPx: Math.round(area), bgAlpha: +alpha.toFixed(2) });
+    }
+    const bandArea = band.w * band.h;
+    const total = occluders.reduce((s, o) => s + o.areaPx, 0);
+    return { screen, occluders, coveragePct: +(100 * Math.min(total, bandArea) / bandArea).toFixed(1) };
+  }, screenLabel);
+}
+
+module.exports = { tapTargetScan, fontScan, hudOverlapScan, overflowScan, feedbackLatency, stuckCheck, saveLoadRoundtrip, playfieldOcclusionScan };

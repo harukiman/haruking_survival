@@ -57,8 +57,9 @@ async function run(ctx) {
   });
   await runner.shot(page, 'night-chaos-mid');
 
-  // 可読性検査 (混戦中): HUD重なり + toastスパム率
+  // 可読性検査 (混戦中): HUD重なり + 中央帯遮蔽 + toastスパム率
   await runner.probe('hud.chaosOverlap', () => probes.hudOverlapScan(page, 'combat-chaos'));
+  await runner.probe('hud.playfieldOcclusion', () => probes.playfieldOcclusionScan(page, 'combat-chaos'));
   await runner.probe('toast.spamRate', () => page.evaluate(() => {
     const A = window.__audit;
     const now = performance.now();

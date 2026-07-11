@@ -252,9 +252,13 @@ Game.Combat = (function () {
     }
 
     let best = null, bestD = Infinity;
+    // 向いている扇(±60°)内の最近傍を別枠で追う: 従来の「前方半平面+最近傍」だけだと真横(dot≈0)の
+    // 別モブが密着正面の敵より近い時にダメージを奪い、狙った敵に当たらない(w03-05)
+    let coneBest = null, coneD = Infinity;
     for (let i = 0; i < mobs.length; i++) {
       const m = mobs[i];
       if (m.def.friendly) continue; // 友好NPCは攻撃しない
+      if (m.hp <= 0) continue;      // 撃破済みは標的にしない
       const dx = m.x - p.x, dy = m.y - p.y;
       const d = Math.hypot(dx, dy);
       if (d > rangePx + m.def.size * 0.5) continue;
@@ -262,7 +266,9 @@ Game.Combat = (function () {
       const dot = (dx * fx + dy * fy);
       if (d > 14 && dot < 0) continue;
       if (d < bestD) { bestD = d; best = m; }
+      if (dot / Math.max(d, 1) >= 0.5 && d < coneD) { coneD = d; coneBest = m; } // cos>=0.5 = 攻撃方向±60°
     }
+    if (coneBest) { best = coneBest; bestD = coneD; } // 扇内優先。扇内ゼロなら従来挙動のまま
     if (!best) {
       // 瞬歩武器は近接標的が無くても向いている方向へ踏み込める(ギャップクローザー)
       if (_def && _def.special && _def.special.type === 'blink') {

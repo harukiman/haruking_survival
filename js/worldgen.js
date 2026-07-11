@@ -528,8 +528,20 @@ Game.WorldGen = (function () {
     }
   }
 
+  // 候補の半径10タイル以内に最初のクエスト対象の O.TREE があるか(genTileベース・決定論)
+  function treeNear(tx, ty, seed) {
+    for (let dy = -10; dy <= 10; dy++)
+      for (let dx = -10; dx <= 10; dx++)
+        if (genTile(tx + dx, ty + dy, seed).obj === O.TREE) return true;
+    return false;
+  }
+
   // 歩けるスポーン地点を原点付近から探す -> {tx, ty}
+  // 木ゼロのビーチスポーン対策(w03-01): 半径10タイル以内に O.TREE がある候補を優先する。
+  // 木なし地帯(砂漠/海洋シード)でも無限ループしないよう、最初の walkable を控えて
+  // 木走査は上限回数で打ち切り従来挙動へ fallback する(400周探索も維持)
   function findSpawn(seed) {
+    let firstWalkable = null, treeScans = 0;
     for (let r = 0; r < 400; r++) {
       for (let a = 0; a < Math.max(1, r * 6); a++) {
         const ang = (a / Math.max(1, r * 6)) * Math.PI * 2;
@@ -539,10 +551,14 @@ Game.WorldGen = (function () {
         const walkable = t.obj === O.NONE &&
           (t.ground === T.GRASS || t.ground === T.SAND || t.ground === T.FOREST || t.ground === T.DIRT) &&
           !inSkyEnclave(tx, ty, seed) && !inRuinCity(tx, ty, seed); // 空島/古代都市の草地を初期スポーンに選ばない
-        if (walkable) return { tx, ty };
+        if (!walkable) continue;
+        if (!firstWalkable) firstWalkable = { tx, ty };
+        if (treeScans >= 60) return firstWalkable; // 木なし地帯: 走査コスト上限で従来挙動へ
+        treeScans++;
+        if (treeNear(tx, ty, seed)) return { tx, ty };
       }
     }
-    return { tx: 0, ty: 0 };
+    return firstWalkable || { tx: 0, ty: 0 };
   }
 
   // 危険度バンドの基準点(seed から決定論再計算・worldName 非依存)。findSpawn と同一の螺旋探索順だが
