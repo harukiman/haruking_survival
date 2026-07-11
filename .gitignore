@@ -7,3 +7,6 @@ gen_manual.js
 
 # dev-only tools with local machine paths (keep out of public repo)
 gen_gallery.js
+
+# audit 生成物 (スクショ/計測JSONは再生成可能)
+audit/wave-*/

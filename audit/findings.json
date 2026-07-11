@@ -1,0 +1,5 @@
+{
+  "meta": { "note": "自動プレイテスト監査の累積台帳。status: open|selected|fixed|wontfix|dupe", "createdWave": "00" },
+  "waveMetrics": {},
+  "findings": []
+}
