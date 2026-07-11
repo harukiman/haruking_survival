@@ -94,6 +94,8 @@ async function hudOverlapScan(page, screenLabel) {
       if (r.bottom < 0 || r.top > innerHeight) continue;
       // 全画面キャンバス/コンテナ (面積>50%) は HUD ウィジェットではない
       if (r.width * r.height > innerWidth * innerHeight * 0.5) continue;
+      // ボタン群コンテナ (子にボタンを持つ入れ物) は bbox が空白域を含むため個別ボタン側で評価
+      if (el.querySelector && el.querySelector(':scope > button, :scope > .abtn, :scope > .dbtn')) continue;
       hud.push({ id: el.id, x: r.left, y: r.top, w: r.width, h: r.height });
     }
     const overlaps = [];

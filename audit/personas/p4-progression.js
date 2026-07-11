@@ -31,7 +31,7 @@ async function run(ctx) {
         id: q.id, name: q.name, desc: q.desc,
         trackerVisible: !!(qt && qt.offsetParent && !qt.classList.contains('hidden')),
         trackerText: qtext ? qtext.innerText : null,
-        trackerOverflow: qtext ? qtext.scrollWidth > qtext.clientWidth + 4 : null,
+        trackerOverflow: qtext ? (qtext.scrollWidth > qtext.clientWidth + 4 || qtext.scrollHeight > qtext.clientHeight + 4) : null,
         index: Game.state.questIndex || 0,
       } : null;
     });

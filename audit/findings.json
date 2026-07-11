@@ -46,6 +46,12 @@
     "04f": {
       "ranAt": "2026-07-11T06:28:36.889Z",
       "note": "wave-4統合検証: fromTracker works/8シード木≤5タイル/死亡画面ペナルティ2行/方角常設。全ペルソナ緑"
+    },
+    "05": {
+      "ranAt": "2026-07-11T06:47:33.243Z",
+      "confirmedNew": 1,
+      "regressions": 0,
+      "note": "新規P1×1 (トラッカー縦塔) を同波内で修正・検証済 (overflow 0/10, fromTracker works)。P2×2も同時修正。dry未達 (P1>0)"
     }
   },
   "findings": [
@@ -1770,6 +1776,75 @@
       "summary": "空振りtoastとhint-pillが解決タイミング差で異なる方角を出し得る (移動後は正常)",
       "evidence": [
         "wave-4 UI修正エージェントの設計メモ"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w05-01",
+      "status": "fixed",
+      "fixedWave": "05",
+      "severity": "P1",
+      "category": "readability",
+      "element": "#quest-tracker モバイル縦塔",
+      "summary": "トラッカーが幅128pxの5文字縦塔+4行クランプになりカウンタ・行動指示が「…」不可視 (w01-09修正の副作用)。拡幅の根拠だったタップ競合は w04-02 で消滅済",
+      "evidence": [
+        "p4-progression-07-quest-06-gear.png",
+        "metric: trackerOverflow が横のみ計測の偽陰性"
+      ],
+      "suggested_fix": "実施: 幅190px+3行+12px化、probe に縦切詰め検出追加",
+      "files": [
+        "css/style.css",
+        "audit/personas/p4-progression.js"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w05-02",
+      "status": "fixed",
+      "fixedWave": "05",
+      "severity": "P2",
+      "category": "readability",
+      "element": "#toast/.hp-tx 孤立1文字折返し",
+      "summary": "長文toast/ヒントの末尾1-2文字が次行に孤立 (「一なりし世/界」「集め/よう」)",
+      "evidence": [
+        "p2-touch-01/03 スクショ"
+      ],
+      "suggested_fix": "実施: text-wrap:balance を #quest-text/.tst-msg/.hp-tx に追加",
+      "files": [
+        "css/style.css"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w05-03",
+      "status": "open",
+      "severity": "P2",
+      "category": "feedback",
+      "element": "敵HPバー (密着戦の描画位置)",
+      "summary": "密着戦で隣接モブのHPバーが自機スプライトに重なり、自分と敵どちらの残HPか瞬時に判別できない",
+      "evidence": [
+        "p3-combat-02-night-chaos-mid.png"
+      ],
+      "suggested_fix": "交差時はバーをモブ下側へフリップ or 幅をモブ幅内に",
+      "files": [
+        "js/mobs.js",
+        "js/render.js"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w05-04",
+      "status": "open",
+      "severity": "P2",
+      "category": "hierarchy",
+      "element": "#autosave-ind × hotbar",
+      "summary": "オートセーブ表示がホットバーと重なる瞬間がある (transient, wave-05x overlaps 3277px²)",
+      "evidence": [
+        "metric: wave-05x p2 layout.hudOverlap"
+      ],
+      "suggested_fix": "autosave-ind の位置をホットバー外へ",
+      "files": [
+        "css/style.css"
       ],
       "dupes": 1
     }

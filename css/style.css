@@ -431,10 +431,11 @@ body.left-handed .abtn.missile { right: auto; left: 74px; }
 .ending-box .ending-stats div:nth-child(2) { animation-delay: 1.7s; }
 .ending-box .ending-stats div:nth-child(3) { animation-delay: 1.85s; }
 @media (max-width: 560px) {
-  /* スマホ: 目標/賞金首ピルは左下に寄せ、右下の扇状ボタン群(左端 = 100vw - 236px - 左右エッジ余白)に届かない幅で折り返し表示。
-     進捗カウンタ(欠片 0/8 等)まで読めるよう nowrap をやめ最大4行で全文を出す */
-  #quest-tracker { left: calc(8px + max(var(--ex,10px), env(safe-area-inset-left))); transform: none; bottom: calc(96px + max(var(--ey,16px), env(safe-area-inset-bottom))); font-size: .7rem; padding: 5px 11px; max-width: calc(100vw - 262px); line-height: 1.35; border-radius: 12px; }
-  #quest-text { white-space: normal; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; }
+  /* スマホ: 目標/賞金首ピルは左下。トラッカーは pointer-events:none (w04-02) のため操作阻害なし。
+     幅128pxの縦塔でカウンタ・行動指示が「…」切れする問題 (w05-01) を受け 180px幅+3行+12px化。
+     ボタン扇との視覚重なりは半透明背景により許容 (階層はトラッカーが下) */
+  #quest-tracker { left: calc(8px + max(var(--ex,10px), env(safe-area-inset-left))); transform: none; bottom: calc(96px + max(var(--ey,16px), env(safe-area-inset-bottom))); font-size: .75rem; padding: 5px 11px; max-width: calc(100vw - 200px); line-height: 1.35; border-radius: 12px; }
+  #quest-text { white-space: normal; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; text-wrap: balance; }
   #bounty-tracker { left: calc(8px + max(var(--ex,10px), env(safe-area-inset-left))); transform: none; bottom: calc(176px + max(var(--ey,16px), env(safe-area-inset-bottom))); font-size: .7rem; padding: 4px 11px; max-width: calc(100vw - 262px); }
   /* 左手モードはボタン群が左下へミラーされるため、左下のトラッカー/ヒントは右側へ退避(重なり回避) */
   body.left-handed #quest-tracker, body.left-handed #bounty-tracker, body.left-handed #hint-pill {
@@ -689,7 +690,7 @@ body.desktop .abtn:hover, body.desktop .dbtn:hover { filter: brightness(1.18); }
   text-shadow: 0 1px 2px rgba(0,0,0,0.85);
   opacity: 0; transition: opacity .2s, transform .2s; z-index: 30; pointer-events: none; }
 /* 2行で省略(…): padding のない内側ラッパーにクランプを掛ける(#toast 直だと padding 越しに3行目が半欠け露出する) */
-#toast .tst-msg { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+#toast .tst-msg { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; text-wrap: balance; } /* balance: 末尾1文字の孤立折返し防止 (w05 P2) */
 #toast.show { opacity: 1; transform: translateY(0); }
 
 /* ===== スマホ最適化 ===== */
@@ -847,7 +848,7 @@ body.desktop .abtn:hover, body.desktop .dbtn:hover { filter: brightness(1.18); }
   text-align: left; opacity: 0; transform: translateY(6px); transition: opacity .3s, transform .3s; pointer-events: none; }
 #hint-pill.in { opacity: 1; transform: none; }
 #hint-pill .hp-ic { font-size: 1.05rem; flex: none; }
-#hint-pill .hp-tx { line-height: 1.35; }
+#hint-pill .hp-tx { line-height: 1.35; text-wrap: balance; } /* balance: 「…集め/よう」の2文字孤立防止 (w05 P2) */
 #hint-pill .hp-x { flex: none; position: relative; width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center;
   border-radius: 50%; background: rgba(255,255,255,0.08); color: #9fb6d0; font-size: .8rem; cursor: pointer; }
 #hint-pill.in .hp-x { pointer-events: auto; }
