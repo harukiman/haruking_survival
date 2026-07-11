@@ -1465,7 +1465,12 @@ Game.UI = (function () {
     if (hintIdx >= HINT_STEPS.length) { markHintsDone(); return; }
     if (!hintPill) {
       hintPill = document.createElement('button'); hintPill.id = 'hint-pill'; hintPill.type = 'button';
-      hintPill.addEventListener('click', function () { Game.Audio.play('select'); advanceHint(); });
+      // 本体は pointer-events:none で透過(移動ドラッグを食わない)。✕のみ次へ進める。
+      // innerHTML 再生成に耐えるようピル側で委譲し、対象が .hp-x のときだけ反応する
+      hintPill.addEventListener('click', function (e) {
+        if (!e.target || !e.target.closest || !e.target.closest('.hp-x')) return;
+        Game.Audio.play('select'); advanceHint();
+      });
       (document.getElementById('app') || document.body).appendChild(hintPill);
     }
     const st = HINT_STEPS[hintIdx];

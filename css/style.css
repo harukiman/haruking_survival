@@ -413,9 +413,11 @@ body.left-handed #action-btns { right: auto; left: calc(12px + max(var(--ex,10px
 .ending-box .ending-stats div:nth-child(2) { animation-delay: 1.7s; }
 .ending-box .ending-stats div:nth-child(3) { animation-delay: 1.85s; }
 @media (max-width: 560px) {
-  /* スマホ: 目標/賞金首ピルは左下に寄せ、右下ボタン群・ホットバーと重ねない */
-  #quest-tracker { left: calc(8px + max(var(--ex,10px), env(safe-area-inset-left))); transform: none; bottom: calc(96px + max(var(--ey,16px), env(safe-area-inset-bottom))); font-size: .7rem; padding: 4px 11px; max-width: 50vw; }
-  #bounty-tracker { left: calc(8px + max(var(--ex,10px), env(safe-area-inset-left))); transform: none; bottom: calc(124px + max(var(--ey,16px), env(safe-area-inset-bottom))); font-size: .7rem; padding: 4px 11px; max-width: 50vw; }
+  /* スマホ: 目標/賞金首ピルは左下に寄せ、右下の扇状ボタン群(左端 = 100vw - 236px - 左右エッジ余白)に届かない幅で折り返し表示。
+     進捗カウンタ(欠片 0/8 等)まで読めるよう nowrap をやめ最大4行で全文を出す */
+  #quest-tracker { left: calc(8px + max(var(--ex,10px), env(safe-area-inset-left))); transform: none; bottom: calc(96px + max(var(--ey,16px), env(safe-area-inset-bottom))); font-size: .7rem; padding: 5px 11px; max-width: calc(100vw - 262px);
+    white-space: normal; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; line-height: 1.35; border-radius: 12px; }
+  #bounty-tracker { left: calc(8px + max(var(--ex,10px), env(safe-area-inset-left))); transform: none; bottom: calc(176px + max(var(--ey,16px), env(safe-area-inset-bottom))); font-size: .7rem; padding: 4px 11px; max-width: calc(100vw - 262px); }
   .ending-box h1 { font-size: 1.3rem; }
 }
 /* 影世界モードの全体トーン */
@@ -615,6 +617,12 @@ body.shadow-mode #app::after {
 .abtn.dash.latched { background: rgba(232,190,74,0.95); border-color: #fff0b0; color: #241a05;
   box-shadow: 0 0 12px rgba(255,226,122,0.75), inset 0 1px 0 rgba(255,255,255,0.3); }
 .abtn.roll { background: radial-gradient(circle at 35% 30%, rgba(110,170,220,0.92), rgba(56,104,150,0.9)); border-color: #8fd0ff; }
+/* スタミナ不足/クールダウン中の回避: 押せない状態を灰色で伝える(class 付け外しは input.js/player.js 側) */
+.abtn.roll.nostam { filter: grayscale(.85); opacity: .55; }
+/* 押下拒否シェイク: 効かない操作へのフィードバック */
+.abtn.shake { animation: btnDeny .25s; }
+@keyframes btnDeny { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 55% { transform: translateX(4px); } 80% { transform: translateX(-2px); } }
+@media (prefers-reduced-motion: reduce) { .abtn.shake { animation: none; } }
 .abtn.missile { background: radial-gradient(circle at 35% 30%, rgba(220,100,60,0.94), rgba(150,54,32,0.92)); border-color: #ff9a6a; font-size: .64rem; }
 /* 影渡りとミサイルは同じ外周スロットを共用(影渡りは徒歩時のみ・ミサイルは搭乗時のみで排他) */
 /* コントローラ接続中はタッチUIを隠す */
@@ -674,9 +682,9 @@ body.desktop .abtn:hover, body.desktop .dbtn:hover { filter: brightness(1.18); }
   .game-title .t-surv { font-size: 1.3rem; letter-spacing: 9px; margin-left: 9px; }
   .inv-box { padding: 14px 12px; max-height: 92vh; }
   .x-btn { width: 38px; height: 38px; }
-  /* 扇状ボタン(右下226px)と重ならないよう、トーストは左寄せ+幅制限 */
-  #toast { bottom: 96px; font-size: .8rem; max-width: 52vw; left: calc(8px + max(var(--ex,10px), env(safe-area-inset-left))); transform: none; }
-  #toast.show { transform: none; }
+  /* トースト: 左下の目標トラッカー/右下の扇状ボタンと物理的に重ならないよう、画面上部中央(ボスバー帯の直下)に表示 */
+  #toast { top: calc(max(var(--et,8px), env(safe-area-inset-top)) + 218px); bottom: auto; font-size: .8rem; max-width: 88vw; left: 50%; transform: translateX(-50%) translateY(-8px); }
+  #toast.show { transform: translateX(-50%) translateY(0); }
 }
 /* 縦が短い端末(小型スマホ縦): 右下ボタン群をややコンパクトに */
 @media (max-height: 740px) and (orientation: portrait) {
@@ -685,7 +693,7 @@ body.desktop .abtn:hover, body.desktop .dbtn:hover { filter: brightness(1.18); }
   .abtn.small { min-height: 44px; }
   .abtn.main { min-height: 52px; }
   #quest-tracker { bottom: calc(88px + max(var(--ey,16px), env(safe-area-inset-bottom))); }
-  #bounty-tracker { bottom: calc(116px + max(var(--ey,16px), env(safe-area-inset-bottom))); }
+  #bounty-tracker { bottom: calc(168px + max(var(--ey,16px), env(safe-area-inset-bottom))); }
 }
 /* 横画面の小さい端末 */
 @media (max-height: 460px) {
@@ -795,16 +803,20 @@ body.desktop .abtn:hover, body.desktop .dbtn:hover { filter: brightness(1.18); }
 /* 死因対策ヒント */
 .death-hint { margin-top: 10px; padding: 8px 12px; border-radius: 10px; background: rgba(40,30,16,0.55);
   border: 1px solid #6a5224; color: #ffd86b; font-size: .8rem; line-height: 1.55; text-align: left; }
-/* 初回マイクロガイド ピル(非モーダル・タップで次へ) */
+/* 初回マイクロガイド ピル(非モーダル・✕タップで次へ)。
+   本体は常に pointer-events:none でタッチを透過させ、左半分なぞり移動を一切妨げない(✕のみ操作可) */
 #hint-pill { position: fixed; left: calc(8px + max(var(--ex,10px), env(safe-area-inset-left))); bottom: calc(126px + max(var(--ey,16px), env(safe-area-inset-bottom)));
-  z-index: 19; display: flex; align-items: center; gap: 7px; min-height: 44px; max-width: 54vw; padding: 8px 12px;
+  z-index: 19; display: flex; align-items: center; gap: 7px; min-height: 44px; max-width: min(54vw, 340px); padding: 8px 12px;
   border-radius: 22px; background: rgba(12,20,34,0.9); border: 1px solid #4a6a8e; color: #dfeaf8; font-size: .78rem;
-  text-align: left; opacity: 0; transform: translateY(6px); transition: opacity .3s, transform .3s; pointer-events: none; cursor: pointer; }
-#hint-pill.in { opacity: 1; transform: none; pointer-events: auto; }
+  text-align: left; opacity: 0; transform: translateY(6px); transition: opacity .3s, transform .3s; pointer-events: none; }
+#hint-pill.in { opacity: 1; transform: none; }
 #hint-pill .hp-ic { font-size: 1.05rem; flex: none; }
 #hint-pill .hp-tx { line-height: 1.35; }
-#hint-pill .hp-x { flex: none; width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center;
-  border-radius: 50%; background: rgba(255,255,255,0.08); color: #9fb6d0; font-size: .8rem; }
+#hint-pill .hp-x { flex: none; position: relative; width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%; background: rgba(255,255,255,0.08); color: #9fb6d0; font-size: .8rem; cursor: pointer; }
+#hint-pill.in .hp-x { pointer-events: auto; }
+/* ✕の見た目は26pxのまま、タップ判定は約48px四方に拡張 */
+#hint-pill .hp-x::after { content: ''; position: absolute; inset: -11px; border-radius: 50%; }
 /* クラフト解禁バッジ(袋ボタンが淡く光る) */
 #btn-inv.craft-new { position: relative; border-color: #c8a84a !important; box-shadow: 0 0 10px rgba(255,215,110,0.55); }
 #btn-inv.craft-new::after { content: ''; position: absolute; top: -3px; right: -3px; width: 12px; height: 12px;
@@ -852,9 +864,10 @@ body.dead #quest-tracker, body.dead #bounty-tracker, body.dead #boss-bar { displ
 /* 航空機の残数HUD: コンパクト縦積み */
 #ammo-hud.ammo-compact { font-size: .68rem; padding: 4px 8px; line-height: 1.45; min-width: 86px; text-align: left; }
 
-/* スマホ縦: 扇状ボタン(幅216px)と重ならないようヒント/説明の幅をさらに制限 */
+/* スマホ縦: ヒントピルは横長1-2行で読めるよう拡幅し、右下の扇状ボタン群(高さ210px+底84px)より上へ退避。
+   本体は pointer-events:none なので左半分なぞり移動も妨げない */
 @media (max-width: 560px) {
-  #hint-pill { max-width: 38vw; }
+  #hint-pill { max-width: min(78vw, 300px); bottom: calc(300px + max(var(--ey,16px), env(safe-area-inset-bottom))); }
   #hb-iteminfo { max-width: 40vw !important; }
 }
 

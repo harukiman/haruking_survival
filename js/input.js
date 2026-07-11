@@ -13,6 +13,7 @@ Game.Input = (function () {
   let useQueued = false;     // 開く/使うエッジ
   let shiftBtnShown = null;  // 影渡りボタンの表示状態キャッシュ(影鏡所持時のみ表示)
   let missileBtnShown = null; // 🚀ミサイルボタンの表示状態キャッシュ(航空機搭乗中のみ表示)
+  let rollBlockedShown = null; // 回避不能状態(スタミナ不足/CD中)の表示キャッシュ(nostamクラス)
   let rollQueued = false;    // 回避ロールエッジ
   let altFireQueued = false; // 副射撃エッジ(戦闘機のミサイル等 = L2)
   let lastDir = 'down';
@@ -424,6 +425,10 @@ Game.Input = (function () {
     const pl2 = Game.state && Game.state.player;
     const mslSig = (pl2 && (pl2.vehicle === 'jet' || pl2.vehicle === 'bomber')) ? (pl2.missileMode || 'homing') : 'off';
     if (mslSig !== missileBtnShown) { missileBtnShown = mslSig; refreshMissileBtn(); }
+    // 回避が出せない間(スタミナ<20 or CD中)はボタンを薄く=「押しても出ない」を事前に可視化(w01-04)。
+    // classList操作は状態が変わった時のみ(毎tickのDOM書換を避ける)。閾値20は player.js の回避コストと同値
+    const rollBlocked = !!(pl2 && !pl2.vehicle && (pl2.stamina < 20 || (pl2.rollCd || 0) > 0));
+    if (rollBlocked !== rollBlockedShown) { rollBlockedShown = rollBlocked; const rb2 = document.getElementById('btn-roll'); if (rb2) rb2.classList.toggle('nostam', rollBlocked); }
     return intent;
   }
 

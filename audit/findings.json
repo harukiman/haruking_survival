@@ -1,5 +1,758 @@
 {
-  "meta": { "note": "自動プレイテスト監査の累積台帳。status: open|selected|fixed|wontfix|dupe", "createdWave": "00" },
-  "waveMetrics": {},
-  "findings": []
+  "meta": {
+    "note": "自動プレイテスト監査の累積台帳。status: open|selected|fixed|wontfix|dupe",
+    "createdWave": "00"
+  },
+  "waveMetrics": {
+    "01": {
+      "ranAt": "2026-07-11T03:47:16.979Z",
+      "confirmed": 19,
+      "fpsBaseline": 60,
+      "fpsChaos": 59.9,
+      "joystickPass": "0/8",
+      "questChain": "11/11"
+    },
+    "01f": {
+      "ranAt": "2026-07-11T04:22:15.445Z",
+      "note": "wave-1修正後の再検証。joystick 0/8→8/8, deadzone 8px, firstAction silent→false, stuck→false, tracker×action-btns重なり 1652→0px2。FPSは環境スロットル(headless rAF 30Hz)によりHEADでも30fps=コード非起因。以後FPSは同一実行内 baseline vs chaos の相対比較のみ有効",
+      "fpsNote": "environment-throttled"
+    }
+  },
+  "findings": [
+    {
+      "id": "w01-01",
+      "status": "fixed",
+      "severity": "P0",
+      "category": "ergonomics",
+      "element": "#hint-pill",
+      "summary": "初回ガイドの #hint-pill (button, pointer-events:auto) が左下ジョイスティック域を覆い、その上で始まるドラッグを全て飲み込むため移動操作が成立しない — ライブ再現で elementFromPoint(110,620)=hint-pill、canvas touchstart 不達・移動 0px を確認",
+      "evidence": [
+        "metric: joystick.direction8.failures = 8/8 (全方向 movedPx=0, noMove)",
+        "metric: joystick.deadzone.minDragPx=null neverMoved=true",
+        "metric: wander.stuck.stuck=true minDisplacementTilesPer4s=0",
+        "p2-touch-02-joystick-active.png"
+      ],
+      "suggested_fix": "推奨は CSS 側の最小修正: css/style.css:803 の `#hint-pill.in` を pointer-events:none にし、`#hint-pill .hp-x` (style.css:806) のみ pointer-events:auto + js/ui.js:1468 の click リスナーを .hp-x に付け替え (innerHTML 再生成毎にバインドするか委譲)。ヒントは life タイマー (ui.js:1481) で自動前進するためタップ前進の喪失は許容範囲。代替案は js/input.js:111-125 の touchstart を document capture に移し左ゾーン判定+HUD 要素除外で受ける方式だが、action-btns 等との干渉リグレッションリスクがあり CSS 案より高コスト。修正後 audit/personas/p2-touch.js の joystick.direction8 (8/8 pass) と buttons.tapResponse で再検証すること。",
+      "files": [
+        "js/input.js:111-125",
+        "js/ui.js:1466-1473",
+        "css/style.css:799-803"
+      ],
+      "dupes": 1,
+      "fixedWave": "01"
+    },
+    {
+      "id": "w01-02",
+      "status": "fixed",
+      "severity": "P1",
+      "category": "feedback",
+      "element": "btn-mine (採掘) 空振り時",
+      "summary": "初見が最初に押す採掘ボタンが対象なし(照準の赤枠が水タイル上)だと完全に無反応で、トースト・振りアニメ・SEのいずれも無く「ボタンが効いていない」と誤解させる",
+      "evidence": [
+        "metric: firstAction.feedback.silent=true, firstAction.feedback.newToasts=[]",
+        "p1-firsttime-06-first-control.png (赤い照準枠が水タイル上、射程内に対象なし)",
+        "metric: firstAction.feedback.silent=true (newToasts=[] 1200ms)",
+        "p1-firsttime-07-after-wander.png"
+      ],
+      "suggested_fix": "js/player.js:449-457 の intent.mine ディスパッチで、tryAttack() が false かつ mineTick が無効対象で早期 return したケースを検知し空振りフィードバックを出す。具体的には (a) combat.js:284 付近の no-target `return false` 直前に throttle 付き (例 tick%10) で Game.Audio.play('swing')+Game.Render.spawnSlash(p.x,p.y,p.dir,'rgba(255,255,255,0.5)') を追加、(b) player.js:546 の非採掘対象 return 前に照準枠シェイク用フラグ (mining.invalidT 等) を立て render 側で赤枠を一瞬揺らす、(c) 初回空振りのみ Game.UI.tipOnce('first_whiff','近くの木や岩に近づいて叩こう') を1回表示。押しっぱなし連打でのスパム防止に throttle 必須。",
+      "files": [
+        "js/combat.js",
+        "js/input.js",
+        "js/player.js",
+        "js/combat.js:349-351",
+        "js/ui.js",
+        "audit/personas/p1-firsttime.js:74-88"
+      ],
+      "dupes": 2,
+      "fixedWave": "01"
+    },
+    {
+      "id": "w01-03",
+      "status": "fixed",
+      "severity": "P1",
+      "category": "readability",
+      "element": "#hint-pill",
+      "summary": "操作ヒントのテキストが1行約4文字幅で縦に折り返され (「画面の左/半分をな/ぞると移/動できる」「武器をホ/ットバーで/選び、敵に/近づいて」)、細長い塔状になって読みづらいうえパネル自体が縦に伸びて移動ゾーンの遮蔽面積を拡大している",
+      "evidence": [
+        "p2-touch-01-gameplay-start.png (4文字幅の縦折り返し)",
+        "p2-touch-02-joystick-active.png / p2-touch-03-after-mash.png (武器ヒントも同様の不自然な折り返しが約86-702pxの高さで常駐)",
+        "p4-progression-01-quest-00-gather.png (4行の語中折返し)",
+        "css/style.css:857 『#hint-pill { max-width: 38vw; }』"
+      ],
+      "suggested_fix": "css/style.css:857 の `#hint-pill { max-width: 38vw; }` を `max-width: min(78vw, 300px);` 等に拡幅して横長 1-2 行化する (base の style.css:800 `max-width: 54vw` も 560px 超で細い場合は同様に見直し)。あわせて高さ増による移動ゾーン侵入を抑えるため、.hp-tx の折り返しを 2 行程度に収める幅を確保するか、bottom 位置をホットバー直上 (移動ゾーン外の下端寄り) に調整する。生成側は js/ui.js:1467 (hintPill 生成) で構造変更が必要な場合のみ触る。",
+      "files": [
+        "css/style.css",
+        "js/ui.js"
+      ],
+      "dupes": 2,
+      "fixedWave": "01"
+    },
+    {
+      "id": "w01-04",
+      "status": "fixed",
+      "severity": "P1",
+      "category": "feedback",
+      "element": "#btn-roll (回避)",
+      "summary": "スタミナ4/100で回避ロールが使えない状態でも「回避」ボタンの見た目が満タン時と同一で、混戦中に押しても無反応=サイレント失敗になる",
+      "evidence": [
+        "metric: buttons.tapResponse btn-roll domReacted=false (btn-inv/btn-mine/btn-place は true)",
+        "p2-touch-03-after-mash.png (40連打後も回避ボタンに押下状態・クールダウン表示等の変化が写っていない)",
+        "p3-combat-02-night-chaos-mid.png (スタミナ 4/100 だが回避ボタンは p3-combat-01 の満タン時と同一表示)",
+        "metric: toast.spamRate.sample「息が切れた…」"
+      ],
+      "suggested_fix": "1) js/player.js:239 — add an else branch for `intent.roll && !p.vehicle && (p.stamina < 20 || p.rollCd > 0)`: call a UI feedback hook (throttled toast + button shake + soft deny SFX). 2) js/ui.js:~1173-1188 (HUD update where stamina-bar width is set) — toggle a `nostam` class on #btn-roll when `p.stamina < 20 || p.rollCd > 0`, optionally with a conic-gradient cooldown/stamina ring. 3) css/style.css:617 — add `.abtn.roll.nostam { filter: grayscale(.8); opacity: .55; }` and a shake keyframe class applied on denied press.",
+      "files": [
+        "js/input.js",
+        "js/ui.js",
+        "css/style.css",
+        "js/input.js",
+        "js/ui.js"
+      ],
+      "dupes": 2,
+      "fixedWave": "01"
+    },
+    {
+      "id": "w01-05",
+      "status": "fixed",
+      "severity": "P1",
+      "category": "ergonomics",
+      "element": "左半分ドラッグ移動 (仮想ジョイスティック)",
+      "summary": "両シードともプレイヤーがゲーム内30分(実時間約3分)にわたり1タイルも移動しておらず(3ショットで座標が完全一致)、左半分ドラッグによる移動が初見の操作列で機能していない疑いがある",
+      "evidence": [
+        "p1-firsttime-06-first-control.png / p1-firsttime-07-after-wander.png / p1-firsttime-08-gameplay-3min-state.png (07:55→08:23→08:26 でプレイヤー位置・照準枠が完全に同一)",
+        "wave-01r/shots/p1-firsttime-07-after-wander.png (別シードでも同一現象)",
+        "metric: wander.stuck.minDisplacementTilesPer4s=0, stuck=true (両wave)"
+      ],
+      "suggested_fix": "css/style.css:803 の `#hint-pill.in { pointer-events: auto; }` をやめ、pill 本体は常に pointer-events:none とし `#hint-pill .hp-x { pointer-events: auto; }` のみ受け付ける。それに合わせ js/ui.js:1467-1469 の click ハンドラ (advanceHint) を .hp-x 要素へ移す。加えて堅牢化するなら js/input.js:111 の joystick touchstart を canvas 単独でなく document/#app レベルで受けて対話的 UI ターゲットのみ除外する方式にすると、他のオーバーレイでも移動が死なない。",
+      "files": [
+        "js/input.js",
+        "js/ui.js",
+        "css/style.css"
+      ],
+      "dupes": 1,
+      "fixedWave": "01"
+    },
+    {
+      "id": "w01-06",
+      "status": "fixed",
+      "severity": "P1",
+      "category": "ergonomics",
+      "element": "#hint-pill / left-half joystick zone",
+      "summary": "移動用の左半分なぞり操作が全方向で無反応 — hint-pill が (18,616)-(166,702) で左下の親指ゾーンを覆い canvas へのタッチを遮断しており、チュートリアルが「画面の左半分をなぞると移動できる」と教えるまさにその領域が UI に食われている",
+      "evidence": [
+        "metric: joystick.direction8.failures = 8/8 全方向 movedPx=0",
+        "metric: joystick.deadzone.neverMoved = true (minDragPx=null)",
+        "p2-touch-01-gameplay-start.png と p2-touch-02-joystick-active.png でプレイヤー座標・赤ターゲット枠が完全に同一 (時刻は07:55→08:34と進行、ドラッグ後も1pxも動いていない)",
+        "metric: layout.hudOverlap action-btns×hint-pill 1451px2"
+      ],
+      "suggested_fix": "css/style.css:799-807 — set #hint-pill { pointer-events: none } even when .in, and give only the ✕ (.hp-x, style.css:806) pointer-events:auto (move the advance/dismiss handler from the pill body at js/ui.js:1468 to .hp-x). Apply the same to #quest-tracker's mobile bottom-left variant (css/style.css:358 pointer-events:auto, positioned at :417) or auto-fade it while joy.active. Alternative/robuster: in js/input.js:111 capture the joystick touchstart at document level in capture phase and only skip touches whose target is a genuinely interactive control (.abtn/#dpad/.hp-x/.slot), so passive HUD text can never eat movement input. Verify with the existing probe after changing the drag origin artifact: audit/personas/p2-touch.js:21 should also randomize/offset drag origins to avoid single-point artifacts in future waves.",
+      "files": [
+        "js/input.js",
+        "js/ui.js",
+        "css/style.css"
+      ],
+      "dupes": 1,
+      "fixedWave": "01"
+    },
+    {
+      "id": "w01-07",
+      "status": "open",
+      "severity": "P1",
+      "category": "onboarding",
+      "element": "quest-tracker / spawn-viewport",
+      "summary": "最初のクエスト「木を叩いて木材を手に入れる」の対象である木が、wave-01のスポーン視界に一本も存在せず(水+砂浜+岩のみ)、最寄りの木への誘導(矢印/ハイライト)も無いため、初見は最初の60秒で何をタップすべきか画面から読み取れない",
+      "evidence": [
+        "p1-firsttime-06-first-control.png",
+        "wave-01r/shots/p1-firsttime-06-first-control.png",
+        "metric: onboarding.guidance.questText='生きる糧：木を叩いて 木材 を手に入れる'"
+      ],
+      "suggested_fix": "js/worldgen.js:532-546 findSpawn を拡張: walkable 候補が見つかったら半径8-10タイル(モバイル縦画面の初期視界相当)内に O.TREE (genTile で確認) が最低1本あるかを追加チェックし、無ければ次候補へ (400周探索で見つからなければ従来 fallback)。加えて js/render.js に最初のクエスト(gather)限定の画面端方向矢印を追加 — render.js:182 の帰路コンパス実装または js/events.js:379 の報酬誘導マーカー(画面内=リング/画面外=端矢印)のパターンを流用し、最寄り O.TREE をチャンク走査で特定して指す。視認性は js/icons.js の TREE スプライトを序盤バイオーム(GRASS/FOREST)では葉付きに変更。",
+      "files": [
+        "js/worldgen.js",
+        "js/quests.js",
+        "js/render.js"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w01-08",
+      "status": "fixed",
+      "severity": "P1",
+      "category": "readability",
+      "element": "#hint-pill (.hp-tx 移動ヒント)",
+      "summary": "初見向けの唯一の操作ヒント「画面の左半分をなぞると移動できる」が1行4文字の縦長折返し(画面の左/半分をな/ぞると移/動できる)で表示され読みにくく、しかもそのヒント自体が左下=移動ドラッグ領域とアクションボタン群に重なっている",
+      "evidence": [
+        "p1-firsttime-06-first-control.png",
+        "metric: fonts.gameplay.warnings .hp-tx fontPx=12.5",
+        "metric: hud.calm.overlaps action-btns/hint-pill areaPx=1041"
+      ],
+      "suggested_fix": "css/style.css:857 — the @media(max-width:560px) override `#hint-pill { max-width: 38vw; }` is the primary culprit; combined with style.css:799-800 (left/bottom fixed anchor, max-width:54vw). Fix direction: reposition #hint-pill to top-center below the HUD bar (e.g. left:50%; transform:translateX(-50%); top:calc(HUD height + safe-area)) and widen to max-width:min(86vw,340px) so the text fits in 1-2 horizontal lines; this simultaneously removes it from the left-half movement drag zone and the action-btns corner. If keeping bottom-left placement, at minimum drop the 38vw override and raise bottom offset above the quest tracker. Optionally, for the movement hint specifically (js/ui.js:1437, pill built at js/ui.js:1466-1473), show a translucent drag-gesture glyph over the left half instead of text.",
+      "files": [
+        "js/ui.js",
+        "css/style.css"
+      ],
+      "dupes": 1,
+      "fixedWave": "01"
+    },
+    {
+      "id": "w01-09",
+      "status": "fixed",
+      "severity": "P1",
+      "category": "hierarchy",
+      "element": "#quest-tracker",
+      "summary": "クエストトラッカーが最初のクエスト文の時点で既に「…木材 …」と省略され(11.2pxで全文も読めない)、右端が使う/設置ボタンの下に潜り込んでいるため、目標の全文確認とボタン操作が互いに阻害される",
+      "evidence": [
+        "p1-firsttime-06-first-control.png",
+        "metric: hud.calm.overlaps quest-tracker/action-btns areaPx=1652, quest-tracker/btn-place areaPx=28",
+        "metric: fonts.gameplay #quest-text fontPx=11.2"
+      ],
+      "suggested_fix": "css/style.css:417 — in the max-width:560px media query, change #quest-tracker to max-width: calc(100vw - 248px) (clamp right edge left of #action-btns' 216px + margins) or otherwise cap width to avoid the button zone; raise font-size to >=.75rem (12px+); replace white-space:nowrap ellipsis with 2-line clamp (white-space:normal; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical) so the full first quest text fits; append a chevron indicator (e.g. ::after '›') to signal tap-to-expand, which is already wired at js/ui.js:141 (questTracker click -> openQuest). Quest text itself is set at js/ui.js:2333 and needs no change.",
+      "files": [
+        "css/style.css",
+        "js/ui.js",
+        "js/quests.js"
+      ],
+      "dupes": 1,
+      "fixedWave": "01"
+    },
+    {
+      "id": "w01-10",
+      "status": "open",
+      "severity": "P1",
+      "category": "ergonomics",
+      "element": "left-handed mode action-btns cluster",
+      "summary": "左手モードでアクションボタン群 (回避/使う・設置/採掘/袋) がヒントパネルとクエストトラッカーの真上に積み重なり、ボタンラベルもヒント本文も互いに潰し合って読めず、ヒントの×閉じるボタンは回避ボタンの下に埋まって押せない",
+      "evidence": [
+        "p2-touch-04-left-handed.png (回避が「ットバーで/敵に」の文字上に重なり、使う/設置がクエストピル「生きる糧…」を覆い、×ボタンが回避円の裏に消えている)",
+        "metric: layout.leftHanded 実行時も hint-pill/quest-tracker の位置がミラーリングされていない"
+      ],
+      "suggested_fix": "css/style.css:205 の直後に left-handed 用ミラーを追加: `body.left-handed #hint-pill { left: auto; right: calc(8px + max(var(--ex,10px), env(safe-area-inset-right))); }` と `body.left-handed #quest-tracker { left: auto; right: calc(8px + ...); transform: none; }`（style.css:417 のモバイル media query 内の quest-tracker left 指定と style.css:799 の hint-pill left 指定を上書き。857行の max-width: 38vw の media query 内にも同様の right 版が必要）。加えてヒント/クエストとアクションボタンの縦占有域が競合しないよう bottom オフセットを排他化する。",
+      "files": [
+        "css/style.css",
+        "js/settings.js",
+        "js/ui.js"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w01-11",
+      "status": "open",
+      "severity": "P1",
+      "category": "ergonomics",
+      "element": "tip-toast × #btn-use / action-btns",
+      "summary": "戦闘中に4行のヒントtoast (グレイズ解説) が左下に出て「使う/設置」ボタンとクエストトラッカーを物理的に覆い、混戦中の操作を阻害する",
+      "evidence": [
+        "p3-combat-01-night-chaos-start.png",
+        "metric: hud.chaosOverlap.overlaps quest-tracker×action-btns=1652px"
+      ],
+      "suggested_fix": "(1) css/style.css:678 モバイル #toast の右端をアクションボタン群に届かないよう制限 (例: max-width: min(52vw, calc(100vw - 200px - env(safe-area-inset-right))) か bottom をホットバー+ボタン帯の上へ移動)。(2) js/ui.js:2498 tipOnce に戦闘中判定 (近傍敵/被弾直後フラグ) を追加し、長文チップはキューに積んで戦闘終了後に flush。(3) css/style.css:417 モバイル #quest-tracker の max-width 50vw を縮小するか bottom を上げ、#action-btns バウンディングボックス (1652px重なり) と btn-place (28px) の交差を解消。",
+      "files": [
+        "js/ui.js",
+        "css/style.css"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w01-12",
+      "status": "open",
+      "severity": "P1",
+      "category": "readability",
+      "element": "primary-action-btn (採掘)",
+      "summary": "敵が自機に密着している近接戦闘中でもメインの緑ボタンのラベルが「採掘」のままで、これが攻撃ボタンだと初見には読み取れない",
+      "evidence": [
+        "p3-combat-03-combat-close.png (敵が隣接しダメージ数字が出ている状態でボタン表記は採掘)",
+        "metric: combat.hitFeedback.damaged=true"
+      ],
+      "suggested_fix": "1) js/combat.js:552 — return に hostileInRange を追加して export。2) js/ui.js:2613 付近 (context-action を毎フレーム更新している updateContextAction 系ループ) — Game.Combat.hostileInRange(p, ATTACK_RANGE*TILE_SIZE) が true なら btn-mine の textContent を「攻撃」+ class 'combat' 付与、false が約1秒継続で「採掘」へ戻すヒステリシス (カウンタ変数) を実装。銃装備時 (player.js:448 の分岐と整合) は「射撃」も検討。3) css/style.css — .abtn.main.combat に赤系背景を追加。index.html:274 の初期ラベルは「採掘」のままで良い。",
+      "files": [
+        "js/input.js",
+        "js/combat.js",
+        "js/ui.js"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w01-13",
+      "status": "fixed",
+      "severity": "P1",
+      "category": "hierarchy",
+      "element": "#quest-tracker / #toast",
+      "summary": "クエスト達成トーストがクエストトラッカーと同位置に重なり、次の目標文言が達成の瞬間に減光＋隠蔽されて読めない (全10回の遷移で毎回発生)",
+      "evidence": [
+        "p4-progression-02-quest-01-tool.png (トースト『目標達成: 生きる糧』の背後で『道具を手に：クラフトで…』が減光・切詰め)",
+        "p4-progression-09-quest-08-boss.png (『主との対峙：影の主 を討ち…』が同様に隠蔽)",
+        "p4-progression-01-quest-00-gather.png (開始直後もストーリー解放トーストが初回クエスト文を隠す)",
+        "metric: quest.chain.steps[*].celebrationToast"
+      ],
+      "suggested_fix": "css/style.css:678 — in the max-width:560px block, raise the mobile toast anchor above the tracker, e.g. `#toast { bottom: calc(134px + max(var(--ey,16px), env(safe-area-inset-bottom))); }` so it stacks above #quest-tracker (style.css:417, bottom: 96px+ey, height ~30px); also update the max-height:740px portrait variant near style.css:687 where #quest-tracker moves to 88px+ey (toast should track it, e.g. 126px+ey). Optionally in js/ui.js refreshQuest (~line 2328) add a temporary highlight class (~1.5s) to #quest-tracker when the quest text changes so the new goal draws attention after the toast.",
+      "files": [
+        "css/style.css",
+        "js/ui.js",
+        "js/quests.js"
+      ],
+      "dupes": 1,
+      "fixedWave": "01"
+    },
+    {
+      "id": "w01-14",
+      "status": "fixed",
+      "severity": "P1",
+      "category": "readability",
+      "element": "#quest-tracker",
+      "summary": "390pxでクエストトラッカーが max-width 50vw で省略され、目標の行動部分 (『欠片 0/8』『0/3』等の進捗カウンタやレシピ) が『…』で常に切れて見えない",
+      "evidence": [
+        "p4-progression-04-quest-03-mirror.png (『鏡を磨く：影の欠片と鉄で …』— カウンタ 0/8 が不可視)",
+        "p4-progression-06-quest-05-crystal.png (『闇の鉱石：影の世界で 影晶 …』— 0/3 不可視)",
+        "metric: quest.chain.steps[3].trackerOverflow=false (計測はDOM全文参照のため視覚切詰めを検出できていない)"
+      ],
+      "suggested_fix": "css/style.css:417 — in the max-width:560px block, override #quest-tracker with white-space:normal; and clamp to 2 lines (display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden), optionally raising max-width to ~62vw and switching border-radius from pill 20px to ~12px for 2-line fit. Complementary: js/ui.js:2333 — split the counter（…0/8 等）out of q.desc into a separate trailing span so it can be kept visible (flex row with the desc span given overflow:hidden and the counter span flex-shrink:0). Also fix the audit metric at audit/personas/p4-progression.js:34 to measure the container: qt.scrollWidth > qt.clientWidth + 4 (using #quest-tracker, not the inline #quest-text span) so future waves detect visual truncation.",
+      "files": [
+        "css/style.css",
+        "js/ui.js"
+      ],
+      "dupes": 1,
+      "fixedWave": "01"
+    },
+    {
+      "id": "w01-15",
+      "status": "fixed",
+      "severity": "P1",
+      "category": "ergonomics",
+      "element": "#hint-pill / shadow-shift button",
+      "summary": "クエスト進行で解放される『影渡り』ボタンがヒントピルの×ボタン位置に重なって出現し、閉じる操作とスキル発動が誤タップ衝突する",
+      "evidence": [
+        "p4-progression-05-quest-04-shift.png (影渡り円ボタンが hint-pill の右端×と接触・一部重畳)",
+        "p4-progression-11-quest-final-state.png (最終状態でも重なりが恒常)"
+      ],
+      "suggested_fix": "css/style.css:857 — tighten the mobile cap so the pill can never reach the shift button's occupied rect, e.g. `#hint-pill { max-width: min(38vw, calc(100vw - 250px)); }` (shift left edge = 100vw - (10px+--ex) - 214px; keep >=8px clearance). Alternatively (or additionally) css/style.css:799 — when btn-shift is visible, raise the pill above the action cluster: in js/input.js around line 420 where shiftBtnShown toggles, add/remove a body class (e.g. `shift-avail`) and add `body.shift-avail #hint-pill { bottom: calc(216px + max(var(--ey,16px), env(safe-area-inset-bottom))); }` so the pill sits clear of the 210px-tall #action-btns fan. Verify with elementFromPoint that no interactive control lies within ~8px of .hp-x.",
+      "files": [
+        "css/style.css",
+        "js/ui.js",
+        "js/input.js"
+      ],
+      "dupes": 1,
+      "fixedWave": "01"
+    },
+    {
+      "id": "w01-16",
+      "status": "open",
+      "severity": "P1",
+      "category": "hierarchy",
+      "element": "#toast / #quest-tracker / hint-text stack (bottom-left)",
+      "summary": "トースト・クエストトラッカー・操作ヒントが画面左下の同じ位置に物理的に積層し、複数テキストが透けて重なって両方とも判読不能、さらにトーストが「使う/設置」ボタンにも被る",
+      "evidence": [
+        "p5-tourist-06-night-hud.png",
+        "p5-tourist-08-after-load.png",
+        "metric: night.readability.warnings #toast text='🌓 夜——鏡の向こうに…' と .hp-tx '画面の左半分をなぞると移動できる' が同時表示"
+      ],
+      "suggested_fix": "css/style.css:678 (モバイル #toast bottom:96px/left:8px) が css/style.css:417 の #quest-tracker (bottom~112px) と css/style.css:799 の #hint-pill (bottom~142px) と同一左下カラムで衝突。修正方向: (1) js/ui.js:2505 付近の toast 表示処理で、表示中は #quest-tracker/#hint-pill に一時クラス(例 .toast-active で opacity:0 か translateY 退避)を付与し hide 後に戻す。(2) #toast の帯をアクションボタン群(使う/設置, 画面右下 x≈440-560px)と重ならないよう max-width を 52vw→約45vw に縮めるか bottom をホットバー直上の専用帯(hint-pill より上、例 bottom:170px+)へ移動。(3) トーストは単一 #toast 要素の差し替えなのでキュー化は必須ではないが、連続発火時の上書きちらつき防止に順次表示キューを入れるとなお良い。",
+      "files": [
+        "js/ui.js",
+        "css/style.css"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w01-17",
+      "status": "open",
+      "severity": "P2",
+      "category": "hierarchy",
+      "element": "quest-tracker / btn-place (使う/設置)",
+      "summary": "通常レイアウトでもストーリートースト「記憶回廊に物語が刻まれた…」が使う/設置ボタンの左半分を覆い、ラベルが「う/設置」しか見えない瞬間があり、序盤で最重要のインタラクトボタンの位置と機能を初見が認識できない",
+      "evidence": [
+        "p2-touch-01-gameplay-start.png (トーストが btn-place を横切りラベル前半を隠す)",
+        "metric: layout.hudOverlap quest-tracker×action-btns 1652px2, quest-tracker×btn-place 28px2"
+      ],
+      "suggested_fix": "css/style.css:678 — モバイル #toast の max-width を 52vw から min(52vw, calc(100vw - 190px)) 程度にクランプ (btn-place 左端 214px@390vw より内側、右下ボタン列幅+マージンを差し引く)。同様に css/style.css:417 の #quest-tracker max-width:50vw も min(50vw, calc(100vw - 190px)) に揃えると metric 28px²/1652px² の重なりも解消。",
+      "files": [
+        "js/ui.js",
+        "css/style.css"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w01-18",
+      "status": "open",
+      "severity": "P2",
+      "category": "hierarchy",
+      "element": "story-chapter-overlay",
+      "summary": "章タイトル「— 影の世界 —」とフレーバーテキスト2行が、25体のモブが湧く夜戦の真っ最中に画面中央=自機の真上へ重なり、自機・敵・ダメージ数字(-2)が文字の裏に隠れる",
+      "evidence": [
+        "p3-combat-01-night-chaos-start.png",
+        "metric: setup.nightChaos.spawned=25"
+      ],
+      "suggested_fix": "render.js:504-509 — テキスト描画の y を v.h*0.42/0.50/0.55 から上部1/4 (v.h*0.16/0.24/0.29 程度) へ移動し、テキスト裏に半透明帯 (fillRect + rgba(18,8,38,0.5)) を敷いて自機周辺を空ける。加えて daynight.js:12 または render.js:490 shadowVision() で、近傍タイル内の敵数 >= N か直近被弾中なら発火を数秒遅延 (storySeen フラグ設定を発火成功時に移す) するガードを追加。",
+      "files": [
+        "js/story.js",
+        "js/ui.js"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w01-19",
+      "status": "open",
+      "severity": "P2",
+      "category": "feedback",
+      "element": "quest-celebration (spawnFloat + toast)",
+      "summary": "祝福演出が全段階で完全に同一 (中央の黄色『目標達成』フロート＋同型トースト) で、木材採取とボス討伐/封印解除が同じ重みに感じられ比例感が皆無",
+      "evidence": [
+        "p4-progression-02-quest-01-tool.png と p4-progression-09-quest-08-boss.png の演出が画素レベルで同一",
+        "metric: quest.chain.steps[*].celebrationToast が全て『🎯 目標達成: <name>』の同一書式"
+      ],
+      "suggested_fix": "js/quests.js:35-44 celebrate(q) に tier 導入: const MAJOR={shift:1,seal:1,boss:1,reunify:1}; MAJOR[q.id] のとき Game.Render.flash('#ffd86b') + spawnFloat をクエスト名入り大型表示に + js/audio.js に専用ファンファーレ cue (quest_major 等) を追加して再生。序盤クエストは現行演出を維持。「初回のみ盛大」方針と整合し、mobs.js/world.js 側の既存フラッシュとは色/音を重ねて相乗させる方向。",
+      "files": [
+        "js/quests.js",
+        "js/audio.js",
+        "js/render.js"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w01-20",
+      "status": "open",
+      "severity": "P2",
+      "category": "pacing",
+      "element": "cutscene (序章ムービー)",
+      "summary": "46秒のオープニングは1カットあたり抽象図形1〜2個+短文1行と視覚密度が低く(特に8s/15s/30s時点)、タップで次のカットへ進める部分送りが無いため、初見の選択肢が「46秒全部見る」か「スキップで物語を全部捨てる」の二択になっている",
+      "evidence": [
+        "p1-firsttime-03-cutscene-8s.png",
+        "p1-firsttime-04-cutscene-15s.png",
+        "p1-firsttime-05-cutscene-30s.png",
+        "metric: cutscene.watch.durationSec=46.629"
+      ],
+      "suggested_fix": "画面タップで現在のカットの残り待ちを飛ばして次カットへ進む部分送りを追加(スキップ全捨てとの中間)。各カットの静止時間を詰めて全体25〜30秒目標。スキップは「スキップ(記憶回廊でいつでも見返せる)」と補足して心理的コストを下げる",
+      "files": [
+        "js/cutscene.js",
+        "js/story.js"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w01-21",
+      "status": "open",
+      "severity": "P2",
+      "category": "onboarding",
+      "element": "action-btns (採掘/使う設置/回避/袋) 初回説明",
+      "summary": "操作開始から3分経ってもチュートリアルtipsが0件で、移動ヒント以外に5つのアクションボタンの役割説明が一切なく、11.5〜11.8pxの小さなラベルだけで機能を推測させている",
+      "evidence": [
+        "metric: onboarding.guidance.tipsFiredSoFar=[], pacing.state.tips=0",
+        "p1-firsttime-08-gameplay-3min-state.png",
+        "metric: fonts.gameplay #btn-place fontPx=11.5, #btn-roll fontPx=11.8"
+      ],
+      "suggested_fix": "文脈トリガー式のワンショットtips (木/岩に近づいた時「採掘で叩ける」、敵接近時「回避」等) を最初の60〜120秒に段階投入する。ボタンラベルは12px以上へ",
+      "files": [
+        "js/ui.js",
+        "js/quests.js",
+        "js/config.js"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w01-22",
+      "status": "open",
+      "severity": "P2",
+      "category": "onboarding",
+      "element": "title screen",
+      "summary": "タイトル画面はセーブ枠運用説明・名前変更・難易度・シード・P2P・設定が初回プレイの「はじめから」と同一階層に並び(タップ対象20個)、初見には情報過多 — 緑のprimaryボタン自体は明瞭なので致命ではないがシード欄とP2P欄は初回には不要なノイズ",
+      "evidence": [
+        "p1-firsttime-01-title.png",
+        "metric: title.tapTargets.total=20",
+        "metric: title.fonts .slots-lbl fontPx=11.8"
+      ],
+      "suggested_fix": "シード入力とP2P欄を「くわしい設定」折りたたみに収納し、初回(全枠が空き)はセーブ枠グリッドも簡略表示にして『はじめから』への視線導線を短くする",
+      "files": [
+        "index.html",
+        "css/style.css",
+        "js/titlefx.js"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w01-23",
+      "status": "open",
+      "severity": "P2",
+      "category": "ergonomics",
+      "element": "hotbar (.slot)",
+      "summary": "武器切替の要であるホットバーが 38px スロット+3px 間隔で画面最下端 (y=786) に密集しており、チュートリアル自身が「武器をホットバーで選び」と戦闘の起点に指定しているのに、混戦中の親指では隣接スロットの押し分けが困難",
+      "evidence": [
+        "p2-touch-02-joystick-active.png (武器ヒント文言とホットバーの実サイズの対比)",
+        "metric: layout.tapTargets.violations 9件 (.slot 38x38 < 44px) + adjacency gap=3px x8",
+        "p2-touch-04-left-handed.png (左手モードでも同一配置で改善されない)"
+      ],
+      "suggested_fix": "スロットを 44px 以上+間隔 6-8px にし、9枠を8枠に減らすか横スクロール化。選択中スロットはタップ域を拡大表示する",
+      "files": [
+        "css/style.css",
+        "js/inventory.js",
+        "js/ui.js"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w01-24",
+      "status": "open",
+      "severity": "P2",
+      "category": "ergonomics",
+      "element": "#btn-roll / #btn-mine",
+      "summary": "回避 (防御・緊急) と採掘 (攻撃・常用) の円ボタンが物理的に重なっており、戦闘中に回避を狙って大きい採掘円の縁を叩く誤爆が起きやすい",
+      "evidence": [
+        "metric: layout.hudOverlap btn-roll×btn-mine 64px2",
+        "p2-touch-01-gameplay-start.png / p2-touch-03-after-mash.png (回避円の右下と採掘円の左上が接触して見える)"
+      ],
+      "suggested_fix": "回避と採掘の中心間距離を広げ重なりゼロ+ギャップ8px以上を確保。誤爆コストが高い回避側を上方向へ8-12pxオフセットする",
+      "files": [
+        "css/style.css",
+        "index.html"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w01-25",
+      "status": "open",
+      "severity": "P2",
+      "category": "readability",
+      "element": "night-mobs (光源外の敵スプライト)",
+      "summary": "光源の外にいる敵は暗い夜背景にほぼ溶けるシルエットで、破線テレグラフ (遠距離攻撃線) だけが見え、撃ってくる本体を視認できない",
+      "evidence": [
+        "p3-combat-02-night-chaos-mid.png (暗部のモブが背景と同輝度)",
+        "p3-combat-03-combat-close.png (複数の破線が画面外/暗部の敵から伸びる)"
+      ],
+      "suggested_fix": "敵スプライトに暗所でも視認できる最小限のシグナル (目の発光 2-3px、攻撃予兆時の輪郭リム) を追加。暗さの演出は保ちつつ『攻撃してくる敵』だけは必ず視認可能にする",
+      "files": [
+        "js/render.js",
+        "js/lighting.js",
+        "js/mobs.js"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w01-26",
+      "status": "open",
+      "severity": "P2",
+      "category": "feedback",
+      "element": "damage-numbers",
+      "summary": "与ダメ(4)と被ダメ(1)の数字が自機の真上でほぼ同サイズ・同位置に重なって表示され、どちらがダメージを受けたのか混戦中に判別できない",
+      "evidence": [
+        "p3-combat-03-combat-close.png (「4」と「1」が自機頭上で重なる)",
+        "p3-combat-01-night-chaos-start.png (「-2」が章テキストと重なる)"
+      ],
+      "suggested_fix": "被ダメは赤+自機から下方向へ、与ダメは白/黄+敵位置から上方向へと出現位置・色・軌道を分離し、同フレーム多発時は横方向にオフセットして重なりを防ぐ",
+      "files": [
+        "js/combat.js",
+        "js/render.js"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w01-27",
+      "status": "open",
+      "severity": "P2",
+      "category": "hierarchy",
+      "element": "hotbar / equipped-weapon-indicator",
+      "summary": "iron_sword を所持して戦闘しているのにホットバーにはりんごx3しか見えず、いま何の武器で殴っているのかを戦闘画面から確認できない",
+      "evidence": [
+        "p3-combat-01-night-chaos-start.png (ホットバー先頭りんごのみ、残り8枠空)",
+        "metric: setup.gear.inv=[apple, iron_sword, ...]"
+      ],
+      "suggested_fix": "装備中の武器をホットバー付近か攻撃ボタン上に常時アイコン表示する (攻撃ボタン内に武器ミニアイコンを重ねる案が省スペース)。入手した武器は空きホットバー枠へ自動配置も検討",
+      "files": [
+        "js/inventory.js",
+        "js/ui.js"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w01-28",
+      "status": "open",
+      "severity": "P2",
+      "category": "hierarchy",
+      "element": "autosave-indicator / hotbar",
+      "summary": "『オートセーブ』インジケータがホットバー右側3-4スロットの真上に被さり、表示中はスロット内容の確認とタップを妨げる (クエスト達成毎の自動保存で頻発)",
+      "evidence": [
+        "p4-progression-04-quest-03-mirror.png (右側スロットを完全に隠蔽)",
+        "p4-progression-08-quest-07-seal.png (同現象)",
+        "code: js/quests.js:61 目標達成毎に Save.autosave('quest')"
+      ],
+      "suggested_fix": "オートセーブ表示をホットバーの上 (quest-tracker と同帯の右端) か画面右上の時計横に移設し、ホットバーとの重なりを排除",
+      "files": [
+        "css/style.css",
+        "js/save.js",
+        "js/ui.js"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w01-29",
+      "status": "open",
+      "severity": "P2",
+      "category": "onboarding",
+      "element": "#quest-tracker / hint system",
+      "summary": "中盤クエスト (影の欠片×8 収集など) は入手手段の説明がトラッカー一文のみで、11段階の全チェーンを通じて文脈ヒント (tips) が一度も発火せず素材の入手先が画面から学べない",
+      "evidence": [
+        "metric: quest.hintCoverage.tipsFired=[] (toastCount=18 に対し 0件)",
+        "p4-progression-04-quest-03-mirror.png (『影の欠片と鉄で…』のみで欠片のドロップ元情報なし)"
+      ],
+      "suggested_fix": "クエスト受注時に対象素材の入手ヒント tip (例: 影の欠片は夜の魔物がドロップ) を1回発火させる。トラッカータップで開くクエスト詳細に入手先1行を常設",
+      "files": [
+        "js/quests.js",
+        "js/ui.js"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w01-30",
+      "status": "open",
+      "severity": "P2",
+      "category": "pacing",
+      "element": "cutscene → quest-tracker 遷移",
+      "summary": "章遷移ムービーの割込は chain 中1回 (crystal 段, storySkips=1) と頻度自体は適切だが、割込直後のトーストでも新目標が隠れるため『ムービー→即次目標不明』の二重中断になる",
+      "evidence": [
+        "metric: quest.chain.steps[5].storySkips=1, latencyMs=613 (他段 ~405ms)",
+        "p4-progression-06-quest-05-crystal.png (ムービー後も『闇の鉱石：…影晶 …』が切詰め＋トースト被り)"
+      ],
+      "suggested_fix": "章ムービー終了時に次目標を1枚のリキャップ表示 (目標名+desc全文) で明示してから通常HUDへ戻す",
+      "files": [
+        "js/story.js",
+        "js/cutscene.js",
+        "js/quests.js"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w01-31",
+      "status": "open",
+      "severity": "P2",
+      "category": "readability",
+      "element": "bigmap footer buttons + legend",
+      "summary": "大マップの操作ボタン「マーク」「閉じる✕」がボタン内で「マ/ーク」「閉じ/る✕」と縦2行に不自然折返しし、凡例10項目は10.9pxで潰れて色チップとの対応を読み取りにくい",
+      "evidence": [
+        "p5-tourist-03-screen-bigmap.png",
+        "metric: screens.tour[bigmap].fonts.violations .lg-item fontPx=10.9 / #bigmap-cap fontPx=11.5"
+      ],
+      "suggested_fix": "ボタンに white-space:nowrap を指定しラベルを短縮(「閉じる」「📍マーク」)、幅を均等配分でなく内容基準に。凡例は12px以上へ拡大し2列グリッドで整列させる",
+      "files": [
+        "css/style.css",
+        "index.html",
+        "js/ui.js"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w01-32",
+      "status": "open",
+      "severity": "P2",
+      "category": "hierarchy",
+      "element": "night world-event overlay (影の世界 text)",
+      "summary": "夜のワールド演出テキスト「影の世界」「鏡の向こうで、それは君を待っている。」がプレイヤーキャラと照準枠(赤枠)の真上に重なり、操作継続中の視認を数秒間妨げる",
+      "evidence": [
+        "p5-tourist-06-night-hud.png (2行目のテキストがプレイヤー直上、照準枠が1行目と重なる)"
+      ],
+      "suggested_fix": "演出テキストの表示位置を画面上1/3(HUD下・プレイヤー上方)に固定するか、プレイヤー周辺半径をテキスト配置から除外。表示中は文字に強めのシャドウ+背景シムを敷き短尺化",
+      "files": [
+        "js/events.js",
+        "js/ui.js",
+        "js/story.js"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w01-33",
+      "status": "open",
+      "severity": "P2",
+      "category": "readability",
+      "element": "#stats HUD bars + #level-badge",
+      "summary": "左上HUDのステータス欄が横に12pxオーバーフローし(scrollW119>clientW107)、レベルバッジも「Lv.」と「1」が2行に折れ、9.6-10.9pxの数値と合わせて390px画面で窮屈に潰れている",
+      "evidence": [
+        "metric: screens.tour[*].overflow #stats scrollW=119 clientW=107",
+        "p5-tourist-02-screen-stats.png (#level-badge が Lv./1 に折返し)",
+        "metric: fonts.violations #health-val fontPx=9.6, #level-badge fontPx=10.9"
+      ],
+      "suggested_fix": "#stats コンテナ幅を実コンテンツに合わせて拡張(または数値を バー内オーバーレイ化して幅節約)。level-badge は「Lv.1」を1行で描画するよう nowrap+幅調整",
+      "files": [
+        "css/style.css",
+        "index.html"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w01-34",
+      "status": "open",
+      "severity": "P2",
+      "category": "pacing",
+      "element": "death-screen",
+      "summary": "復活ボタン自体は機能する (再現で hp 0→100・画面閉了確認) が、respawn() 末尾の Story.unlock('traveler', true) が初回死亡時に即ムービー自動再生→ paused=true になり、復活の瞬間に操作を奪われる — metric reviveWorked=false はこれが原因",
+      "evidence": [
+        "metric: death.experience.reviveWorked=false",
+        "p3-combat-05-after-revive.png",
+        "repro: scratchpad/revive_repro.js → afterTap {ev:[click], hp:100, hidden:true, paused:true}"
+      ],
+      "suggested_fix": "js/survival.js:400 の Story.unlock('traveler', true) を autoplay=false にして『記憶回廊に刻まれた』トースト誘導のみにするか、復活後 5-10 秒の安全猶予後に再生キューする (story.js:207 AUTO_TRIGGERS の delay 機構を流用)。監査側は probes の revive 判定にストーリー再生中 (Game.Story) の許容を追加",
+      "files": [
+        "js/survival.js:400",
+        "js/story.js:187-192",
+        "audit/personas/p3-combat.js:115"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w01-35",
+      "status": "open",
+      "severity": "P2",
+      "category": "ergonomics",
+      "element": "title-screen",
+      "summary": "タイトル画面の操作 9 要素が44px未満 (難易度ボタン41px・枠名変更35px・シード/名前/ルーム入力31-35px・ホスト/参加43px) かつセーブ枠/難易度の隣接ギャップ 6-7px",
+      "evidence": [
+        "metric: title.tapTargets.violations (.diff-btn 41 x3, #slot-rename 35, #seed-input 31, #btn-host/#btn-join 43)",
+        "metric: title.tapTargets.adjacency (.slot-btn gap 6-7, .diff-btn gap 6-7)",
+        "p1-firsttime-01-title.png"
+      ],
+      "suggested_fix": "css/style.css:276 .diff-btn padding 9px→11px、:76 .slot-rename に min-height:44px、入力欄 (index.html #seed-input/#name-input/#room-input) に padding 増で 44px 化。ギャップは 6px→8px",
+      "files": [
+        "css/style.css:276",
+        "css/style.css:76",
+        "css/style.css:70",
+        "index.html"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w01-36",
+      "status": "open",
+      "severity": "P2",
+      "category": "readability",
+      "element": "hud-stats",
+      "summary": "HUD のステータスバー列 #stats が横 12px オーバーフロー (scrollW 119 > clientW 107) しており、右端のバー/数値が全パネル画面で切れている",
+      "evidence": [
+        "metric: screens.tour[*].overflow #stats scrollW=119 clientW=107 (inventory/stats/bigmap/options/shop 全てで検出)",
+        "p5-tourist-03-screen-bigmap.png"
+      ],
+      "suggested_fix": "css/style.css:654 .bar width 88px か :656 .bar-label width 15px をモバイルで 2-3px 縮める、または :657 #stats gap:3px→2px + flex-wrap で収める。フォント拡大 (readability finding) と同時に幅を再計算すること",
+      "files": [
+        "css/style.css:652-658",
+        "css/style.css:298-303"
+      ],
+      "dupes": 1
+    },
+    {
+      "id": "w01-37",
+      "status": "wontfix",
+      "summary": "死亡画面の「復活する」をタップしてもゲームプレイに復帰せず、代わりに死亡カットシーンへ遷移し計測上も復活が確認できなかった (reviveWorked=false)",
+      "reason": "復活は正常に機能している。ui.js:145 の復活ボタンは Game.Survival.respawn() を呼び、survival.js:345-401 で HP全快・死亡画面非表示・unpause まで完了する。その直後 survival.js:400 で「初回死亡のみ」(!Game.Story.seen('traveler') ゲート) の断章『名もなき者』ムービー(~16秒・スキップボタンあり)が再生され paused=true になる。probe (audit/personas/p3-combat.js:115) は health>0 && !paused を 8秒でしか待たないため、初回死亡ムービー中にタイムアウトして reviveWorked=false になっただけの計測アーティファクト。puppeteer 実機再現で確認: 復活タップ直後 hp=100/deathHidden=true/cutscene=traveler、スキップ後即 paused=false でtick進行、2回目死亡ではムービー再生されず probe と同一条件が8秒以内に成立(reviveWorked=true相当)。suggested_fix の「カットシーンは初回死亡のみに限定」は既に実装済みであり、RUBRIC.md L63-65 は「ストーリー章の初回自動ムービー: 仕様(findingにしないこと)」と明記している既知の仕様に該当。修正すべきはゲームではなく監査ハーネス側: audit/personas/p3-combat.js:115 の revive 判定でカットシーン再生中は Game.Cutscene.skip() を呼ぶかタイムアウトを延長すべき。"
+    },
+    {
+      "id": "w01-38",
+      "status": "open",
+      "severity": "P2",
+      "category": "hierarchy",
+      "element": "#toast (desktop)",
+      "summary": "デスクトップ(>560px)ではトーストが従来の bottom:78 中央のままで、bottom-center のクエストトラッカーと僅かに重なり得る (モバイルは上部退避済み)",
+      "evidence": [
+        "w01 修正エージェントXの報告 (モバイル優先最小diffのため既存挙動維持)"
+      ],
+      "suggested_fix": "デスクトップ media でも toast を上部または右下へ退避し、トラッカーとの物理的分離を全モードで統一",
+      "files": [
+        "css/style.css"
+      ],
+      "dupes": 1
+    }
+  ]
 }

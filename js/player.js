@@ -6,6 +6,48 @@ Game.Player = (function () {
   const R = 11; // 当たり判定半径(px)
 
   const mining = { active: false, tx: 0, ty: 0, obj: 0, progress: 0 };
+  let lastWhiffT = -999;   // 空振り演出のthrottle(押しっぱなしでもスパムしない)
+  let rollDenyT = -999;    // 回避拒否演出のthrottle
+
+  // 空振りフィードバック: 攻撃/採掘の対象が無くても腕振り(斬撃残像+風切り音)を出す。
+  // 完全無音だと「ボタンが効いてない」と誤解されるため(w01-02)。成功時より淡い色=当たっていない合図
+  function whiffFx() {
+    const p = Game.state.player, now = Game.state.tick;
+    if ((p.attackCd || 0) > 0) return;    // 直前に本物の攻撃が出ている間は重ねない
+    if (now - lastWhiffT < 10) return;    // 30Hzで約3回/秒まで
+    lastWhiffT = now;
+    Game.Audio.play('swing');
+    Game.Render.spawnSlash(p.x, p.y, p.dir, '#aab6c2');
+    // 初回のみ誘導ヒント。tipOnce と同じ once 記憶(_tips)を共有しつつ、表示は export された
+    // Game.UI.toast を経由する(tipOnce 内部の toast 直呼びはモジュール外の計測/差し替えに掛からないため)
+    const tips = Game.state._tips || (Game.state._tips = {});
+    if (!tips.first_whiff) { tips.first_whiff = 1; Game.UI.toast('💡 近くの木や岩に近づいて叩こう'); }
+  }
+
+  // 掘れない対象へのヒント: tick%N 同期だと短いタップ(3-4tick)が窓を外して完全無音になるため、
+  // 押した瞬間に必ず1回出る throttle 方式(以後は同じ約1秒間隔)。トースト連発は防ぐ
+  let mineHintT = -999;
+  function mineHint(msg) {
+    const now = Game.state.tick;
+    if (now - mineHintT < 30) return;
+    mineHintT = now;
+    Game.UI.toast(msg);
+  }
+
+  // 回避拒否フィードバック: スタミナ不足/CD中の回避入力に乾いた不発音+ボタン振動で応える(w01-04)。
+  // 新規SEは追加せず既存の「カチッ」(gun_dry)を流用。toastは出さない(混戦でスパム化するため)
+  function rollDenyFx() {
+    const now = Game.state.tick;
+    if (now - rollDenyT < 8) return;
+    rollDenyT = now;
+    Game.Audio.play('gun_dry');
+    const rb = document.getElementById('btn-roll');
+    if (rb) {
+      rb.classList.remove('shake'); void rb.offsetWidth; // reflowでCSSアニメを毎回リスタート
+      rb.classList.add('shake');
+      setTimeout(function () { rb.classList.remove('shake'); }, 320);
+    }
+  }
 
   // 乗り物の加速/減速カーブ(最高速は従来と同一・立ち上がりと惰性だけを付与。バランス不変)
   const VEH_ACCEL = { car: 0.085, buggy: 0.10, boat: 0.055, plane: 0.05, carpet: 0.075, tank: 0.045, mech: 0.08, jet: 0.06, bomber: 0.045 };
@@ -243,6 +285,11 @@ Game.Player = (function () {
       p.rolling = 12; p.rollCd = 45; p.invuln = Math.max(p.invuln || 0, 18); p.stamina = Math.max(0, p.stamina - 20); p.rollRewarded = false;
       Game.Audio.play('dash');
       Game.Render.spawnParticles(p.x, p.y, '#ffffff', 6); // ロール開始の白い砂煙(無敵時間の始まりを視認)
+    } else if (intent.roll && !p.vehicle && (p.rolling || 0) <= 0) {
+      // 回避が出せない時(スタミナ<20 or CD中)のフィードバック: 無音・無反応だと
+      // 「ボタンが効いてない」と誤解される。乾いた不発音+ボタン振動で「今は出せない」を伝える。
+      // toastは出さない(混戦で連打するとスパム化するため)
+      rollDenyFx();
     }
     if (dashing) { p.stamina = Math.max(0, p.stamina - 1.1); }
     else if (p.stamina < p.maxStamina) { p.stamina = Math.min(p.maxStamina, p.stamina + (moving ? 0.3 : 0.7)); }
@@ -533,23 +580,23 @@ Game.Player = (function () {
 
   function mineTick() {
     const t = targetTile();
-    if (!t || !t.inReach) { mining.active = false; return; }
+    if (!t || !t.inReach) { mining.active = false; whiffFx(); return; } // 射程外への空振りも無音にしない
     const obj = t.obj;
     const meta = Game.OBJ_META[obj];
     // 封印壁は破壊不可（二相連動で解く）。ヒント提示
     if (obj === Game.OBJ.SEAL_WALL) {
       mining.active = false;
-      if (Game.state.tick % 40 === 0) Game.UI.toast('固い封印だ… 影の世界の同じ場所に「共鳴核」があるはず');
+      mineHint('固い封印だ… 影の世界の同じ場所に「共鳴核」があるはず');
       return;
     }
-    if (obj === Game.OBJ.NONE || !meta || !meta.mineable) { mining.active = false; return; }
+    if (obj === Game.OBJ.NONE || !meta || !meta.mineable) { mining.active = false; whiffFx(); return; } // 採掘対象なし=空振り演出
 
     // ダンジョンの壁は「破城のツルハシ(siege)」を装備している時のみ破壊可能（壁抜き不可）
     if (meta.dungeonWall) {
       const sel0 = Game.Inventory.selectedItemDef();
       if (!sel0 || !sel0.siege) {
         mining.active = false; mining.progress = 0;
-        if (Game.state.tick % 40 === 0) Game.UI.toast('壁が硬すぎる… 「破城のツルハシ」が必要だ');
+        mineHint('壁が硬すぎる… 「破城のツルハシ」が必要だ');
         return;
       }
     }
@@ -561,18 +608,18 @@ Game.Player = (function () {
     }
 
     // 幻影鉱脈は正気度が低いときだけ掘れる
-    if (meta.phantom && Game.state.sanity >= 40) { mining.active = false; return; }
+    if (meta.phantom && Game.state.sanity >= 40) { mining.active = false; whiffFx(); return; } // 幻影は正気だとすり抜ける=空振り扱い
     // マイクラ踏襲: ツルハシが要る対象(石/鉱石)は素手では掘れない。上位素材は上位ツルハシが要る
     const selT = Game.Inventory.selectedItemDef();
     if (meta.tool === 'pickaxe' && !(selT && selT.tool === 'pickaxe')) {
       mining.active = false; mining.progress = 0;
-      if (Game.state.tick % 30 === 0) Game.UI.toast('ツルハシが必要だ（素手で石は掘れない）。木を集めて木のツルハシを作ろう');
+      mineHint('ツルハシが必要だ（素手で石は掘れない）。木を集めて木のツルハシを作ろう');
       return;
     }
     const tierUsed = toolTierFor(meta.tool);
     if (tierUsed < meta.tier) {
       mining.active = false; mining.progress = 0;
-      if (Game.state.tick % 30 === 0) Game.UI.toast(meta.tier >= 3 ? '更に上位のツルハシが必要' : 'もっと良い道具（上位のツルハシ）が必要');
+      mineHint(meta.tier >= 3 ? '更に上位のツルハシが必要' : 'もっと良い道具（上位のツルハシ）が必要');
       return;
     }
     if (mining.tx !== t.tx || mining.ty !== t.ty || mining.obj !== obj) {
@@ -583,7 +630,7 @@ Game.Player = (function () {
     const matched = sel && sel.tool === meta.tool;
     const speed = (matched ? (1 + sel.tier) : 0.6) + skillBonus().mining;
     mining.progress += speed;
-    if (Game.state.tick % 6 === 0) Game.Audio.play('mine');
+    if (mining.progress === speed || Game.state.tick % 6 === 0) Game.Audio.play('mine'); // 掘り始めの1tick目は必ず鳴らす(短タップ無音防止)。以後は従来周期(SE側throttleあり)
     // 採掘中の破片(対象タイルからチップが飛ぶ)＋進捗のひび
     if (Game.state.tick % 4 === 0 && Game.Render.spawnParticles) {
       const wx = t.tx * TS + TS / 2, wy = t.ty * TS + TS / 2;
